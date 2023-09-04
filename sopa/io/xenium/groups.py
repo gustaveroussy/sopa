@@ -17,7 +17,7 @@ def add_group(root: zarr.Group, index: int, categories: np.ndarray):
     group.array("indptr", indptr, dtype="uint32", chunks=(len(indptr),))
 
 
-def save_groups(path: str, df: pd.DataFrame):
+def write_groups(path: str, df: pd.DataFrame):
     ATTRS = {
         "major_version": 1,
         "minor_version": 0,

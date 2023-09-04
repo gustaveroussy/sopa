@@ -1,3 +1,3 @@
-from .groups import save_groups
-from .ome import save_ome_tif
-from .polygons import save_polygons
+from .groups import write_groups
+from .ome import write_ome_tif
+from .polygons import write_polygons

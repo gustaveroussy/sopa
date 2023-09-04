@@ -6,7 +6,7 @@ from typing import List
 
 import tifffile as tf
 
-from .xenium import save_ome_tif
+from .xenium import write_ome_tif
 
 
 def get_channel_name(description):
@@ -18,7 +18,12 @@ def read_series(path: Path) -> List[tf.TiffPageSeries]:
         return list(reversed(sorted(tif.series[0].series, key=lambda p: p.size)))
 
 
-def write_zarr(path: Path, series: List[tf.TiffPageSeries], names: List[str]) -> None:
+def write_zarr(
+    path: Path,
+    series: List[tf.TiffPageSeries],
+    names: List[str],
+    overwrite: bool = True,
+) -> None:
     import dask.array as da
     import xarray as xr
 
@@ -29,6 +34,7 @@ def write_zarr(path: Path, series: List[tf.TiffPageSeries], names: List[str]) ->
     ds = xr.Dataset({"image": xarr})
 
     if path.exists():
+        assert overwrite, f"Path {path} exists and overwrite is False"
         shutil.rmtree(path)
 
     print("Saving xarray")
@@ -43,7 +49,7 @@ def main(args):
     series = read_series(path)
     names = [get_channel_name(page.description) for page in series[0]._pages]
 
-    save_ome_tif(output, series, names)
+    write_ome_tif(output, series, names)
 
 
 if __name__ == "__main__":

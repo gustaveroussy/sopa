@@ -4,7 +4,7 @@ from typing import List
 import tifffile as tf
 
 
-def save_ome_tif(
+def write_ome_tif(
     output_path: Path,
     series: List[tf.TiffPageSeries],
     channel_names: List[str],

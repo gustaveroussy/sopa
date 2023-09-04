@@ -39,7 +39,7 @@ GROUP_ATTRS = {
 }
 
 
-def save_polygons(path: Path, coordinates: np.ndarray) -> None:
+def write_polygons(path: Path, coordinates: np.ndarray) -> None:
     num_cells = len(coordinates)
     cells_fourth = ceil(num_cells / 4)
     cells_half = ceil(num_cells / 2)

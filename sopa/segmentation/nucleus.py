@@ -8,7 +8,7 @@ from cellpose import models
 from shapely.geometry import MultiPolygon, Polygon
 from tqdm import tqdm
 
-from ..io.xenium import save_polygons
+from ..io.xenium import write_polygons
 from .tiling import TileMaker
 
 
@@ -99,7 +99,7 @@ def main(args):
         axis=0,
     )
 
-    save_polygons(args.output, coordinates)
+    write_polygons(args.output, coordinates)
 
 
 if __name__ == "__main__":
