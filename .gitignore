@@ -1,0 +1,115 @@
+# Misc
+cytospace
+show_small.py
+archive/
+workflow/.snakemake
+workflow/logs
+*.ignore.*
+explore
+
+# OS related
+.DS_Store
+
+# Documentation
+site
+
+# Code Ocean related
+code
+results
+
+# Logs
+outputs
+multirun
+lightning_logs
+checkpoints
+run.log
+
+# Data files
+data/*/*
+!data/aml/default.csv
+!data/aml/short.h5ad
+!data/bmmc/default.csv
+!data/poised/default.csv
+!data/debarcoding/default.csv
+!data/README.md
+
+# Jupyter Notebook
+.ipynb_checkpoints
+exploration/*
+*.ipynb
+!notebooks/*.ipynb
+
+# pyenv
+.python-version
+
+# VisualStudioCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+**/.vscode
+
+# Lightning-Hydra-Template
+logs/
+wandb/
+.env
+.autoenv
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+!cli/src/lib
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Misc
+jobs/
