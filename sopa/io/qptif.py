@@ -2,26 +2,25 @@ import argparse
 import re
 import shutil
 from pathlib import Path
-from typing import List
 
 import tifffile as tf
 
-from .xenium import write_ome_tif
+from .explorer import write_ome_tif
 
 
 def get_channel_name(description):
     return re.search(r"<Name>(.*?)</Name>", description).group(1)
 
 
-def read_series(path: Path) -> List[tf.TiffPageSeries]:
+def read_series(path: Path) -> list[tf.TiffPageSeries]:
     with tf.TiffFile(path) as tif:
         return list(reversed(sorted(tif.series[0], key=lambda p: p.size)))
 
 
 def write_zarr(
     path: Path,
-    series: List[tf.TiffPageSeries],
-    names: List[str],
+    series: list[tf.TiffPageSeries],
+    names: list[str],
     overwrite: bool = True,
 ) -> None:
     import dask.array as da
