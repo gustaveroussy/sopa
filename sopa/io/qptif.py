@@ -15,7 +15,7 @@ def get_channel_name(description):
 
 def read_series(path: Path) -> List[tf.TiffPageSeries]:
     with tf.TiffFile(path) as tif:
-        return list(reversed(sorted(tif.series[0].series, key=lambda p: p.size)))
+        return list(reversed(sorted(tif.series[0], key=lambda p: p.size)))
 
 
 def write_zarr(

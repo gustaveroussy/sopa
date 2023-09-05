@@ -27,8 +27,7 @@ def extract_polygons(mask: np.ndarray) -> List[Polygon]:
         polys_ = [smooth(Polygon(c[:, 0, :])) for c in contours if c.shape[0] >= 4]
         polys_ = [p for p in polys_ if not p.is_empty]
 
-        if len(polys_) > 1:
-            print(len(polys_))
+        assert len(polys_) <= 1
         polys.extend(polys_)
 
     return polys
