@@ -18,17 +18,19 @@ GRID_SIZE = 250
 QUALITY_SCORE = 40
 
 
-def write_transcripts(path: Path, df: pd.DataFrame):
+def write_transcripts(
+    path: Path, df: pd.DataFrame, x: str = "x", y: str = "y", gene: str = "gene"
+):
     num_transcripts = len(df)
-    df["gene"] = df["gene"].astype("category")
+    df[gene] = df[gene].astype("category")
 
-    location = df[["x", "y"]]
+    location = df[[x, y]]
     location = np.concatenate([location, np.zeros((num_transcripts, 1))], axis=1)
 
     xmin, xmax = location[:, 0].min(), location[:, 0].max()
     ymin, ymax = location[:, 1].min(), location[:, 1].max()
 
-    gene_names = list(df["gene"].cat.categories)
+    gene_names = list(df[gene].cat.categories)
     num_genes = len(gene_names)
 
     codeword_gene_mapping = list(range(num_genes))
@@ -37,7 +39,7 @@ def write_transcripts(path: Path, df: pd.DataFrame):
     uuid = np.stack(
         [np.arange(num_transcripts), np.full(num_transcripts, 65535)], axis=1
     )
-    gene_identity = df["gene"].cat.codes.values[:, None]
+    gene_identity = df[gene].cat.codes.values[:, None]
     codeword_identity = np.stack(
         [gene_identity[:, 0], np.full(num_transcripts, 65535)], axis=1
     )
