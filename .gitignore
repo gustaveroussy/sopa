@@ -4,7 +4,7 @@ show_small.py
 archive/
 workflow/.snakemake
 workflow/logs
-*.ignore.*
+*ignore*
 explore
 
 # OS related
