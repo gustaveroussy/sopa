@@ -10,6 +10,7 @@ from shapely.geometry import shape
 from ...segmentation.nucleus import pad
 from . import (
     write_experiment,
+    write_features,
     write_groups,
     write_multiscale,
     write_polygons,
@@ -27,6 +28,7 @@ cells_path = res_dir / "cells.zarr.zip"
 transcripts_path = res_dir / "transcripts.zarr.zip"
 experiment_path = res_dir / "experiment.xenium"
 analysis_path = res_dir / "analysis.zarr.zip"
+features_path = res_dir / "cell_feature_matrix.zarr.zip"
 
 ### JSON
 
@@ -75,8 +77,12 @@ if not cells_path.exists():
 
     write_polygons(cells_path, coordinates)
 
+### FEATURES
 
-# ### TRANSCRIPTS
+if not features_path.exists():
+    write_features(features_path, adata)
+
+### TRANSCRIPTS
 
 if not transcripts_path.exists():
     df = pd.read_csv(path / "detected_transcripts.csv")
