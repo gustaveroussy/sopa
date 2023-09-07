@@ -30,10 +30,13 @@ def write_groups(path: str, df: pd.DataFrame):
         g = zarr.group(store=store)
         cell_groups = g.create_group("cell_groups")
 
-        for i, name in enumerate(df.columns):
-            ATTRS["grouping_names"].append(name)
-            ATTRS["group_names"].append(list(df[name].unique()))
+        i = 0
+        for name in df.columns:
+            if df[name].dtype == "category":
+                ATTRS["grouping_names"].append(name)
+                ATTRS["group_names"].append(list(df[name].unique()))
 
-            add_group(cell_groups, i, df[name])
+                add_group(cell_groups, i, df[name])
+                i += 1
 
         cell_groups.attrs.put(ATTRS)
