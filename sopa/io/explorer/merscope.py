@@ -7,7 +7,6 @@ import pandas as pd
 from shapely import affinity
 from shapely.geometry import shape
 
-from ...segmentation.nucleus import pad
 from . import (
     write_experiment,
     write_features,
@@ -32,7 +31,7 @@ features_path = res_dir / "cell_feature_matrix.zarr.zip"
 
 ### JSON
 
-write_experiment(experiment_path, "B2", "Breast", "Breast")
+write_experiment(experiment_path, "B2", "Breast", "Breast", "uuidB2")
 
 ### IMAGE
 
@@ -72,10 +71,7 @@ if not cells_path.exists():
     polygons = [shape(d[cell_id]) for cell_id in valid_cell]
     polygons = [affinity.affine_transform(p, matrix) for p in polygons]
 
-    coordinates = np.stack([pad(p, 3, 13) for p in polygons])
-    coordinates /= 4.705882
-
-    write_polygons(cells_path, coordinates)
+    write_polygons(cells_path, polygons)
 
 ### FEATURES
 

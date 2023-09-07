@@ -3,6 +3,9 @@ from pathlib import Path
 
 import numpy as np
 import zarr
+from shapely.geometry import Polygon
+
+from ...segmentation.utils import pad
 
 CELLS_SUMMARY_ATTRS = {
     "column_descriptions": [
@@ -30,8 +33,8 @@ GROUP_ATTRS = {
     "minor_version": 0,
     "name": "CellSegmentationDataset",
     "polygon_set_descriptions": [
-        "DAPI-based nuclei segmentation",
-        "Expansion of nuclei boundaries by 15 \u03bcm",
+        "NA",
+        "NA",
     ],
     "polygon_set_display_names": ["Nucleus boundaries", "Cell boundaries"],
     "polygon_set_names": ["nucleus", "cell"],
@@ -39,7 +42,10 @@ GROUP_ATTRS = {
 }
 
 
-def write_polygons(path: Path, coordinates: np.ndarray) -> None:
+def write_polygons(path: Path, polygons: list[Polygon]) -> None:
+    coordinates = np.stack([pad(p, 3, 13) for p in polygons])
+    coordinates /= 4.705882
+
     num_cells = len(coordinates)
     cells_fourth = ceil(num_cells / 4)
     cells_half = ceil(num_cells / 2)
@@ -65,9 +71,11 @@ def write_polygons(path: Path, coordinates: np.ndarray) -> None:
         cell_id[:, 0] = np.arange(1, num_cells + 1)
         g.array("cell_id", cell_id, dtype="uint32", chunks=(cells_half, 1))
 
+        cell_summary = np.zeros((num_cells, 7))
+        cell_summary[:, 2] = [p.area for p in polygons]
         g.array(
             "cell_summary",
-            np.zeros((num_cells, 7)),
+            cell_summary,
             dtype="float64",
             chunks=(num_cells, 1),
         )
