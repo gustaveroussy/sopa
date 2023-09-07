@@ -48,7 +48,7 @@ if not image_path.exists():
 ### TABLE
 
 adata = anndata.read_h5ad(path / "baysor" / "adata_annotated_filtered.h5ad")
-valid_cell = set(adata.obs["cell_num"].values)
+valid_cell = adata.obs["cell_num"].values
 
 if not analysis_path.exists():
     write_groups(analysis_path, adata.obs)
@@ -66,7 +66,8 @@ if not cells_path.exists():
     # polygons = gdf.Geometry.map(lambda mp: mp.geoms[0])
     with open(path / "baysor" / "segmentation_polygons.json") as f:
         d = json.load(f)
-    polygons = [shape(p) for p in d["geometries"] if p["cell"] in valid_cell]
+        d = {c["cell"]: c for c in d["geometries"]}
+    polygons = [shape(d[cell_id]) for cell_id in valid_cell]
     polygons = [affinity.affine_transform(p, matrix) for p in polygons]
 
     coordinates = np.stack([pad(p, 3, 13) for p in polygons])

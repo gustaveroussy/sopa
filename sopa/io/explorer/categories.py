@@ -3,15 +3,13 @@ import pandas as pd
 import zarr
 
 
-def add_group(root: zarr.Group, index: int, categories: np.ndarray):
+def add_group(root: zarr.Group, index: int, values: np.ndarray, categories: list[str]):
     group = root.create_group(index)
-    categories_indices = [
-        np.where(categories == cat)[0] for cat in np.unique(categories)
-    ]
-    categories_cum_len = np.cumsum([len(indices) for indices in categories_indices])
+    values_indices = [np.where(values == cat)[0] for cat in categories]
+    values_cum_len = np.cumsum([len(indices) for indices in values_indices])
 
-    indices = np.concatenate(categories_indices)
-    indptr = np.concatenate([[0], categories_cum_len[:-1]])
+    indices = np.concatenate(values_indices)
+    indptr = np.concatenate([[0], values_cum_len[:-1]])
 
     group.array("indices", indices, dtype="uint32", chunks=(len(indices),))
     group.array("indptr", indptr, dtype="uint32", chunks=(len(indptr),))
@@ -33,10 +31,11 @@ def write_groups(path: str, df: pd.DataFrame):
         i = 0
         for name in df.columns:
             if df[name].dtype == "category":
+                categories = list(df[name].cat.categories)
                 ATTRS["grouping_names"].append(name)
-                ATTRS["group_names"].append(list(df[name].unique()))
+                ATTRS["group_names"].append(categories)
 
-                add_group(cell_groups, i, df[name])
+                add_group(cell_groups, i, df[name], categories)
                 i += 1
 
         cell_groups.attrs.put(ATTRS)
