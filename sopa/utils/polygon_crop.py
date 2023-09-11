@@ -1,7 +1,7 @@
-import argparse
 import json
 from pathlib import Path
 
+import click
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.widgets import PolygonSelector
@@ -38,7 +38,7 @@ def _save_polygon(path: str, selector: _Selector):
 def xarr_selector(
     image_path: str,
     output_path: str,
-    channels: list[str] | str | None,
+    channels: list[str],
     scale_factor: float = 10,
     margin_ratio: float = 0.2,
 ):
@@ -48,9 +48,9 @@ def xarr_selector(
 
     image = xr.open_zarr(image_path)["image"]
 
-    if channels is not None:
+    if len(channels):
         assert (
-            isinstance(channels, str) or len(channels) in VALID_N_CHANNELS
+            len(channels) in VALID_N_CHANNELS
         ), f"Number of channels provided must be in: {', '.join(VALID_N_CHANNELS)}"
         image = image.sel(c=channels).transpose("y", "x", "c")
 
@@ -86,44 +86,38 @@ def cells_selector(
     _save_polygon(output_path, selector)
 
 
-def main(args):
+@click.command()
+@click.option(
+    "-i",
+    "--input_path",
+    type=str,
+    help="Path to input file, either a cell_metadata.csv file, or a xarray .zarr file",
+)
+@click.option(
+    "-o", "--output_path", type=str, help="Path where the polygon will be saved"
+)
+@click.option(
+    "-c",
+    "--channels",
+    type=str,
+    multiple=True,
+    default=None,
+    help="List of channels name to be displayed",
+)
+def main(input_path, output_path, channels):
     VALID_SUFFIX = [".zarr", ".csv"]
 
-    path = Path(args.input)
+    input_path = Path(input_path)
 
     assert (
-        path.suffix in VALID_SUFFIX
+        input_path.suffix in VALID_SUFFIX
     ), f"Valid input suffix are: {', '.join(VALID_SUFFIX)}"
 
-    if path.suffix == ".zarr":
-        xarr_selector(path, args.polygon, args.channels)
-    if path.suffix == ".csv":
-        cells_selector(path, args.polygon)
+    if input_path.suffix == ".zarr":
+        xarr_selector(input_path, output_path, list(channels))
+    if input_path.suffix == ".csv":
+        cells_selector(input_path, output_path)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i",
-        "--input",
-        type=str,
-        required=True,
-        help="Path to input file, either a cell_metadata.csv file, or a xarray .zarr file",
-    )
-    parser.add_argument(
-        "-p",
-        "--polygon",
-        type=str,
-        required=True,
-        help="Path where the polygon will be saved",
-    )
-    parser.add_argument(
-        "-c",
-        "--channels",
-        type=str,
-        nargs="+",
-        default=None,
-        help="List of channels name to be displayed",
-    )
-
-    main(parser.parse_args())
+    main()
