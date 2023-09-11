@@ -3,6 +3,7 @@ from pathlib import Path
 
 import click
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from matplotlib.widgets import PolygonSelector
 
@@ -24,15 +25,17 @@ class _Selector:
 
     def onselect(self, vertices):
         self.vertices = vertices
-        print(f"\nVertices: {self.vertices}")
+        print(f"Selected polygon with {len(self.vertices)} vertices.")
 
     def disconnect(self):
         self.poly.disconnect_events()
 
 
-def _save_polygon(path: str, selector: _Selector):
+def _save_polygon(path: str, coords: np.ndarray | list):
+    if isinstance(coords, np.ndarray):
+        coords = coords.tolist()
     with open(path, "w") as f:
-        json.dump(selector.vertices, f, indent=4)
+        json.dump(coords, f, indent=4)
 
 
 def xarr_selector(
@@ -64,7 +67,8 @@ def xarr_selector(
     plt.ylim(dy + margin_ratio * dy, -margin_ratio * dy)
 
     selector = _Selector(ax)
-    _save_polygon(output_path, selector)
+
+    _save_polygon(output_path, np.array(selector.vertices) * scale_factor)
 
 
 def cells_selector(
@@ -83,7 +87,7 @@ def cells_selector(
 
     selector = _Selector(ax)
 
-    _save_polygon(output_path, selector)
+    _save_polygon(output_path, selector.vertices)
 
 
 @click.command()
