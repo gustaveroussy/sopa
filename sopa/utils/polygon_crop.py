@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import click
@@ -24,18 +23,11 @@ class _Selector:
         plt.show()
 
     def onselect(self, vertices):
-        self.vertices = vertices
+        self.vertices = np.array(vertices)
         print(f"Selected polygon with {len(self.vertices)} vertices.")
 
     def disconnect(self):
         self.poly.disconnect_events()
-
-
-def _save_polygon(path: str, coords: np.ndarray | list):
-    if isinstance(coords, np.ndarray):
-        coords = coords.tolist()
-    with open(path, "w") as f:
-        json.dump(coords, f, indent=4)
 
 
 def xarr_selector(
@@ -43,19 +35,19 @@ def xarr_selector(
     output_path: str,
     channels: list[str],
     scale_factor: float = 10,
-    margin_ratio: float = 0.2,
+    margin_ratio: float = 0.1,
 ):
     import xarray as xr
 
     from .image import resize
 
-    image = xr.open_zarr(image_path)["image"]
+    image = xr.open_zarr(image_path)["image"].transpose("y", "x", "c")
 
     if len(channels):
         assert (
             len(channels) in VALID_N_CHANNELS
         ), f"Number of channels provided must be in: {', '.join(VALID_N_CHANNELS)}"
-        image = image.sel(c=channels).transpose("y", "x", "c")
+        image = image.sel(c=channels)
 
     image = resize(image, scale_factor).compute()
 
@@ -68,7 +60,7 @@ def xarr_selector(
 
     selector = _Selector(ax)
 
-    _save_polygon(output_path, np.array(selector.vertices) * scale_factor)
+    np.savetxt(output_path, selector.vertices * scale_factor)
 
 
 def cells_selector(
@@ -87,7 +79,7 @@ def cells_selector(
 
     selector = _Selector(ax)
 
-    _save_polygon(output_path, selector.vertices)
+    np.savetxt(output_path, selector.vertices)
 
 
 @click.command()
