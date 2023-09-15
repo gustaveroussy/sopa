@@ -1,5 +1,5 @@
+import anndata
 import numpy as np
-import pandas as pd
 import zarr
 
 
@@ -15,7 +15,7 @@ def add_group(root: zarr.Group, index: int, values: np.ndarray, categories: list
     group.array("indptr", indptr, dtype="uint32", chunks=(len(indptr),))
 
 
-def write_groups(path: str, df: pd.DataFrame):
+def write_groups(path: str, adata: anndata.AnnData):
     ATTRS = {
         "major_version": 1,
         "minor_version": 0,
@@ -24,18 +24,19 @@ def write_groups(path: str, df: pd.DataFrame):
         "group_names": [],
     }
 
+    categorical_columns = [
+        name for name, cat in adata.obs.dtypes.items() if cat == "category"
+    ]
+
     with zarr.ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)
         cell_groups = g.create_group("cell_groups")
 
-        i = 0
-        for name in df.columns:
-            if df[name].dtype == "category":
-                categories = list(df[name].cat.categories)
-                ATTRS["grouping_names"].append(name)
-                ATTRS["group_names"].append(categories)
+        for i, name in enumerate(categorical_columns):
+            categories = list(adata.obs[name].cat.categories)
+            ATTRS["grouping_names"].append(name)
+            ATTRS["group_names"].append(categories)
 
-                add_group(cell_groups, i, df[name], categories)
-                i += 1
+            add_group(cell_groups, i, adata.obs[name], categories)
 
         cell_groups.attrs.put(ATTRS)

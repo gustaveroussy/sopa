@@ -3,52 +3,55 @@ import re
 import shutil
 from pathlib import Path
 
+import dask.array as da
 import tifffile as tf
-
-from .explorer import write_ome_tif
+import toml
+import xarray as xr
+from spatialdata import SpatialData
+from spatialdata.models import Image2DModel
+from spatialdata.transformations import Identity
 
 
 def get_channel_name(description):
     return re.search(r"<Name>(.*?)</Name>", description).group(1)
 
 
-def read_series(path: Path) -> list[tf.TiffPageSeries]:
+def read_qptiff(
+    path: Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
+) -> SpatialData:
+    image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
+    if "chunks" not in image_models_kwargs:
+        image_models_kwargs["chunks"] = (1, 4096, 4096)
+
     with tf.TiffFile(path) as tif:
-        return list(reversed(sorted(tif.series[0], key=lambda p: p.size)))
+        page_series = tif.series[0]
+        names = [get_channel_name(page.description) for page in page_series]
 
+        if channels_renaming is not None:
+            names = [channels_renaming[name] for name in names]
 
-def write_zarr(
-    path: Path,
-    series: list[tf.TiffPageSeries],
-    names: list[str],
-    overwrite: bool = True,
-) -> None:
-    import dask.array as da
-    import xarray as xr
+        image_name = Path(path).absolute().stem
+        image = Image2DModel.parse(
+            da.from_array(page_series.asarray(), chunks=image_models_kwargs["chunks"]),
+            dims=list(page_series._axes.lower()),
+            transformations={"pixels": Identity()},
+            c_coords=names,
+            **image_models_kwargs,
+        )
 
-    dask_array = da.asarray(series[0].asarray())
-    xarr = xr.DataArray(
-        dask_array, dims=list(series[0]._axes.lower()), coords={"c": names}
-    )
-    ds = xr.Dataset({"image": xarr})
-
-    if path.exists():
-        assert overwrite, f"Path {path} exists and overwrite is False"
-        shutil.rmtree(path)
-
-    print("Saving xarray")
-    ds.to_zarr(path)
+        return SpatialData(images={image_name: image})
 
 
 def main(args):
-    path, output = Path(args.path), Path(args.output)
+    path = Path(args.path)
+    output = path.with_suffix(".zarr")
 
     assert not output.exists(), f"Output path {output} already exists"
 
-    series = read_series(path)
-    names = [get_channel_name(page.description) for page in series[0]._pages]
+    config = toml.load(args.config)
 
-    write_ome_tif(output, series, names)
+    sdata = read_qptiff(path, channels_renaming=config["reader"]["channels_renaming"])
+    sdata.write(output)
 
 
 if __name__ == "__main__":
@@ -61,11 +64,11 @@ if __name__ == "__main__":
         help="Path to the qptiff file",
     )
     parser.add_argument(
-        "-o",
-        "--output",
+        "-c",
+        "--config",
         type=str,
         required=True,
-        help="Path to the morphology.ome.tif file",
+        help="Path to the config file",
     )
 
     main(parser.parse_args())
