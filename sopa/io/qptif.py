@@ -51,6 +51,8 @@ def main(args):
     config = toml.load(args.config)
 
     sdata = read_qptiff(path, channels_renaming=config["reader"]["channels_renaming"])
+
+    print(sdata)
     sdata.write(output)
 
 
