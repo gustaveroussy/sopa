@@ -59,7 +59,7 @@ def main(args):
     sdata = spatialdata.read_zarr(args.path)
     model = models.Cellpose(model_type="cyto2")
 
-    image = next(iter(sdata.images))
+    image = next(iter(sdata.images.values()))
 
     tiles = Tiles2D(0, len(image.coords["x"]), 0, len(image.coords["y"]), args.width)
 
