@@ -1,15 +1,17 @@
 import argparse
 
 import cv2
+import geopandas as gpd
 import numpy as np
+import spatialdata
 import xarray as xr
 from cellpose import models
+from shapely import affinity
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
-from ..io.explorer import write_polygons
 from ..utils.tiling import Tiles2D
-from .utils import pad, smooth
+from .utils import smooth
 
 
 def extract_polygons(mask: np.ndarray) -> list[Polygon]:
@@ -34,8 +36,6 @@ def patch_coordinates(
     x_bounds: list[int],
     y_bounds: list[int],
     c: str,
-    min_vertices: int = 3,
-    max_vertices: int = 13,
 ) -> np.ndarray:
     patch = xarr.sel(
         c=c,
@@ -52,28 +52,24 @@ def patch_coordinates(
     )
 
     polygons = extract_polygons(masks[0])
-
-    coordinates = np.stack([pad(p, min_vertices, max_vertices) for p in polygons])
-    coordinates[:, ::2] += x_bounds[0]
-    coordinates[:, 1::2] += y_bounds[0]
-    coordinates /= 4.705882
-    return coordinates
+    return [affinity.translate(p, x_bounds[0], y_bounds[0]) for p in polygons]
 
 
 def main(args):
-    xarr = xr.open_zarr(args.path)["image"]
+    sdata = spatialdata.read_zarr(args.path)
     model = models.Cellpose(model_type="cyto2")
-    tiles = Tiles2D(0, xarr.shape[2], 0, xarr.shape[1], args.width)
 
-    coordinates = np.concatenate(
-        [
-            patch_coordinates(xarr, model, x_bounds, y_bounds, args.dapi)
-            for x_bounds, y_bounds in tqdm(tiles)
-        ],
-        axis=0,
-    )
+    image = next(iter(sdata.images))
 
-    write_polygons(args.output, coordinates)
+    tiles = Tiles2D(0, len(image.coords["x"]), 0, len(image.coords["y"]), args.width)
+
+    polygons_list = [
+        patch_coordinates(image, model, x_bounds, y_bounds, args.dapi)
+        for x_bounds, y_bounds in tqdm(tiles)
+    ]
+
+    gdf = gpd.GeoDataFrame({"geometry": [p for l in polygons_list for p in l]})
+    sdata.add_shapes("polygons", gdf)
 
 
 if __name__ == "__main__":
@@ -83,14 +79,7 @@ if __name__ == "__main__":
         "--path",
         type=str,
         required=True,
-        help="Path to the zarr image",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        required=True,
-        help="Path to the output zip file",
+        help="Path to the zarr spatialdata object",
     )
     parser.add_argument(
         "-d",
