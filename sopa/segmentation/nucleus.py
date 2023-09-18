@@ -8,6 +8,7 @@ import xarray as xr
 from cellpose import models
 from shapely import affinity
 from shapely.geometry import Polygon
+from spatialdata.models import ShapesModel
 from tqdm import tqdm
 
 from ..utils.tiling import Tiles2D
@@ -50,8 +51,9 @@ def patch_coordinates(
         flow_threshold=2,
         cellprob_threshold=-6,
     )
-
     polygons = extract_polygons(masks[0])
+
+    print(f"Extracted {len(polygons)} polygons")
     return [affinity.translate(p, x_bounds[0], y_bounds[0]) for p in polygons]
 
 
@@ -65,11 +67,12 @@ def main(args):
 
     polygons_list = [
         patch_coordinates(image, model, x_bounds, y_bounds, args.dapi)
-        for x_bounds, y_bounds in tqdm(tiles)
+        for x_bounds, y_bounds in tqdm(tiles[:2])
     ]
 
-    gdf = gpd.GeoDataFrame({"geometry": [p for l in polygons_list for p in l]})
-    sdata.add_shapes("polygons", gdf)
+    geo_df = gpd.GeoDataFrame({"geometry": [p for l in polygons_list for p in l]})
+    geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
+    sdata.add_shapes("polygons", geo_df)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import numpy as np
 import tifffile as tf
-from multiscale_spatial_image import MultiscaleSpatialImage
+from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 
 from ._constants import image_metadata, image_options
 
@@ -18,26 +18,27 @@ def _astype_uint8(arr: np.ndarray) -> np.ndarray:
     return (arr * factor).astype(np.uint8)
 
 
-def write_multiscale(
+def write_image(
     path: str,
-    multiscale: MultiscaleSpatialImage,
+    image: MultiscaleSpatialImage,
+    image_key: str,
     pixelsize: float = 0.2125,
 ):
     print("Writing multiscale image")
 
-    assert isinstance(
-        multiscale, MultiscaleSpatialImage
-    ), f"For now, only `MultiscaleSpatialImage` is supported. Found {type(multiscale)}."
+    if not isinstance(image, MultiscaleSpatialImage):
+        image = to_multiscale(image, [2, 2, 2, 2, 2])
 
-    scale_names = list(multiscale.children)
-    channel_names = list(multiscale[scale_names[0]].c.values)
+    scale_names = list(image.children)
+    channel_names = list(image[scale_names[0]].c.values)
 
     metadata = image_metadata(channel_names, pixelsize)
 
     # TODO : make it memory efficient
     with tf.TiffWriter(path, bigtiff=True) as tif:
+        print(metadata)
         tif.write(
-            _astype_uint8(multiscale[scale_names[0]]["image"].values),
+            _astype_uint8(image[scale_names[0]][image_key].values),
             subifds=len(scale_names) - 1,
             resolution=(1e4 / pixelsize, 1e4 / pixelsize),
             metadata=metadata,
@@ -46,7 +47,7 @@ def write_multiscale(
 
         for i, scale in enumerate(scale_names[1:]):
             tif.write(
-                _astype_uint8(multiscale[scale]["image"].values),
+                _astype_uint8(image[scale][image_key].values),
                 subfiletype=1,
                 resolution=(
                     1e4 * 2 ** (i + 1) / pixelsize,

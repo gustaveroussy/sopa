@@ -4,10 +4,11 @@ from pathlib import Path
 from spatialdata import SpatialData
 from spatialdata.transformations import Identity, set_transformation
 
+from ...utils.utils import _get_key, _get_value
 from . import (
     write_cell_categories,
     write_gene_counts,
-    write_multiscale,
+    write_image,
     write_polygons,
     write_transcripts,
 )
@@ -29,10 +30,10 @@ def _reorder_instances(sdata: SpatialData, shapes_key: str):
 def write(
     path: str,
     sdata: SpatialData,
-    image_key: str,
-    shapes_key: str,
-    points_key: str,
-    gene_column: str,
+    image_key: str | None = None,
+    shapes_key: str | None = None,
+    points_key: str | None = None,
+    gene_column: str | None = None,
     layer: str | None = None,
     polygon_max_vertices: int = 13,
 ) -> None:
@@ -57,22 +58,36 @@ def write(
 
     path.mkdir(parents=True, exist_ok=True)
 
-    adata = _reorder_instances(sdata, shapes_key)
+    image_key = _get_key(sdata, "images", image_key)
+    assert image_key is not None, "An image is required to convert to the Xenium Explorer inputs"
 
-    EXPERIMENT = experiment_dict(image_key, shapes_key, adata.n_obs)
-    with open(path / FileNames.METADATA, "w") as f:
-        json.dump(EXPERIMENT, f, indent=4)
+    if sdata.table is not None:
+        adata = _reorder_instances(sdata, shapes_key)
 
-    write_gene_counts(path / FileNames.TABLE, adata, layer)
-    write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
+        write_gene_counts(path / FileNames.TABLE, adata, layer)
+        write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
 
     pixels_cs = "__pixels"
     set_transformation(sdata.images[image_key], Identity(), pixels_cs)
 
-    gdf = sdata.transform_element_to_coordinate_system(sdata.shapes[shapes_key], pixels_cs)
-    write_polygons(path / FileNames.SHAPES, gdf.geometry, polygon_max_vertices)
+    shapes_key = _get_key(sdata, "shapes", shapes_key)
+    gdf = sdata.shapes[shapes_key]
+    if gdf is not None:
+        gdf = sdata.transform_element_to_coordinate_system(gdf, pixels_cs)
+        write_polygons(path / FileNames.SHAPES, gdf.geometry, polygon_max_vertices)
 
-    df = sdata.transform_element_to_coordinate_system(sdata.points[points_key], pixels_cs)
-    write_transcripts(path / FileNames.POINTS, df, gene_column)
+    df = _get_value(sdata, "points", points_key)
+    if df is not None:
+        assert (
+            gene_column is not None
+        ), "The argument 'gene_column' has to be provided to save the transcripts"
+        df = sdata.transform_element_to_coordinate_system(df, pixels_cs)
+        write_transcripts(path / FileNames.POINTS, df, gene_column)
 
-    write_multiscale(path / FileNames.IMAGE, sdata.images[image_key])
+    write_image(path / FileNames.IMAGE, sdata.images[image_key], image_key)
+
+    n_obs = sdata.table.n_obs if sdata.table is not None else (len(gdf) if gdf is not None else 0)
+
+    EXPERIMENT = experiment_dict(image_key, shapes_key, n_obs)
+    with open(path / FileNames.METADATA, "w") as f:
+        json.dump(EXPERIMENT, f, indent=4)

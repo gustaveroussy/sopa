@@ -1,6 +1,7 @@
 from math import ceil
 
 import numpy as np
+from shapely.geometry import Polygon, box
 
 
 class Tiles1D:
@@ -17,9 +18,7 @@ class Tiles1D:
     def _count(self):
         if self.tile_width >= self.delta:
             return 1
-        return ceil(
-            (self.delta - self.tile_overlap) / (self.tile_width - self.tile_overlap)
-        )
+        return ceil((self.delta - self.tile_overlap) / (self.tile_width - self.tile_overlap))
 
     def update(self, tile_width):
         self.tile_width = tile_width
@@ -75,6 +74,9 @@ class Tiles2D:
         return ix, iy
 
     def __getitem__(self, i):
+        if isinstance(i, slice):
+            start, stop, step = i.indices(len(self))
+            return [self[i] for i in range(start, stop, step)]
         ix, iy = self.pair_indices(i)
         return [self.tile_x[ix], self.tile_y[iy]]
 
@@ -86,9 +88,14 @@ class Tiles2D:
             yield self[i]
 
     def coords_to_indices(self, coords: np.ndarray):
-        assert (
-            self.tile_overlap == 0
-        ), "coords to indices with tile overlap is ambiguous"
+        assert self.tile_overlap == 0, "coords to indices with tile overlap is ambiguous"
         min_coords = np.array([self.tile_x.xmin, self.tile_y.xmin])
 
         return np.floor((coords - min_coords) / self.tile_width).clip(0).astype(int)
+
+    def polygon(self, i) -> Polygon:
+        (x0, x1), (y0, y1) = self[i]
+        return box(x0, y0, x1, y1)
+
+    def polygons(self):
+        return [self.polygon(i) for i in range(len(self))]
