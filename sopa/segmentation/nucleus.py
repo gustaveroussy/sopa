@@ -2,15 +2,18 @@ import argparse
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import spatialdata
 import xarray as xr
+from anndata import AnnData
 from cellpose import models
 from shapely import affinity
-from spatialdata.models import ShapesModel
+from spatialdata.models import ShapesModel, TableModel
 from tqdm import tqdm
 
 from ..utils.tiling import Tiles2D
-from .utils import extract_polygons, solve_conflicts
+from ..utils.utils import _get_key, _get_spatial_image
+from .utils import average, extract_polygons, solve_conflicts
 
 
 def cellpose_patch(model_type: str = "cyto2"):
@@ -50,7 +53,7 @@ def run_patch(
 def main(args):
     sdata = spatialdata.read_zarr(args.path)
 
-    image = next(iter(sdata.images.values()))
+    image_key, image = _get_spatial_image(sdata)
 
     tiles = Tiles2D(0, len(image.coords["x"]), 0, len(image.coords["y"]), args.width)
 
@@ -61,9 +64,40 @@ def main(args):
     ]
     polygons = solve_conflicts(polygons)
 
-    geo_df = gpd.GeoDataFrame({"geometry": polygons})
+    geo_df = gpd.GeoDataFrame(
+        {
+            "geometry": polygons,
+            "x": [poly.centroid.x for poly in polygons],
+            "y": [poly.centroid.y for poly in polygons],
+        }
+    )
+    geo_df.index = image_key + geo_df.index.astype(str)
+
     geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
     sdata.add_shapes("polygons", geo_df)
+
+    mean_intensities = average(image, polygons)
+    adata = AnnData(
+        mean_intensities,
+        dtype=mean_intensities.dtype,
+        var=pd.DataFrame(index=image.c),
+        obs=pd.DataFrame(index=geo_df.index),
+    )
+
+    adata.obsm["spatial"] = geo_df[["x", "y"]].values
+    adata.obs["region"] = pd.Series("polygons", index=adata.obs_names, dtype="category")
+    adata.obs["slide"] = pd.Series(image_key, index=adata.obs_names, dtype="category")
+    adata.obs["dataset_id"] = pd.Series(image_key, index=adata.obs_names, dtype="category")
+    adata.obs["cell_id"] = geo_df.index
+
+    adata = TableModel.parse(
+        adata,
+        region_key="region",
+        region="polygons",
+        instance_key="cell_id",
+    )
+
+    sdata.table = adata
 
 
 if __name__ == "__main__":

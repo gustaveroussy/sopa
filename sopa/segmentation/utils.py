@@ -1,6 +1,12 @@
+from math import ceil, floor
+
 import numpy as np
+import rasterio.features
 import shapely
+import shapely.affinity
+import xarray as xr
 from shapely.geometry import MultiPolygon, Polygon
+from tqdm import tqdm
 
 
 def smooth(poly: Polygon, radius: int = 5) -> Polygon:
@@ -44,3 +50,20 @@ def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarr
             polygons.append(poly1.union(poly2))
 
     return np.array(polygons)[np.unique(resolved_indices)]
+
+
+def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
+    xmin, ymin, xmax, ymax = poly.bounds
+    xmin, ymin, xmax, ymax = floor(xmin), floor(ymin), ceil(xmax) + 1, ceil(ymax) + 1
+
+    sub_image = xarr.data[:, ymin:ymax, xmin:xmax].compute()
+
+    new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
+    mask = rasterio.features.rasterize([new_poly], out_shape=(ymax - ymin, xmax - xmin))
+
+    return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
+
+
+def average(xarr: xr.DataArray, polygons: list[Polygon]) -> np.ndarray:
+    print(f"Averaging intensities over {len(polygons)} polygons")
+    return np.stack([average_polygon(xarr, poly) for poly in tqdm(polygons)])
