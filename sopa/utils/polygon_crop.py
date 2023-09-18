@@ -74,21 +74,21 @@ def xarr_selector(
     sdata.add_shapes(ROI, geo_df)
 
 
-def cells_selector(metadata_path: str, output_path: str, x: str = "center_x", y: str = "center_y"):
-    df = pd.read_csv(metadata_path)
+# def cells_selector(metadata_path: str, output_path: str, x: str = "center_x", y: str = "center_y"):
+#     df = pd.read_csv(metadata_path)
 
-    _, ax = plt.subplots()
-    ax.scatter(
-        df[x],
-        df[y],
-        marker=".",
-        rasterized=True,
-        s=0.05,
-    )
+#     _, ax = plt.subplots()
+#     ax.scatter(
+#         df[x],
+#         df[y],
+#         marker=".",
+#         rasterized=True,
+#         s=0.05,
+#     )
 
-    selector = _Selector(ax)
+#     selector = _Selector(ax)
 
-    np.savetxt(output_path, selector.vertices)
+#     np.savetxt(output_path, selector.vertices)
 
 
 @click.command()
