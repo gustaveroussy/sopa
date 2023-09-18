@@ -52,14 +52,18 @@ def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarr
     return np.array(polygons)[np.unique(resolved_indices)]
 
 
+def to_chunk_mask(poly: Polygon, xmin, ymin, xmax, ymax) -> np.ndarray:
+    new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
+    return rasterio.features.rasterize([new_poly], out_shape=(ymax - ymin, xmax - xmin))
+
+
 def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
     xmin, ymin, xmax, ymax = poly.bounds
     xmin, ymin, xmax, ymax = floor(xmin), floor(ymin), ceil(xmax) + 1, ceil(ymax) + 1
 
     sub_image = xarr.data[:, ymin:ymax, xmin:xmax].compute()
 
-    new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
-    mask = rasterio.features.rasterize([new_poly], out_shape=(ymax - ymin, xmax - xmin))
+    mask = to_chunk_mask(poly, xmin, ymin, xmax, ymax)
 
     return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
 

@@ -8,12 +8,14 @@ import xarray as xr
 from anndata import AnnData
 from cellpose import models
 from shapely import affinity
+from shapely.geometry import Polygon, box
 from spatialdata.models import ShapesModel, TableModel
 from tqdm import tqdm
 
+from .._constants import ROI
 from ..utils.tiling import Tiles2D
 from ..utils.utils import _get_key, _get_spatial_image
-from .utils import average, extract_polygons, solve_conflicts
+from .utils import average, extract_polygons, solve_conflicts, to_chunk_mask
 
 
 def cellpose_patch(model_type: str = "cyto2"):
@@ -34,6 +36,7 @@ def cellpose_patch(model_type: str = "cyto2"):
 
 def run_patch(
     xarr: xr.DataArray,
+    poly_ROI: Polygon | None,
     x_bounds: list[int],
     y_bounds: list[int],
     c: str,
@@ -45,6 +48,17 @@ def run_patch(
         y=slice(*y_bounds),
     ).values
 
+    if poly_ROI is not None:
+        patch_box = box(x_bounds[0], y_bounds[0], x_bounds[1], y_bounds[1])
+
+        if not poly_ROI.intersects(patch_box):
+            return []
+
+        if not poly_ROI.contains(patch_box):
+            patch = patch * to_chunk_mask(
+                poly_ROI, x_bounds[0], y_bounds[0], x_bounds[1], y_bounds[1]
+            )
+
     polygons = extract_polygons(method(patch))
 
     return [affinity.translate(p, x_bounds[0], y_bounds[0]) for p in polygons]
@@ -55,12 +69,14 @@ def main(args):
 
     image_key, image = _get_spatial_image(sdata)
 
+    poly_ROI = sdata.shapes.get(ROI).geometry[0]
+
     tiles = Tiles2D(0, len(image.coords["x"]), 0, len(image.coords["y"]), args.width)
 
     polygons = [
         poly
         for x_bounds, y_bounds in tqdm(tiles)
-        for poly in run_patch(image, x_bounds, y_bounds, args.dapi, cellpose_patch())
+        for poly in run_patch(image, poly_ROI, x_bounds, y_bounds, args.dapi, cellpose_patch())
     ]
     polygons = solve_conflicts(polygons)
 
