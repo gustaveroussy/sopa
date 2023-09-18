@@ -1,10 +1,11 @@
-import argparse
 from math import ceil
 from pathlib import Path
 
+import dask.dataframe as dd
 import numpy as np
-import pandas as pd
 import zarr
+
+from ._constants import ExplorerConstants
 
 
 def subsample_indices(n_samples, factor: int = 4):
@@ -12,24 +13,24 @@ def subsample_indices(n_samples, factor: int = 4):
     return np.random.choice(n_samples, n_sub, replace=False)
 
 
-MAX_LEVELS = 15
-GRID_SIZE = 250
-QUALITY_SCORE = 40
-
-
 def write_transcripts(
-    path: Path, df: pd.DataFrame, x: str = "x", y: str = "y", gene: str = "gene"
+    path: Path,
+    df: dd.DataFrame,
+    gene: str = "gene",
+    max_levels: int = 15,
 ):
+    # TODO: make everything using dask instead of pandas
+    print(f"Writing {len(df)} transcripts")
+    df = df.compute()
+
     num_transcripts = len(df)
     df[gene] = df[gene].astype("category")
 
-    location = df[[x, y]]
+    location = df[["x", "y"]]
+    location /= ExplorerConstants.MICRONS_TO_PIXELS
     location = np.concatenate([location, np.zeros((num_transcripts, 1))], axis=1)
 
     xmax, ymax = location[:, :2].max(axis=0)
-
-    assert location[:, 0].min() >= 0
-    assert location[:, 1].min() >= 0
 
     gene_names = list(df[gene].cat.categories)
     num_genes = len(gene_names)
@@ -37,27 +38,19 @@ def write_transcripts(
     codeword_gene_mapping = list(range(num_genes))
 
     valid = np.ones((num_transcripts, 1))
-    uuid = np.stack(
-        [np.arange(num_transcripts), np.full(num_transcripts, 65535)], axis=1
-    )
-    transcript_id = np.stack(
-        [np.arange(num_transcripts), np.full(num_transcripts, 65535)], axis=1
-    )
+    uuid = np.stack([np.arange(num_transcripts), np.full(num_transcripts, 65535)], axis=1)
+    transcript_id = np.stack([np.arange(num_transcripts), np.full(num_transcripts, 65535)], axis=1)
     gene_identity = df[gene].cat.codes.values[:, None]
-    codeword_identity = np.stack(
-        [gene_identity[:, 0], np.full(num_transcripts, 65535)], axis=1
-    )
+    codeword_identity = np.stack([gene_identity[:, 0], np.full(num_transcripts, 65535)], axis=1)
     status = np.zeros((num_transcripts, 1))
-    quality_score = np.full((num_transcripts, 1), QUALITY_SCORE)
+    quality_score = np.full((num_transcripts, 1), ExplorerConstants.QUALITY_SCORE)
 
     ATTRS = {
         "codeword_count": num_genes,
         "codeword_gene_mapping": codeword_gene_mapping,
         "codeword_gene_names": gene_names,
         "gene_names": gene_names,
-        "gene_index_map": {
-            name: index for name, index in zip(gene_names, codeword_gene_mapping)
-        },
+        "gene_index_map": {name: index for name, index in zip(gene_names, codeword_gene_mapping)},
         "number_genes": num_genes,
         "spatial_units": "micron",
         "coordinate_space": "refined-final_global_micron",
@@ -72,14 +65,11 @@ def write_transcripts(
     GRIDS_ATTRS = {
         "grid_key_names": ["grid_x_loc", "grid_y_loc"],
         "grid_zip": False,
-        "grid_size": [GRID_SIZE],
+        "grid_size": [ExplorerConstants.GRID_SIZE],
         "grid_array_shapes": [],
         "grid_number_objects": [],
         "grid_keys": [],
     }
-
-    if path.exists():
-        path.unlink()
 
     with zarr.ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)
@@ -87,12 +77,11 @@ def write_transcripts(
 
         grids = g.create_group("grids")
 
-        for level in range(MAX_LEVELS):
+        for level in range(max_levels):
+            print(f"   Level {level}: {len(location)} transcripts")
             level_group = grids.create_group(level)
 
-            tile_size = GRID_SIZE * 2**level
-
-            print(f"Level {level}: {len(location)} transcripts")
+            tile_size = ExplorerConstants.GRID_SIZE * 2**level
 
             indices = np.floor(location[:, :2] / tile_size).clip(0).astype(int)
             tiles_str_indices = np.array([f"{tx},{ty}" for (tx, ty) in indices])
@@ -184,24 +173,3 @@ def write_transcripts(
             transcript_id = transcript_id[sub_indices]
 
         grids.attrs.put(GRIDS_ATTRS)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        required=True,
-        help="Path to the zarr.zip file to be created",
-    )
-    parser.add_argument(
-        "-d",
-        "--data",
-        type=str,
-        required=True,
-        help="Path to the pandas transcript file",
-    )
-
-    args = parser.parse_args()
-    write_transcripts(args.path, pd.read_csv(args.data))

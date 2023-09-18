@@ -1,55 +1,41 @@
 from math import ceil
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 import zarr
 from shapely.geometry import Polygon
 
-from ...segmentation.utils import pad
-
-CELLS_SUMMARY_ATTRS = {
-    "column_descriptions": [
-        "Cell centroid in X",
-        "Cell centroid in Y",
-        "Cell area",
-        "Nucleus centroid in X",
-        "Nucleus centroid in Y",
-        "Nucleus area",
-        "z_level",
-    ],
-    "column_names": [
-        "cell_centroid_x",
-        "cell_centroid_y",
-        "cell_area",
-        "nucleus_centroid_x",
-        "nucleus_centroid_y",
-        "nucleus_area",
-        "z_level",
-    ],
-}
-
-GROUP_ATTRS = {
-    "major_version": 5,
-    "minor_version": 0,
-    "name": "CellSegmentationDataset",
-    "polygon_set_descriptions": [
-        "NA",
-        "NA",
-    ],
-    "polygon_set_display_names": ["Nucleus boundaries", "Cell boundaries"],
-    "polygon_set_names": ["nucleus", "cell"],
-    "spatial_units": "microns",
-}
+from ._constants import ExplorerConstants, cell_summary_attrs, group_attrs
 
 
-def write_polygons(path: Path, polygons: list[Polygon]) -> None:
-    coordinates = np.stack([pad(p, 3, 13) for p in polygons])
-    coordinates /= 4.705882
+def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np.ndarray:
+    n_vertices = len(polygon.exterior.coords)
+    assert n_vertices >= 3
+
+    coords = polygon.exterior.coords._coords
+
+    if n_vertices == max_vertices:
+        return coords.flatten()
+
+    if n_vertices < max_vertices:
+        return np.pad(coords, ((0, max_vertices - n_vertices), (0, 0)), mode="edge").flatten()
+
+    # TODO: improve it: how to choose the right tolerance?
+    polygon = polygon.simplify(tolerance=tolerance)
+    return pad_polygon(polygon, max_vertices, tolerance + 1)
+
+
+def write_polygons(path: Path, polygons: Iterable[Polygon], max_vertices: int) -> None:
+    print(f"Writing {len(polygons)} cell polygons")
+    coordinates = np.stack([pad_polygon(p, max_vertices) for p in polygons])
+    coordinates /= ExplorerConstants.MICRONS_TO_PIXELS
 
     num_cells = len(coordinates)
     cells_fourth = ceil(num_cells / 4)
     cells_half = ceil(num_cells / 2)
 
+    GROUP_ATTRS = group_attrs()
     GROUP_ATTRS["number_cells"] = num_cells
 
     polygon_vertices = np.stack([coordinates, coordinates])
@@ -79,7 +65,7 @@ def write_polygons(path: Path, polygons: list[Polygon]) -> None:
             dtype="float64",
             chunks=(num_cells, 1),
         )
-        g["cell_summary"].attrs.put(CELLS_SUMMARY_ATTRS)
+        g["cell_summary"].attrs.put(cell_summary_attrs())
 
         g.array(
             "polygon_num_vertices",
