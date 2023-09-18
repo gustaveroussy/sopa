@@ -1,4 +1,5 @@
 import numpy as np
+import shapely
 from shapely.geometry import MultiPolygon, Polygon
 
 
@@ -7,21 +8,39 @@ def smooth(poly: Polygon, radius: int = 5) -> Polygon:
     return poly if isinstance(smooth, MultiPolygon) else smooth
 
 
-def pad(
-    polygon: Polygon, min_vertices: int, max_vertices: int, tolerance: float = 1
-) -> np.ndarray:
-    n_vertices = len(polygon.exterior.coords)
-    assert n_vertices >= min_vertices
+def extract_polygons(mask: np.ndarray) -> list[Polygon]:
+    import cv2
 
-    coords = polygon.exterior.coords._coords
+    polys = []
 
-    if n_vertices == max_vertices:
-        return coords.flatten()
+    for cell_id in range(1, mask.max() + 1):
+        mask_id = (mask == cell_id).astype("uint8")
+        contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-    if n_vertices < max_vertices:
-        return np.pad(
-            coords, ((0, max_vertices - n_vertices), (0, 0)), mode="edge"
-        ).flatten()
+        polys_ = [smooth(Polygon(c[:, 0, :])) for c in contours if c.shape[0] >= 4]
+        polys_ = [p for p in polys_ if not p.is_empty]
 
-    polygon = polygon.simplify(tolerance=tolerance)
-    return pad(polygon, min_vertices, max_vertices, tolerance + 1)
+        assert len(polys_) <= 1
+        polys.extend(polys_)
+
+    return polys
+
+
+def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarray[Polygon]:
+    n_polygons = len(polygons)
+    resolved_indices = np.arange(n_polygons)
+
+    tree = shapely.STRtree(polygons)
+    conflicts = tree.query(polygons, predicate="intersects")
+    conflicts = conflicts[:, conflicts[0] != conflicts[1]].T
+
+    for i1, i2 in conflicts:
+        resolved_i1, resolved_i2 = resolved_indices[i1], resolved_indices[i2]
+        poly1, poly2 = polygons[resolved_i1], polygons[resolved_i2]
+
+        intersection = poly1.intersection(poly2).area
+        if intersection / min(poly1.area, poly2.area) >= threshold:
+            resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(polygons)
+            polygons.append(poly1.union(poly2))
+
+    return np.array(polygons)[np.unique(resolved_indices)]
