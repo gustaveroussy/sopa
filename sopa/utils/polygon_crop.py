@@ -1,10 +1,17 @@
-from pathlib import Path
-
 import click
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import spatialdata
 from matplotlib.widgets import PolygonSelector
+from shapely.geometry import Polygon
+from spatialdata import SpatialData
+from spatialdata.models import ShapesModel
+
+from .._constants import ROI
+from .image import resize
+from .utils import _get_spatial_image
 
 HELPER = """Enclose cells within a polygon. Helper:
     - Click on the plot to add a polygon vertex
@@ -31,23 +38,23 @@ class _Selector:
 
 
 def xarr_selector(
-    image_path: str,
-    output_path: str,
+    sdata: SpatialData,
     channels: list[str],
     scale_factor: float = 10,
     margin_ratio: float = 0.1,
 ):
-    import xarray as xr
-
-    from .image import resize
-
-    image = xr.open_zarr(image_path)["image"].transpose("y", "x", "c")
+    _, spatial_image = _get_spatial_image(sdata)
+    image = spatial_image.transpose("y", "x", "c")
 
     if len(channels):
         assert (
             len(channels) in VALID_N_CHANNELS
         ), f"Number of channels provided must be in: {', '.join(VALID_N_CHANNELS)}"
         image = image.sel(c=channels)
+    else:
+        assert (
+            len(image.coords["c"]) in VALID_N_CHANNELS
+        ), f"Choose one or three channels among {image.c.values} by using the -c argument"
 
     image = resize(image, scale_factor).compute()
 
@@ -60,12 +67,14 @@ def xarr_selector(
 
     selector = _Selector(ax)
 
-    np.savetxt(output_path, selector.vertices * scale_factor)
+    polygon = Polygon(selector.vertices * scale_factor)
+
+    geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
+    geo_df = ShapesModel.parse(geo_df, transformations=spatial_image.transform)
+    sdata.add_shapes(ROI, geo_df)
 
 
-def cells_selector(
-    metadata_path: str, output_path: str, x: str = "center_x", y: str = "center_y"
-):
+def cells_selector(metadata_path: str, output_path: str, x: str = "center_x", y: str = "center_y"):
     df = pd.read_csv(metadata_path)
 
     _, ax = plt.subplots()
@@ -87,10 +96,7 @@ def cells_selector(
     "-i",
     "--input_path",
     type=str,
-    help="Path to input file, either a cell_metadata.csv file, or a xarray .zarr file",
-)
-@click.option(
-    "-o", "--output_path", type=str, help="Path where the polygon will be saved"
+    help="Path to input sdata.zarr directory",
 )
 @click.option(
     "-c",
@@ -100,19 +106,10 @@ def cells_selector(
     default=None,
     help="List of channels name to be displayed",
 )
-def main(input_path, output_path, channels):
-    VALID_SUFFIX = [".zarr", ".csv"]
+def main(input_path, channels):
+    sdata = spatialdata.read_zarr(input_path)
 
-    input_path = Path(input_path)
-
-    assert (
-        input_path.suffix in VALID_SUFFIX
-    ), f"Valid input suffix are: {', '.join(VALID_SUFFIX)}"
-
-    if input_path.suffix == ".zarr":
-        xarr_selector(input_path, output_path, list(channels))
-    if input_path.suffix == ".csv":
-        cells_selector(input_path, output_path)
+    xarr_selector(sdata, list(channels))
 
 
 if __name__ == "__main__":

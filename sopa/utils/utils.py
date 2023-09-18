@@ -3,7 +3,7 @@ from multiscale_spatial_image import MultiscaleSpatialImage
 from spatialdata import SpatialData
 
 
-def _get_key(sdata: SpatialData, attr: str, key: str | None):
+def _get_key(sdata: SpatialData, attr: str, key: str | None = None):
     spatial_elements = getattr(sdata, attr)
 
     if key is not None:
@@ -19,7 +19,7 @@ def _get_key(sdata: SpatialData, attr: str, key: str | None):
     return next(iter(spatial_elements.keys()))
 
 
-def _get_value(sdata: SpatialData, attr: str, key: str | None):
+def _get_value(sdata: SpatialData, attr: str, key: str | None = None):
     spatial_elements = getattr(sdata, attr)
 
     if key is not None:
