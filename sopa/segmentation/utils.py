@@ -9,12 +9,14 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm import tqdm
 
 
-def smooth(poly: Polygon, radius: int = 5) -> Polygon:
-    smooth = poly.buffer(-radius).buffer(radius * 2).buffer(-radius)
+def smooth(poly: Polygon, expand_radius: int, smooth_radius: int = 5) -> Polygon:
+    smooth = (
+        poly.buffer(-smooth_radius).buffer(smooth_radius * 2).buffer(-smooth_radius + expand_radius)
+    )
     return poly if isinstance(smooth, MultiPolygon) else smooth
 
 
-def extract_polygons(mask: np.ndarray) -> list[Polygon]:
+def extract_polygons(mask: np.ndarray, expand_radius: int = 0) -> list[Polygon]:
     import cv2
 
     polys = []
@@ -23,7 +25,7 @@ def extract_polygons(mask: np.ndarray) -> list[Polygon]:
         mask_id = (mask == cell_id).astype("uint8")
         contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        polys_ = [smooth(Polygon(c[:, 0, :])) for c in contours if c.shape[0] >= 4]
+        polys_ = [smooth(Polygon(c[:, 0, :], expand_radius)) for c in contours if c.shape[0] >= 4]
         polys_ = [p for p in polys_ if not p.is_empty]
 
         assert len(polys_) <= 1

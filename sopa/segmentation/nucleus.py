@@ -41,6 +41,7 @@ def run_patch(
     y_bounds: list[int],
     c: str,
     method: callable,
+    expand_radius: int = 0,
 ) -> np.ndarray:
     patch = xarr.sel(
         c=c,
@@ -59,7 +60,7 @@ def run_patch(
                 poly_ROI, x_bounds[0], y_bounds[0], x_bounds[1], y_bounds[1]
             )
 
-    polygons = extract_polygons(method(patch))
+    polygons = extract_polygons(method(patch), expand_radius)
 
     return [affinity.translate(p, x_bounds[0], y_bounds[0]) for p in polygons]
 
@@ -76,7 +77,9 @@ def main(args):
     polygons = [
         poly
         for x_bounds, y_bounds in tqdm(tiles)
-        for poly in run_patch(image, poly_ROI, x_bounds, y_bounds, args.dapi, cellpose_patch())
+        for poly in run_patch(
+            image, poly_ROI, x_bounds, y_bounds, args.dapi, cellpose_patch(), args.expand_radius
+        )
     ]
     polygons = solve_conflicts(polygons)
 
@@ -138,6 +141,13 @@ if __name__ == "__main__":
         type=int,
         default=5000,
         help="Tile width",
+    )
+    parser.add_argument(
+        "-e",
+        "--expand_radius",
+        type=int,
+        default=0,
+        help="Expand cell polygons by the provided radius",
     )
 
     main(parser.parse_args())
