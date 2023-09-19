@@ -70,7 +70,7 @@ def main(args):
 
     image_key, image = _get_spatial_image(sdata)
 
-    poly_ROI = sdata.shapes.get(ROI).geometry[0]
+    poly_ROI = sdata.shapes.get(ROI.KEY).geometry[0]
 
     tiles = Tiles2D(0, len(image.coords["x"]), 0, len(image.coords["y"]), args.width)
 
