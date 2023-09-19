@@ -44,16 +44,13 @@ def read_qptiff(
 
 def main(args):
     path = Path(args.path)
-    output = path.with_suffix(".zarr")
-
-    assert not output.exists(), f"Output path {output} already exists"
 
     config = toml.load(args.config)
 
     sdata = read_qptiff(path, channels_renaming=config["reader"]["channels_renaming"])
 
     print(sdata)
-    sdata.write(output)
+    sdata.write(args.sdata_path)
 
 
 if __name__ == "__main__":
@@ -64,6 +61,13 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="Path to the qptiff file",
+    )
+    parser.add_argument(
+        "-s",
+        "--sdata_path",
+        type=str,
+        required=True,
+        help="Path to the zarr sdata",
     )
     parser.add_argument(
         "-c",
