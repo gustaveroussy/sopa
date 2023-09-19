@@ -17,6 +17,8 @@ def smooth(poly: Polygon, expand_radius: int, smooth_radius: int = 5) -> Polygon
 
 
 def extract_polygons(mask: np.ndarray, expand_radius: int = 0) -> list[Polygon]:
+    # Copied from https://github.com/Vizgen/vizgen-postprocessing
+    # TODO: do not rely on cv2?
     import cv2
 
     polys = []
