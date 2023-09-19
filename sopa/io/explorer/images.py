@@ -36,7 +36,6 @@ def write_image(
 
     # TODO : make it memory efficient
     with tf.TiffWriter(path, bigtiff=True) as tif:
-        print(metadata)
         tif.write(
             _astype_uint8(image[scale_names[0]][image_key].values),
             subifds=len(scale_names) - 1,

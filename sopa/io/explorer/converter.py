@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import click
+import spatialdata
 from spatialdata import SpatialData
 from spatialdata.transformations import Identity, set_transformation
 
@@ -91,3 +93,35 @@ def write(
     EXPERIMENT = experiment_dict(image_key, shapes_key, n_obs)
     with open(path / FileNames.METADATA, "w") as f:
         json.dump(EXPERIMENT, f, indent=4)
+
+
+@click.command()
+@click.option(
+    "-s",
+    "--sdata_path",
+    type=str,
+    required=True,
+    help="Path to input sdata.zarr directory",
+)
+@click.option(
+    "-o",
+    "--output_path",
+    type=str,
+    required=True,
+    help="Path to output explorer directory",
+)
+@click.option(
+    "-sk",
+    "--shapes_key",
+    type=str,
+    default=None,
+    help="Key of sdata.shapes to be considered",
+)
+def main(sdata_path: str, output_path: str, shapes_key: str | None):
+    sdata = spatialdata.read_zarr(sdata_path)
+
+    write(output_path, sdata, shapes_key=shapes_key)
+
+
+if __name__ == "__main__":
+    main()

@@ -15,9 +15,10 @@ def main(args):
     sdata = spatialdata.read_zarr(args.sdata_path)
 
     method = cellpose_patch(args.diameter, args.channels)
-    segmentation = StainingSegmentation(sdata, args.channels, method, args.expand_radius)
-
-    polygons = segmentation.run_patches(args.tile_width, args.tile_overlap)
+    segmentation = StainingSegmentation(
+        sdata, method, args.channels, args.tile_width, args.tile_overlap, args.expand_radius
+    )
+    polygons = segmentation.run_patches()
 
     geo_df = gpd.GeoDataFrame(
         {

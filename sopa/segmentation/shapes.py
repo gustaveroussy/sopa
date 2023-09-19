@@ -27,7 +27,7 @@ def extract_polygons(mask: np.ndarray, expand_radius: int = 0) -> list[Polygon]:
         mask_id = (mask == cell_id).astype("uint8")
         contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        polys_ = [smooth(Polygon(c[:, 0, :], expand_radius)) for c in contours if c.shape[0] >= 4]
+        polys_ = [smooth(Polygon(c[:, 0, :]), expand_radius) for c in contours if c.shape[0] >= 4]
         polys_ = [p for p in polys_ if not p.is_empty]
 
         assert len(polys_) <= 1
@@ -66,9 +66,9 @@ def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
     xmin, ymin, xmax, ymax = poly.bounds
     xmin, ymin, xmax, ymax = floor(xmin), floor(ymin), ceil(xmax) + 1, ceil(ymax) + 1
 
-    sub_image = xarr.data[:, ymin:ymax, xmin:xmax].compute()
+    sub_image = xarr.data[:, ymin:ymax, xmin:xmax].compute()  # TODO: use .sel?
 
-    mask = to_chunk_mask(poly, xmin, ymin, xmax, ymax)
+    mask = to_chunk_mask(poly, [xmin, ymin, xmax, ymax])
 
     return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
 
