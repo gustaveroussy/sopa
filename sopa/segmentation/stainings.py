@@ -6,7 +6,6 @@ import pandas as pd
 import spatialdata
 import xarray as xr
 from anndata import AnnData
-from cellpose import models
 from shapely import affinity
 from shapely.geometry import Polygon, box
 from spatialdata.models import ShapesModel, TableModel
@@ -14,24 +13,11 @@ from tqdm import tqdm
 
 from .._constants import ROI
 from ..utils.tiling import Tiles2D
-from ..utils.utils import _get_key, _get_spatial_image
+from ..utils.utils import _get_spatial_image
+from .cellpose import cellpose_patch
 from .utils import average, extract_polygons, solve_conflicts, to_chunk_mask
 
-
-def cellpose_patch(model_type: str = "cyto2"):
-    model = models.Cellpose(model_type=model_type)
-
-    def _(patch: np.ndarray):
-        masks, *_ = model.eval(
-            [patch],
-            diameter=15,
-            channels=[[0, 0]],
-            flow_threshold=2,
-            cellprob_threshold=-6,
-        )
-        return masks[0]
-
-    return _
+N_POSSIBLE_CHANNELS = [1, 2]
 
 
 def run_patch(
@@ -39,12 +25,12 @@ def run_patch(
     poly_ROI: Polygon | None,
     x_bounds: list[int],
     y_bounds: list[int],
-    c: str,
+    channels: list[int],
     method: callable,
     expand_radius: int = 0,
 ) -> np.ndarray:
     patch = xarr.sel(
-        c=c,
+        c=channels,
         x=slice(*x_bounds),
         y=slice(*y_bounds),
     ).values
@@ -74,11 +60,22 @@ def main(args):
 
     tiles = Tiles2D(0, len(image.coords["x"]), 0, len(image.coords["y"]), args.width)
 
+    assert (
+        len(args.channels) in N_POSSIBLE_CHANNELS
+    ), f"Provide one or two channel names. Found {len(args.channels)}"
+    channels = [0, 0] if len(args.channels) == 1 else [1, 2]
+
     polygons = [
         poly
         for x_bounds, y_bounds in tqdm(tiles)
         for poly in run_patch(
-            image, poly_ROI, x_bounds, y_bounds, args.dapi, cellpose_patch(), args.expand_radius
+            image,
+            poly_ROI,
+            x_bounds,
+            y_bounds,
+            args.channels,
+            cellpose_patch(args.diameter, channels),
+            args.expand_radius,
         )
     ]
     polygons = solve_conflicts(polygons)
@@ -129,11 +126,19 @@ if __name__ == "__main__":
         help="Path to the zarr spatialdata object",
     )
     parser.add_argument(
-        "-d",
-        "--dapi",
+        "-c",
+        "--channels",
         type=str,
         required=True,
-        help="DAPI channel name",
+        nargs="+",
+        help="One or two channel names to be used for segmentation. If two channels, provide first the cytoplasm channel, and then the nucleus channel",
+    )
+    parser.add_argument(
+        "-d",
+        "--diameter",
+        type=float,
+        required=True,
+        help="Expected cell diameter",
     )
     parser.add_argument(
         "-w",
