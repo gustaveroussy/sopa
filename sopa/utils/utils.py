@@ -35,7 +35,7 @@ def _get_value(sdata: SpatialData, attr: str, key: str | None = None):
     return next(iter(spatial_elements.values()))
 
 
-def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> xr.DataArray:
+def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str, xr.DataArray]:
     if key is None:
         key = _get_key(sdata, "images")
 

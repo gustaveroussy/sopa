@@ -1,6 +1,7 @@
 from math import ceil
 
 import numpy as np
+import xarray as xr
 from shapely.geometry import Polygon, box
 
 
@@ -37,11 +38,11 @@ class Tiles1D:
 class Tiles2D:
     def __init__(
         self,
-        xmin: float | int,
-        xmax: float | int,
-        ymin: float | int,
-        ymax: float | int,
         tile_width: float | int,
+        xmax: float | int,
+        ymax: float | int,
+        ymin: float | int = 0,
+        xmin: float | int = 0,
         tile_overlap: float | int = 50,
         tight: bool = False,
         int_coords: bool = False,
@@ -57,6 +58,12 @@ class Tiles2D:
         assert self.tile_width > self.tile_overlap
 
         self.compute()
+
+    @classmethod
+    def from_image(cls, image: xr.DataArray, tile_width: int, tile_overlap: int):
+        xmax = len(image.coords["x"])
+        ymax = len(image.coords["y"])
+        return Tiles2D(tile_width, xmax, ymax, tile_overlap=tile_overlap, int_coords=True)
 
     def compute(self):
         width_x = self.tile_x.tight_width()
@@ -78,7 +85,11 @@ class Tiles2D:
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
         ix, iy = self.pair_indices(i)
-        return [self.tile_x[ix], self.tile_y[iy]]
+
+        xmin, xmax = self.tile_x[ix]
+        ymin, ymax = self.tile_y[iy]
+
+        return [xmin, ymin, xmax, ymax]
 
     def __len__(self):
         return self.count
@@ -93,9 +104,8 @@ class Tiles2D:
 
         return np.floor((coords - min_coords) / self.tile_width).clip(0).astype(int)
 
-    def polygon(self, i) -> Polygon:
-        (x0, x1), (y0, y1) = self[i]
-        return box(x0, y0, x1, y1)
+    def polygon(self, bounds: list[int]) -> Polygon:
+        return box(*bounds)
 
-    def polygons(self):
-        return [self.polygon(i) for i in range(len(self))]
+    def polygons(self) -> list[Polygon]:
+        return [self.polygon(self[i]) for i in range(len(self))]

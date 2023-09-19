@@ -56,7 +56,8 @@ def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarr
     return np.array(polygons)[np.unique(resolved_indices)]
 
 
-def to_chunk_mask(poly: Polygon, xmin, ymin, xmax, ymax) -> np.ndarray:
+def to_chunk_mask(poly: Polygon, bounds: list[int]) -> np.ndarray:
+    xmin, ymin, xmax, ymax = bounds
     new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
     return rasterio.features.rasterize([new_poly], out_shape=(ymax - ymin, xmax - xmin))
 
