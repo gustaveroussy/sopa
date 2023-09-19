@@ -37,7 +37,7 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
             len(image.coords["c"]) in VALID_N_CHANNELS
         ), f"Choose one or three channels among {image.c.values} by using the -c argument"
 
-    return image_key, resize(image, scale_factor).compute(), spatial_image.transform
+    return image_key, resize(image, scale_factor).compute()
 
 
 class _Selector:
@@ -67,17 +67,6 @@ def _draw_polygon(image: np.ndarray, scale_factor: float, margin_ratio: float):
     return Polygon(selector.vertices * scale_factor)
 
 
-def _save_intermediate(
-    intermediate_image: str, image_key: str, image: np.ndarray, scale_factor: float
-):
-    print(f"Resized image will be saved to {intermediate_image}")
-
-    with zarr.ZipStore(intermediate_image, mode="w") as store:
-        g = zarr.group(store=store)
-        g.attrs.put({ROI.SCALE_FACTOR: scale_factor, ROI.IMAGE_KEY: image_key})
-        g.array(ROI.IMAGE_ARRAY_KEY, image, dtype=image.dtype, chunks=image.shape)
-
-
 def intermediate_selection(
     intermediate_image: str, intermediate_polygon: str, margin_ratio: float = 0.1
 ):
@@ -104,19 +93,26 @@ def polygon_selection(
     margin_ratio: float = 0.1,
 ):
     if intermediate_polygon is None:
-        image_key, image, transformations = _prepare(sdata, channels, scale_factor)
+        image_key, image = _prepare(sdata, channels, scale_factor)
 
-        if intermediate_polygon is not None:
-            return _save_intermediate(intermediate_image, image_key, image, scale_factor)
+        if intermediate_image is not None:
+            print(f"Resized image will be saved to {intermediate_image}")
+            with zarr.ZipStore(intermediate_image, mode="w") as store:
+                g = zarr.group(store=store)
+                g.attrs.put({ROI.SCALE_FACTOR: scale_factor, ROI.IMAGE_KEY: image_key})
+                g.array(ROI.IMAGE_ARRAY_KEY, image, dtype=image.dtype, chunks=image.shape)
+            return
 
         polygon = _draw_polygon(image, scale_factor, margin_ratio)
     else:
+        print(f"Reading polygon at path {intermediate_polygon}")
         z = zarr.open(intermediate_polygon, mode="r")
-        transformations = _get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY]).transform
         polygon = Polygon(z[ROI.POLYGON_ARRAY_KEY][:])
 
+        _, image = _get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
+
     geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
-    geo_df = ShapesModel.parse(geo_df, transformations=transformations)
+    geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
     sdata.add_shapes(ROI.KEY, geo_df)
 
 
@@ -133,14 +129,14 @@ def polygon_selection(
     "--intermediate_image",
     type=str,
     default=None,
-    help="Path to the intermediate resized image",
+    help="Path to the intermediate resized image (.zarr.zip format)",
 )
 @click.option(
     "-ip",
     "--intermediate_polygon",
     type=str,
     default=None,
-    help="Path to the intermediate poluygon selection",
+    help="Path to the intermediate polygon selection (.zarr.zip format)",
 )
 @click.option(
     "-c",
@@ -173,6 +169,10 @@ def main(
     margin_ratio: float,
 ):
     if sdata_path is None:
+        assert (
+            intermediate_image is not None and intermediate_polygon is not None
+        ), "When no --sdata_path is provided, both --intermediate_image and --intermediate_polygon have to be provided"
+
         intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
         return
 
