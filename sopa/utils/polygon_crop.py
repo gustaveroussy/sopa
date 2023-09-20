@@ -1,8 +1,6 @@
-import click
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
-import spatialdata
 import zarr
 from matplotlib.widgets import PolygonSelector
 from shapely.geometry import Polygon
@@ -114,32 +112,3 @@ def polygon_selection(
     geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
     geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
     sdata.add_shapes(ROI.KEY, geo_df)
-
-
-def main(
-    sdata_path: str = None,
-    intermediate_image: str = None,
-    intermediate_polygon: str = None,
-    channels: list[str] = None,
-    scale_factor: float = 10,
-    margin_ratio: float = 0.1,
-):
-    if sdata_path is None:
-        assert (
-            intermediate_image is not None and intermediate_polygon is not None
-        ), "When no --sdata_path is provided, both --intermediate_image and --intermediate_polygon have to be provided"
-
-        intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
-        return
-
-    sdata = spatialdata.read_zarr(sdata_path)
-
-    polygon_selection(
-        sdata, intermediate_image, intermediate_polygon, list(channels), scale_factor, margin_ratio
-    )
-
-
-if __name__ == "__main__":
-    import typer
-
-    typer.run(main)

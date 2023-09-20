@@ -1,0 +1,13 @@
+
+print(config)
+
+rule all:
+    input:
+        "out.txt"
+
+rule a:
+    output: "out.txt"
+    shell:
+        f"""
+        touch out.txt
+        """

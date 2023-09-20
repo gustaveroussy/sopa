@@ -1,3 +1,14 @@
+import utils
+
+### Required command line arguments
+
+# region: relative path to the region folder 
+# config: name of the config file to be used
+relative_region = config["region"]
+config_name = config["config"]
+
+run = utils.WorkflowPaths(relative_region, config_name)
+
 file = "..."
 sdata_path = f"{file}.zarr"
 config = "..."
