@@ -28,7 +28,7 @@ def read_qptiff(
         names = [get_channel_name(page.description) for page in page_series]
 
         if channels_renaming is not None:
-            names = [channels_renaming[name] for name in names]
+            names = [channels_renaming.get(name, name) for name in names]
 
         image_name = Path(path).absolute().stem
         image = Image2DModel.parse(

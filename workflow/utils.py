@@ -11,16 +11,13 @@ class WorkflowPaths:
 
 
 def _dump_arg(key: str, value):
-    assert not isinstance(
-        value, dict
-    ), f"Can't dump dictionary {value} for key {key}. Instead, provide a str, int, float, or list"
     option = f"--{key.replace('_', '-')}"
     if isinstance(value, list):
         for v in value:
-            yield from (option, v)
+            yield from (option, str(v))
     else:
-        yield from (option, value)
+        yield from (option, str(value))
 
 
-def dump_args(args: dict):
-    return " ".join(map(str, (res for item in args.items() for res in _dump_arg(*item))))
+def dump_args(args: dict) -> str:
+    return " ".join((res for item in args.items() for res in _dump_arg(*item)))
