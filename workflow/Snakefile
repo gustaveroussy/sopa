@@ -12,7 +12,7 @@ rule to_spatialdata:
     input:
         paths.raw,
     output:
-        directory(paths.sdata),
+        paths.sdata,
     conda:
         "spatial"
     shell:
@@ -24,7 +24,7 @@ rule segmentation:
     input:
         paths.sdata,
     output:
-        directory(paths.polygons),
+        paths.polygons,
     conda:
         "spatial"
     shell:
@@ -36,7 +36,7 @@ rule explorer:
     input:
         paths.polygons,
     output:
-        directory(paths.explorer_directory),
+        paths.explorer_directory,
         paths.explorer_experiment,
     conda:
         "spatial"

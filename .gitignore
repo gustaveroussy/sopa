@@ -6,6 +6,7 @@ workflow/.snakemake
 workflow/logs
 *ignore*
 explore
+sandbox
 
 # OS related
 .DS_Store
