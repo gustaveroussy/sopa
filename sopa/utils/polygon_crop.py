@@ -116,57 +116,13 @@ def polygon_selection(
     sdata.add_shapes(ROI.KEY, geo_df)
 
 
-@click.command()
-@click.option(
-    "-s",
-    "--sdata_path",
-    type=str,
-    default=None,
-    help="Path to input sdata.zarr directory",
-)
-@click.option(
-    "-ii",
-    "--intermediate_image",
-    type=str,
-    default=None,
-    help="Path to the intermediate resized image (.zarr.zip format)",
-)
-@click.option(
-    "-ip",
-    "--intermediate_polygon",
-    type=str,
-    default=None,
-    help="Path to the intermediate polygon selection (.zarr.zip format)",
-)
-@click.option(
-    "-c",
-    "--channels",
-    type=str,
-    multiple=True,
-    default=None,
-    help="List of channels name to be displayed",
-)
-@click.option(
-    "-sf",
-    "--scale_factor",
-    type=float,
-    default=10,
-    help="The image size (widht and height) will be divided by this amount",
-)
-@click.option(
-    "-mr",
-    "--margin_ratio",
-    type=float,
-    default=0.1,
-    help="Image margin ratio when displaying the image",
-)
 def main(
-    sdata_path: str | None,
-    intermediate_image: str | None,
-    intermediate_polygon: str | None,
-    channels: list[str] | None,
-    scale_factor: float,
-    margin_ratio: float,
+    sdata_path: str = None,
+    intermediate_image: str = None,
+    intermediate_polygon: str = None,
+    channels: list[str] = None,
+    scale_factor: float = 10,
+    margin_ratio: float = 0.1,
 ):
     if sdata_path is None:
         assert (
@@ -184,4 +140,6 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    import typer
+
+    typer.run(main)
