@@ -4,10 +4,16 @@ from pathlib import Path
 class WorkflowPaths:
     def __init__(self, sdata_path: str) -> None:
         self.sdata = Path(sdata_path)
+        self.raw = self.sdata.with_suffix(".qptiff")  # TODO: make it general
 
         self.polygons = self.sdata / "shapes" / "polygons"
 
-        self.temp_dir = self.sdata.parent / f".temp_{self.sdata.name}"
+        self.temp_dir = self.sdata.parent / f"{self.sdata.name}_temp"
+
+        self.explorer_directory = self.sdata.with_suffix(".explorer")
+        self.explorer_directory.mkdir(parents=True, exist_ok=True)
+
+        self.explorer_experiment = self.explorer_directory / "experiment.xenium"
 
 
 def _dump_arg(key: str, value):

@@ -6,16 +6,18 @@ paths = WorkflowPaths(config["sdata_path"])
 
 rule all:
     input:
-        "out.txt"
+        paths.explorer_experiment,
 
 rule to_spatialdata:
     input:
-        ...
+        paths.raw,
     output:
         directory(paths.sdata),
+    conda:
+        "spatial"
     shell:
         f"""
-        sopa read {config["reader"]["name"]} {paths.sdata} {dump_args(config["segmentation"]["args"])}
+        sopa read {config["reader"]["name"]} {paths.sdata} {paths.raw} {dump_args(config["segmentation"]["args"])}
         """
 
 rule segmentation:
@@ -23,14 +25,22 @@ rule segmentation:
         paths.sdata,
     output:
         directory(paths.polygons),
+    conda:
+        "spatial"
     shell:
         f"""
         sopa segmentation {config["segmentation"]["name"]} {paths.sdata} {dump_args(config["segmentation"]["args"])}
         """
 
-rule a:
-    output: "out.txt"
+rule explorer:
+    input:
+        paths.polygons,
+    output:
+        directory(paths.explorer_directory),
+        paths.explorer_experiment,
+    conda:
+        "spatial"
     shell:
         f"""
-        touch out.txt
+        sopa explorer {paths.sdata} {paths.explorer_directory} {dump_args(config["explorer"])}
         """

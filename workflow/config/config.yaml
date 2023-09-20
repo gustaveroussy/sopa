@@ -32,5 +32,4 @@ segmentation:
 annotation: false
 
 explorer: #TODO: use this
-  metadata:
-    a: 2
+  shapes_key: "polygons"
