@@ -1,6 +1,13 @@
 import typer
 
+from .read import app_read
+from .segmentation import app_segmentation
+
+option = typer.Option()
+
 app = typer.Typer()
+app.add_typer(app_segmentation, name="segmentation")
+app.add_typer(app_read, name="read")
 
 
 @app.command()
@@ -49,5 +56,17 @@ def crop(
 
 
 @app.command()
-def test():
-    print("test")
+def explorer(sdata_path: str, path: str, shapes_key: str = None):
+    """Convert a spatialdata object to Xenium Explorer's inputs
+
+    Args:\n
+        sdata_path: Path to the sdata.zarr directory\n
+        path: Path to a directory where Xenium Explorer's outputs will be saved\n
+        shapes_key: Key for the polygons\n
+    """
+    from spatialdata import SpatialData
+
+    from sopa.io.explorer import write
+
+    sdata = SpatialData.read(sdata_path)
+    write(path, sdata, shapes_key=shapes_key)  # TODO: add more args

@@ -1,9 +1,32 @@
+from utils import WorkflowPaths, dump_args
 
-print(config)
+assert "sdata_path" in config.keys(), "Argument --sdata_path is required"
+
+paths = WorkflowPaths(config["sdata_path"])
 
 rule all:
     input:
         "out.txt"
+
+rule to_spatialdata:
+    input:
+        ...
+    output:
+        directory(paths.sdata),
+    shell:
+        f"""
+        sopa read {config["reader"]["name"]} {paths.sdata} {dump_args(config["segmentation"]["args"])}
+        """
+
+rule segmentation:
+    input:
+        paths.sdata,
+    output:
+        directory(paths.polygons),
+    shell:
+        f"""
+        sopa segmentation {config["segmentation"]["name"]} {paths.sdata} {dump_args(config["segmentation"]["args"])}
+        """
 
 rule a:
     output: "out.txt"

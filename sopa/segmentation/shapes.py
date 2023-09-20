@@ -9,33 +9,6 @@ from shapely.geometry import MultiPolygon, Polygon
 from tqdm import tqdm
 
 
-def smooth(poly: Polygon, expand_radius: int, smooth_radius: int = 5) -> Polygon:
-    smooth = (
-        poly.buffer(-smooth_radius).buffer(smooth_radius * 2).buffer(-smooth_radius + expand_radius)
-    )
-    return poly if isinstance(smooth, MultiPolygon) else smooth
-
-
-def extract_polygons(mask: np.ndarray, expand_radius: int = 0) -> list[Polygon]:
-    # Copied from https://github.com/Vizgen/vizgen-postprocessing
-    # TODO: do not rely on cv2?
-    import cv2
-
-    polys = []
-
-    for cell_id in range(1, mask.max() + 1):
-        mask_id = (mask == cell_id).astype("uint8")
-        contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-        polys_ = [smooth(Polygon(c[:, 0, :]), expand_radius) for c in contours if c.shape[0] >= 4]
-        polys_ = [p for p in polys_ if not p.is_empty]
-
-        assert len(polys_) <= 1
-        polys.extend(polys_)
-
-    return polys
-
-
 def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarray[Polygon]:
     n_polygons = len(polygons)
     resolved_indices = np.arange(n_polygons)
@@ -54,6 +27,36 @@ def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarr
             polygons.append(poly1.union(poly2))
 
     return np.array(polygons)[np.unique(resolved_indices)]
+
+
+def expand(polygons: list[Polygon], expand_radius: float) -> list[Polygon]:
+    return [polygon.buffer(expand_radius) for polygon in polygons]
+
+
+def smooth(poly: Polygon, smooth_radius: int = 5) -> Polygon:
+    # Copied from https://github.com/Vizgen/vizgen-postprocessing
+    smooth = poly.buffer(-smooth_radius).buffer(smooth_radius * 2).buffer(-smooth_radius)
+    return poly if isinstance(smooth, MultiPolygon) else smooth
+
+
+def extract_polygons(mask: np.ndarray) -> list[Polygon]:
+    # Copied from https://github.com/Vizgen/vizgen-postprocessing
+    # TODO: do not rely on cv2?
+    import cv2
+
+    polys = []
+
+    for cell_id in range(1, mask.max() + 1):
+        mask_id = (mask == cell_id).astype("uint8")
+        contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+        polys_ = [smooth(Polygon(c[:, 0, :])) for c in contours if c.shape[0] >= 4]
+        polys_ = [p for p in polys_ if not p.is_empty]
+
+        assert len(polys_) <= 1
+        polys.extend(polys_)
+
+    return polys
 
 
 def to_chunk_mask(poly: Polygon, bounds: list[int]) -> np.ndarray:

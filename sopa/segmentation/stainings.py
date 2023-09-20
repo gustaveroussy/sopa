@@ -21,12 +21,10 @@ class StainingSegmentation:
         channels: list[str],
         tile_width: int,
         tile_overlap: int,
-        expand_radius: int = 0,
     ):
         self.sdata = sdata
         self.method = method
         self.channels = channels
-        self.expand_radius = expand_radius
 
         self.image_key, self.image = _get_spatial_image(sdata)
 
@@ -61,7 +59,7 @@ class StainingSegmentation:
             if not self.poly_ROI.contains(patch_box):
                 patch = patch * to_chunk_mask(self.poly_ROI, bounds)
 
-        polygons = extract_polygons(self.method(patch), self.expand_radius)
+        polygons = extract_polygons(self.method(patch))
 
         return [affinity.translate(p, *bounds[:2]) for p in polygons]
 
