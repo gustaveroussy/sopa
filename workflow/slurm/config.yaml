@@ -8,7 +8,7 @@ cluster:
     --output=logs/%j"
 default-resources:
   - partition=shortq
-  - mem_mb=1000
+  - mem_mb=16000
   - gpu=0
 restart-times: 0
 max-jobs-per-second: 100

@@ -10,7 +10,7 @@ from .shapes import average
 
 
 def update(sdata: SpatialData, polygons: list[Polygon], image_key: str):
-    image = _get_spatial_image(sdata, image_key)
+    _, image = _get_spatial_image(sdata, image_key)
 
     geo_df = gpd.GeoDataFrame(
         {
@@ -22,7 +22,7 @@ def update(sdata: SpatialData, polygons: list[Polygon], image_key: str):
     geo_df.index = image_key + geo_df.index.astype(str)
 
     geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
-    sdata.add_shapes("polygons", geo_df)
+    sdata.add_shapes("polygons", geo_df)  # TODO: not hardcoded name
 
     mean_intensities = average(image, polygons)
     adata = AnnData(
