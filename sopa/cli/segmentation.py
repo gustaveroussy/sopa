@@ -41,7 +41,6 @@ def cellpose(
 
         tiles = Tiles2D.from_image(image, tile_width, tile_overlap)
         tiles.write(patch_attrs_file)
-        print("Saved patches paths. You can now run segmentation on each patch on separate jobs.")
         return
 
     method = cellpose_patch(diameter, channels)

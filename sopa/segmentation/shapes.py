@@ -1,3 +1,4 @@
+import logging
 from math import ceil, floor
 
 import numpy as np
@@ -7,6 +8,8 @@ import shapely.affinity
 import xarray as xr
 from shapely.geometry import MultiPolygon, Polygon
 from tqdm import tqdm
+
+log = logging.getLogger(__name__)
 
 
 def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarray[Polygon]:
@@ -59,6 +62,16 @@ def extract_polygons(mask: np.ndarray) -> list[Polygon]:
     return polys
 
 
+def outer_bounds(bounds):
+    return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
+
+
+def update_bounds(bounds, shape):
+    bounds[2] = bounds[0] + shape[0]
+    bounds[3] = bounds[1] + shape[1]
+    return bounds
+
+
 def to_chunk_mask(poly: Polygon, bounds: list[int]) -> np.ndarray:
     xmin, ymin, xmax, ymax = bounds
     new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
@@ -66,16 +79,19 @@ def to_chunk_mask(poly: Polygon, bounds: list[int]) -> np.ndarray:
 
 
 def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
-    xmin, ymin, xmax, ymax = poly.bounds
-    xmin, ymin, xmax, ymax = floor(xmin), floor(ymin), ceil(xmax) + 1, ceil(ymax) + 1
+    bounds = outer_bounds(poly.bounds)
 
-    sub_image = xarr.data[:, ymin:ymax, xmin:xmax].compute()  # TODO: use .sel?
+    sub_image = xarr.sel(
+        x=slice(bounds[0], bounds[2]), y=slice(bounds[1], bounds[3])
+    ).data.compute()
 
-    mask = to_chunk_mask(poly, [xmin, ymin, xmax, ymax])
+    update_bounds(bounds, sub_image.shape[1:])
+
+    mask = to_chunk_mask(poly, bounds)
 
     return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
 
 
 def average(xarr: xr.DataArray, polygons: list[Polygon]) -> np.ndarray:
-    print(f"Averaging intensities over {len(polygons)} polygons")
+    log.info(f"Averaging intensities over {len(polygons)} polygons")
     return np.stack([average_polygon(xarr, poly) for poly in tqdm(polygons)])

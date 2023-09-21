@@ -1,12 +1,8 @@
-import argparse
 import re
-import shutil
 from pathlib import Path
 
 import dask.array as da
 import tifffile as tf
-import toml
-import xarray as xr
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
@@ -40,41 +36,3 @@ def read_qptiff(
         )
 
         return SpatialData(images={image_name: image})
-
-
-def main(args):
-    path = Path(args.path)
-
-    config = toml.load(args.config)
-
-    sdata = read_qptiff(path, channels_renaming=config["reader"]["channels_renaming"])
-
-    print(sdata)
-    sdata.write(args.sdata_path)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-p",
-        "--path",
-        type=str,
-        required=True,
-        help="Path to the qptiff file",
-    )
-    parser.add_argument(
-        "-s",
-        "--sdata_path",
-        type=str,
-        required=True,
-        help="Path to the zarr sdata",
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        required=True,
-        help="Path to the config file",
-    )
-
-    main(parser.parse_args())

@@ -1,12 +1,16 @@
+import logging
+
 import numpy as np
 import tifffile as tf
 from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 
 from ._constants import image_metadata, image_options
 
+log = logging.getLogger(__name__)
+
 
 def _astype_uint8(arr: np.ndarray) -> np.ndarray:
-    print(f"   Image of shape {arr.shape}")
+    log.info(f"   Image of shape {arr.shape}")
     assert np.issubdtype(
         arr.dtype, np.integer
     ), f"The image dtype has to be an integer dtype. Found {arr.dtype}"
@@ -24,7 +28,7 @@ def write_image(
     image_key: str,
     pixelsize: float = 0.2125,
 ):
-    print("Writing multiscale image")
+    log.info("Writing multiscale image")
 
     if not isinstance(image, MultiscaleSpatialImage):
         image = to_multiscale(image, [2, 2, 2, 2, 2])

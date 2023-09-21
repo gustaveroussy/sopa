@@ -1,3 +1,4 @@
+import logging
 from math import ceil
 from pathlib import Path
 
@@ -6,6 +7,8 @@ import numpy as np
 import zarr
 
 from ._constants import ExplorerConstants
+
+log = logging.getLogger(__name__)
 
 
 def subsample_indices(n_samples, factor: int = 4):
@@ -20,7 +23,7 @@ def write_transcripts(
     max_levels: int = 15,
 ):
     # TODO: make everything using dask instead of pandas
-    print(f"Writing {len(df)} transcripts")
+    log.info(f"Writing {len(df)} transcripts")
     df = df.compute()
 
     num_transcripts = len(df)
@@ -78,7 +81,7 @@ def write_transcripts(
         grids = g.create_group("grids")
 
         for level in range(max_levels):
-            print(f"   Level {level}: {len(location)} transcripts")
+            log.info(f"   Level {level}: {len(location)} transcripts")
             level_group = grids.create_group(level)
 
             tile_size = ExplorerConstants.GRID_SIZE * 2**level

@@ -39,7 +39,7 @@ def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str,
     if key is None:
         key = _get_key(sdata, "images")
 
-    image = sdata.images[key]
+    image = sdata.images[key]  # TODO: switch axes for c,y,x
 
     if isinstance(image, MultiscaleSpatialImage):
         return key, image["scale0"]

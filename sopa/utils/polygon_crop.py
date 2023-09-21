@@ -1,3 +1,5 @@
+import logging
+
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +12,8 @@ from spatialdata.models import ShapesModel
 from .._constants import ROI
 from .image import resize
 from .utils import _get_spatial_image
+
+log = logging.getLogger(__name__)
 
 HELPER = """Enclose cells within a polygon. Helper:
     - Click on the plot to add a polygon vertex
@@ -41,12 +45,12 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
 class _Selector:
     def __init__(self, ax):
         self.poly = PolygonSelector(ax, self.onselect, draw_bounding_box=True)
-        print(HELPER)
+        log.info(HELPER)
         plt.show()
 
     def onselect(self, vertices):
         self.vertices = np.array(vertices)
-        print(f"Selected polygon with {len(self.vertices)} vertices.")
+        log.info(f"Selected polygon with {len(self.vertices)} vertices.")
 
     def disconnect(self):
         self.poly.disconnect_events()
@@ -94,7 +98,7 @@ def polygon_selection(
         image_key, image = _prepare(sdata, channels, scale_factor)
 
         if intermediate_image is not None:
-            print(f"Resized image will be saved to {intermediate_image}")
+            log.info(f"Resized image will be saved to {intermediate_image}")
             with zarr.ZipStore(intermediate_image, mode="w") as store:
                 g = zarr.group(store=store)
                 g.attrs.put({ROI.SCALE_FACTOR: scale_factor, ROI.IMAGE_KEY: image_key})
@@ -103,7 +107,7 @@ def polygon_selection(
 
         polygon = _draw_polygon(image, scale_factor, margin_ratio)
     else:
-        print(f"Reading polygon at path {intermediate_polygon}")
+        log.info(f"Reading polygon at path {intermediate_polygon}")
         z = zarr.open(intermediate_polygon, mode="r")
         polygon = Polygon(z[ROI.POLYGON_ARRAY_KEY][:])
 

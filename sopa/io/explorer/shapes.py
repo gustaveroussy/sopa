@@ -1,3 +1,4 @@
+import logging
 from math import ceil
 from pathlib import Path
 from typing import Iterable
@@ -7,6 +8,8 @@ import zarr
 from shapely.geometry import Polygon
 
 from ._constants import ExplorerConstants, cell_summary_attrs, group_attrs
+
+log = logging.getLogger(__name__)
 
 
 def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np.ndarray:
@@ -27,7 +30,7 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np
 
 
 def write_polygons(path: Path, polygons: Iterable[Polygon], max_vertices: int) -> None:
-    print(f"Writing {len(polygons)} cell polygons")
+    log.info(f"Writing {len(polygons)} cell polygons")
     coordinates = np.stack([pad_polygon(p, max_vertices) for p in polygons])
     coordinates /= ExplorerConstants.MICRONS_TO_PIXELS
 
