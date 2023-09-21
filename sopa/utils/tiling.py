@@ -1,6 +1,7 @@
 from math import ceil
+from pathlib import Path
 
-import numpy as np
+import dask.dataframe as dd
 import xarray as xr
 from shapely.geometry import Polygon, box
 
@@ -14,19 +15,19 @@ class Tiles1D:
         self.tile_overlap = tile_overlap
         self.int_coords = int_coords
 
-        self.count = self._count()
+        self._count = self.count()
 
-    def _count(self):
+    def count(self):
         if self.tile_width >= self.delta:
             return 1
         return ceil((self.delta - self.tile_overlap) / (self.tile_width - self.tile_overlap))
 
     def update(self, tile_width):
         self.tile_width = tile_width
-        assert self.count == self._count()
+        assert self._count == self.count()
 
     def tight_width(self):
-        return ceil((self.delta + (self.count - 1) * self.tile_overlap) / self.count)
+        return ceil((self.delta + (self._count - 1) * self.tile_overlap) / self._count)
 
     def __getitem__(self, i):
         start_delta = i * (self.tile_width - self.tile_overlap)
@@ -65,11 +66,20 @@ class Tiles2D:
         ymax = len(image.coords["y"])
         return Tiles2D(tile_width, xmax, ymax, tile_overlap=tile_overlap, int_coords=True)
 
+    @classmethod
+    def from_dataframe(cls, df: dd.DataFrame, tile_width: int, tile_overlap: int):
+        xmin, ymin = df.x.min().compute(), df.y.min().compute()
+        xmax, ymax = df.x.max().compute(), df.y.max().compute()
+
+        return Tiles2D(
+            tile_width, xmax, ymax, ymin=ymin, xmin=xmin, tile_overlap=tile_overlap, tight=True
+        )
+
     def compute(self):
         width_x = self.tile_x.tight_width()
         width_y = self.tile_y.tight_width()
 
-        self.count = self.tile_x.count * self.tile_y.count
+        self._count = self.tile_x._count * self.tile_y._count
 
         if self.tight:
             self.tile_width = max(width_x, width_y)
@@ -77,10 +87,11 @@ class Tiles2D:
             self.tile_y.update(self.tile_width)
 
     def pair_indices(self, i: int) -> tuple[int, int]:
-        iy, ix = divmod(i, self.tile_x.count)
+        iy, ix = divmod(i, self.tile_x._count)
         return ix, iy
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> tuple[int, int, int, int]:
+        """One tile a tuple representing its bounding box: (xmin, ymin, xmax, ymax)"""
         if isinstance(i, slice):
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
@@ -92,20 +103,21 @@ class Tiles2D:
         return [xmin, ymin, xmax, ymax]
 
     def __len__(self):
-        return self.count
+        return self._count
 
     def __iter__(self):
         for i in range(len(self)):
             yield self[i]
-
-    def coords_to_indices(self, coords: np.ndarray):
-        assert self.tile_overlap == 0, "coords to indices with tile overlap is ambiguous"
-        min_coords = np.array([self.tile_x.xmin, self.tile_y.xmin])
-
-        return np.floor((coords - min_coords) / self.tile_width).clip(0).astype(int)
 
     def polygon(self, bounds: list[int]) -> Polygon:
         return box(*bounds)
 
     def polygons(self) -> list[Polygon]:
         return [self.polygon(self[i]) for i in range(len(self))]
+
+    def write(self, patch_attrs_file: str):
+        parent = Path(patch_attrs_file).absolute().parent
+        parent.mkdir(parents=True, exist_ok=True)
+
+        with open(patch_attrs_file, "w") as f:
+            f.write("\n".join((parent / f"{i}.zarr.zip" for i in range(len(self)))))

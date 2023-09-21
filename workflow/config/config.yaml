@@ -12,22 +12,13 @@ reader:
 
 segmentation:
   name: cellpose
+  mode: parralel
   args:
     diameter: 100
     channels: ["DAPI"]
     tile_width: 3000
     tile_overlap: 50
     expand_radius: 2
-  
-  # tiling:
-  #   name: sequential
-  #   args:
-  #     tile_width: 3000
-  #     tile_overlap: 50
-  
-  # post-processing:
-  #   expand_radius: 0
-  #   average_channels_intensities: true
 
 annotation: false
 

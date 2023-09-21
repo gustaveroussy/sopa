@@ -10,7 +10,7 @@ from tqdm import tqdm
 from .._constants import ROI
 from ..utils.tiling import Tiles2D
 from ..utils.utils import _get_spatial_image
-from .shapes import extract_polygons, solve_conflicts, to_chunk_mask
+from . import shapes
 
 
 class StainingSegmentation:
@@ -57,38 +57,24 @@ class StainingSegmentation:
                 return []
 
             if not self.poly_ROI.contains(patch_box):
-                patch = patch * to_chunk_mask(self.poly_ROI, bounds)
+                patch = patch * shapes.to_chunk_mask(self.poly_ROI, bounds)
 
-        polygons = extract_polygons(self.method(patch))
+        polygons = shapes.extract_polygons(self.method(patch))
 
         return [affinity.translate(p, *bounds[:2]) for p in polygons]
 
-    def patch_polygons_paths(self, directory: str):
-        directory = Path(directory)
-        return [directory / f"{i}.zarr.zip" for i in range(len(self.tiles))]
-
-    def write_patch_polygons(self, path: str, index: int):
+    def write_patch_polygons(self, patch_file: str):
+        index = int(Path(patch_file).stem)
         polygons = self._run_patch(self.tiles[index])
 
-        with zarr.ZipStore(path, mode="w") as store:
+        with zarr.ZipStore(patch_file, mode="w") as store:
             g = zarr.group(store=store)
 
             for i, polygon in enumerate(polygons):
                 coords = np.array(polygon.exterior.coords)
                 g.array(f"polygon_{i}", coords, dtype=coords.dtype, chunks=coords.shape)
 
-    def aggregate_patch_polygons(self, directory: str) -> list[Polygon]:
-        polygons = []
-
-        for path in tqdm(self.patch_polygons_paths(directory)):
-            z = zarr.open(path, mode="r")
-            for _, coords_zarr in z.arrays():
-                polygons.append(Polygon(coords_zarr[:]))
-
-        polygons = solve_conflicts(polygons)
-        return polygons
-
     def run_patches(self) -> list[Polygon]:
         polygons = [poly for bounds in tqdm(self.tiles) for poly in self._run_patch(bounds)]
-        polygons = solve_conflicts(polygons)
+        polygons = shapes.solve_conflicts(polygons)
         return polygons
