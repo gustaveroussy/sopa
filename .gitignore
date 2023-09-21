@@ -1,10 +1,8 @@
 # Misc
-cytospace
-show_small.py
-archive/
 workflow/.snakemake
 workflow/logs
 *ignore*
+archive/
 explore
 sandbox
 
@@ -14,7 +12,7 @@ sandbox
 # Documentation
 site
 
-# Code Ocean related
+# Code Ocean
 code
 results
 
@@ -24,15 +22,6 @@ multirun
 lightning_logs
 checkpoints
 run.log
-
-# Data files
-data/*/*
-!data/aml/default.csv
-!data/aml/short.h5ad
-!data/bmmc/default.csv
-!data/poised/default.csv
-!data/debarcoding/default.csv
-!data/README.md
 
 # Jupyter Notebook
 .ipynb_checkpoints
