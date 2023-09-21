@@ -120,4 +120,4 @@ class Tiles2D:
         parent.mkdir(parents=True, exist_ok=True)
 
         with open(patch_attrs_file, "w") as f:
-            f.write("\n".join((parent / f"{i}.zarr.zip" for i in range(len(self)))))
+            f.write("\n".join((str(parent / f"{i}.zarr.zip") for i in range(len(self)))))

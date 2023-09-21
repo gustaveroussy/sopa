@@ -37,7 +37,7 @@ def cellpose(
         from sopa.utils.tiling import Tiles2D
         from sopa.utils.utils import _get_spatial_image
 
-        image = _get_spatial_image(sdata)
+        _, image = _get_spatial_image(sdata)
 
         tiles = Tiles2D.from_image(image, tile_width, tile_overlap)
         tiles.write(patch_attrs_file)

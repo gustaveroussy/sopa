@@ -64,7 +64,7 @@ class StainingSegmentation:
         return [affinity.translate(p, *bounds[:2]) for p in polygons]
 
     def write_patch_polygons(self, patch_file: str):
-        index = int(Path(patch_file).stem)
+        index = int(Path(patch_file).name.split(".")[0])
         polygons = self._run_patch(self.tiles[index])
 
         with zarr.ZipStore(patch_file, mode="w") as store:

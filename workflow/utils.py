@@ -10,6 +10,8 @@ class WorkflowPaths:
         self.polygons = self.sdata_path / "shapes" / "polygons"
 
         self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
+        self.patches_dir = self.temp_dir / "patches"
+        self.patches_attrs_file = self.patches_dir / ".paths"
 
         self.explorer_directory = self.sdata_path.with_suffix(".explorer")
         self.explorer_directory.mkdir(parents=True, exist_ok=True)

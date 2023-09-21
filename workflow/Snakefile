@@ -32,7 +32,7 @@ rule to_spatialdata:
 #         sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} {dump_args(config["segmentation"]["args"])}
 #         """
 
-rule prepare_parralel_segmentation:
+checkpoint prepare_parralel_segmentation:
     input:
         paths.sdata_zgroup,
     output:
@@ -41,7 +41,7 @@ rule prepare_parralel_segmentation:
         "spatial"
     shell:
         f"""
-        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} {dump_args(config["segmentation"]["args"])} --patch_attrs_file {{output[0]}}
+        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-attrs-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
         """
 
 rule patch_segmentation:
@@ -53,7 +53,7 @@ rule patch_segmentation:
         "spatial"
     shell:
         f"""
-        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-file {{output[0]}}
+        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
         """
 
 def get_input_resolve_segmentation(wilcards):
