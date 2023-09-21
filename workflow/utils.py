@@ -3,15 +3,15 @@ from pathlib import Path
 
 class WorkflowPaths:
     def __init__(self, sdata_path: str) -> None:
-        self.sdata_dir = Path(sdata_path)
-        self.sdata = self.sdata_dir / ".zgroup"  # trick to fix snakemake ChildIOException
-        self.raw = self.sdata_dir.with_suffix(".qptiff")  # TODO: make it general
+        self.sdata_path = Path(sdata_path)
+        self.sdata_zgroup = self.sdata_path / ".zgroup"  # trick to fix snakemake ChildIOException
+        self.raw = self.sdata_path.with_suffix(".qptiff")  # TODO: make it general
 
-        self.polygons = self.sdata_dir / "shapes" / "polygons"
+        self.polygons = self.sdata_path / "shapes" / "polygons"
 
-        self.temp_dir = self.sdata_dir.parent / f"{self.sdata_dir.name}_temp"
+        self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
 
-        self.explorer_directory = self.sdata_dir.with_suffix(".explorer")
+        self.explorer_directory = self.sdata_path.with_suffix(".explorer")
         self.explorer_directory.mkdir(parents=True, exist_ok=True)
 
         self.explorer_experiment = self.explorer_directory / "experiment.xenium"
