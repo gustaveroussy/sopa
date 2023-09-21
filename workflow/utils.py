@@ -3,7 +3,7 @@ from pathlib import Path
 
 class WorkflowPaths:
     def __init__(self, sdata_path: str) -> None:
-        self.sdata = Path(sdata_path)
+        self.sdata = Path(sdata_path) / ".zgroup"  # trick to fix snakemake ChildIOException
         self.raw = self.sdata.with_suffix(".qptiff")  # TODO: make it general
 
         self.polygons = self.sdata / "shapes" / "polygons"

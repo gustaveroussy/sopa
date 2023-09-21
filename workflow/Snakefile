@@ -8,23 +8,23 @@ rule all:
     input:
         paths.explorer_experiment,
 
-# rule to_spatialdata:
-#     input:
-#         paths.raw,
-#     output:
-#         paths.sdata,
-#     conda:
-#         "spatial"
-#     shell:
-#         f"""
-#         sopa read {config["reader"]["name"]} {paths.sdata} {paths.raw} {dump_args(config["segmentation"]["args"])}
-#         """
+rule to_spatialdata:
+    input:
+        paths.raw,
+    output:
+        paths.sdata,
+    conda:
+        "spatial"
+    shell:
+        f"""
+        sopa read {config["reader"]["name"]} {paths.sdata} {paths.raw} {dump_args(config["segmentation"]["args"])}
+        """
 
 rule segmentation:
     input:
         paths.sdata,
     output:
-        paths.polygons,
+        directory(paths.polygons),
     conda:
         "spatial"
     shell:
@@ -36,7 +36,7 @@ rule explorer:
     input:
         paths.polygons,
     output:
-        paths.explorer_directory,
+        directory(paths.explorer_directory),
         paths.explorer_experiment,
     conda:
         "spatial"
