@@ -6,7 +6,7 @@ import spatialdata
 from spatialdata import SpatialData
 from spatialdata.transformations import Identity, set_transformation
 
-from ...utils.utils import _get_key, _get_value
+from ...utils.utils import _get_element, _get_key
 from . import (
     write_cell_categories,
     write_gene_counts,
@@ -78,7 +78,7 @@ def write(
         gdf = sdata.transform_element_to_coordinate_system(gdf, pixels_cs)
         write_polygons(path / FileNames.SHAPES, gdf.geometry, polygon_max_vertices)
 
-    df = _get_value(sdata, "points", points_key)
+    df = _get_element(sdata, "points", points_key)
     if df is not None:
         assert (
             gene_column is not None
