@@ -62,18 +62,28 @@ def extract_polygons(mask: np.ndarray) -> list[Polygon]:
     return polys
 
 
-def outer_bounds(bounds):
+def outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
 
 
-def update_bounds(bounds, shape):
-    bounds[2] = bounds[0] + shape[1]
-    bounds[3] = bounds[1] + shape[0]
-    return bounds
+def update_bounds(
+    bounds: tuple[int, int, int, int], shape: tuple[int, int]
+) -> tuple[int, int, int, int]:
+    """Update bound's width and heigh to fit the image
+
+    Args:
+        bounds: original bounds (xmin, ymin, xmax, ymax)
+        shape: image shapes (dim_y, dim_x)
+
+    Returns:
+        Updated bounds
+    """
+    return (bounds[0], bounds[1], bounds[0] + shape[1], bounds[1] + shape[0])
 
 
-def to_chunk_mask(poly: Polygon, bounds: list[int]) -> np.ndarray:
+def to_chunk_mask(poly: Polygon, bounds: tuple[int, int, int, int]) -> np.ndarray:
     xmin, ymin, xmax, ymax = bounds
+
     new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
     return rasterio.features.rasterize([new_poly], out_shape=(ymax - ymin, xmax - xmin))
 
@@ -85,10 +95,8 @@ def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
         x=slice(bounds[0], bounds[2]), y=slice(bounds[1], bounds[3])
     ).data.compute()
 
-    update_bounds(bounds, sub_image.shape[1:])
-
+    bounds = update_bounds(bounds, sub_image.shape[1:])
     mask = to_chunk_mask(poly, bounds)
-
     return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
 
 

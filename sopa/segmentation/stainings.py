@@ -57,7 +57,7 @@ class StainingSegmentation:
                 return []
 
             if not self.poly_ROI.contains(patch_box):
-                shapes.update_bounds(bounds, patch.shape[1:])
+                bounds = shapes.update_bounds(bounds, patch.shape[1:])
                 patch = patch * shapes.to_chunk_mask(self.poly_ROI, bounds)
 
         polygons = shapes.extract_polygons(self.method(patch))
