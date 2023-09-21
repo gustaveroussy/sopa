@@ -36,7 +36,6 @@ rule explorer:
     input:
         paths.polygons,
     output:
-        directory(paths.explorer_directory),
         paths.explorer_experiment,
     conda:
         "spatial"
