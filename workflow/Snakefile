@@ -12,24 +12,24 @@ rule to_spatialdata:
     input:
         paths.raw,
     output:
-        paths.sdata,
+        paths.sdata_zgroup,
     conda:
         "spatial"
     shell:
         f"""
-        sopa read {config["reader"]["name"]} {paths.sdata} {paths.raw} {dump_args(config["segmentation"]["args"])}
+        sopa read {config["reader"]["name"]} {paths.sdata_path} {paths.raw} {dump_args(config["segmentation"]["args"])}
         """
 
 rule segmentation:
     input:
-        paths.sdata,
+        paths.sdata_zgroup,
     output:
         directory(paths.polygons),
     conda:
         "spatial"
     shell:
         f"""
-        sopa segmentation {config["segmentation"]["name"]} {paths.sdata} {dump_args(config["segmentation"]["args"])}
+        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} {dump_args(config["segmentation"]["args"])}
         """
 
 rule explorer:
@@ -41,5 +41,5 @@ rule explorer:
         "spatial"
     shell:
         f"""
-        sopa explorer {paths.sdata} {paths.explorer_directory} {dump_args(config["explorer"])}
+        sopa explorer {paths.sdata_path} {paths.explorer_directory} {dump_args(config["explorer"])}
         """
