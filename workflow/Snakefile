@@ -20,58 +20,59 @@ rule to_spatialdata:
         sopa read {config["reader"]["name"]} {paths.sdata_path} {paths.raw} {dump_args(config["segmentation"]["args"])}
         """
 
-# rule sequential_segmentation:
-#     input:
-#         paths.sdata_zgroup,
-#     output:
-#         directory(paths.polygons),
-#     conda:
-#         "spatial"
-#     shell:
-#         f"""
-#         sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} {dump_args(config["segmentation"]["args"])}
-#         """
+if config["segmentation"]["mode"] == "parallel":
+    checkpoint prepare_parralel_segmentation:
+        input:
+            paths.sdata_zgroup,
+        output:
+            paths.patches_attrs_file,
+        conda:
+            "spatial"
+        shell:
+            f"""
+            sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-attrs-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
+            """
 
-checkpoint prepare_parralel_segmentation:
-    input:
-        paths.sdata_zgroup,
-    output:
-        paths.patches_attrs_file,
-    conda:
-        "spatial"
-    shell:
-        f"""
-        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-attrs-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
-        """
+    rule patch_segmentation:
+        input:
+            paths.patches_attrs_file,
+        output:
+            f"{paths.patches_dir}/{{index}}.zarr.zip",
+        conda:
+            "spatial"
+        shell:
+            f"""
+            sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
+            """
 
-rule patch_segmentation:
-    input:
-        paths.patches_attrs_file,
-    output:
-        f"{paths.patches_dir}/{{index}}.zarr.zip",
-    conda:
-        "spatial"
-    shell:
-        f"""
-        sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
-        """
+    def get_input_resolve_segmentation(wilcards):
+        with open(checkpoints.prepare_parralel_segmentation.get(**wilcards).output[0], 'r') as f:
+            return [line.rstrip() for line in f]
 
-def get_input_resolve_segmentation(wilcards):
-    with open(checkpoints.prepare_parralel_segmentation.get(**wilcards).output[0], 'r') as f:
-        return [line.rstrip() for line in f]
-
-rule resolve_parralel_segmentation:
-    input:
-        paths.patches_attrs_file,
-        get_input_resolve_segmentation,
-    output:
-        directory(paths.polygons),
-    conda:
-        "spatial"
-    shell:
-        f"""
-        sopa segmentation resolve {paths.sdata_path} --patch-attrs-file {paths.patches_attrs_file} --expand-radius {config["segmentation"]["args"]["expand_radius"]}
-        """
+    rule resolve_parralel_segmentation:
+        input:
+            paths.patches_attrs_file,
+            get_input_resolve_segmentation,
+        output:
+            directory(paths.polygons),
+        conda:
+            "spatial"
+        shell:
+            f"""
+            sopa segmentation resolve {paths.sdata_path} --patch-attrs-file {paths.patches_attrs_file} --expand-radius {config["segmentation"]["args"]["expand_radius"]}
+            """
+else:
+    rule sequential_segmentation:
+        input:
+            paths.sdata_zgroup,
+        output:
+            directory(paths.polygons),
+        conda:
+            "spatial"
+        shell:
+            f"""
+            sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} {dump_args(config["segmentation"]["args"])}
+            """
 
 rule explorer:
     input:

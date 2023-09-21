@@ -12,7 +12,7 @@ reader:
 
 segmentation:
   name: cellpose
-  mode: parralel
+  mode: parallel
   args:
     diameter: 15
     channels: ["DAPI"]
