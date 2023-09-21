@@ -56,6 +56,29 @@ def crop(
 
 
 @app.command()
+def patchify(
+    sdata_path: str, name: str, patch_attrs_file: str, tile_width: float, tile_overlap: float
+):
+    import spatialdata
+
+    sdata = spatialdata.read_zarr(sdata_path)
+
+    if name == "cellpose":
+        from sopa.utils.tiling import Tiles2D
+        from sopa.utils.utils import _get_spatial_image
+
+        _, image = _get_spatial_image(sdata)
+
+        tiles = Tiles2D.from_image(image, tile_width, tile_overlap)
+        tiles.write(patch_attrs_file)
+
+    if name == "baysor":
+        from sopa.segmentation.baysor.prepare import patchify_transcripts
+
+        patchify_transcripts(sdata, patch_attrs_file, tile_width, tile_overlap)
+
+
+@app.command()
 def explorer(sdata_path: str, path: str, shapes_key: str = None):
     """Convert a spatialdata object to Xenium Explorer's inputs
 
