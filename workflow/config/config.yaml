@@ -14,9 +14,9 @@ segmentation:
   name: cellpose
   mode: parralel
   args:
-    diameter: 100
+    diameter: 15
     channels: ["DAPI"]
-    tile_width: 3000
+    tile_width: 5000
     tile_overlap: 50
     expand_radius: 2
 
