@@ -1,9 +1,12 @@
+import logging
 from math import ceil
 from pathlib import Path
 
 import dask.dataframe as dd
 import xarray as xr
 from shapely.geometry import Polygon, box
+
+log = logging.getLogger(__name__)
 
 
 class Tiles1D:
@@ -121,3 +124,5 @@ class Tiles2D:
 
         with open(patch_attrs_file, "w") as f:
             f.write("\n".join((str(parent / f"{i}.zarr.zip") for i in range(len(self)))))
+
+        log.info(f"Patch informations saved in file {patch_attrs_file}")

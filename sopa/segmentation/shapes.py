@@ -67,8 +67,8 @@ def outer_bounds(bounds):
 
 
 def update_bounds(bounds, shape):
-    bounds[2] = bounds[0] + shape[0]
-    bounds[3] = bounds[1] + shape[1]
+    bounds[2] = bounds[0] + shape[1]
+    bounds[3] = bounds[1] + shape[0]
     return bounds
 
 
