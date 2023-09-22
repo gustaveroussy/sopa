@@ -23,6 +23,11 @@ segmentation:
     tile_overlap: 50
     expand_radius: 2
 
+aggregate:
+  intensity_mean: true
+  transcript_count: false
+  gene_column: none
+
 annotation: false
 
 explorer:

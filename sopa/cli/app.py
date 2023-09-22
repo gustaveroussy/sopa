@@ -56,8 +56,29 @@ def crop(
 
 
 @app.command()
-def aggregate():
-    ...
+def aggregate(
+    sdata_path: str,
+    intensity_mean: bool = True,
+    transcript_count: bool = False,
+    gene_column: str = None,
+):
+    import spatialdata
+
+    from sopa.segmentation.update import aggregate
+
+    sdata = spatialdata.read_zarr(sdata_path)
+
+    table = None
+    if transcript_count:
+        table = sdata.aggregate(
+            values="transcripts",
+            by="polygons",
+            value_key=gene_column,
+            agg_func="count",
+            target_coordinate_system="pixels",
+        ).table
+
+    aggregate(sdata, table, intensity_mean)
 
 
 @app.command()
