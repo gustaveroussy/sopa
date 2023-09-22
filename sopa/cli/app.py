@@ -65,6 +65,7 @@ def patchify(
     sdata_path: str,
     tile_width: float = option,
     tile_overlap: float = option,
+    mode: str = option,
     baysor_dir: str = None,
 ):
     from pathlib import Path
@@ -73,19 +74,21 @@ def patchify(
 
     sdata = spatialdata.read_zarr(sdata_path)
 
+    from sopa._constants import SopaFiles
     from sopa.utils.tiling import Tiles2D
     from sopa.utils.utils import _get_spatial_image
 
-    image_key, image = _get_spatial_image(sdata)
+    image_key, _ = _get_spatial_image(sdata)
 
     tiles = Tiles2D(sdata, image_key, tile_width, tile_overlap)
     tiles.write()
 
-    if baysor_dir is not None:
-        tiles.patchify_transcripts(baysor_dir)
+    if mode == "parallel":
+        if baysor_dir is not None:
+            tiles.patchify_transcripts(baysor_dir)
 
-    with open(Path(sdata_path) / ".n_patches", "w") as f:
-        f.write(str(len(tiles)))
+        with open(Path(sdata_path) / SopaFiles.NUM_PATCHES, "w") as f:
+            f.write(str(len(tiles)))
 
 
 @app.command()

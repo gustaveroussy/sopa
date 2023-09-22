@@ -5,3 +5,12 @@ class ROI:
     POLYGON_ARRAY_KEY = "polygon"
     IMAGE_KEY = "image_key"
     ELEMENT_TYPE = "element_type"
+
+
+class SopaKeys:
+    POLYGONS = "polygons"
+    PATCHES = "patches"
+
+
+class SopaFiles:
+    NUM_PATCHES = ".n_patches"

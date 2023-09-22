@@ -10,11 +10,14 @@ reader:
       Cy3: CD68
       Texas Red: CD20
 
-segmentation:
-  name: cellpose
+patchify:
   mode: parallel
-  args:
-    diameter: 15
+  tile_width: 5000
+  tile_overlap: 100
+
+segmentation:
+  cellpose:
+    diameter: 100
     channels: ["DAPI"]
     tile_width: 5000
     tile_overlap: 50

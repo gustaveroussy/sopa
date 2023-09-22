@@ -6,6 +6,7 @@ paths = WorkflowPaths(config["sdata_path"])
 
 rule all:
     input:
+        paths.polygons,
         paths.explorer_experiment,
 
 rule to_spatialdata:
@@ -17,41 +18,42 @@ rule to_spatialdata:
         "spatial"
     shell:
         f"""
-        sopa read {config["reader"]["name"]} {paths.sdata_path} {paths.raw} {dump_args(config["segmentation"]["args"])}
+        sopa read {config["reader"]["name"]} {paths.sdata_path} {paths.raw}
         """
 
-if config["segmentation"]["mode"] == "parallel":
+if config["patchify"]["mode"] == "parallel":
     checkpoint prepare_parralel_segmentation:
         input:
             paths.sdata_zgroup,
         output:
-            paths.patches_attrs_file,
+            paths.n_patches_path,
+            directory(paths.patches),
         conda:
             "spatial"
         shell:
             f"""
-            sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-attrs-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
+            sopa patchify {paths.sdata_path} {dump_args(config["patchify"])}
             """
 
     rule patch_segmentation:
         input:
-            paths.patches_attrs_file,
+            paths.n_patches_path,
+            paths.patches,
         output:
             f"{paths.patches_dir}/{{index}}.zarr.zip",
         conda:
             "spatial"
         shell:
             f"""
-            sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} --patch-file {{output[0]}} {dump_args(config["segmentation"]["args"])}
+            sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.patches_dir} --patch-index {{wildcards.index}} {dump_args(config["segmentation"]["cellpose"])}
             """
 
     def get_input_resolve_segmentation(wilcards):
         with open(checkpoints.prepare_parralel_segmentation.get(**wilcards).output[0], 'r') as f:
-            return [line.rstrip() for line in f]
+            return paths.cells_paths(int(f.read()))
 
     rule resolve_parralel_segmentation:
         input:
-            paths.patches_attrs_file,
             get_input_resolve_segmentation,
         output:
             directory(paths.polygons),
@@ -59,7 +61,7 @@ if config["segmentation"]["mode"] == "parallel":
             "spatial"
         shell:
             f"""
-            sopa segmentation resolve {paths.sdata_path} --patch-attrs-file {paths.patches_attrs_file} --expand-radius {config["segmentation"]["args"]["expand_radius"]}
+            sopa segmentation resolve {paths.sdata_path} --patch-dir {paths.patches_dir} --expand-radius {config["segmentation"]["cellpose"]["expand_radius"]}
             """
 else:
     rule sequential_segmentation:
@@ -71,7 +73,7 @@ else:
             "spatial"
         shell:
             f"""
-            sopa segmentation {config["segmentation"]["name"]} {paths.sdata_path} {dump_args(config["segmentation"]["args"])}
+            sopa segmentation cellpose {paths.sdata_path} {dump_args(config["segmentation"]["cellpose"])}
             """
 
 rule explorer:
