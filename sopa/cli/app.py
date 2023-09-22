@@ -56,30 +56,40 @@ def crop(
 
 
 @app.command()
+def aggregate():
+    ...
+
+
+@app.command()
 def patchify(
-    sdata_path: str, name: str, patch_attrs_file: str, tile_width: float, tile_overlap: float
+    sdata_path: str,
+    tile_width: float = option,
+    tile_overlap: float = option,
+    baysor_dir: str = None,
 ):
+    from pathlib import Path
+
     import spatialdata
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    if name == "cellpose":
-        from sopa.utils.tiling import Tiles2D
-        from sopa.utils.utils import _get_spatial_image
+    from sopa.utils.tiling import Tiles2D
+    from sopa.utils.utils import _get_spatial_image
 
-        _, image = _get_spatial_image(sdata)
+    image_key, image = _get_spatial_image(sdata)
 
-        tiles = Tiles2D.from_image(image, tile_width, tile_overlap)
-        tiles.write(patch_attrs_file)
+    tiles = Tiles2D(sdata, image_key, tile_width, tile_overlap)
+    tiles.write()
 
-    if name == "baysor":
-        from sopa.segmentation.baysor.prepare import patchify_transcripts
+    if baysor_dir is not None:
+        tiles.patchify_transcripts(baysor_dir)
 
-        patchify_transcripts(sdata, patch_attrs_file, tile_width, tile_overlap)
+    with open(Path(sdata_path) / ".n_patches", "w") as f:
+        f.write(str(len(tiles)))
 
 
 @app.command()
-def explorer(sdata_path: str, path: str, shapes_key: str = None):
+def explorer(sdata_path: str, path: str, shapes_key: str = None, gene_column: str = None):
     """Convert a spatialdata object to Xenium Explorer's inputs
 
     Args:\n
@@ -92,4 +102,4 @@ def explorer(sdata_path: str, path: str, shapes_key: str = None):
     from sopa.io.explorer import write
 
     sdata = SpatialData.read(sdata_path)
-    write(path, sdata, shapes_key=shapes_key)  # TODO: add more args
+    write(path, sdata, shapes_key=shapes_key, gene_column=gene_column)  # TODO: add more args

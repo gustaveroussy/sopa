@@ -22,5 +22,6 @@ segmentation:
 
 annotation: false
 
-explorer: #TODO: use this
+explorer:
   shapes_key: "polygons"
+  gene_column: "gene"

@@ -24,6 +24,16 @@ def update(sdata: SpatialData, polygons: list[Polygon], image_key: str):
     geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
     sdata.add_shapes("polygons", geo_df)  # TODO: not hardcoded name
 
+
+def aggregate(sdata: SpatialData, genes: bool = False, gene_column: str = None):
+    adata = sdata.aggregate(
+        values="transcripts",
+        by="polygons",
+        value_key=gene_column,
+        agg_func="count",
+        target_coordinate_system="pixels",
+    ).table
+
     mean_intensities = average(image, polygons)
     adata = AnnData(
         mean_intensities,

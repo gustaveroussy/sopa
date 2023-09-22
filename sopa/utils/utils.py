@@ -1,6 +1,7 @@
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatialdata import SpatialData
+from spatialdata.transformations import Identity, set_transformation
 
 
 def _get_key(sdata: SpatialData, attr: str, key: str | None = None):
@@ -21,7 +22,12 @@ def _get_key(sdata: SpatialData, attr: str, key: str | None = None):
 
 def _get_element(sdata: SpatialData, attr: str, key: str | None = None):
     key = _get_key(sdata, attr, key)
-    return getattr(sdata, attr)[key]
+    return sdata[key]
+
+
+def _get_item(sdata: SpatialData, attr: str, key: str | None = None):
+    key = _get_key(sdata, attr, key)
+    return key, sdata[key]
 
 
 def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str, xr.DataArray]:
@@ -33,3 +39,19 @@ def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str,
         return key, image["scale0"]
 
     return key, image
+
+
+def get_intrinsic_cs(sdata: SpatialData, element_name: str) -> str:
+    for cs, transform in sdata[element_name].attrs["transform"].items():
+        if isinstance(transform, Identity):
+            return cs
+    cs = f"_{element_name}_intrinsic"
+    set_transformation(sdata[element_name], Identity(), cs)
+    return cs
+
+
+def to_intrinsic(sdata: SpatialData, element, element_name_cs: str):
+    if isinstance(element, str):
+        element = sdata[element]
+    cs = get_intrinsic_cs(sdata, element_name_cs)
+    return sdata.transform_element_to_coordinate_system(element, cs)

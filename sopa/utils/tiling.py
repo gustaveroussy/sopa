@@ -3,8 +3,15 @@ from math import ceil
 from pathlib import Path
 
 import dask.dataframe as dd
-import xarray as xr
+import geopandas as gpd
+from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Polygon, box
+from spatial_image import SpatialImage
+from spatialdata import SpatialData
+from spatialdata.models import ShapesModel
+
+from .._constants import ROI
+from .utils import _get_item, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -42,15 +49,27 @@ class Tiles1D:
 class Tiles2D:
     def __init__(
         self,
+        sdata: SpatialData,
+        element_name: str,
         tile_width: float | int,
-        xmax: float | int,
-        ymax: float | int,
-        ymin: float | int = 0,
-        xmin: float | int = 0,
         tile_overlap: float | int = 50,
-        tight: bool = False,
-        int_coords: bool = False,
     ):
+        self.sdata = sdata
+        self.element = sdata[element_name]
+
+        if isinstance(self.element, SpatialImage) or isinstance(
+            self.element, MultiscaleSpatialImage
+        ):
+            xmin, ymin = 0, 0
+            xmax, ymax = len(self.element.coords["x"]), len(self.element.coords["y"])
+            tight, int_coords = False, True
+        elif isinstance(self.element, dd.DataFrame):
+            xmin, ymin = self.element.x.min().compute(), self.element.y.min().compute()
+            xmax, ymax = self.element.x.max().compute(), self.element.y.max().compute()
+            tight, int_coords = True, False
+        else:
+            raise ValueError(f"Invalid element type: {type(self.element)}")
+
         self.tile_x = Tiles1D(xmin, xmax, tile_width, tile_overlap, int_coords)
         self.tile_y = Tiles1D(ymin, ymax, tile_width, tile_overlap, int_coords)
 
@@ -58,71 +77,96 @@ class Tiles2D:
         self.tile_overlap = tile_overlap
         self.tight = tight
         self.int_coords = int_coords
+        self.roi = sdata.shapes[ROI.KEY] if ROI.KEY in sdata.shapes else None  # TODO: utils
+        if self.roi is not None:
+            self.roi = to_intrinsic(sdata, self.roi, element_name).geometry[0]
 
         assert self.tile_width > self.tile_overlap
 
-        self.compute()
-
-    @classmethod
-    def from_image(cls, image: xr.DataArray, tile_width: int, tile_overlap: int):
-        xmax = len(image.coords["x"])
-        ymax = len(image.coords["y"])
-        return Tiles2D(tile_width, xmax, ymax, tile_overlap=tile_overlap, int_coords=True)
-
-    @classmethod
-    def from_dataframe(cls, df: dd.DataFrame, tile_width: int, tile_overlap: int):
-        xmin, ymin = df.x.min().compute(), df.y.min().compute()
-        xmax, ymax = df.x.max().compute(), df.y.max().compute()
-
-        return Tiles2D(
-            tile_width, xmax, ymax, ymin=ymin, xmin=xmin, tile_overlap=tile_overlap, tight=True
-        )
-
-    def compute(self):
         width_x = self.tile_x.tight_width()
         width_y = self.tile_y.tight_width()
-
-        self._count = self.tile_x._count * self.tile_y._count
 
         if self.tight:
             self.tile_width = max(width_x, width_y)
             self.tile_x.update(self.tile_width)
             self.tile_y.update(self.tile_width)
 
+        self._ilocs = []
+
+        for i in range(self.tile_x._count * self.tile_y._count):
+            ix, iy = self.pair_indices(i)
+            bounds = self.iloc(ix, iy)
+            patch = box(*bounds)
+            if self.roi is None or self.roi.intersects(patch):
+                self._ilocs.append((ix, iy))
+
     def pair_indices(self, i: int) -> tuple[int, int]:
         iy, ix = divmod(i, self.tile_x._count)
         return ix, iy
+
+    def iloc(self, ix: int, iy: int):
+        xmin, xmax = self.tile_x[ix]
+        ymin, ymax = self.tile_y[iy]
+        return [xmin, ymin, xmax, ymax]
 
     def __getitem__(self, i) -> tuple[int, int, int, int]:
         """One tile a tuple representing its bounding box: (xmin, ymin, xmax, ymax)"""
         if isinstance(i, slice):
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
-        ix, iy = self.pair_indices(i)
 
-        xmin, xmax = self.tile_x[ix]
-        ymin, ymax = self.tile_y[iy]
-
-        return [xmin, ymin, xmax, ymax]
+        return self.iloc(*self._ilocs[i])
 
     def __len__(self):
-        return self._count
+        return len(self._ilocs)
 
     def __iter__(self):
         for i in range(len(self)):
             yield self[i]
 
-    def polygon(self, bounds: list[int]) -> Polygon:
-        return box(*bounds)
+    def polygon(self, i: int) -> Polygon:
+        return box(*self[i]).intersection(self.roi)
 
+    @property
     def polygons(self) -> list[Polygon]:
-        return [self.polygon(self[i]) for i in range(len(self))]
+        return [self.polygon(i) for i in range(len(self))]
 
-    def write(self, patch_attrs_file: str):
-        parent = Path(patch_attrs_file).absolute().parent
-        parent.mkdir(parents=True, exist_ok=True)
+    def write(self, overwrite: bool = True):
+        geo_df = gpd.GeoDataFrame(
+            {"geometry": self.polygons, "bounds": [self[i] for i in range(len(self))]}
+        )
+        geo_df = ShapesModel.parse(geo_df, transformations=self.element.attrs["transform"])
+        self.sdata.add_shapes("patches", geo_df, overwrite=overwrite)
 
-        with open(patch_attrs_file, "w") as f:
-            f.write("\n".join((str(parent / f"{i}.zarr.zip") for i in range(len(self)))))
+    def patchify_transcripts(self, baysor_dir: str):
+        import shapely
+        from shapely.geometry import Point
+        from tqdm import tqdm
 
-        log.info(f"Patch informations saved in file {patch_attrs_file}")
+        df_key, df = _get_item(self.sdata, "points")
+
+        baysor_dir = Path(baysor_dir)
+
+        polygons = to_intrinsic(self.sdata, self.sdata["patches"], df_key).geometry
+
+        log.info(f"Making {len(polygons)} sub-csv for Baysor")
+        for i, polygon in enumerate(tqdm(polygons)):
+            patch_dir = (baysor_dir / str(i)).absolute()
+            patch_dir.mkdir(parents=True, exist_ok=True)
+            patch_path = patch_dir / "transcripts.csv"
+
+            tx0, ty0, tx1, ty1 = polygon.bounds
+            where = (df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)
+
+            if polygon.area < box(*polygon.bounds).area:
+                df[where].to_csv(patch_path, single_file=True)
+            else:
+                sub_df = df[where].compute()
+
+                points = [Point(row) for row in sub_df[["x", "y"]].values]
+                tree = shapely.STRtree(points)
+                indices = tree.query(polygon, predicate="intersects")
+
+                sub_df.iloc[indices].to_csv(patch_path)
+
+        log.info(f"Patches saved in directory {baysor_dir}")
