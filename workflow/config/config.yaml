@@ -26,7 +26,7 @@ segmentation:
 aggregate:
   intensity_mean: true
   transcript_count: false
-  gene_column: none
+  gene_column: false
 
 annotation: false
 

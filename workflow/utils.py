@@ -9,6 +9,7 @@ class WorkflowPaths:
 
         self.polygons = self.sdata_path / "shapes" / "polygons"
         self.patches = self.sdata_path / "shapes" / "patches"
+        self.table = self.sdata_path / "table"
 
         self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
         self.patches_dir = self.temp_dir / "patches"
@@ -28,6 +29,10 @@ def _dump_arg(key: str, value):
     if isinstance(value, list):
         for v in value:
             yield from (option, str(v))
+    elif value is True:
+        yield option
+    elif value is False:
+        yield f"--no-{key.replace('_', '-')}"
     else:
         yield from (option, str(value))
 

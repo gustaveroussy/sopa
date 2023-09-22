@@ -76,9 +76,22 @@ else:
             sopa segmentation cellpose {paths.sdata_path} {dump_args(config["segmentation"]["cellpose"])}
             """
 
+rule aggregate:
+    input:
+        paths.polygons,
+    output:
+        directory(paths.table),
+    conda:
+        "spatial"
+    shell:
+        f"""
+        sopa aggregate {paths.sdata_path} {dump_args(config["aggregate"])}
+        """
+
 rule explorer:
     input:
         paths.polygons,
+        paths.table,
     output:
         paths.explorer_experiment,
     conda:
