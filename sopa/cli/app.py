@@ -84,9 +84,11 @@ def aggregate(
 @app.command()
 def patchify(
     sdata_path: str,
+    mode: str = option,
     tile_width: float = option,
     tile_overlap: float = option,
-    mode: str = option,
+    tile_width_microns: float = None,
+    tile_overlap_microns: float = None,
     baysor_dir: str = None,
 ):
     from pathlib import Path
@@ -97,7 +99,7 @@ def patchify(
 
     from sopa._constants import SopaFiles
     from sopa.utils.tiling import Tiles2D
-    from sopa.utils.utils import _get_spatial_image
+    from sopa.utils.utils import _get_key, _get_spatial_image
 
     image_key, _ = _get_spatial_image(sdata)
 
@@ -105,11 +107,13 @@ def patchify(
     tiles.write()
 
     if mode == "parallel":
-        if baysor_dir is not None:
-            tiles.patchify_transcripts(baysor_dir)
-
         with open(Path(sdata_path) / SopaFiles.NUM_PATCHES, "w") as f:
             f.write(str(len(tiles)))
+
+        if baysor_dir is not None:
+            df_key = _get_key(sdata, "points")
+            tiles = Tiles2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
+            tiles.patchify_transcripts(baysor_dir)
 
 
 @app.command()

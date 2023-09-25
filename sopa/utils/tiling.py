@@ -143,14 +143,12 @@ class Tiles2D:
         from shapely.geometry import Point
         from tqdm import tqdm
 
-        df_key, df = _get_item(self.sdata, "points")
+        df = self.element
 
         baysor_dir = Path(baysor_dir)
 
-        polygons = to_intrinsic(self.sdata, self.sdata["patches"], df_key).geometry
-
-        log.info(f"Making {len(polygons)} sub-csv for Baysor")
-        for i, polygon in enumerate(tqdm(polygons)):
+        log.info(f"Making {len(self)} sub-csv for Baysor")
+        for i, polygon in enumerate(tqdm(self.polygons)):
             patch_dir = (baysor_dir / str(i)).absolute()
             patch_dir.mkdir(parents=True, exist_ok=True)
             patch_path = patch_dir / "transcripts.csv"
