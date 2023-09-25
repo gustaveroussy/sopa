@@ -1,3 +1,5 @@
+import ast
+
 import typer
 
 from .read import app_read
@@ -90,6 +92,9 @@ def patchify(
     tile_width_microns: float = None,
     tile_overlap_microns: float = None,
     baysor_dir: str = None,
+    baysor_config: str = typer.Option(default=None, callback=ast.literal_eval),
+    baysor_cell_key: str = None,
+    baysor_unassigned_value: int = None,
 ):
     from pathlib import Path
 
@@ -113,7 +118,14 @@ def patchify(
         if baysor_dir is not None:
             df_key = _get_key(sdata, "points")
             tiles = Tiles2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
-            tiles.patchify_transcripts(baysor_dir)
+            tiles.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
+
+            if baysor_config is not None:
+                from sopa.segmentation.baysor.prepare import to_toml
+
+                for i in range(len(tiles)):
+                    path = Path(baysor_dir) / str(i) / "config.toml"
+                    to_toml(path, baysor_config)
 
 
 @app.command()

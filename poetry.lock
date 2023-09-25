@@ -1528,6 +1528,26 @@ files = [
 ]
 
 [[package]]
+name = "loompy"
+version = "3.0.7"
+description = "Work with Loom files for single-cell RNA-seq data"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "loompy-3.0.7.tar.gz", hash = "sha256:b5cdf7b54734c6bed3a181d11947af70af2c6e0dcadc02fd0e871df232faa8f4"},
+]
+
+[package.dependencies]
+click = "*"
+h5py = "*"
+numba = "*"
+numpy = "*"
+numpy-groupies = "*"
+scipy = "*"
+setuptools = "*"
+
+[[package]]
 name = "markdown"
 version = "3.4.4"
 description = "Python implementation of John Gruber's Markdown."
@@ -2132,6 +2152,25 @@ files = [
     {file = "numpy-1.23.4-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:4d52914c88b4930dafb6c48ba5115a96cbab40f45740239d9f4159c4ba779962"},
     {file = "numpy-1.23.4.tar.gz", hash = "sha256:ed2cc92af0efad20198638c69bb0fc2870a58dabfba6eb722c933b48556c686c"},
 ]
+
+[[package]]
+name = "numpy-groupies"
+version = "0.10.1"
+description = "Optimised tools for group-indexing operations: aggregated sum and more."
+category = "dev"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "numpy-groupies-0.10.1.tar.gz", hash = "sha256:f0aa57d81ae99c70f0a8b4f1ca53447951ecff63d6ca4edb0906206229044e2d"},
+    {file = "numpy_groupies-0.10.1-py3-none-any.whl", hash = "sha256:03621e2e223d3978c0f45537997f932e436af6d6bbbf6925295ad4f793ff059d"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+dev = ["numba", "pandas", "pytest"]
+fast = ["numba"]
 
 [[package]]
 name = "ome-zarr"
@@ -3650,6 +3689,18 @@ numpy = "*"
 all = ["defusedxml", "fsspec", "imagecodecs (>=2023.8.12)", "lxml", "matplotlib", "zarr"]
 
 [[package]]
+name = "toml"
+version = "0.10.2"
+description = "Python Library for Tom's Obvious, Minimal Language"
+category = "dev"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
+    {file = "toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -4126,4 +4177,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "d78cae8b1d9376606c80b21146ffbafb5e9f813fa6fe875e64661c83b79e3cf4"
+content-hash = "8ad9fb95724d69327a2548a145c2d45645189f9218212d3eccbb90ff55f61550"

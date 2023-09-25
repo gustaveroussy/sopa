@@ -138,12 +138,17 @@ class Tiles2D:
         geo_df = ShapesModel.parse(geo_df, transformations=self.element.attrs["transform"])
         self.sdata.add_shapes("patches", geo_df, overwrite=overwrite)
 
-    def patchify_transcripts(self, baysor_dir: str):
+    def patchify_transcripts(
+        self, baysor_dir: str, cell_key: str = None, unassigned_value: int | str = None
+    ):
         import shapely
         from shapely.geometry import Point
         from tqdm import tqdm
 
         df = self.element
+
+        if cell_key is not None and unassigned_value is not None:
+            df[cell_key] = df[cell_key].replace(unassigned_value, 0)
 
         baysor_dir = Path(baysor_dir)
 
