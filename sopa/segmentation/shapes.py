@@ -107,6 +107,9 @@ def average(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
                     max(bounds[0] - xmin, 0) : bounds[2] - xmin,
                 ]
 
+                if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
+                    continue
+
                 mask = rasterize(poly, sub_image.shape[1:], bounds)
 
                 intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
