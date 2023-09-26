@@ -58,14 +58,14 @@ def geometrize(mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2) -
     return polys
 
 
-def outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
+def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
 
 
 def rasterize(
     poly: Polygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
 ) -> np.ndarray:
-    """Transform a polygon into a numpy array with 1 where the polygon touches a pixel.
+    """Transform a polygon into a numpy array with value 1 where the polygon touches a pixel, else 0.
 
     Args:
         poly: Polygon to rasterize.
@@ -83,7 +83,7 @@ def rasterize(
 
 
 def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
-    bounds = outer_bounds(poly.bounds)
+    bounds = pixel_outer_bounds(poly.bounds)
 
     sub_image = xarr.sel(
         x=slice(bounds[0], bounds[2]), y=slice(bounds[1], bounds[3])
