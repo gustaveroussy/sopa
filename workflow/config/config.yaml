@@ -17,7 +17,7 @@ patchify:
 
 segmentation:
   cellpose:
-    diameter: 100
+    diameter: 15
     channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
