@@ -70,14 +70,6 @@ def aggregate(
 
     from sopa.segmentation.update import aggregate
 
-    print(sdata_path)
-
-    from pathlib import Path
-
-    p = Path(sdata_path) / "table"
-
-    print(p.exists())
-
     sdata = spatialdata.read_zarr(sdata_path)
 
     table = None
