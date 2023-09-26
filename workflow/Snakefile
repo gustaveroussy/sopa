@@ -7,6 +7,7 @@ paths = WorkflowPaths(config)
 rule all:
     input:
         paths.polygons,
+        paths.annotations,
         paths.explorer_experiment,
 
 rule to_spatialdata:
@@ -80,7 +81,7 @@ rule aggregate:
     input:
         paths.polygons,
     output:
-        directory(paths.table),
+        touch(paths.table),
     conda:
         "spatial"
     shell:
@@ -97,13 +98,12 @@ rule annotate:
         "spatial"
     shell:
         f"""
-        sopa annotate fluorescence {paths.sdata_path} {dump_args(config["annotate"]["fluorescence"])}
+        sopa annotate fluorescence {paths.sdata_path} {dump_args(config["annotation"]["fluorescence"])}
         """
 
 rule explorer:
     input:
         paths.polygons,
-        paths.table,
         paths.annotations,
     output:
         paths.explorer_experiment,

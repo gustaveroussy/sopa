@@ -54,7 +54,7 @@ segmentation:
 aggregate:
   intensity_mean: true
   transcript_count: false
-  gene_column: false
+  #gene_column: ""
 
 annotation:
   fluorescence:

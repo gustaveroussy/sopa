@@ -10,7 +10,7 @@ option = typer.Option()
 def qptiff(
     sdata_path: str,
     qptiff_path: str,
-    channels_renaming: str = typer.Option(default=None, callback=ast.literal_eval),
+    channels_renaming: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
     from sopa.io.qptiff import read_qptiff
 

@@ -9,7 +9,7 @@ option = typer.Option()
 @app_annotate.command()
 def fluorescence(
     sdata_path: str,
-    marker_cell_dict: str = typer.Option(default=None, callback=ast.literal_eval),
+    marker_cell_dict: str = typer.Option(default={}, callback=ast.literal_eval),
     key: str = "cell_type",
 ):
     from pathlib import Path

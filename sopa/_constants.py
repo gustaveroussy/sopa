@@ -13,4 +13,5 @@ class SopaKeys:
 
 
 class SopaFiles:
+    SMK_DIR = ".smk_files"
     NUM_PATCHES = ".n_patches"

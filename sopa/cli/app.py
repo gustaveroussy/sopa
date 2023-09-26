@@ -70,6 +70,14 @@ def aggregate(
 
     from sopa.segmentation.update import aggregate
 
+    print(sdata_path)
+
+    from pathlib import Path
+
+    p = Path(sdata_path) / "table"
+
+    print(p.exists())
+
     sdata = spatialdata.read_zarr(sdata_path)
 
     table = None
@@ -94,9 +102,9 @@ def patchify(
     tile_width_microns: float = None,
     tile_overlap_microns: float = None,
     baysor_dir: str = None,
-    baysor_config: str = typer.Option(default=None, callback=ast.literal_eval),
     baysor_cell_key: str = None,
     baysor_unassigned_value: int = None,
+    baysor_config: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
     from pathlib import Path
 
@@ -114,7 +122,7 @@ def patchify(
     tiles.write()
 
     if mode == "parallel":
-        with open(Path(sdata_path) / SopaFiles.NUM_PATCHES, "w") as f:
+        with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES, "w") as f:
             f.write(str(len(tiles)))
 
         if baysor_dir is not None:

@@ -23,14 +23,24 @@ class WorkflowPaths:
         self.sdata_zgroup = self.sdata_path / ".zgroup"  # trick to fix snakemake ChildIOException
         self.raw = self.sdata_path.with_suffix(".qptiff")  # TODO: make it general
 
-        self.polygons = self.sdata_path / "shapes" / "polygons"
-        self.patches = self.sdata_path / "shapes" / "patches"
-        self.table = self.sdata_path / "table" / "table"
-        self.annotations = self.table / "obs" / config["annotation"][ConfigConstants.CT_KEY]
+        self.shapes_dir = self.sdata_path / "shapes"
+        self.points_dir = self.sdata_path / "points"
+        self.images_dir = self.sdata_path / "images"
+        self.table_dir = self.sdata_path / "table"
+
+        self.polygons = self.shapes_dir / "polygons"
+        self.patches = self.shapes_dir / "patches"
+
+        self.smk_files = self.sdata_path / ".smk_files"
+        self.table = self.smk_files / "table"
+
+        self.annotations = (
+            self.table_dir / "table" / "obs" / config["annotation"][ConfigConstants.CT_KEY]
+        )
 
         self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
         self.patches_dir = self.temp_dir / "patches"
-        self.n_patches_path = self.sdata_path / ".n_patches"
+        self.n_patches_path = self.smk_files / ".n_patches"
 
         self.explorer_directory = self.sdata_path.with_suffix(".explorer")
         self.explorer_directory.mkdir(parents=True, exist_ok=True)
@@ -46,6 +56,8 @@ def _dump_arg(key: str, value):
     if isinstance(value, list):
         for v in value:
             yield from (option, str(v))
+    elif isinstance(value, dict):
+        yield from (option, '"' + str(value).replace("{", "{{").replace("}", "}}") + '"')
     elif value is True:
         yield option
     elif value is False:
