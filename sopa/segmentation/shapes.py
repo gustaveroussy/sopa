@@ -6,8 +6,7 @@ import numpy as np
 import shapely
 import shapely.affinity
 import xarray as xr
-from shapely.geometry import Polygon
-from tqdm import tqdm
+from shapely.geometry import Polygon, box
 
 log = logging.getLogger(__name__)
 
@@ -82,17 +81,38 @@ def rasterize(
     return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
 
 
-def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
-    bounds = pixel_outer_bounds(poly.bounds)
+def average(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
+    import dask.array as da
 
-    sub_image = xarr.sel(
-        x=slice(bounds[0], bounds[2]), y=slice(bounds[1], bounds[3])
-    ).data.compute()
+    log.info(f"Averaging intensities over {len(cells)} cells")
 
-    mask = rasterize(poly, sub_image.shape[1:], bounds[:2])
-    return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
+    tree = shapely.STRtree(cells)
 
+    intensities = np.zeros((len(cells), len(xarr.coords["c"])))
+    areas = np.zeros(len(cells))
 
-def average(xarr: xr.DataArray, polygons: list[Polygon]) -> np.ndarray:
-    log.info(f"Averaging intensities over {len(polygons)} polygons")
-    return np.stack([average_polygon(xarr, poly) for poly in tqdm(polygons)])
+    def func(x, block_info=None):
+        if block_info is not None:
+            (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
+            patch = box(xmin, ymin, xmax, ymax)
+            intersections = tree.query(patch, predicate="intersects")
+
+            for index in intersections:
+                poly = cells.iloc[index]
+                bounds = pixel_outer_bounds(poly.bounds)
+
+                sub_image = x[
+                    :,
+                    max(bounds[1] - ymin, 0) : bounds[3] - ymin,
+                    max(bounds[0] - xmin, 0) : bounds[2] - xmin,
+                ]
+
+                mask = rasterize(poly, sub_image.shape[1:], bounds)
+
+                intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
+                areas[index] += np.sum(mask)
+        return da.zeros_like(x)
+
+    xarr.data.rechunk({0: -1}).map_blocks(func).compute()
+
+    return intensities / areas[:, None]
