@@ -98,7 +98,7 @@ def average(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
             intersections = tree.query(patch, predicate="intersects")
 
             for index in intersections:
-                poly = cells.iloc[index]
+                poly = cells[index]
                 bounds = pixel_outer_bounds(poly.bounds)
 
                 sub_image = x[
