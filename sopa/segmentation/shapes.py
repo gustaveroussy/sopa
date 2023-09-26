@@ -1,6 +1,7 @@
 import logging
 from math import ceil, floor
 
+import cv2
 import numpy as np
 import shapely
 import shapely.affinity
@@ -41,8 +42,6 @@ def smooth(poly: Polygon, smooth_radius: int, tolerance: float) -> Polygon:
 
 def geometrize(mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2) -> list[Polygon]:
     # Copied from https://github.com/Vizgen/vizgen-postprocessing
-    import cv2
-
     polys = []
 
     for cell_id in range(1, mask.max() + 1):
@@ -63,25 +62,20 @@ def outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
 
 
-def update_bounds(
-    bounds: tuple[int, int, int, int], shape: tuple[int, int]
-) -> tuple[int, int, int, int]:
-    """Update bound's width and heigh to fit the image
+def rasterize(
+    poly: Polygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
+) -> np.ndarray:
+    """Transform a polygon into a numpy array with 1 where the polygon touches a pixel.
 
     Args:
-        bounds: original bounds (xmin, ymin, xmax, ymax)
-        shape: image shapes (dim_y, dim_x)
+        poly: Polygon to rasterize.
+        shape: Image shape as a tuple (y, x).
+        xy_min: Tuple containing the origin of the image [x0, y0].
 
     Returns:
-        Updated bounds
+        The mask array.
     """
-    return (bounds[0], bounds[1], bounds[0] + shape[1], bounds[1] + shape[0])
-
-
-def rasterize(poly: Polygon, bounds: tuple[int, int, int, int]) -> np.ndarray:
-    import cv2
-
-    xmin, ymin, xmax, ymax = bounds
+    xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
     coords = np.array(new_poly.boundary.coords)[None, :].astype(np.int32)
@@ -95,8 +89,7 @@ def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
         x=slice(bounds[0], bounds[2]), y=slice(bounds[1], bounds[3])
     ).data.compute()
 
-    bounds = update_bounds(bounds, sub_image.shape[1:])
-    mask = rasterize(poly, bounds)
+    mask = rasterize(poly, sub_image.shape[1:], bounds[:2])
     return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
 
 

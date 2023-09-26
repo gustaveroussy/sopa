@@ -43,8 +43,7 @@ class StainingSegmentation:
         ).values
 
         if polygon.area < box(*bounds).area:
-            bounds = shapes.update_bounds(bounds, patch.shape[1:])
-            patch = patch * shapes.rasterize(polygon, bounds)
+            patch = patch * shapes.rasterize(polygon, patch.shape[1:], bounds[:2])
 
         polygons = shapes.geometrize(self.method(patch))
 
