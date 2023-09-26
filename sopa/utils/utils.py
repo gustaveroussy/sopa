@@ -15,23 +15,25 @@ def _get_key(sdata: SpatialData, attr: str, key: str | None = None):
 
     assert (
         len(elements) == 1
-    ), f"Trying to get an element key of sdata.{attr}, but it contains multiple values and no dict key was provided"
+    ), f"Trying to get an element key of `sdata.{attr}`, but it contains multiple values and no dict key was provided"
 
     return next(iter(elements.keys()))
 
 
 def _get_element(sdata: SpatialData, attr: str, key: str | None = None):
     key = _get_key(sdata, attr, key)
-    return sdata[key]
+    return sdata[key] if key is not None else None
 
 
 def _get_item(sdata: SpatialData, attr: str, key: str | None = None):
     key = _get_key(sdata, attr, key)
-    return key, sdata[key]
+    return key, sdata[key] if key is not None else None
 
 
 def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str, xr.DataArray]:
     key = _get_key(sdata, "images", key)
+
+    assert key is not None, "One image (in `sdata.images`) is required"
 
     image = sdata.images[key]  # TODO: switch axes for c,y,x
 

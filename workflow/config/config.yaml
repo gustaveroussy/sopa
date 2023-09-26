@@ -19,8 +19,8 @@ segmentation:
   cellpose:
     diameter: 100
     channels: ["DAPI"]
-    tile_width: 5000
-    tile_overlap: 50
+    flow_threshold: 2
+    cellprob_threshold: -6
     expand_radius: 2
 
   baysor:
@@ -56,7 +56,15 @@ aggregate:
   transcript_count: false
   gene_column: false
 
-annotation: false
+annotation:
+  fluorescence:
+    marker_cell_dict:
+      CK: Tumoral cell
+      CD3: T cell
+      CD31: Endothelial
+      FAP: Fibroblast
+      CD68: Macrophage
+      CD20: B cell
 
 explorer:
   shapes_key: "polygons"

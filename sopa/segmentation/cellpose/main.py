@@ -12,9 +12,3 @@ def cellpose_patch(
         return mask
 
     return _
-
-
-def run_cellpose(channels):
-    assert len(channels) in [1, 2], f"Provide one or two channel names. Found {len(channels)}"
-    channels = [0, 0] if len(channels) == 1 else [1, 2]
-    ...

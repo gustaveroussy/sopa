@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 
@@ -6,6 +7,8 @@ import tifffile as tf
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
+
+log = logging.getLogger(__name__)
 
 
 def get_channel_name(description):
@@ -23,8 +26,12 @@ def read_qptiff(
         page_series = tif.series[0]
         names = [get_channel_name(page.description) for page in page_series]
 
+        log.info(f"Found channel names {names}")
+
         if channels_renaming is not None:
+            log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
             names = [channels_renaming.get(name, name) for name in names]
+            log.info(f"New names are: {names}")
 
         image_name = Path(path).absolute().stem
         image = Image2DModel.parse(

@@ -2,7 +2,7 @@ from utils import WorkflowPaths, dump_args
 
 assert "sdata_path" in config.keys(), "Argument --sdata_path is required"
 
-paths = WorkflowPaths(config["sdata_path"])
+paths = WorkflowPaths(config)
 
 rule all:
     input:
@@ -88,10 +88,23 @@ rule aggregate:
         sopa aggregate {paths.sdata_path} {dump_args(config["aggregate"])}
         """
 
+rule annotate:
+    input:
+        paths.table,
+    output:
+        directory(paths.annotations),
+    conda:
+        "spatial"
+    shell:
+        f"""
+        sopa annotate fluorescence {paths.sdata_path} {dump_args(config["annotate"]["fluorescence"])}
+        """
+
 rule explorer:
     input:
         paths.polygons,
         paths.table,
+        paths.annotations,
     output:
         paths.explorer_experiment,
     conda:

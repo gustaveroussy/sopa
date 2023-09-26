@@ -2,12 +2,14 @@ import ast
 
 import typer
 
+from .annotate import app_annotate
 from .read import app_read
 from .segmentation import app_segmentation
 
 option = typer.Option()
 
 app = typer.Typer()
+app.add_typer(app_annotate, name="annotate")
 app.add_typer(app_segmentation, name="segmentation")
 app.add_typer(app_read, name="read")
 

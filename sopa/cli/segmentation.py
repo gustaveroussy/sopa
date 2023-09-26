@@ -9,6 +9,8 @@ def cellpose(
     sdata_path: str,
     diameter: float = option,
     channels: list[str] = option,
+    flow_threshold: int = option,
+    cellprob_threshold: int = option,
     tile_width: int = typer.Option(default=None),
     tile_overlap: int = typer.Option(default=None),
     expand_radius: int = typer.Option(default=0),
@@ -19,7 +21,6 @@ def cellpose(
 
     Args:\n
         sdata_path: Path to the sdata.zarr directory.\n
-        name: Name of the segmentation method. Can be either 'cellpose' or 'baysor'.\n
     """
     import spatialdata
 
@@ -29,7 +30,9 @@ def cellpose(
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    method = cellpose_patch(diameter, channels)
+    method = cellpose_patch(
+        diameter, channels, flow_threshold=flow_threshold, cellprob_threshold=cellprob_threshold
+    )
     segmentation = StainingSegmentation(sdata, method, channels)
 
     if patch_index is not None:
