@@ -44,7 +44,7 @@ class StainingSegmentation:
 
         if polygon.area < box(*bounds).area:
             bounds = shapes.update_bounds(bounds, patch.shape[1:])
-            patch = patch * shapes.to_chunk_mask(polygon, bounds)
+            patch = patch * shapes.rasterize(polygon, bounds)
 
         polygons = shapes.extract_polygons(self.method(patch))
 

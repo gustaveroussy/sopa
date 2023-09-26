@@ -2,11 +2,10 @@ import logging
 from math import ceil, floor
 
 import numpy as np
-import rasterio.features
 import shapely
 import shapely.affinity
 import xarray as xr
-from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry import Polygon
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
@@ -36,15 +35,14 @@ def expand(polygons: list[Polygon], expand_radius: float) -> list[Polygon]:
     return [polygon.buffer(expand_radius) for polygon in polygons]
 
 
-def smooth(poly: Polygon, smooth_radius: int = 5) -> Polygon:
-    # Copied from https://github.com/Vizgen/vizgen-postprocessing
-    smooth = poly.buffer(-smooth_radius).buffer(smooth_radius * 2).buffer(-smooth_radius)
-    return poly if isinstance(smooth, MultiPolygon) else smooth
+def smooth(poly: Polygon, smooth_radius: int, tolerance: float) -> Polygon:
+    return poly.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
 
 
-def extract_polygons(mask: np.ndarray) -> list[Polygon]:
+def extract_polygons(
+    mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2
+) -> list[Polygon]:
     # Copied from https://github.com/Vizgen/vizgen-postprocessing
-    # TODO: do not rely on cv2?
     import cv2
 
     polys = []
@@ -53,7 +51,8 @@ def extract_polygons(mask: np.ndarray) -> list[Polygon]:
         mask_id = (mask == cell_id).astype("uint8")
         contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        polys_ = [smooth(Polygon(c[:, 0, :])) for c in contours if c.shape[0] >= 4]
+        polys_ = [Polygon(c[:, 0, :]) for c in contours if c.shape[0] >= 4]
+        polys_ = [smooth(p, smooth_radius, tolerance) for p in polys_]
         polys_ = [p for p in polys_ if not p.is_empty]
 
         assert len(polys_) <= 1
@@ -81,11 +80,14 @@ def update_bounds(
     return (bounds[0], bounds[1], bounds[0] + shape[1], bounds[1] + shape[0])
 
 
-def to_chunk_mask(poly: Polygon, bounds: tuple[int, int, int, int]) -> np.ndarray:
+def rasterize(poly: Polygon, bounds: tuple[int, int, int, int]) -> np.ndarray:
+    import cv2
+
     xmin, ymin, xmax, ymax = bounds
 
     new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
-    return rasterio.features.rasterize([new_poly], out_shape=(ymax - ymin, xmax - xmin))
+    coords = np.array(new_poly.boundary.coords)[None, :].astype(np.int32)
+    return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
 
 
 def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
@@ -96,7 +98,7 @@ def average_polygon(xarr: xr.DataArray, poly: Polygon) -> np.ndarray:
     ).data.compute()
 
     bounds = update_bounds(bounds, sub_image.shape[1:])
-    mask = to_chunk_mask(poly, bounds)
+    mask = rasterize(poly, bounds)
     return np.sum(sub_image * mask, axis=(1, 2)) / np.sum(mask)
 
 
