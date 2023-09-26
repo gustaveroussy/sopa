@@ -46,7 +46,7 @@ class StainingSegmentation:
             bounds = shapes.update_bounds(bounds, patch.shape[1:])
             patch = patch * shapes.rasterize(polygon, bounds)
 
-        polygons = shapes.extract_polygons(self.method(patch))
+        polygons = shapes.geometrize(self.method(patch))
 
         return [affinity.translate(p, *bounds[:2]) for p in polygons]
 

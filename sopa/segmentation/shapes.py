@@ -39,9 +39,7 @@ def smooth(poly: Polygon, smooth_radius: int, tolerance: float) -> Polygon:
     return poly.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
 
 
-def extract_polygons(
-    mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2
-) -> list[Polygon]:
+def geometrize(mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2) -> list[Polygon]:
     # Copied from https://github.com/Vizgen/vizgen-postprocessing
     import cv2
 
