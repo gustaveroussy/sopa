@@ -77,6 +77,7 @@ def baysor(sdata_path: str, baysor_dir: str, gene_column: str, min_area: float =
         + [table_conflicts],
         join="outer",
     )
+    table.obs.dropna(axis="columns", inplace=True)
 
     geo_df = geo_df.loc[table.obs_names]
 

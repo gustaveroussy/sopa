@@ -38,7 +38,7 @@ def read_baysor(
 
 def read_all_baysor_patches(
     baysor_dir: str, min_area: float = 0
-) -> tuple(list[list[Polygon]], list[AnnData]):
+) -> tuple[list[list[Polygon]], list[AnnData]]:
     baysor_dir = Path(baysor_dir)
 
     outs = [read_baysor(directory, min_area) for directory in baysor_dir.iterdir()]
