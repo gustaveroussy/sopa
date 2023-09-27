@@ -1,7 +1,6 @@
 import logging
 from math import ceil, floor
 
-import cv2
 import numpy as np
 import shapely
 import shapely.affinity
@@ -11,13 +10,22 @@ from shapely.geometry import Polygon, box
 log = logging.getLogger(__name__)
 
 
-def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarray[Polygon]:
+def solve_conflicts(
+    polygons: list[Polygon],
+    threshold: float = 0.5,
+    patch_indices: np.ndarray | None = None,
+    return_status: bool = False,
+) -> np.ndarray[Polygon]:
     n_polygons = len(polygons)
     resolved_indices = np.arange(n_polygons)
 
     tree = shapely.STRtree(polygons)
     conflicts = tree.query(polygons, predicate="intersects")
-    conflicts = conflicts[:, conflicts[0] != conflicts[1]].T
+
+    if patch_indices is not None:
+        conflicts = conflicts[:, patch_indices[conflicts[0]] != patch_indices[conflicts[1]]].T
+    else:
+        conflicts = conflicts[:, conflicts[0] != conflicts[1]].T
 
     for i1, i2 in conflicts:
         resolved_i1, resolved_i2 = resolved_indices[i1], resolved_indices[i2]
@@ -28,7 +36,13 @@ def solve_conflicts(polygons: list[Polygon], threshold: float = 0.5) -> np.ndarr
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(polygons)
             polygons.append(poly1.union(poly2))
 
-    return np.array(polygons)[np.unique(resolved_indices)]
+    unique_indices = np.unique(resolved_indices)
+    unique_polygons = np.array(polygons)[unique_indices]
+
+    if return_status:
+        return unique_polygons, np.where(unique_indices < n_polygons, False, True)
+
+    return unique_polygons
 
 
 def expand(polygons: list[Polygon], expand_radius: float) -> list[Polygon]:
@@ -41,6 +55,8 @@ def smooth(poly: Polygon, smooth_radius: int, tolerance: float) -> Polygon:
 
 def geometrize(mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2) -> list[Polygon]:
     # Copied from https://github.com/Vizgen/vizgen-postprocessing
+    import cv2
+
     polys = []
 
     for cell_id in range(1, mask.max() + 1):
@@ -74,6 +90,8 @@ def rasterize(
     Returns:
         The mask array.
     """
+    import cv2
+
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
@@ -118,4 +136,4 @@ def average(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
 
     xarr.data.rechunk({0: -1}).map_blocks(func).compute()
 
-    return intensities / areas[:, None]
+    return intensities / areas[:, None].clip(1)

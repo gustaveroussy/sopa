@@ -4,6 +4,7 @@ import typer
 
 from .annotate import app_annotate
 from .read import app_read
+from .resolve import app_resolve
 from .segmentation import app_segmentation
 
 option = typer.Option()
@@ -12,6 +13,7 @@ app = typer.Typer()
 app.add_typer(app_annotate, name="annotate")
 app.add_typer(app_segmentation, name="segmentation")
 app.add_typer(app_read, name="read")
+app.add_typer(app_resolve, name="resolve")
 
 
 @app.command()
@@ -89,14 +91,14 @@ def aggregate(
 def patchify(
     sdata_path: str,
     mode: str = option,
-    tile_width: float = option,
-    tile_overlap: float = option,
+    tile_width_pixel: float = None,
+    tile_overlap_pixel: float = None,
     tile_width_microns: float = None,
     tile_overlap_microns: float = None,
     baysor_dir: str = None,
+    baysor_config: str = typer.Option(default={}, callback=ast.literal_eval),
     baysor_cell_key: str = None,
     baysor_unassigned_value: int = None,
-    baysor_config: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
     from pathlib import Path
 
@@ -110,24 +112,25 @@ def patchify(
 
     image_key, _ = _get_spatial_image(sdata)
 
-    tiles = Tiles2D(sdata, image_key, tile_width, tile_overlap)
-    tiles.write()
+    if tile_width_pixel is not None:
+        tiles = Tiles2D(sdata, image_key, tile_width_pixel, tile_overlap_pixel)
+        tiles.write()
 
-    if mode == "parallel":
-        with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES, "w") as f:
-            f.write(str(len(tiles)))
+        if mode == "parallel":
+            with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES, "w") as f:
+                f.write(str(len(tiles)))
 
-        if baysor_dir is not None:
-            df_key = _get_key(sdata, "points")
-            tiles = Tiles2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
-            tiles.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
+    if mode == "parallel" and baysor_dir is not None:
+        df_key = _get_key(sdata, "points")
+        tiles = Tiles2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
+        tiles.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
 
-            if baysor_config is not None:
-                from sopa.segmentation.baysor.prepare import to_toml
+        if baysor_config is not None:
+            from sopa.segmentation.baysor.prepare import to_toml
 
-                for i in range(len(tiles)):
-                    path = Path(baysor_dir) / str(i) / "config.toml"
-                    to_toml(path, baysor_config)
+            for i in range(len(tiles)):
+                path = Path(baysor_dir) / str(i) / "config.toml"
+                to_toml(path, baysor_config)
 
 
 @app.command()

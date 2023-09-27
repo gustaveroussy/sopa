@@ -12,8 +12,8 @@ reader:
 
 patchify:
   mode: parallel
-  tile_width: 4000
-  tile_overlap: 40
+  tile_width_pixel: 4000
+  tile_overlap_pixel: 40
 
 segmentation:
   cellpose:

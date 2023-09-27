@@ -125,7 +125,8 @@ class Tiles2D:
             yield self[i]
 
     def polygon(self, i: int) -> Polygon:
-        return box(*self[i]).intersection(self.roi)
+        square = box(*self[i])
+        return square if self.roi is None else square.intersection(self.roi)
 
     @property
     def polygons(self) -> list[Polygon]:
@@ -162,8 +163,6 @@ class Tiles2D:
             where = (df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)
 
             if polygon.area < box(*polygon.bounds).area:
-                df[where].to_csv(patch_path, single_file=True)
-            else:
                 sub_df = df[where].compute()
 
                 points = [Point(row) for row in sub_df[["x", "y"]].values]
@@ -171,5 +170,7 @@ class Tiles2D:
                 indices = tree.query(polygon, predicate="intersects")
 
                 sub_df.iloc[indices].to_csv(patch_path)
+            else:
+                df[where].to_csv(patch_path, single_file=True)
 
         log.info(f"Patches saved in directory {baysor_dir}")
