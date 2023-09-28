@@ -14,7 +14,7 @@ def solve_conflicts(
     polygons: list[Polygon],
     threshold: float = 0.5,
     patch_indices: np.ndarray | None = None,
-    return_status: bool = False,
+    return_indices: bool = False,
 ) -> np.ndarray[Polygon]:
     n_polygons = len(polygons)
     resolved_indices = np.arange(n_polygons)
@@ -39,8 +39,8 @@ def solve_conflicts(
     unique_indices = np.unique(resolved_indices)
     unique_polygons = np.array(polygons)[unique_indices]
 
-    if return_status:
-        return unique_polygons, np.where(unique_indices < n_polygons, False, True)
+    if return_indices:
+        return unique_polygons, np.where(unique_indices < n_polygons, unique_indices, -1)
 
     return unique_polygons
 

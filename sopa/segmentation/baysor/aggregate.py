@@ -56,16 +56,16 @@ def resolve(patch_polygons, adatas):
     polygons = [polygon for polys in patch_polygons for polygon in polys]
     baysor_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
-    polys_resolved, is_new = shapes.solve_conflicts(
-        polygons, patch_indices=patch_indices, return_status=True
+    polys_resolved, polys_indices = shapes.solve_conflicts(
+        polygons, patch_indices=patch_indices, return_indices=True
     )
 
-    existing_ids = baysor_ids[: (~is_new).sum()]
-    new_ids = np.char.add("merged_cell_", np.arange(is_new.sum()).astype(str))
+    existing_ids = baysor_ids[polys_indices[polys_indices >= 0]]
+    new_ids = np.char.add("merged_cell_", np.arange((polys_indices == -1).sum()).astype(str))
     index = np.concatenate([existing_ids, new_ids])
 
     return (
         gpd.GeoDataFrame({"geometry": polys_resolved}, index=index),
-        is_new,
+        polys_indices,
         new_ids,
     )

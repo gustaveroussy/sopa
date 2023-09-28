@@ -53,10 +53,10 @@ def baysor(sdata_path: str, baysor_dir: str, gene_column: str, min_area: float =
     sdata = spatialdata.read_zarr(sdata_path)
 
     patch_polygons, adatas = read_all_baysor_patches(baysor_dir, min_area)
-    geo_df, is_new, new_ids = resolve(patch_polygons, adatas)
+    geo_df, polys_indices, new_ids = resolve(patch_polygons, adatas)
     geo_df = ShapesModel.parse(geo_df, transformations=sdata["transcripts"].attrs["transform"])
 
-    new_polys = geo_df.geometry[is_new]
+    new_polys = geo_df.geometry[polys_indices == -1]
     geo_df_new = gpd.GeoDataFrame({"geometry": new_polys})
     geo_df_new = ShapesModel.parse(
         geo_df_new, transformations=sdata["transcripts"].attrs["transform"]
