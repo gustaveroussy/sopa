@@ -11,7 +11,7 @@ rule all:
         paths.annotations,
         paths.explorer_experiment,
 
-rule to_spatialdata:
+rule to_spatialdata: # TODO: update
     input:
         paths.raw,
     output:
@@ -32,13 +32,13 @@ checkpoint patchify:
         n_patches = paths.smk_n_patches,
         patches = directory(paths.patches),
     params:
-        patchify_args = args["patchify"],
-        baysor_args = args.dump_baysor_patchify() if args.baysor else "",
+        args_patchify = str(args["patchify"]),
+        args_baysor = args.dump_baysor_patchify() if args.baysor else "",
     conda:
         "spatial"
     shell:
         """
-        sopa patchify {paths.sdata_path} {params.patchify_args} {params.baysor_args}
+        sopa patchify {paths.sdata_path} {params.args_patchify} {params.args_baysor}
         """
 
 if args.cellpose:
@@ -51,7 +51,7 @@ if args.cellpose:
         conda:
             "spatial"
         params:
-            args_cellpose = args["segmentation"]["cellpose"],
+            args_cellpose = str(args["segmentation"]["cellpose"]),
         shell:
             """
             sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {wildcards.index} {params.args_cellpose}
@@ -60,14 +60,16 @@ if args.cellpose:
 if args.baysor:
     rule patch_segmentation_baysor:
         input:
-            paths.smk_n_patches,
+            n_patches = paths.smk_n_patches,
             baysor_patch = f"{paths.baysor_dir}/{{index}}",
         output:
             f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
+        params:
+            args_baysor_cell_key = args.baysor_cell_key,
         shell:
-            f"""
-            cd {{input.baysor_patch}}
-            {config['executables']['baysor']} run --save-polygons GeoJSON -c config.toml transcripts.csv {args.baysor_cell_id}
+            """
+            cd {input.baysor_patch}
+            {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
             """
 
 def get_input_resolve(name):
@@ -85,9 +87,11 @@ if args.cellpose:
             directory(paths.polygons),
         conda:
             "spatial"
+        params:
+            args_expand_radius = args.expand_radius,
         shell:
             """
-            sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {args.expand_radius}
+            sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {params.args_expand_radius}
             """
 
 if args.baysor:
@@ -112,7 +116,7 @@ rule aggregate:
     conda:
         "spatial"
     params:
-        args_aggregate = args["aggregate"],
+        args_aggregate = str(args["aggregate"]),
     shell:
         """
         sopa aggregate {paths.sdata_path} {params.args_aggregate}
@@ -126,7 +130,7 @@ rule annotate:
     conda:
         "spatial"
     params:
-        args_fluorescence = args["annotation"]["fluorescence"]
+        args_fluorescence = str(args["annotation"]["fluorescence"])
     shell:
         """
         sopa annotate fluorescence {paths.sdata_path} {params.args_fluorescence}
@@ -142,7 +146,7 @@ rule explorer:
     conda:
         "spatial"
     params:
-        args_explorer = args["explorer"]
+        args_explorer = str(args["explorer"]),
     shell:
         """
         sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer}

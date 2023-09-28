@@ -52,9 +52,9 @@ class WorkflowPaths:
 
     def cells_paths(self, n: int, name):
         if name == "cellpose":
-            return [self.cellpose_dir / f"{i}.zarr.zip" for i in range(n)]
+            return [str(self.cellpose_dir / f"{i}.zarr.zip") for i in range(n)]
         if name == "baysor":
-            return [self.baysor_dir / str(i) / "segmentation_polygons.json" for i in range(n)]
+            return [str(self.baysor_dir / str(i) / "segmentation_polygons.json") for i in range(n)]
 
 
 class Args:
@@ -104,10 +104,10 @@ class Args:
         return self._dump()
 
     @property
-    def baysor_cell_id(self):
-        if not self.baysor or "cell_id" not in self.config["segmentation"]["baysor"]:
+    def baysor_cell_key(self):
+        if not self.baysor or "cell_key" not in self.config["segmentation"]["baysor"]:
             return ""
-        return f":{self.config['segmentation']['baysor']['cell_id']}"
+        return f":{self.config['segmentation']['baysor']['cell_key']}"
 
     @property
     def gene_column(self):

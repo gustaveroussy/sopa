@@ -43,7 +43,7 @@ def aggregate(sdata: SpatialData, table: AnnData | None, intensity_mean: bool):
             var=pd.DataFrame(index=image.c),
             obs=pd.DataFrame(index=geo_df.index),
         )
-    else:
+    elif intensity_mean:
         table.obsm["intensities"] = pd.DataFrame(
             mean_intensities, columns=image.coords["c"].values, index=table.obs_names
         )

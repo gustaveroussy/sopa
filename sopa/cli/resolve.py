@@ -99,4 +99,8 @@ def baysor(
     )
 
     sdata.add_shapes("polygons", geo_df)
+
+    if sdata.table is not None:
+        del sdata.table
+
     sdata.table = table
