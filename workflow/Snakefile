@@ -22,59 +22,81 @@ rule to_spatialdata:
         sopa read {config["reader"]["name"]} {paths.sdata_path} {paths.raw}
         """
 
-if config["patchify"]["mode"] == "parallel":
-    checkpoint prepare_parralel_segmentation:
-        input:
-            paths.sdata_zgroup,
-        output:
-            paths.n_patches_path,
-            directory(paths.patches),
-        conda:
-            "spatial"
-        shell:
-            f"""
-            sopa patchify {paths.sdata_path} {dump_args(config["patchify"])}
-            """
+checkpoint patchify:
+    input:
+        paths.sdata_zgroup,
+    output:
+        paths.n_patches_path,
+        directory(paths.patches),
+    conda:
+        "spatial"
+    shell:
+        f"""
+        sopa patchify {paths.sdata_path} {dump_args(config["patchify"])} {paths.dump_baysor_patchify() if paths.run_baysor else ""}
+        """
 
-    rule patch_segmentation:
+def baysor_cell_id():
+    if "cell_id" not in config["segmentation"]["baysor"]:
+        return ""
+    return f":{config['segmentation']['baysor']['cell_id']}"
+
+if paths.run_cellpose:
+    rule patch_segmentation_cellpose:
         input:
             paths.n_patches_path,
             paths.patches,
         output:
-            f"{paths.patches_dir}/{{index}}.zarr.zip",
+            f"{paths.cellpose_dir}/{{index}}.zarr.zip",
         conda:
             "spatial"
         shell:
             f"""
-            sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.patches_dir} --patch-index {{wildcards.index}} {dump_args(config["segmentation"]["cellpose"])}
-            """
-
-    def get_input_resolve_segmentation(wilcards):
-        with open(checkpoints.prepare_parralel_segmentation.get(**wilcards).output[0], 'r') as f:
-            return paths.cells_paths(int(f.read()))
-
-    rule resolve_parralel_segmentation:
-        input:
-            get_input_resolve_segmentation,
-        output:
-            directory(paths.polygons),
-        conda:
-            "spatial"
-        shell:
-            f"""
-            sopa segmentation resolve {paths.sdata_path} --patch-dir {paths.patches_dir} --expand-radius {config["segmentation"]["cellpose"]["expand_radius"]}
+            sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {{wildcards.index}} {dump_args(config["segmentation"]["cellpose"])}
             """
 else:
-    rule sequential_segmentation:
+    rule patch_segmentation_baysor:
         input:
-            paths.sdata_zgroup,
+            paths.n_patches_path,
+            baysor_patch = f"{paths.baysor_dir}/{{index}}",
+        output:
+            f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
+        shell:
+            f"""
+            baysor run --save-polygons GeoJSON -c {{input.baysor_patch}}/config.toml {{input.baysor_patch}}/transcripts.csv {baysor_cell_id()}
+            """
+
+def get_input_resolve(name):
+    import json
+
+    def _(wilcards):
+        with open(checkpoints.patchify.get(**wilcards).output[0], 'r') as f:
+            return paths.cells_paths(json.load(f)[name], name)
+    return _
+
+if paths.run_cellpose:
+    rule resolve_cellpose:
+        input:
+            get_input_resolve("cellpose"),
         output:
             directory(paths.polygons),
         conda:
             "spatial"
         shell:
             f"""
-            sopa segmentation cellpose {paths.sdata_path} {dump_args(config["segmentation"]["cellpose"])}
+            sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {config["segmentation"]["cellpose"]["expand_radius"]}
+            """
+else:
+    rule resolve_baysor:
+        input:
+            get_input_resolve("baysor"),
+        output:
+            directory(paths.polygons),
+            touch(paths.table)
+        conda:
+            "spatial"
+        shell:
+            f"""
+            sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {config["segmentation"]["baysor"]["config"]["data"]["gene"]}
             """
 
 rule aggregate:
