@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 import shapely.affinity
 import xarray as xr
-from shapely.geometry import Polygon, box
+from shapely.geometry import MultiPolygon, Polygon, box
 
 log = logging.getLogger(__name__)
 
@@ -49,28 +49,55 @@ def expand(polygons: list[Polygon], expand_radius: float) -> list[Polygon]:
     return [polygon.buffer(expand_radius) for polygon in polygons]
 
 
-def smooth(poly: Polygon, smooth_radius: int, tolerance: float) -> Polygon:
-    return poly.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
+def smooth(poly: Polygon, dist: float, tolerance: float) -> Polygon:
+    return poly.buffer(-dist).buffer(-2 * dist).buffer(-dist).simplify(tolerance)
 
 
-def geometrize(mask: np.ndarray, smooth_radius: int = 3, tolerance: float = 2) -> list[Polygon]:
-    # Copied from https://github.com/Vizgen/vizgen-postprocessing
+def _find_contours(cell_mask: np.ndarray) -> list[Polygon]:
     import cv2
 
-    polys = []
+    contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    return [Polygon(c[:, 0, :]) for c in contours if c.shape[0] >= 4]
 
-    for cell_id in range(1, mask.max() + 1):
-        mask_id = (mask == cell_id).astype("uint8")
-        contours, _ = cv2.findContours(mask_id, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        polys_ = [Polygon(c[:, 0, :]) for c in contours if c.shape[0] >= 4]
-        polys_ = [smooth(p, smooth_radius, tolerance) for p in polys_]
-        polys_ = [p for p in polys_ if not p.is_empty]
+def _geometrize_cell(
+    mask: np.ndarray, cell_id: int, smooth_radius: int, tolerance: float
+) -> Polygon | None:
+    """Transform one cell id to a polygon based on a mask array. Inspired from https://github.com/Vizgen/vizgen-postprocessing
 
-        assert len(polys_) <= 1
-        polys.extend(polys_)
+    Args:
+        mask: Numpy array with values == cell_id where the cell is
+        cell_id: ID of the cell to geometrize
+        smooth_radius: radius used to smooth the cell polygon
+        tolerance: tolerance used to simplify the cell polygon
 
-    return polys
+    Returns:
+        Shapely polygon representing the cell, or `None` if the cell was empty after smoothing
+    """
+    polygons = _find_contours((mask == cell_id).astype("uint8"))
+    polygons = [polygon for polygon in polygons if not polygon.buffer(-smooth_radius).is_empty]
+    polygon = MultiPolygon(polygons)
+    polygon = polygon.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
+
+    if polygon.is_empty:
+        return None
+
+    if isinstance(polygon, Polygon):
+        return polygon
+
+    log.warn(
+        f"""Geometry index {cell_id} is composed of {len(polygon.geoms)} polygons of areas: {[p.area for p in polygon.geoms]}. Only the polygon corresponding to the largest area will be kept"""
+    )
+
+    return max(polygon.geoms, key=lambda polygon: polygon.area)
+
+
+def geometrize(mask: np.ndarray, smooth_radius: int = 5, tolerance: float = 2) -> list[Polygon]:
+    polygons = [
+        _geometrize_cell(mask, cell_id, smooth_radius, tolerance)
+        for cell_id in range(1, mask.max() + 1)
+    ]
+    return [polygon for polygon in polygons if polygon is not None]
 
 
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
