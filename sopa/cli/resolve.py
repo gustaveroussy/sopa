@@ -39,7 +39,9 @@ def cellpose(
 
 
 @app_resolve.command()
-def baysor(sdata_path: str, baysor_dir: str, gene_column: str, min_area: float = 0):
+def baysor(
+    sdata_path: str, baysor_dir: str = option, gene_column: str = option, min_area: float = 0
+):
     import anndata
     import geopandas as gpd
     import numpy as np
@@ -56,25 +58,27 @@ def baysor(sdata_path: str, baysor_dir: str, gene_column: str, min_area: float =
     geo_df, polys_indices, new_ids = resolve(patch_polygons, adatas)
     geo_df = ShapesModel.parse(geo_df, transformations=sdata["transcripts"].attrs["transform"])
 
-    new_polys = geo_df.geometry[polys_indices == -1]
-    geo_df_new = gpd.GeoDataFrame({"geometry": new_polys})
-    geo_df_new = ShapesModel.parse(
-        geo_df_new, transformations=sdata["transcripts"].attrs["transform"]
-    )
+    table_conflicts = []
+    if len(new_ids):
+        new_polys = geo_df.geometry[polys_indices == -1]
+        geo_df_new = gpd.GeoDataFrame({"geometry": new_polys})
+        geo_df_new = ShapesModel.parse(
+            geo_df_new, transformations=sdata["transcripts"].attrs["transform"]
+        )
 
-    table_conflicts = sdata.aggregate(
-        values="transcripts",
-        by=geo_df_new,
-        value_key=gene_column,
-        agg_func="count",
-        target_coordinate_system=get_intrinsic_cs(sdata, "transcripts"),
-    ).table
-    table_conflicts.obs_names = new_ids
+        table_conflicts = sdata.aggregate(
+            values="transcripts",
+            by=geo_df_new,
+            value_key=gene_column,
+            agg_func="count",
+            target_coordinate_system=get_intrinsic_cs(sdata, "transcripts"),
+        ).table
+        table_conflicts.obs_names = new_ids
+        table_conflicts = [table_conflicts]
 
     valid_ids = set(list(geo_df.index))
     table = anndata.concat(
-        [adata[list(valid_ids & set(list(adata.obs_names)))] for adata in adatas]
-        + [table_conflicts],
+        [adata[list(valid_ids & set(list(adata.obs_names)))] for adata in adatas] + table_conflicts,
         join="outer",
     )
     table.obs.dropna(axis="columns", inplace=True)

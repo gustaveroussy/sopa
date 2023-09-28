@@ -13,16 +13,16 @@ reader:
 patchify:
   tile_width_pixel: 4000
   tile_overlap_pixel: 40
-  tile_width_microns: 400
-  tile_overlap_microns: 30
+  tile_width_microns: 4000
+  tile_overlap_microns: 40
 
 segmentation:
-  cellpose:
-    diameter: 150
-    channels: ["DAPI"]
-    flow_threshold: 2
-    cellprob_threshold: -6
-    expand_radius: 2
+  # cellpose:
+  #   diameter: 150
+  #   channels: ["DAPI"]
+  #   flow_threshold: 2
+  #   cellprob_threshold: -6
+  #   expand_radius: 2
 
   baysor:
     cell_key: cell_id
@@ -58,16 +58,19 @@ aggregate:
   transcript_count: false
   #gene_column: ""
 
-annotation:
-  fluorescence:
-    marker_cell_dict:
-      CK: Tumoral cell
-      CD3: T cell
-      CD31: Endothelial
-      FAP: Fibroblast
-      CD68: Macrophage
-      CD20: B cell
+# annotation:
+#   fluorescence:
+#     marker_cell_dict:
+#       CK: Tumoral cell
+#       CD3: T cell
+#       CD31: Endothelial
+#       FAP: Fibroblast
+#       CD68: Macrophage
+#       CD20: B cell
 
 explorer:
   shapes_key: "polygons"
   gene_column: "gene"
+
+executables:
+  baysor: ~/.julia/bin/baysor

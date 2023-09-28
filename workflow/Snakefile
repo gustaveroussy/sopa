@@ -1,8 +1,9 @@
-from utils import WorkflowPaths, dump_args
+from utils import WorkflowPaths, Args
 
 assert "sdata_path" in config.keys(), "Argument --sdata_path is required"
 
 paths = WorkflowPaths(config)
+args = Args(paths, config)
 
 rule all:
     input:
@@ -17,63 +18,66 @@ rule to_spatialdata:
         paths.sdata_zgroup,
     conda:
         "spatial"
+    params:
+        reader_name = config["reader"]["name"],
     shell:
-        f"""
-        sopa read {config["reader"]["name"]} {paths.sdata_path} {paths.raw}
+        """
+        sopa read {params.reader_name} {paths.sdata_path} {paths.raw}
         """
 
 checkpoint patchify:
     input:
         paths.sdata_zgroup,
     output:
-        paths.n_patches_path,
-        directory(paths.patches),
+        n_patches = paths.smk_n_patches,
+        patches = directory(paths.patches),
+    params:
+        patchify_args = args["patchify"],
+        baysor_args = args.dump_baysor_patchify() if args.baysor else "",
     conda:
         "spatial"
     shell:
-        f"""
-        sopa patchify {paths.sdata_path} {dump_args(config["patchify"])} {paths.dump_baysor_patchify() if paths.run_baysor else ""}
+        """
+        sopa patchify {paths.sdata_path} {params.patchify_args} {params.baysor_args}
         """
 
-def baysor_cell_id():
-    if "cell_id" not in config["segmentation"]["baysor"]:
-        return ""
-    return f":{config['segmentation']['baysor']['cell_id']}"
-
-if paths.run_cellpose:
+if args.cellpose:
     rule patch_segmentation_cellpose:
         input:
-            paths.n_patches_path,
+            paths.smk_n_patches,
             paths.patches,
         output:
-            f"{paths.cellpose_dir}/{{index}}.zarr.zip",
+            "{paths.cellpose_dir}/{index}.zarr.zip",
         conda:
             "spatial"
+        params:
+            args_cellpose = args["segmentation"]["cellpose"],
         shell:
-            f"""
-            sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {{wildcards.index}} {dump_args(config["segmentation"]["cellpose"])}
             """
-else:
+            sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {wildcards.index} {params.args_cellpose}
+            """
+
+if args.baysor:
     rule patch_segmentation_baysor:
         input:
-            paths.n_patches_path,
+            paths.smk_n_patches,
             baysor_patch = f"{paths.baysor_dir}/{{index}}",
         output:
             f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
         shell:
             f"""
-            baysor run --save-polygons GeoJSON -c {{input.baysor_patch}}/config.toml {{input.baysor_patch}}/transcripts.csv {baysor_cell_id()}
+            cd {{input.baysor_patch}}
+            {config['executables']['baysor']} run --save-polygons GeoJSON -c config.toml transcripts.csv {args.baysor_cell_id}
             """
 
 def get_input_resolve(name):
     import json
-
     def _(wilcards):
-        with open(checkpoints.patchify.get(**wilcards).output[0], 'r') as f:
+        with open(checkpoints.patchify.get(**wilcards).output.n_patches, 'r') as f:
             return paths.cells_paths(json.load(f)[name], name)
     return _
 
-if paths.run_cellpose:
+if args.cellpose:
     rule resolve_cellpose:
         input:
             get_input_resolve("cellpose"),
@@ -82,56 +86,64 @@ if paths.run_cellpose:
         conda:
             "spatial"
         shell:
-            f"""
-            sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {config["segmentation"]["cellpose"]["expand_radius"]}
             """
-else:
+            sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {args.expand_radius}
+            """
+
+if args.baysor:
     rule resolve_baysor:
         input:
             get_input_resolve("baysor"),
         output:
             directory(paths.polygons),
-            touch(paths.table)
+            touch(paths.smk_table)
         conda:
             "spatial"
         shell:
-            f"""
-            sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {config["segmentation"]["baysor"]["config"]["data"]["gene"]}
+            """
+            sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {args.gene_column}
             """
 
 rule aggregate:
     input:
         paths.polygons,
     output:
-        touch(paths.table),
+        touch(paths.smk_aggregation),
     conda:
         "spatial"
+    params:
+        args_aggregate = args["aggregate"],
     shell:
-        f"""
-        sopa aggregate {paths.sdata_path} {dump_args(config["aggregate"])}
+        """
+        sopa aggregate {paths.sdata_path} {params.args_aggregate}
         """
 
 rule annotate:
     input:
-        paths.table,
+        paths.smk_table if not args.aggregate else paths.smk_aggregation,
     output:
         directory(paths.annotations),
     conda:
         "spatial"
+    params:
+        args_fluorescence = args["annotation"]["fluorescence"]
     shell:
-        f"""
-        sopa annotate fluorescence {paths.sdata_path} {dump_args(config["annotation"]["fluorescence"])}
+        """
+        sopa annotate fluorescence {paths.sdata_path} {params.args_fluorescence}
         """
 
 rule explorer:
     input:
         paths.polygons,
-        paths.annotations,
+        paths.smk_aggregation if args.aggregate else paths.smk_table,
+        paths.annotations if args.annotate else [],
     output:
         paths.explorer_experiment,
     conda:
         "spatial"
+    params:
+        args_explorer = args["explorer"]
     shell:
-        f"""
-        sopa explorer {paths.sdata_path} {paths.explorer_directory} {dump_args(config["explorer"])}
+        """
+        sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer}
         """

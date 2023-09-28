@@ -25,6 +25,10 @@ def aggregate(sdata: SpatialData, table: AnnData | None, intensity_mean: bool):
 
     image_key, image = _get_spatial_image(sdata)
 
+    assert table is None or sdata.table is None
+
+    table = table if sdata.table is None else sdata.table
+
     assert (
         intensity_mean or table is not None
     ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
@@ -40,15 +44,18 @@ def aggregate(sdata: SpatialData, table: AnnData | None, intensity_mean: bool):
             obs=pd.DataFrame(index=geo_df.index),
         )
     else:
-        table.obsm["intensities"] = pd.DataFrame(mean_intensities, columns=list(image.c))
+        table.obsm["intensities"] = pd.DataFrame(
+            mean_intensities, columns=image.coords["c"].values, index=table.obs_names
+        )
 
-    centroids = geo_df.centroid
-
-    table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in centroids])
+    table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
     table.obs["region"] = pd.Series("polygons", index=table.obs_names, dtype="category")
     table.obs["slide"] = pd.Series(image_key, index=table.obs_names, dtype="category")
     table.obs["dataset_id"] = pd.Series(image_key, index=table.obs_names, dtype="category")
     table.obs["cell_id"] = geo_df.index
+
+    if "spatialdata_attrs" in table.uns:
+        del table.uns["spatialdata_attrs"]
 
     table = TableModel.parse(
         table,
@@ -56,5 +63,8 @@ def aggregate(sdata: SpatialData, table: AnnData | None, intensity_mean: bool):
         region="polygons",
         instance_key="cell_id",
     )
+
+    if sdata.table is not None:
+        del sdata.table
 
     sdata.table = table
