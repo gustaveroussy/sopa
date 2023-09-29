@@ -3,6 +3,8 @@ repo_name: sopa
 copyright: Copyright &copy; 2023 - 2024 Quentin Blampey
 theme:
   name: material
+  logo: assets/sopa_white.svg
+  favicon: assets/sopa_favicon.ico
 nav:
   - Home: index.md
 plugins:
