@@ -17,7 +17,7 @@ def update(sdata: SpatialData, polygons: list[Polygon], image_key: str):
     geo_df.index = image_key + geo_df.index.astype(str)
 
     geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
-    sdata.add_shapes("polygons", geo_df)  # TODO: not hardcoded name
+    sdata.add_shapes("polygons", geo_df, overwrite=True)  # TODO: not hardcoded name
 
 
 def aggregate(sdata: SpatialData, table: AnnData | None, intensity_mean: bool):

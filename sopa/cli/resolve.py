@@ -40,7 +40,11 @@ def cellpose(
 
 @app_resolve.command()
 def baysor(
-    sdata_path: str, baysor_dir: str = option, gene_column: str = option, min_area: float = 0
+    sdata_path: str,
+    baysor_dir: str = option,
+    gene_column: str = option,
+    min_area: float = 0,
+    n: int = None,
 ):
     import anndata
     import geopandas as gpd
@@ -54,7 +58,7 @@ def baysor(
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    patch_polygons, adatas = read_all_baysor_patches(baysor_dir, min_area)
+    patch_polygons, adatas = read_all_baysor_patches(baysor_dir, min_area, n)
     geo_df, polys_indices, new_ids = resolve(patch_polygons, adatas)
     geo_df = ShapesModel.parse(geo_df, transformations=sdata["transcripts"].attrs["transform"])
 
@@ -98,7 +102,7 @@ def baysor(
         instance_key="cell_id",
     )
 
-    sdata.add_shapes("polygons", geo_df)
+    sdata.add_shapes("polygons", geo_df, overwrite=True)
 
     if sdata.table is not None:
         del sdata.table

@@ -105,7 +105,8 @@ if args.baysor:
             "spatial"
         shell:
             """
-            sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {args.gene_column}
+            N=$(echo {input[0]} | tr ' ' '\\n' | wc -l);
+            sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {args.gene_column} --n $N
             """
 
 rule aggregate:

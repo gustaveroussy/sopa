@@ -13,7 +13,7 @@ reader:
 patchify:
   tile_width_pixel: 4000
   tile_overlap_pixel: 40
-  tile_width_microns: 3500
+  tile_width_microns: 4000
   tile_overlap_microns: 30
 
 segmentation:
