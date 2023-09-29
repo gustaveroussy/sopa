@@ -4,6 +4,7 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
+import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Polygon, box
 from spatial_image import SpatialImage
@@ -57,9 +58,10 @@ class Tiles2D:
         self.sdata = sdata
         self.element = sdata[element_name]
 
-        if isinstance(self.element, SpatialImage) or isinstance(
-            self.element, MultiscaleSpatialImage
-        ):
+        if isinstance(self.element, MultiscaleSpatialImage):
+            self.element = self.element["scale0"][element_name]
+
+        if isinstance(self.element, SpatialImage) or isinstance(self.element, xr.DataArray):
             xmin, ymin = 0, 0
             xmax, ymax = len(self.element.coords["x"]), len(self.element.coords["y"])
             tight, int_coords = False, True

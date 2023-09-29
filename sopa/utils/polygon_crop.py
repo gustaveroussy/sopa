@@ -39,7 +39,7 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
             len(image.coords["c"]) in VALID_N_CHANNELS
         ), f"Choose one or three channels among {image.c.values} by using the -c argument"
 
-    return image_key, resize(image, scale_factor).compute()
+    return image_key, resize(image, scale_factor).compute(), image.transform
 
 
 class _Selector:
@@ -95,7 +95,7 @@ def polygon_selection(
     margin_ratio: float = 0.1,
 ):
     if intermediate_polygon is None:
-        image_key, image = _prepare(sdata, channels, scale_factor)
+        image_key, image, transformations = _prepare(sdata, channels, scale_factor)
 
         if intermediate_image is not None:
             log.info(f"Resized image will be saved to {intermediate_image}")
@@ -114,5 +114,5 @@ def polygon_selection(
         _, image = _get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
 
     geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
-    geo_df = ShapesModel.parse(geo_df, transformations=image.transform)
+    geo_df = ShapesModel.parse(geo_df, transformations=transformations)
     sdata.add_shapes(ROI.KEY, geo_df)

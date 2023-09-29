@@ -38,13 +38,22 @@ def _get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str,
     image = sdata.images[key]  # TODO: switch axes for c,y,x
 
     if isinstance(image, MultiscaleSpatialImage):
-        return key, image["scale0"]
+        return key, image["scale0"][key]
 
     return key, image
 
 
+def _get_element_transform(sdata: SpatialData, element_name: str) -> dict:
+    element = sdata[element_name]
+
+    if isinstance(element, MultiscaleSpatialImage):
+        element = element["scale0"][element_name]
+
+    return element.attrs["transform"]
+
+
 def get_intrinsic_cs(sdata: SpatialData, element_name: str) -> str:
-    for cs, transform in sdata[element_name].attrs["transform"].items():
+    for cs, transform in _get_element_transform(sdata, element_name).items():
         if isinstance(transform, Identity):
             return cs
     cs = f"_{element_name}_intrinsic"
