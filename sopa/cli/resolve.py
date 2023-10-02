@@ -54,28 +54,29 @@ def baysor(
     from spatialdata.models import ShapesModel, TableModel
 
     from sopa.segmentation.baysor.aggregate import read_all_baysor_patches, resolve
-    from sopa.utils.utils import get_intrinsic_cs
+    from sopa.utils.utils import _get_item, get_intrinsic_cs
 
     sdata = spatialdata.read_zarr(sdata_path)
 
     patch_polygons, adatas = read_all_baysor_patches(baysor_dir, min_area, n)
     geo_df, polys_indices, new_ids = resolve(patch_polygons, adatas)
-    geo_df = ShapesModel.parse(geo_df, transformations=sdata["transcripts"].attrs["transform"])
+
+    points_key, points = _get_item(sdata, "points")
+
+    geo_df = ShapesModel.parse(geo_df, transformations=points.attrs["transform"])
 
     table_conflicts = []
     if len(new_ids):
         new_polys = geo_df.geometry[polys_indices == -1]
         geo_df_new = gpd.GeoDataFrame({"geometry": new_polys})
-        geo_df_new = ShapesModel.parse(
-            geo_df_new, transformations=sdata["transcripts"].attrs["transform"]
-        )
+        geo_df_new = ShapesModel.parse(geo_df_new, transformations=points.attrs["transform"])
 
         table_conflicts = sdata.aggregate(
-            values="transcripts",
+            values=points_key,
             by=geo_df_new,
             value_key=gene_column,
             agg_func="count",
-            target_coordinate_system=get_intrinsic_cs(sdata, "transcripts"),
+            target_coordinate_system=get_intrinsic_cs(sdata, points_key),
         ).table
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
