@@ -149,6 +149,8 @@ rule explorer:
         paths.explorer_experiment,
     conda:
         "spatial"
+    resources:
+        mem_mb=64_000,
     params:
         args_explorer = str(args["explorer"]),
     shell:
