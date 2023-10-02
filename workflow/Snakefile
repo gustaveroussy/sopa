@@ -66,10 +66,12 @@ if args.baysor:
             f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
         params:
             args_baysor_cell_key = args.baysor_cell_key,
+        resources:
+            mem_mb=64_000,
         shell:
             """
             cd {input.baysor_patch}
-            module purge
+            module purge  # TODO: add if 'command exists'
             {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
             """
 
