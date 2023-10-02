@@ -69,6 +69,7 @@ if args.baysor:
         shell:
             """
             cd {input.baysor_patch}
+            module purge
             {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
             """
 
