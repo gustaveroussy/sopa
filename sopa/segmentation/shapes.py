@@ -11,16 +11,16 @@ log = logging.getLogger(__name__)
 
 
 def solve_conflicts(
-    polygons: list[Polygon],
+    cells: list[Polygon],
     threshold: float = 0.5,
     patch_indices: np.ndarray | None = None,
     return_indices: bool = False,
 ) -> np.ndarray[Polygon]:
-    n_polygons = len(polygons)
-    resolved_indices = np.arange(n_polygons)
+    n_cells = len(cells)
+    resolved_indices = np.arange(n_cells)
 
-    tree = shapely.STRtree(polygons)
-    conflicts = tree.query(polygons, predicate="intersects")
+    tree = shapely.STRtree(cells)
+    conflicts = tree.query(cells, predicate="intersects")
 
     if patch_indices is not None:
         conflicts = conflicts[:, patch_indices[conflicts[0]] != patch_indices[conflicts[1]]].T
@@ -29,35 +29,35 @@ def solve_conflicts(
 
     for i1, i2 in conflicts:
         resolved_i1, resolved_i2 = resolved_indices[i1], resolved_indices[i2]
-        poly1, poly2 = polygons[resolved_i1], polygons[resolved_i2]
+        cell1, cell2 = cells[resolved_i1], cells[resolved_i2]
 
-        intersection = poly1.intersection(poly2).area
-        if intersection / min(poly1.area, poly2.area) >= threshold:
-            resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(polygons)
-            polygons.append(poly1.union(poly2))
+        intersection = cell1.intersection(cell2).area
+        if intersection / min(cell1.area, cell2.area) >= threshold:
+            resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
+            cells.append(cell1.union(cell2))
 
     unique_indices = np.unique(resolved_indices)
-    unique_polygons = np.array(polygons)[unique_indices]
+    unique_cells = np.array(cells)[unique_indices]
 
     if return_indices:
-        return unique_polygons, np.where(unique_indices < n_polygons, unique_indices, -1)
+        return unique_cells, np.where(unique_indices < n_cells, unique_indices, -1)
 
-    return unique_polygons
-
-
-def expand(polygons: list[Polygon], expand_radius: float) -> list[Polygon]:
-    return [polygon.buffer(expand_radius) for polygon in polygons]
+    return unique_cells
 
 
-def smooth(poly: Polygon, dist: float, tolerance: float) -> Polygon:
-    return poly.buffer(-dist).buffer(-2 * dist).buffer(-dist).simplify(tolerance)
+def expand(cells: list[Polygon], expand_radius: float) -> list[Polygon]:
+    return [cell.buffer(expand_radius) for cell in cells]
+
+
+def smooth(cell: Polygon, dist: float, tolerance: float) -> Polygon:
+    return cell.buffer(-dist).buffer(-2 * dist).buffer(-dist).simplify(tolerance)
 
 
 def _find_contours(cell_mask: np.ndarray) -> list[Polygon]:
     import cv2
 
     contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    return [Polygon(c[:, 0, :]) for c in contours if c.shape[0] >= 4]
+    return [Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4]
 
 
 def _geometrize_cell(
@@ -76,28 +76,28 @@ def _geometrize_cell(
     """
     polygons = _find_contours((mask == cell_id).astype("uint8"))
     polygons = [polygon for polygon in polygons if not polygon.buffer(-smooth_radius).is_empty]
-    polygon = MultiPolygon(polygons)
-    polygon = polygon.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
+    cell = MultiPolygon(polygons)
+    cell = cell.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
 
-    if polygon.is_empty:
+    if cell.is_empty:
         return None
 
-    if isinstance(polygon, Polygon):
-        return polygon
+    if isinstance(cell, Polygon):
+        return cell
 
     log.warn(
-        f"""Geometry index {cell_id} is composed of {len(polygon.geoms)} polygons of areas: {[p.area for p in polygon.geoms]}. Only the polygon corresponding to the largest area will be kept"""
+        f"""Geometry index {cell_id} is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
     )
 
-    return max(polygon.geoms, key=lambda polygon: polygon.area)
+    return max(cell.geoms, key=lambda polygon: polygon.area)
 
 
 def geometrize(mask: np.ndarray, smooth_radius: int = 5, tolerance: float = 2) -> list[Polygon]:
-    polygons = [
+    cells = [
         _geometrize_cell(mask, cell_id, smooth_radius, tolerance)
         for cell_id in range(1, mask.max() + 1)
     ]
-    return [polygon for polygon in polygons if polygon is not None]
+    return [cell for cell in cells if cell is not None]
 
 
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
@@ -105,12 +105,12 @@ def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int
 
 
 def rasterize(
-    poly: Polygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
+    cell: Polygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
 ) -> np.ndarray:
-    """Transform a polygon into a numpy array with value 1 where the polygon touches a pixel, else 0.
+    """Transform a cell polygon into a numpy array with value 1 where the polygon touches a pixel, else 0.
 
     Args:
-        poly: Polygon to rasterize.
+        cell: Cell polygon to rasterize.
         shape: Image shape as a tuple (y, x).
         xy_min: Tuple containing the origin of the image [x0, y0].
 
@@ -121,8 +121,8 @@ def rasterize(
 
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
-    new_poly = shapely.affinity.translate(poly, -xmin, -ymin)
-    coords = np.array(new_poly.boundary.coords)[None, :].astype(np.int32)
+    cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
+    coords = np.array(cell_translated.boundary.coords)[None, :].astype(np.int32)
     return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
 
 
@@ -143,8 +143,8 @@ def average(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
             intersections = tree.query(patch, predicate="intersects")
 
             for index in intersections:
-                poly = cells[index]
-                bounds = pixel_outer_bounds(poly.bounds)
+                cell = cells[index]
+                bounds = pixel_outer_bounds(cell.bounds)
 
                 sub_image = x[
                     :,
@@ -155,7 +155,7 @@ def average(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
                 if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
                     continue
 
-                mask = rasterize(poly, sub_image.shape[1:], bounds)
+                mask = rasterize(cell, sub_image.shape[1:], bounds)
 
                 intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
                 areas[index] += np.sum(mask)

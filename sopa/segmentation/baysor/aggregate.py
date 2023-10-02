@@ -31,9 +31,9 @@ def read_baysor(
         cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
     ]
 
-    polygons = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
+    cells = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
 
-    return polygons, adata[cells_num.index].copy()
+    return cells, adata[cells_num.index].copy()
 
 
 def read_all_baysor_patches(
@@ -46,30 +46,30 @@ def read_all_baysor_patches(
     else:
         outs = [read_baysor(baysor_dir / str(i), min_area) for i in range(n)]
 
-    patch_polygons, adatas = zip(*outs)
+    patches_cells, adatas = zip(*outs)
 
-    return patch_polygons, adatas
+    return patches_cells, adatas
 
 
-def resolve(patch_polygons, adatas):
+def resolve(
+    patches_cells: list[list[Polygon]], adatas: list[AnnData]
+) -> tuple[gpd.GeoDataFrame, np.ndarray, np.ndarray]:
     patch_ids = [adata.obs_names for adata in adatas]
 
-    patch_indices = np.arange(len(patch_polygons)).repeat(
-        [len(polygons) for polygons in patch_polygons]
-    )
-    polygons = [polygon for polys in patch_polygons for polygon in polys]
+    patch_indices = np.arange(len(patches_cells)).repeat([len(cells) for cells in patches_cells])
+    cells = [cell for cells in patches_cells for cell in cells]
     baysor_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
-    polys_resolved, polys_indices = shapes.solve_conflicts(
-        polygons, patch_indices=patch_indices, return_indices=True
+    cells_resolved, cells_indices = shapes.solve_conflicts(
+        cells, patch_indices=patch_indices, return_indices=True
     )
 
-    existing_ids = baysor_ids[polys_indices[polys_indices >= 0]]
-    new_ids = np.char.add("merged_cell_", np.arange((polys_indices == -1).sum()).astype(str))
+    existing_ids = baysor_ids[cells_indices[cells_indices >= 0]]
+    new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))
     index = np.concatenate([existing_ids, new_ids])
 
     return (
-        gpd.GeoDataFrame({"geometry": polys_resolved}, index=index),
-        polys_indices,
+        gpd.GeoDataFrame({"geometry": cells_resolved}, index=index),
+        cells_indices,
         new_ids,
     )

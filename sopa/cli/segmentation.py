@@ -11,8 +11,8 @@ def cellpose(
     channels: list[str] = option,
     flow_threshold: int = option,
     cellprob_threshold: int = option,
-    tile_width: int = typer.Option(default=None),
-    tile_overlap: int = typer.Option(default=None),
+    patch_width: int = typer.Option(default=None),
+    patch_overlap: int = typer.Option(default=None),
     expand_radius: int = typer.Option(default=0),
     patch_index: int = typer.Option(default=None),
     patch_dir: str = typer.Option(default=None),
@@ -39,7 +39,7 @@ def cellpose(
         segmentation.write_patch_polygons(patch_dir, patch_index)
         return
 
-    polygons = segmentation.run_patches(tile_width, tile_overlap)
-    polygons = shapes.expand(polygons, expand_radius)
+    cells = segmentation.run_patches(patch_width, patch_overlap)
+    cells = shapes.expand(cells, expand_radius)
 
-    add_shapes(sdata, polygons, segmentation.image_key)
+    add_shapes(sdata, cells, segmentation.image_key)

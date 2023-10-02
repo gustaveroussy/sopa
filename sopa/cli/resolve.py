@@ -20,11 +20,11 @@ def cellpose(
 
     image_key = get_key(sdata, "images")
 
-    polygons = StainingSegmentation.read_patches_polygons(patch_dir)
-    polygons = shapes.solve_conflicts(polygons)
-    polygons = shapes.expand(polygons, expand_radius)
+    cells = StainingSegmentation.read_patches_cells(patch_dir)
+    cells = shapes.solve_conflicts(cells)
+    cells = shapes.expand(cells, expand_radius)
 
-    add_shapes(sdata, polygons, image_key)
+    add_shapes(sdata, cells, image_key)
 
 
 @app_resolve.command()
@@ -49,8 +49,8 @@ def baysor(
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    patch_polygons, adatas = read_all_baysor_patches(baysor_dir, min_area, n)
-    geo_df, polys_indices, new_ids = resolve(patch_polygons, adatas)
+    patches_cells, adatas = read_all_baysor_patches(baysor_dir, min_area, n)
+    geo_df, cells_indices, new_ids = resolve(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")
     points_key, points = get_item(sdata, "points")
@@ -60,8 +60,8 @@ def baysor(
 
     table_conflicts = []
     if len(new_ids):
-        new_polys = geo_df.geometry[polys_indices == -1]
-        geo_df_new = gpd.GeoDataFrame({"geometry": new_polys})
+        new_cells = geo_df.geometry[cells_indices == -1]
+        geo_df_new = gpd.GeoDataFrame({"geometry": new_cells})
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         table_conflicts = sdata.aggregate(

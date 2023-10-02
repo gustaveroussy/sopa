@@ -79,10 +79,10 @@ def aggregate(
 @app.command()
 def patchify(
     sdata_path: str,
-    tile_width_pixel: float = None,
-    tile_overlap_pixel: float = None,
-    tile_width_microns: float = None,
-    tile_overlap_microns: float = None,
+    patch_width_pixel: float = None,
+    patch_overlap_pixel: float = None,
+    patch_width_microns: float = None,
+    patch_overlap_microns: float = None,
     baysor_dir: str = None,
     baysor_config: str = typer.Option(default={}, callback=ast.literal_eval),
     baysor_cell_key: str = None,
@@ -97,17 +97,17 @@ def patchify(
 
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
-    from sopa.patching import Patch2D
+    from sopa.patching import Patches2D
 
     image_key = get_key(sdata, "images")
 
-    n_tiles = {}
+    n_patches = {}
 
-    if tile_width_pixel is not None:
-        tiles = Patch2D(sdata, image_key, tile_width_pixel, tile_overlap_pixel)
-        tiles.write()
+    if patch_width_pixel is not None:
+        patches = Patches2D(sdata, image_key, patch_width_pixel, patch_overlap_pixel)
+        patches.write()
 
-        n_tiles[SopaFiles.CELLPOSE_NAME] = len(tiles)
+        n_patches[SopaFiles.CELLPOSE_NAME] = len(patches)
 
     if baysor_dir is not None:
         from sopa.segmentation.baysor.prepare import to_toml
@@ -115,17 +115,17 @@ def patchify(
         assert baysor_config is not None
 
         df_key = get_key(sdata, "points")
-        tiles = Patch2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
-        tiles.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
+        patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
+        patches.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
 
-        for i in range(len(tiles)):
+        for i in range(len(patches)):
             path = Path(baysor_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
             to_toml(path, baysor_config)
 
-        n_tiles[SopaFiles.BAYSOR_NAME] = len(tiles)
+        n_patches[SopaFiles.BAYSOR_NAME] = len(patches)
 
     with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES, "w") as f:
-        json.dump(n_tiles, f, indent=4)
+        json.dump(n_patches, f, indent=4)
 
 
 @app.command()
@@ -135,7 +135,7 @@ def explorer(sdata_path: str, path: str, shapes_key: str = None, gene_column: st
     Args:\n
         sdata_path: Path to the sdata.zarr directory\n
         path: Path to a directory where Xenium Explorer's outputs will be saved\n
-        shapes_key: Key for the polygons\n
+        shapes_key: Key for the boundaries\n
     """
     from spatialdata import SpatialData
 

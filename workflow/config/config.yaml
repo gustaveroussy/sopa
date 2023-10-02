@@ -11,10 +11,10 @@ reader:
       Texas Red: CD20
 
 patchify:
-  tile_width_pixel: 4000
-  tile_overlap_pixel: 40
-  tile_width_microns: 4000
-  tile_overlap_microns: 30
+  patch_width_pixel: 4000
+  patch_overlap_pixel: 40
+  patch_width_microns: 4000
+  patch_overlap_microns: 30
 
 segmentation:
   # cellpose:

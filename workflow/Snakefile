@@ -7,7 +7,6 @@ args = Args(paths, config)
 
 rule all:
     input:
-        paths.polygons,
         paths.annotations,
         paths.explorer_experiment,
 
@@ -41,39 +40,37 @@ checkpoint patchify:
         sopa patchify {paths.sdata_path} {params.args_patchify} {params.args_baysor}
         """
 
-if args.cellpose:
-    rule patch_segmentation_cellpose:
-        input:
-            paths.smk_n_patches,
-            paths.patches,
-        output:
-            "{paths.cellpose_dir}/{index}.zarr.zip",
-        conda:
-            "spatial"
-        params:
-            args_cellpose = str(args["segmentation"]["cellpose"]),
-        shell:
-            """
-            sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {wildcards.index} {params.args_cellpose}
-            """
+rule patch_segmentation_cellpose:
+    input:
+        paths.smk_n_patches,
+        paths.patches,
+    output:
+        "{paths.cellpose_dir}/{index}.zarr.zip",
+    conda:
+        "spatial"
+    params:
+        args_cellpose = str(args["segmentation"]["cellpose"]),
+    shell:
+        """
+        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {wildcards.index} {params.args_cellpose}
+        """
 
-if args.baysor:
-    rule patch_segmentation_baysor:
-        input:
-            n_patches = paths.smk_n_patches,
-            baysor_patch = f"{paths.baysor_dir}/{{index}}",
-        output:
-            f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
-        params:
-            args_baysor_cell_key = args.baysor_cell_key,
-        resources:
-            mem_mb=64_000,
-        shell:
-            """
-            cd {input.baysor_patch}
-            module purge  # TODO: add if 'command exists'
-            {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
-            """
+rule patch_segmentation_baysor:
+    input:
+        n_patches = paths.smk_n_patches,
+        baysor_patch = f"{paths.baysor_dir}/{{index}}",
+    output:
+        f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
+    params:
+        args_baysor_cell_key = args.baysor_cell_key,
+    resources:
+        mem_mb=64_000,
+    shell:
+        """
+        cd {input.baysor_patch}
+        module purge  # TODO: add if 'command exists'
+        {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
+        """
 
 def get_input_resolve(name):
     import json
@@ -82,39 +79,37 @@ def get_input_resolve(name):
             return paths.cells_paths(json.load(f)[name], name)
     return _
 
-if args.cellpose:
-    rule resolve_cellpose:
-        input:
-            get_input_resolve("cellpose"),
-        output:
-            directory(paths.polygons),
-        conda:
-            "spatial"
-        params:
-            args_expand_radius = args.expand_radius,
-        shell:
-            """
-            sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {params.args_expand_radius}
-            """
+rule resolve_cellpose:
+    input:
+        get_input_resolve("cellpose"),
+    output:
+        directory(paths.cellpose_boundaries),
+    conda:
+        "spatial"
+    params:
+        args_expand_radius = args.expand_radius,
+    shell:
+        """
+        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {params.args_expand_radius}
+        """
 
-if args.baysor:
-    rule resolve_baysor:
-        input:
-            get_input_resolve("baysor"),
-        output:
-            directory(paths.polygons),
-            touch(paths.smk_table)
-        conda:
-            "spatial"
-        shell:
-            """
-            N=$(echo {input[0]} | tr ' ' '\\n' | wc -l);
-            sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {args.gene_column} --n $N
-            """
+rule resolve_baysor:
+    input:
+        get_input_resolve("baysor"),
+    output:
+        directory(paths.baysor_boundaries),
+        touch(paths.smk_table)
+    conda:
+        "spatial"
+    shell:
+        """
+        N=$(echo {input[0]} | tr ' ' '\\n' | wc -l);
+        sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {args.gene_column} --n $N
+        """
 
 rule aggregate:
     input:
-        paths.polygons,
+        paths.baysor_boundaries if args.baysor else paths.cellpose_boundaries,
     output:
         touch(paths.smk_aggregation),
     conda:
@@ -142,7 +137,7 @@ rule annotate:
 
 rule explorer:
     input:
-        paths.polygons,
+        paths.baysor_boundaries if args.baysor else paths.cellpose_boundaries,
         paths.smk_aggregation if args.aggregate else paths.smk_table,
         paths.annotations if args.annotate else [],
     output:

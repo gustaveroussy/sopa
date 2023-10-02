@@ -27,7 +27,8 @@ class WorkflowPaths:
         self.images_dir = self.sdata_path / "images"
         self.table_dir = self.sdata_path / "table"
 
-        self.polygons = self.shapes_dir / "polygons"
+        self.baysor_boundaries = self.shapes_dir / "baysor_boundaries"
+        self.cellpose_boundaries = self.shapes_dir / "cellpose_boundaries"
         self.patches = self.shapes_dir / "patches"
 
         self.smk_files = self.sdata_path / ".smk_files"

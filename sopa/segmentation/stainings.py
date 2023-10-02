@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from .._constants import SopaKeys
 from .._sdata import get_spatial_image
-from ..patching import Patch2D
+from ..patching import Patches2D
 from . import shapes
 
 
@@ -32,22 +32,22 @@ class StainingSegmentation:
 
     def _run_patch(
         self,
-        polygon: Polygon,
+        patch: Polygon,
     ) -> list[Polygon]:
-        bounds = [int(x) for x in polygon.bounds]
+        bounds = [int(x) for x in patch.bounds]
 
-        patch = self.image.sel(
+        image = self.image.sel(
             c=self.channels,
             x=slice(bounds[0], bounds[2]),
             y=slice(bounds[1], bounds[3]),
         ).values
 
-        if polygon.area < box(*bounds).area:
-            patch = patch * shapes.rasterize(polygon, patch.shape[1:], bounds)
+        if patch.area < box(*bounds).area:
+            image = image * shapes.rasterize(patch, image.shape[1:], bounds)
 
-        polygons = shapes.geometrize(self.method(patch))
+        cells = shapes.geometrize(self.method(image))
 
-        return [affinity.translate(p, *bounds[:2]) for p in polygons]
+        return [affinity.translate(cell, *bounds[:2]) for cell in cells]
 
     def write_patch_polygons(self, patch_dir: str, patch_index: int):
         patch = self.sdata[SopaKeys.PATCHES].geometry[patch_index]
@@ -64,23 +64,23 @@ class StainingSegmentation:
 
     def run_patches(
         self,
-        tile_width: int,
-        tile_overlap: int,
+        patch_width: int,
+        patch_overlap: int,
     ) -> list[Polygon]:
-        self.tiles = Patch2D(self.sdata, self.image_key, tile_width, tile_overlap)
+        self.patches = Patches2D(self.sdata, self.image_key, patch_width, patch_overlap)
 
-        cells = [cell for patch in tqdm(self.tiles.polygons) for cell in self._run_patch(patch)]
+        cells = [cell for patch in tqdm(self.patches.polygons) for cell in self._run_patch(patch)]
         cells = shapes.solve_conflicts(cells)
         return cells
 
     @classmethod
-    def read_patches_polygons(cls, patch_dir: str) -> list[Polygon]:
-        polygons = []
+    def read_patches_cells(cls, patch_dir: str) -> list[Polygon]:
+        cells = []
 
         files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".zip"]
         for file in tqdm(files):
             z = zarr.open(file, mode="r")
             for _, coords_zarr in z.arrays():
-                polygons.append(Polygon(coords_zarr[:]))
+                cells.append(Polygon(coords_zarr[:]))
 
-        return polygons
+        return cells

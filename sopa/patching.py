@@ -18,43 +18,43 @@ from ._sdata import get_spatial_image, to_intrinsic
 log = logging.getLogger(__name__)
 
 
-class Patch1D:
-    def __init__(self, xmin, xmax, tile_width, tile_overlap, int_coords):
+class Patches1D:
+    def __init__(self, xmin, xmax, patch_width, patch_overlap, int_coords):
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
 
-        self.tile_width = tile_width
-        self.tile_overlap = tile_overlap
+        self.patch_width = patch_width
+        self.patch_overlap = patch_overlap
         self.int_coords = int_coords
 
         self._count = self.count()
 
     def count(self):
-        if self.tile_width >= self.delta:
+        if self.patch_width >= self.delta:
             return 1
-        return ceil((self.delta - self.tile_overlap) / (self.tile_width - self.tile_overlap))
+        return ceil((self.delta - self.patch_overlap) / (self.patch_width - self.patch_overlap))
 
-    def update(self, tile_width):
-        self.tile_width = tile_width
+    def update(self, patch_width):
+        self.patch_width = patch_width
         assert self._count == self.count()
 
     def tight_width(self):
-        return ceil((self.delta + (self._count - 1) * self.tile_overlap) / self._count)
+        return ceil((self.delta + (self._count - 1) * self.patch_overlap) / self._count)
 
     def __getitem__(self, i):
-        start_delta = i * (self.tile_width - self.tile_overlap)
-        x0, x1 = self.xmin + start_delta, self.xmin + start_delta + self.tile_width
+        start_delta = i * (self.patch_width - self.patch_overlap)
+        x0, x1 = self.xmin + start_delta, self.xmin + start_delta + self.patch_width
 
         return [int(x0), int(x1)] if self.int_coords else [x0, x1]
 
 
-class Patch2D:
+class Patches2D:
     def __init__(
         self,
         sdata: SpatialData,
         element_name: str,
-        tile_width: float | int,
-        tile_overlap: float | int = 50,
+        patch_width: float | int,
+        patch_overlap: float | int = 50,
     ):
         self.sdata = sdata
         self.element = sdata[element_name]
@@ -73,30 +73,31 @@ class Patch2D:
         else:
             raise ValueError(f"Invalid element type: {type(self.element)}")
 
-        self.tile_x = Patch1D(xmin, xmax, tile_width, tile_overlap, int_coords)
-        self.tile_y = Patch1D(ymin, ymax, tile_width, tile_overlap, int_coords)
+        self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, int_coords)
+        self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, int_coords)
 
-        self.tile_width = tile_width
-        self.tile_overlap = tile_overlap
+        self.patch_width = patch_width
+        self.patch_overlap = patch_overlap
         self.tight = tight
         self.int_coords = int_coords
-        self.roi = sdata.shapes[ROI.KEY] if ROI.KEY in sdata.shapes else None  # TODO: utils
+
+        self.roi = sdata.shapes[ROI.KEY] if ROI.KEY in sdata.shapes else None
         if self.roi is not None:
             self.roi = to_intrinsic(sdata, self.roi, element_name).geometry[0]
 
-        assert self.tile_width > self.tile_overlap
+        assert self.patch_width > self.patch_overlap
 
-        width_x = self.tile_x.tight_width()
-        width_y = self.tile_y.tight_width()
+        width_x = self.patch_x.tight_width()
+        width_y = self.patch_y.tight_width()
 
         if self.tight:
-            self.tile_width = max(width_x, width_y)
-            self.tile_x.update(self.tile_width)
-            self.tile_y.update(self.tile_width)
+            self.patch_width = max(width_x, width_y)
+            self.patch_x.update(self.patch_width)
+            self.patch_y.update(self.patch_width)
 
         self._ilocs = []
 
-        for i in range(self.tile_x._count * self.tile_y._count):
+        for i in range(self.patch_x._count * self.patch_y._count):
             ix, iy = self.pair_indices(i)
             bounds = self.iloc(ix, iy)
             patch = box(*bounds)
@@ -104,16 +105,16 @@ class Patch2D:
                 self._ilocs.append((ix, iy))
 
     def pair_indices(self, i: int) -> tuple[int, int]:
-        iy, ix = divmod(i, self.tile_x._count)
+        iy, ix = divmod(i, self.patch_x._count)
         return ix, iy
 
     def iloc(self, ix: int, iy: int):
-        xmin, xmax = self.tile_x[ix]
-        ymin, ymax = self.tile_y[iy]
+        xmin, xmax = self.patch_x[ix]
+        ymin, ymax = self.patch_y[iy]
         return [xmin, ymin, xmax, ymax]
 
     def __getitem__(self, i) -> tuple[int, int, int, int]:
-        """One tile a tuple representing its bounding box: (xmin, ymin, xmax, ymax)"""
+        """One patche bounding box: (xmin, ymin, xmax, ymax)"""
         if isinstance(i, slice):
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
@@ -159,20 +160,20 @@ class Patch2D:
         baysor_dir = Path(baysor_dir)
 
         log.info(f"Making {len(self)} sub-CSV for Baysor")
-        for i, polygon in enumerate(tqdm(self.polygons)):
+        for i, patch in enumerate(tqdm(self.polygons)):
             patch_dir = (baysor_dir / str(i)).absolute()
             patch_dir.mkdir(parents=True, exist_ok=True)
             patch_path = patch_dir / SopaFiles.BAYSOR_TRANSCRIPTS
 
-            tx0, ty0, tx1, ty1 = polygon.bounds
+            tx0, ty0, tx1, ty1 = patch.bounds
             where = (df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)
 
-            if polygon.area < box(*polygon.bounds).area:
+            if patch.area < box(*patch.bounds).area:
                 sub_df = df[where].compute()
 
                 points = [Point(row) for row in sub_df[["x", "y"]].values]
                 tree = shapely.STRtree(points)
-                indices = tree.query(polygon, predicate="intersects")
+                indices = tree.query(patch, predicate="intersects")
 
                 sub_df.iloc[indices].to_csv(patch_path)
             else:
