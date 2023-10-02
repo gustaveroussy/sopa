@@ -26,7 +26,7 @@ def _reorder_instances(sdata: SpatialData, shapes_key: str):
     return adata
 
 
-def write(
+def write_explorer(
     path: str,
     sdata: SpatialData,
     image_key: str | None = None,
