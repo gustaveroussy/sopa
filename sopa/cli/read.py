@@ -19,5 +19,16 @@ def qptiff(
 
 
 @app_read.command()
-def merscope():
-    ...
+def merscope(path: str, sdata_path: str = None):
+    from pathlib import Path
+
+    from spatialdata import SpatialData
+
+    from sopa import io
+
+    path = Path(path)
+
+    sdata_path = path.with_suffix(".zarr") if sdata_path is None else sdata_path
+
+    sdata: SpatialData = io.merscope(path)
+    sdata.write(sdata_path)
