@@ -73,4 +73,4 @@ explorer:
   gene_column: "gene"
 
 executables:
-  baysor: ~/.julia/bin/baysor
+  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor #~/.julia/bin/baysor
