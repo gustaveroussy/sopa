@@ -150,7 +150,9 @@ def explorer(sdata_path: str, path: str, shapes_key: str = None, gene_column: st
     """
     from spatialdata import SpatialData
 
-    from sopa.io.explorer import write
+    from sopa.io.explorer import write_explorer
 
     sdata = SpatialData.read(sdata_path)
-    write(path, sdata, shapes_key=shapes_key, gene_column=gene_column)  # TODO: add more args
+    write_explorer(
+        path, sdata, shapes_key=shapes_key, gene_column=gene_column
+    )  # TODO: add more args
