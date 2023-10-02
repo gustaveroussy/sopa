@@ -8,8 +8,8 @@ from spatialdata import SpatialData
 from tqdm import tqdm
 
 from .._constants import SopaKeys
-from ..utils.tiling import Tiles2D
-from ..utils.utils import _get_spatial_image
+from .._sdata import get_spatial_image
+from ..patching import Patch2D
 from . import shapes
 
 
@@ -24,7 +24,7 @@ class StainingSegmentation:
         self.method = method
         self.channels = channels
 
-        self.image_key, self.image = _get_spatial_image(sdata)
+        self.image_key, self.image = get_spatial_image(sdata)
 
         assert np.isin(
             channels, self.image.c
@@ -67,8 +67,20 @@ class StainingSegmentation:
         tile_width: int,
         tile_overlap: int,
     ) -> list[Polygon]:
-        self.tiles = Tiles2D(self.sdata, self.image_key, tile_width, tile_overlap)
+        self.tiles = Patch2D(self.sdata, self.image_key, tile_width, tile_overlap)
 
         cells = [cell for patch in tqdm(self.tiles.polygons) for cell in self._run_patch(patch)]
         cells = shapes.solve_conflicts(cells)
         return cells
+
+    @classmethod
+    def read_patches_polygons(cls, patch_dir: str) -> list[Polygon]:
+        polygons = []
+
+        files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".zip"]
+        for file in tqdm(files):
+            z = zarr.open(file, mode="r")
+            for _, coords_zarr in z.arrays():
+                polygons.append(Polygon(coords_zarr[:]))
+
+        return polygons

@@ -10,8 +10,8 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 
 from .._constants import ROI
+from .._sdata import get_spatial_image
 from .image import resize
-from .utils import _get_spatial_image
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ VALID_N_CHANNELS = [1, 3]
 
 
 def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
-    image_key, spatial_image = _get_spatial_image(sdata)
+    image_key, spatial_image = get_spatial_image(sdata)
     image = spatial_image.transpose("y", "x", "c")
 
     if len(channels):
@@ -111,7 +111,7 @@ def polygon_selection(
         z = zarr.open(intermediate_polygon, mode="r")
         polygon = Polygon(z[ROI.POLYGON_ARRAY_KEY][:])
 
-        _, image = _get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
+        _, image = get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
 
     geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)

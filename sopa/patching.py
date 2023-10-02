@@ -10,14 +10,15 @@ from shapely.geometry import Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
+from spatialdata.transformations import get_transformation
 
-from .._constants import ROI
-from .utils import _get_item, to_intrinsic
+from ._constants import ROI, SopaFiles, SopaKeys
+from ._sdata import get_spatial_image, to_intrinsic
 
 log = logging.getLogger(__name__)
 
 
-class Tiles1D:
+class Patch1D:
     def __init__(self, xmin, xmax, tile_width, tile_overlap, int_coords):
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
@@ -47,7 +48,7 @@ class Tiles1D:
         return [int(x0), int(x1)] if self.int_coords else [x0, x1]
 
 
-class Tiles2D:
+class Patch2D:
     def __init__(
         self,
         sdata: SpatialData,
@@ -59,7 +60,7 @@ class Tiles2D:
         self.element = sdata[element_name]
 
         if isinstance(self.element, MultiscaleSpatialImage):
-            self.element = self.element["scale0"][element_name]
+            self.element = get_spatial_image(sdata, element_name)
 
         if isinstance(self.element, SpatialImage) or isinstance(self.element, xr.DataArray):
             xmin, ymin = 0, 0
@@ -72,8 +73,8 @@ class Tiles2D:
         else:
             raise ValueError(f"Invalid element type: {type(self.element)}")
 
-        self.tile_x = Tiles1D(xmin, xmax, tile_width, tile_overlap, int_coords)
-        self.tile_y = Tiles1D(ymin, ymax, tile_width, tile_overlap, int_coords)
+        self.tile_x = Patch1D(xmin, xmax, tile_width, tile_overlap, int_coords)
+        self.tile_y = Patch1D(ymin, ymax, tile_width, tile_overlap, int_coords)
 
         self.tile_width = tile_width
         self.tile_overlap = tile_overlap
@@ -136,10 +137,12 @@ class Tiles2D:
 
     def write(self, overwrite: bool = True):
         geo_df = gpd.GeoDataFrame(
-            {"geometry": self.polygons, "bounds": [self[i] for i in range(len(self))]}
+            {"geometry": self.polygons, SopaKeys.BOUNDS: [self[i] for i in range(len(self))]}
         )
-        geo_df = ShapesModel.parse(geo_df, transformations=self.element.attrs["transform"])
-        self.sdata.add_shapes("patches", geo_df, overwrite=overwrite)
+        geo_df = ShapesModel.parse(
+            geo_df, transformations=get_transformation(self.element, get_all=True)
+        )
+        self.sdata.add_shapes(SopaKeys.PATCHES, geo_df, overwrite=overwrite)
 
     def patchify_transcripts(
         self, baysor_dir: str, cell_key: str = None, unassigned_value: int | str = None
@@ -155,11 +158,11 @@ class Tiles2D:
 
         baysor_dir = Path(baysor_dir)
 
-        log.info(f"Making {len(self)} sub-csv for Baysor")
+        log.info(f"Making {len(self)} sub-CSV for Baysor")
         for i, polygon in enumerate(tqdm(self.polygons)):
             patch_dir = (baysor_dir / str(i)).absolute()
             patch_dir.mkdir(parents=True, exist_ok=True)
-            patch_path = patch_dir / "transcripts.csv"
+            patch_path = patch_dir / SopaFiles.BAYSOR_TRANSCRIPTS
 
             tx0, ty0, tx1, ty1 = polygon.bounds
             where = (df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)

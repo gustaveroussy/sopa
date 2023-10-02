@@ -65,26 +65,15 @@ def crop(
 def aggregate(
     sdata_path: str,
     intensity_mean: bool = True,
-    transcript_count: bool = False,
     gene_column: str = None,
 ):
     import spatialdata
 
-    from sopa.segmentation.update import aggregate
+    from sopa.segmentation.aggregate import aggregate
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    table = None
-    if transcript_count:
-        table = sdata.aggregate(
-            values="transcripts",
-            by="polygons",
-            value_key=gene_column,
-            agg_func="count",
-            target_coordinate_system="pixels",
-        ).table
-
-    aggregate(sdata, table, intensity_mean)
+    aggregate(sdata, gene_column, intensity_mean)
 
 
 @app.command()
@@ -107,33 +96,33 @@ def patchify(
     sdata = spatialdata.read_zarr(sdata_path)
 
     from sopa._constants import SopaFiles
-    from sopa.utils.tiling import Tiles2D
-    from sopa.utils.utils import _get_key, _get_spatial_image
+    from sopa._sdata import get_key
+    from sopa.patching import Patch2D
 
-    image_key, _ = _get_spatial_image(sdata)
+    image_key = get_key(sdata, "images")
 
     n_tiles = {}
 
     if tile_width_pixel is not None:
-        tiles = Tiles2D(sdata, image_key, tile_width_pixel, tile_overlap_pixel)
+        tiles = Patch2D(sdata, image_key, tile_width_pixel, tile_overlap_pixel)
         tiles.write()
 
-        n_tiles["cellpose"] = len(tiles)
+        n_tiles[SopaFiles.CELLPOSE_NAME] = len(tiles)
 
     if baysor_dir is not None:
         from sopa.segmentation.baysor.prepare import to_toml
 
         assert baysor_config is not None
 
-        df_key = _get_key(sdata, "points")
-        tiles = Tiles2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
+        df_key = get_key(sdata, "points")
+        tiles = Patch2D(sdata, df_key, tile_width_microns, tile_overlap_microns)
         tiles.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
 
         for i in range(len(tiles)):
-            path = Path(baysor_dir) / str(i) / "config.toml"
+            path = Path(baysor_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
             to_toml(path, baysor_config)
 
-        n_tiles["baysor"] = len(tiles)
+        n_tiles[SopaFiles.BAYSOR_NAME] = len(tiles)
 
     with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES, "w") as f:
         json.dump(n_tiles, f, indent=4)

@@ -10,32 +10,21 @@ def cellpose(
     patch_dir: str = option,
     expand_radius: float = typer.Option(default=0),
 ):
-    from pathlib import Path
-
     import spatialdata
-    import zarr
-    from shapely.geometry import Polygon
-    from tqdm import tqdm
 
-    from sopa.segmentation import shapes
-    from sopa.segmentation.update import update
-    from sopa.utils.utils import _get_spatial_image
+    from sopa._sdata import get_key
+    from sopa.segmentation import StainingSegmentation, shapes
+    from sopa.segmentation.cellpose.update import add_shapes
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    image_key, _ = _get_spatial_image(sdata)
+    image_key = get_key(sdata, "images")
 
-    polygons = []
-
-    files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".zip"]
-    for file in tqdm(files):
-        z = zarr.open(file, mode="r")
-        for _, coords_zarr in z.arrays():
-            polygons.append(Polygon(coords_zarr[:]))
+    polygons = StainingSegmentation.read_patches_polygons(patch_dir)
     polygons = shapes.solve_conflicts(polygons)
     polygons = shapes.expand(polygons, expand_radius)
 
-    update(sdata, polygons, image_key)
+    add_shapes(sdata, polygons, image_key)
 
 
 @app_resolve.command()
@@ -52,24 +41,28 @@ def baysor(
     import pandas as pd
     import spatialdata
     from spatialdata.models import ShapesModel, TableModel
+    from spatialdata.transformations import get_transformation
 
+    from sopa._constants import SopaKeys
+    from sopa._sdata import get_intrinsic_cs, get_item, get_key
     from sopa.segmentation.baysor.aggregate import read_all_baysor_patches, resolve
-    from sopa.utils.utils import _get_item, get_intrinsic_cs
 
     sdata = spatialdata.read_zarr(sdata_path)
 
     patch_polygons, adatas = read_all_baysor_patches(baysor_dir, min_area, n)
     geo_df, polys_indices, new_ids = resolve(patch_polygons, adatas)
 
-    points_key, points = _get_item(sdata, "points")
+    image_key = get_key(sdata, "images")
+    points_key, points = get_item(sdata, "points")
+    transformations = get_transformation(points, get_all=True)
 
-    geo_df = ShapesModel.parse(geo_df, transformations=points.attrs["transform"])
+    geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 
     table_conflicts = []
     if len(new_ids):
         new_polys = geo_df.geometry[polys_indices == -1]
         geo_df_new = gpd.GeoDataFrame({"geometry": new_polys})
-        geo_df_new = ShapesModel.parse(geo_df_new, transformations=points.attrs["transform"])
+        geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         table_conflicts = sdata.aggregate(
             values=points_key,
@@ -91,19 +84,20 @@ def baysor(
     geo_df = geo_df.loc[table.obs_names]
 
     table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
-    table.obs["region"] = pd.Series("polygons", index=table.obs_names, dtype="category")
-    # table.obs["slide"] = pd.Series(image_key, index=table.obs_names, dtype="category")
-    # table.obs["dataset_id"] = pd.Series(image_key, index=table.obs_names, dtype="category")
-    table.obs["cell_id"] = geo_df.index
+    table.obs[SopaKeys.REGION_KEY] = pd.Series(
+        SopaKeys.BAYSOR_BOUNDARIES, index=table.obs_names, dtype="category"
+    )
+    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(image_key, index=table.obs_names, dtype="category")
+    table.obs[SopaKeys.INSTANCE_KEY] = geo_df.index
 
     table = TableModel.parse(
         table,
-        region_key="region",
-        region="polygons",
-        instance_key="cell_id",
+        region_key=SopaKeys.REGION_KEY,
+        region=SopaKeys.BAYSOR_BOUNDARIES,
+        instance_key=SopaKeys.INSTANCE_KEY,
     )
 
-    sdata.add_shapes("polygons", geo_df, overwrite=True)
+    sdata.add_shapes(SopaKeys.BAYSOR_BOUNDARIES, geo_df, overwrite=True)
 
     if sdata.table is not None:
         del sdata.table

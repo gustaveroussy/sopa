@@ -3,7 +3,7 @@ from pathlib import Path
 
 from spatialdata import SpatialData
 
-from ...utils.utils import _get_element, _get_key, get_intrinsic_cs
+from ..._sdata import get_element, get_intrinsic_cs, get_key
 from . import (
     write_cell_categories,
     write_gene_counts,
@@ -57,7 +57,7 @@ def write_explorer(
 
     path.mkdir(parents=True, exist_ok=True)
 
-    image_key = _get_key(sdata, "images", image_key)
+    image_key = get_key(sdata, "images", image_key)
     assert image_key is not None, "An image is required to convert to the Xenium Explorer inputs"
 
     if sdata.table is not None:
@@ -68,13 +68,13 @@ def write_explorer(
 
     pixels_cs = get_intrinsic_cs(sdata, image_key)
 
-    shapes_key = _get_key(sdata, "shapes", shapes_key)
+    shapes_key = get_key(sdata, "shapes", shapes_key)
     gdf = sdata.shapes[shapes_key]
     if gdf is not None:
         gdf = sdata.transform_element_to_coordinate_system(gdf, pixels_cs)
         write_polygons(path / FileNames.SHAPES, gdf.geometry, polygon_max_vertices)
 
-    df = _get_element(sdata, "points", points_key)
+    df = get_element(sdata, "points", points_key)
     if df is not None:
         assert (
             gene_column is not None

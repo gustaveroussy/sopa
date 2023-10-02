@@ -9,6 +9,8 @@ MIN_CELLS = 5_000
 CT_KEY = "ct_level"
 log = logging.getLogger(__name__)
 
+# TODO: improve and remove click
+
 
 @click.command()
 @click.option("-p", "--path", type=str, help="Path to the h5ad reference")

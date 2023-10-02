@@ -26,7 +26,7 @@ def cellpose(
 
     from sopa.segmentation import StainingSegmentation, shapes
     from sopa.segmentation.cellpose import cellpose_patch
-    from sopa.segmentation.update import update
+    from sopa.segmentation.cellpose.update import add_shapes
 
     sdata = spatialdata.read_zarr(sdata_path)
 
@@ -42,4 +42,4 @@ def cellpose(
     polygons = segmentation.run_patches(tile_width, tile_overlap)
     polygons = shapes.expand(polygons, expand_radius)
 
-    update(sdata, polygons, segmentation.image_key)
+    add_shapes(sdata, polygons, segmentation.image_key)

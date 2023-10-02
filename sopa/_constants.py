@@ -1,5 +1,20 @@
+class SopaKeys:
+    CELLPOSE_BOUNDARIES = "cellpose_boundaries"
+    BAYSOR_BOUNDARIES = "baysor_boundaries"
+    PATCHES = "sopa_patches"
+    BOUNDS = "bounds"
+
+    INTENSITIES_OBSM = "intensities"
+
+    REGION_KEY = "region"
+    SLIDE_KEY = "slide"
+    INSTANCE_KEY = "cell_id"
+
+    Z_SCORES = "z_scores"
+
+
 class ROI:
-    KEY = "sopa_ROI"
+    KEY = "region_of_interest"
     SCALE_FACTOR = "scale_factor"
     IMAGE_ARRAY_KEY = "image"
     POLYGON_ARRAY_KEY = "polygon"
@@ -7,11 +22,10 @@ class ROI:
     ELEMENT_TYPE = "element_type"
 
 
-class SopaKeys:
-    POLYGONS = "polygons"
-    PATCHES = "patches"
-
-
 class SopaFiles:
     SMK_DIR = ".smk_files"
     NUM_PATCHES = "n_patches"
+    BAYSOR_TRANSCRIPTS = "transcripts.csv"
+    BAYSOR_CONFIG = "config.toml"
+    CELLPOSE_NAME = "cellpose"
+    BAYSOR_NAME = "baysor"
