@@ -1,12 +1,88 @@
+import logging
+
 import numpy as np
 import pandas as pd
+import shapely
+import shapely.affinity
+import xarray as xr
 from anndata import AnnData
+from shapely.geometry import Point, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
 
 from .._constants import SopaKeys
-from .._sdata import get_boundaries, get_intrinsic_cs, get_key, get_spatial_image
+from .._sdata import (
+    get_boundaries,
+    get_element,
+    get_intrinsic_cs,
+    get_key,
+    get_spatial_image,
+)
 from . import shapes
+
+log = logging.getLogger(__name__)
+
+
+def average_channels(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
+    import dask.array as da
+
+    log.info(f"Averaging intensities over {len(cells)} cells")
+
+    tree = shapely.STRtree(cells)
+
+    intensities = np.zeros((len(cells), len(xarr.coords["c"])))
+    areas = np.zeros(len(cells))
+
+    def func(x, block_info=None):
+        if block_info is not None:
+            (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
+            patch = box(xmin, ymin, xmax, ymax)
+            intersections = tree.query(patch, predicate="intersects")
+
+            for index in intersections:
+                cell = cells[index]
+                bounds = shapes.pixel_outer_bounds(cell.bounds)
+
+                sub_image = x[
+                    :,
+                    max(bounds[1] - ymin, 0) : bounds[3] - ymin,
+                    max(bounds[0] - xmin, 0) : bounds[2] - xmin,
+                ]
+
+                if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
+                    continue
+
+                mask = shapes.rasterize(cell, sub_image.shape[1:], bounds)
+
+                intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
+                areas[index] += np.sum(mask)
+        return da.zeros_like(x)
+
+    xarr.data.rechunk({0: -1}).map_blocks(func).compute()
+
+    return intensities / areas[:, None].clip(1)
+
+
+def _tree_to_cell_id(tree, points, polygons):
+    polygon_indices, points_indices = tree.query(polygons, predicate="contains")
+
+    unique_values, indices = np.unique(points_indices, return_index=True)
+    cell_id = np.zeros(len(points), dtype=int)
+    cell_id[unique_values] = 1 + polygon_indices[indices]
+
+    return cell_id
+
+
+def map_transcript_to_cell(sdata: SpatialData, cell_key: str):
+    df = get_element(sdata, "points")
+    polygons = get_boundaries(sdata).geometry
+
+    def _get_cell_id(partition):
+        points = [Point(x, y) for x, y in partition[["x", "y"]].values]
+        tree = shapely.STRtree(points)
+        return _tree_to_cell_id(tree, points, polygons)
+
+    df[cell_key] = df.map_partitions(_get_cell_id)
 
 
 def aggregate(
@@ -33,7 +109,7 @@ def aggregate(
         ).table
 
     if intensity_mean:
-        mean_intensities = shapes.average(image, geo_df.geometry)
+        mean_intensities = average_channels(image, geo_df.geometry)
 
     if table is None:
         table = AnnData(

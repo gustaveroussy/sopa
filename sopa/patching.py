@@ -4,6 +4,7 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
+import numpy as np
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Polygon, box
@@ -14,6 +15,7 @@ from spatialdata.transformations import get_transformation
 
 from ._constants import ROI, SopaFiles, SopaKeys
 from ._sdata import get_spatial_image, to_intrinsic
+from .segmentation.aggregate import _tree_to_cell_id, map_transcript_to_cell
 
 log = logging.getLogger(__name__)
 
@@ -146,7 +148,11 @@ class Patches2D:
         self.sdata.add_shapes(SopaKeys.PATCHES, geo_df, overwrite=overwrite)
 
     def patchify_transcripts(
-        self, baysor_dir: str, cell_key: str = None, unassigned_value: int | str = None
+        self,
+        baysor_dir: str,
+        cell_key: str = None,
+        unassigned_value: int | str = None,
+        use_prior: bool = False,
     ):
         import shapely
         from shapely.geometry import Point
@@ -159,6 +165,8 @@ class Patches2D:
 
         baysor_dir = Path(baysor_dir)
 
+        prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES] if use_prior else None
+
         log.info(f"Making {len(self)} sub-CSV for Baysor")
         for i, patch in enumerate(tqdm(self.polygons)):
             patch_dir = (baysor_dir / str(i)).absolute()
@@ -166,17 +174,25 @@ class Patches2D:
             patch_path = patch_dir / SopaFiles.BAYSOR_TRANSCRIPTS
 
             tx0, ty0, tx1, ty1 = patch.bounds
-            where = (df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)
+            df = df[(df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)]
 
             if patch.area < box(*patch.bounds).area:
-                sub_df = df[where].compute()
+                sub_df = df.compute()  # TODO: make it more efficient using map partitions?
 
                 points = [Point(row) for row in sub_df[["x", "y"]].values]
                 tree = shapely.STRtree(points)
                 indices = tree.query(patch, predicate="intersects")
+                sub_df = sub_df.iloc[indices]
 
-                sub_df.iloc[indices].to_csv(patch_path)
+                if prior_boundaries:
+                    sub_df[SopaKeys.BAYSOR_CELL_KEY] = _tree_to_cell_id(
+                        tree, points, prior_boundaries
+                    )
+
+                sub_df.to_csv(patch_path)
             else:
-                df[where].to_csv(patch_path, single_file=True)
+                if prior_boundaries is not None:
+                    df = map_transcript_to_cell(self.sdata, SopaKeys.BAYSOR_CELL_KEY)
+                df.to_csv(patch_path, single_file=True)
 
         log.info(f"Patches saved in directory {baysor_dir}")
