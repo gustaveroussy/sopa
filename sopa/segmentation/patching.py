@@ -13,15 +13,15 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
-from ._constants import ROI, SopaFiles, SopaKeys
-from ._sdata import get_spatial_image, to_intrinsic
-from .segmentation.aggregate import _tree_to_cell_id, map_transcript_to_cell
+from .._constants import ROI, SopaFiles, SopaKeys
+from .._sdata import get_spatial_image, to_intrinsic
+from .aggregate import _tree_to_cell_id, map_transcript_to_cell
 
 log = logging.getLogger(__name__)
 
 
 class Patches1D:
-    def __init__(self, xmin, xmax, patch_width, patch_overlap, int_coords):
+    def __init__(self, xmin, xmax, patch_width, patch_overlap, tight, int_coords):
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
 
@@ -30,6 +30,9 @@ class Patches1D:
         self.int_coords = int_coords
 
         self._count = self.count()
+        if tight:
+            self.patch_width = self.tight_width()
+            assert self._count == self.count()
 
     def count(self):
         if self.patch_width >= self.delta:
@@ -41,7 +44,8 @@ class Patches1D:
         assert self._count == self.count()
 
     def tight_width(self):
-        return ceil((self.delta + (self._count - 1) * self.patch_overlap) / self._count)
+        width = (self.delta + (self._count - 1) * self.patch_overlap) / self._count
+        return ceil(width) if self.int_coords else width
 
     def __getitem__(self, i):
         start_delta = i * (self.patch_width - self.patch_overlap)
@@ -75,27 +79,12 @@ class Patches2D:
         else:
             raise ValueError(f"Invalid element type: {type(self.element)}")
 
-        self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, int_coords)
-        self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, int_coords)
-
-        self.patch_width = patch_width
-        self.patch_overlap = patch_overlap
-        self.tight = tight
-        self.int_coords = int_coords
+        self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, tight, int_coords)
+        self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
         self.roi = sdata.shapes[ROI.KEY] if ROI.KEY in sdata.shapes else None
         if self.roi is not None:
             self.roi = to_intrinsic(sdata, self.roi, element_name).geometry[0]
-
-        assert self.patch_width > self.patch_overlap
-
-        width_x = self.patch_x.tight_width()
-        width_y = self.patch_y.tight_width()
-
-        if self.tight:
-            self.patch_width = max(width_x, width_y)
-            self.patch_x.update(self.patch_width)
-            self.patch_y.update(self.patch_width)
 
         self._ilocs = []
 
@@ -131,8 +120,8 @@ class Patches2D:
             yield self[i]
 
     def polygon(self, i: int) -> Polygon:
-        square = box(*self[i])
-        return square if self.roi is None else square.intersection(self.roi)
+        rectangle = box(*self[i])
+        return rectangle if self.roi is None else rectangle.intersection(self.roi)
 
     @property
     def polygons(self) -> list[Polygon]:
@@ -174,10 +163,10 @@ class Patches2D:
             patch_path = patch_dir / SopaFiles.BAYSOR_TRANSCRIPTS
 
             tx0, ty0, tx1, ty1 = patch.bounds
-            df = df[(df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)]
+            sub_df = df[(df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)]
 
             if patch.area < box(*patch.bounds).area:
-                sub_df = df.compute()  # TODO: make it more efficient using map partitions?
+                sub_df = sub_df.compute()  # TODO: make it more efficient using map partitions?
 
                 points = [Point(row) for row in sub_df[["x", "y"]].values]
                 tree = shapely.STRtree(points)
@@ -192,7 +181,7 @@ class Patches2D:
                 sub_df.to_csv(patch_path)
             else:
                 if prior_boundaries is not None:
-                    df = map_transcript_to_cell(self.sdata, SopaKeys.BAYSOR_CELL_KEY)
-                df.to_csv(patch_path, single_file=True)
+                    map_transcript_to_cell(self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df)
+                sub_df.to_csv(patch_path, single_file=True)
 
         log.info(f"Patches saved in directory {baysor_dir}")

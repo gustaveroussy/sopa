@@ -22,7 +22,6 @@ segmentation:
   #   channels: ["DAPI"]
   #   flow_threshold: 2
   #   cellprob_threshold: -6
-  #   expand_radius: 2
 
   baysor:
     cell_key: cell_id
@@ -53,9 +52,11 @@ segmentation:
         new_component_weight: 0.2
         new_component_fraction: 0.3
 
+shapes:
+  expand_radius: 2
+
 aggregate:
   intensity_mean: true
-  transcript_count: false
   #gene_column: ""
 
 # annotation:
@@ -69,8 +70,7 @@ aggregate:
 #       CD20: B cell
 
 explorer:
-  shapes_key: "polygons"
   gene_column: "gene"
 
 executables:
-  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor #~/.julia/bin/baysor
+  baysor: ~/.julia/bin/baysor #/mnt/beegfs/merfish/bin/baysor/bin/baysor

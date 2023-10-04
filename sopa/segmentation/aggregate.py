@@ -1,5 +1,6 @@
 import logging
 
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import shapely
@@ -73,8 +74,10 @@ def _tree_to_cell_id(tree, points, polygons):
     return cell_id
 
 
-def map_transcript_to_cell(sdata: SpatialData, cell_key: str):
-    df = get_element(sdata, "points")
+def map_transcript_to_cell(sdata: SpatialData, cell_key: str, df: dd.DataFrame | None = None):
+    if df is None:
+        df = get_element(sdata, "points")
+
     polygons = get_boundaries(sdata).geometry
 
     def _get_cell_id(partition):

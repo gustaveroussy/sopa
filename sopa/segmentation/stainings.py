@@ -9,8 +9,8 @@ from tqdm import tqdm
 
 from .._constants import SopaKeys
 from .._sdata import get_spatial_image
-from ..patching import Patches2D
 from . import shapes
+from .patching import Patches2D
 
 
 class StainingSegmentation:

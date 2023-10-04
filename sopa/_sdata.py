@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 def _try_get_boundaries(
     sdata: SpatialData, shapes_key: str, return_key: bool
 ) -> gpd.GeoDataFrame | None:
-    if hasattr(sdata.shapes, shapes_key):
+    if shapes_key in sdata.shapes:
         return (shapes_key, sdata[shapes_key]) if return_key else sdata[shapes_key]
 
 

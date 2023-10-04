@@ -33,6 +33,9 @@ def write_transcripts(
     location /= ExplorerConstants.MICRONS_TO_PIXELS
     location = np.concatenate([location, np.zeros((num_transcripts, 1))], axis=1)
 
+    if location.min() < 0:
+        log.warn("Some transcripts are located outside of the image (pixels < 0)")
+
     xmax, ymax = location[:, :2].max(axis=0)
 
     gene_names = list(df[gene].cat.categories)

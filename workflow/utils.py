@@ -29,7 +29,7 @@ class WorkflowPaths:
 
         self.baysor_boundaries = self.shapes_dir / "baysor_boundaries"
         self.cellpose_boundaries = self.shapes_dir / "cellpose_boundaries"
-        self.patches = self.shapes_dir / "patches"
+        self.patches = self.shapes_dir / "sopa_patches"
 
         self.smk_files = self.sdata_path / ".smk_files"
         self.smk_table = self.smk_files / "table"
@@ -116,4 +116,4 @@ class Args:
 
     @property
     def expand_radius(self):
-        return self.config["segmentation"]["cellpose"]["expand_radius"]
+        return self.config["shapes"]["expand_radius"]

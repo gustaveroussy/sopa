@@ -3,7 +3,7 @@ from pathlib import Path
 
 from spatialdata import SpatialData
 
-from ..._sdata import get_element, get_intrinsic_cs, get_key
+from ..._sdata import get_boundaries, get_element, get_intrinsic_cs, get_key
 from . import (
     write_cell_categories,
     write_gene_counts,
@@ -58,6 +58,7 @@ def write_explorer(
     path.mkdir(parents=True, exist_ok=True)
 
     image_key = get_key(sdata, "images", image_key)
+    shapes_key, geo_df = get_boundaries(sdata, return_key=True)
     assert image_key is not None, "An image is required to convert to the Xenium Explorer inputs"
 
     if sdata.table is not None:
@@ -68,11 +69,9 @@ def write_explorer(
 
     pixels_cs = get_intrinsic_cs(sdata, image_key)
 
-    shapes_key = get_key(sdata, "shapes", shapes_key)
-    gdf = sdata.shapes[shapes_key]
-    if gdf is not None:
-        gdf = sdata.transform_element_to_coordinate_system(gdf, pixels_cs)
-        write_polygons(path / FileNames.SHAPES, gdf.geometry, polygon_max_vertices)
+    if geo_df is not None:
+        geo_df = sdata.transform_element_to_coordinate_system(geo_df, pixels_cs)
+        write_polygons(path / FileNames.SHAPES, geo_df.geometry, polygon_max_vertices)
 
     df = get_element(sdata, "points", points_key)
     if df is not None:
@@ -84,7 +83,9 @@ def write_explorer(
 
     write_image(path / FileNames.IMAGE, sdata.images[image_key], image_key)
 
-    n_obs = sdata.table.n_obs if sdata.table is not None else (len(gdf) if gdf is not None else 0)
+    n_obs = (
+        sdata.table.n_obs if sdata.table is not None else (len(geo_df) if geo_df is not None else 0)
+    )
 
     EXPERIMENT = experiment_dict(image_key, shapes_key, n_obs)
     with open(path / FileNames.METADATA, "w") as f:

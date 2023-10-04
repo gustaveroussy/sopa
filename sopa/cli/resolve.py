@@ -13,8 +13,9 @@ def cellpose(
     import spatialdata
 
     from sopa._sdata import get_key
-    from sopa.segmentation import StainingSegmentation, shapes
+    from sopa.segmentation import shapes
     from sopa.segmentation.cellpose.update import add_shapes
+    from sopa.segmentation.stainings import StainingSegmentation
 
     sdata = spatialdata.read_zarr(sdata_path)
 

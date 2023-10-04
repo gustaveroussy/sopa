@@ -97,7 +97,7 @@ def patchify(
 
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
-    from sopa.patching import Patches2D
+    from sopa.segmentation.patching import Patches2D
 
     image_key = get_key(sdata, "images")
 

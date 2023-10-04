@@ -68,7 +68,10 @@ rule patch_segmentation_baysor:
     shell:
         """
         cd {input.baysor_patch}
-        module purge  # TODO: add if 'command exists'
+        if command -v module &> /dev/null; then
+            module purge
+        fi
+        
         {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
         """
 
