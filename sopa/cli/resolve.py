@@ -31,7 +31,7 @@ def cellpose(
 @app_resolve.command()
 def baysor(
     sdata_path: str,
-    baysor_dir: str = option,
+    baysor_temp_dir: str = option,
     gene_column: str = option,
     min_area: float = 0,
     n: int = None,
@@ -50,7 +50,7 @@ def baysor(
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    patches_cells, adatas = read_all_baysor_patches(baysor_dir, min_area, n)
+    patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, n)
     geo_df, cells_indices, new_ids = resolve(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")

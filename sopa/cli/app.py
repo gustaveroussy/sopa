@@ -3,6 +3,7 @@ import ast
 import typer
 
 from .annotate import app_annotate
+from .patchify import app_patchify
 from .read import app_read
 from .resolve import app_resolve
 from .segmentation import app_segmentation
@@ -14,6 +15,7 @@ app.add_typer(app_annotate, name="annotate")
 app.add_typer(app_segmentation, name="segmentation")
 app.add_typer(app_read, name="read")
 app.add_typer(app_resolve, name="resolve")
+app.add_typer(app_patchify, name="patchify")
 
 
 @app.command()
@@ -74,58 +76,6 @@ def aggregate(
     sdata = spatialdata.read_zarr(sdata_path)
 
     aggregate(sdata, gene_column, intensity_mean)
-
-
-@app.command()
-def patchify(
-    sdata_path: str,
-    patch_width_pixel: float = None,
-    patch_overlap_pixel: float = None,
-    patch_width_microns: float = None,
-    patch_overlap_microns: float = None,
-    baysor_dir: str = None,
-    baysor_config: str = typer.Option(default={}, callback=ast.literal_eval),
-    baysor_cell_key: str = None,
-    baysor_unassigned_value: int = None,
-):
-    import json
-    from pathlib import Path
-
-    import spatialdata
-
-    sdata = spatialdata.read_zarr(sdata_path)
-
-    from sopa._constants import SopaFiles
-    from sopa._sdata import get_key
-    from sopa.segmentation.patching import Patches2D
-
-    image_key = get_key(sdata, "images")
-
-    n_patches = {}
-
-    if patch_width_pixel is not None:
-        patches = Patches2D(sdata, image_key, patch_width_pixel, patch_overlap_pixel)
-        patches.write()
-
-        n_patches[SopaFiles.CELLPOSE_NAME] = len(patches)
-
-    if baysor_dir is not None:
-        from sopa.segmentation.baysor.prepare import to_toml
-
-        assert baysor_config is not None
-
-        df_key = get_key(sdata, "points")
-        patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
-        patches.patchify_transcripts(baysor_dir, baysor_cell_key, baysor_unassigned_value)
-
-        for i in range(len(patches)):
-            path = Path(baysor_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
-            to_toml(path, baysor_config)
-
-        n_patches[SopaFiles.BAYSOR_NAME] = len(patches)
-
-    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES, "w") as f:
-        json.dump(n_patches, f, indent=4)
 
 
 @app.command()

@@ -24,43 +24,60 @@ rule to_spatialdata: # TODO: update
         sopa read {params.reader_name} {paths.sdata_path} {paths.raw}
         """
 
-checkpoint patchify:
+checkpoint patchify_cellpose:
     input:
         paths.sdata_zgroup,
     output:
-        n_patches = paths.smk_n_patches,
+        n_patches = paths.smk_n_patches_cellpose,
         patches = directory(paths.patches),
     params:
-        args_patchify = str(args["patchify"]),
-        args_baysor = args.dump_baysor_patchify() if args.baysor else "",
+        args_patchify = str(args["patchify"].where(contains="pixel")),
     conda:
         "spatial"
     shell:
         """
-        sopa patchify {paths.sdata_path} {params.args_patchify} {params.args_baysor}
+        sopa patchify cellpose {paths.sdata_path} {params.args_patchify}
+        """
+
+checkpoint patchify_baysor:
+    input:
+        paths.sdata_zgroup,
+        paths.cellpose_boundaries if args.cellpose else [],
+    output:
+        n_patches = paths.smk_n_patches_baysor,
+        baysor_temp_dir = directory(paths.baysor_temp_dir),
+    params:
+        args_patchify = str(args["patchify"].where(contains="micron")),
+        args_baysor = args.dump_baysor_patchify() if args.baysor else "",
+        arg_prior = "--use-prior" if args.cellpose else ""
+    conda:
+        "spatial"
+    shell:
+        """
+        sopa patchify baysor {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
         """
 
 rule patch_segmentation_cellpose:
     input:
-        paths.smk_n_patches,
+        paths.smk_n_patches_cellpose,
         paths.patches,
     output:
-        "{paths.cellpose_dir}/{index}.zarr.zip",
+        f"{paths.cellpose_temp_dir}/{{index}}.zarr.zip",
     conda:
         "spatial"
     params:
         args_cellpose = str(args["segmentation"]["cellpose"]),
     shell:
         """
-        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --patch-index {wildcards.index} {params.args_cellpose}
+        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
         """
 
 rule patch_segmentation_baysor:
     input:
-        n_patches = paths.smk_n_patches,
-        baysor_patch = f"{paths.baysor_dir}/{{index}}",
+        n_patches = paths.smk_n_patches_baysor,
+        baysor_patch = f"{paths.baysor_temp_dir}/{{index}}",
     output:
-        f"{paths.baysor_dir}/{{index}}/segmentation_polygons.json"
+        f"{paths.baysor_temp_dir}/{{index}}/segmentation_polygons.json"
     params:
         args_baysor_cell_key = args.baysor_cell_key,
     resources:
@@ -76,10 +93,9 @@ rule patch_segmentation_baysor:
         """
 
 def get_input_resolve(name):
-    import json
     def _(wilcards):
-        with open(checkpoints.patchify.get(**wilcards).output.n_patches, 'r') as f:
-            return paths.cells_paths(json.load(f)[name], name)
+        with open(getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.n_patches, 'r') as f:
+            return paths.cells_paths(int(f.read()), name)
     return _
 
 rule resolve_cellpose:
@@ -93,7 +109,7 @@ rule resolve_cellpose:
         args_expand_radius = args.expand_radius,
     shell:
         """
-        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_dir} --expand-radius {params.args_expand_radius}
+        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_temp_dir} --expand-radius {params.args_expand_radius}
         """
 
 rule resolve_baysor:
@@ -107,7 +123,7 @@ rule resolve_baysor:
     shell:
         """
         N=$(echo {input[0]} | tr ' ' '\\n' | wc -l);
-        sopa resolve baysor {paths.sdata_path} --baysor-dir {paths.baysor_dir} --gene-column {args.gene_column} --n $N
+        sopa resolve baysor {paths.sdata_path} --baysor-temp-dir {paths.baysor_temp_dir} --gene-column {args.gene_column} --n $N
         """
 
 rule aggregate:

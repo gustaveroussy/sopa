@@ -33,7 +33,8 @@ class WorkflowPaths:
 
         self.smk_files = self.sdata_path / ".smk_files"
         self.smk_table = self.smk_files / "table"
-        self.smk_n_patches = self.smk_files / "n_patches"
+        self.smk_n_patches_cellpose = self.smk_files / "n_patches_cellpose"
+        self.smk_n_patches_baysor = self.smk_files / "n_patches_baysor"
         self.smk_aggregation = self.smk_files / "aggregation"
 
         self.annotations = []
@@ -43,8 +44,8 @@ class WorkflowPaths:
             )
 
         self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
-        self.cellpose_dir = self.temp_dir / "cellpose"
-        self.baysor_dir = self.temp_dir / "baysor"
+        self.cellpose_temp_dir = self.temp_dir / "cellpose"
+        self.baysor_temp_dir = self.temp_dir / "baysor"
 
         self.explorer_directory = self.sdata_path.with_suffix(".explorer")
         self.explorer_directory.mkdir(parents=True, exist_ok=True)
@@ -53,9 +54,11 @@ class WorkflowPaths:
 
     def cells_paths(self, n: int, name):
         if name == "cellpose":
-            return [str(self.cellpose_dir / f"{i}.zarr.zip") for i in range(n)]
+            return [str(self.cellpose_temp_dir / f"{i}.zarr.zip") for i in range(n)]
         if name == "baysor":
-            return [str(self.baysor_dir / str(i) / "segmentation_polygons.json") for i in range(n)]
+            return [
+                str(self.baysor_temp_dir / str(i) / "segmentation_polygons.json") for i in range(n)
+            ]
 
 
 class Args:
@@ -72,13 +75,19 @@ class Args:
     def __getitem__(self, name):
         return Args(self.paths, self.config.get(name, {}))
 
-    def dump_baysor_patchify(self):
-        if not self.baysor:
-            return ""
+    def where(self, keys: list[str] | None = None, contains: str | None = None):
+        if keys is not None:
+            return Args(self.paths, {key: self.config[key] for key in keys})
+        if contains is not None:
+            return Args(
+                self.paths,
+                {key: value for key, value in self.config.items() if contains in key},
+            )
+        return self
 
+    def dump_baysor_patchify(self):
         return (
-            self["segmentation"]["baysor"]._dump("baysor-")
-            + f" --baysor-dir {self.paths.baysor_dir}"
+            str(self["segmentation"]["baysor"]) + f" --baysor-temp-dir {self.paths.baysor_temp_dir}"
         )
 
     @classmethod

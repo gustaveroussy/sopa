@@ -25,7 +25,8 @@ class ROI:
 
 class SopaFiles:
     SMK_DIR = ".smk_files"
-    NUM_PATCHES = "n_patches"
+    NUM_PATCHES_CELLPOSE = "n_patches_cellpose"
+    NUM_PATCHES_BAYSOR = "n_patches_baysor"
     BAYSOR_TRANSCRIPTS = "transcripts.csv"
     BAYSOR_CONFIG = "config.toml"
     CELLPOSE_NAME = "cellpose"

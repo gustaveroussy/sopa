@@ -64,7 +64,9 @@ def average_channels(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
     return intensities / areas[:, None].clip(1)
 
 
-def _tree_to_cell_id(tree, points, polygons):
+def _tree_to_cell_id(
+    tree: shapely.STRtree, points: list[Point], polygons: list[Polygon]
+) -> np.ndarray:
     polygon_indices, points_indices = tree.query(polygons, predicate="contains")
 
     unique_values, indices = np.unique(points_indices, return_index=True)
@@ -74,18 +76,29 @@ def _tree_to_cell_id(tree, points, polygons):
     return cell_id
 
 
-def map_transcript_to_cell(sdata: SpatialData, cell_key: str, df: dd.DataFrame | None = None):
+def map_transcript_to_cell(
+    sdata: SpatialData,
+    cell_key: str,
+    df: dd.DataFrame | pd.DataFrame | None = None,
+    polygons: list[Polygon] | None = None,
+):
     if df is None:
         df = get_element(sdata, "points")
 
-    polygons = get_boundaries(sdata).geometry
+    if polygons is None:
+        polygons = get_boundaries(sdata).geometry
 
-    def _get_cell_id(partition):
+    def _get_cell_id(partition: pd.DataFrame) -> np.ndarray:
         points = [Point(x, y) for x, y in partition[["x", "y"]].values]
         tree = shapely.STRtree(points)
         return _tree_to_cell_id(tree, points, polygons)
 
-    df[cell_key] = df.map_partitions(_get_cell_id)
+    if isinstance(df, dd.DataFrame):
+        df[cell_key] = df.map_partitions(_get_cell_id)
+    elif isinstance(df, pd.DataFrame):
+        df[cell_key] = _get_cell_id(df)
+    else:
+        raise ValueError(f"Invalid dataframe type: {type(df)}")
 
 
 def aggregate(

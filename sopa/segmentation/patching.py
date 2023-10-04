@@ -63,6 +63,7 @@ class Patches2D:
         patch_overlap: float | int = 50,
     ):
         self.sdata = sdata
+        self.element_name = element_name
         self.element = sdata[element_name]
 
         if isinstance(self.element, MultiscaleSpatialImage):
@@ -138,7 +139,7 @@ class Patches2D:
 
     def patchify_transcripts(
         self,
-        baysor_dir: str,
+        baysor_temp_dir: str,
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
@@ -152,13 +153,18 @@ class Patches2D:
         if cell_key is not None and unassigned_value is not None:
             df[cell_key] = df[cell_key].replace(unassigned_value, 0)
 
-        baysor_dir = Path(baysor_dir)
+        baysor_temp_dir = Path(baysor_temp_dir)
 
-        prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES] if use_prior else None
+        prior_boundaries = None
+        if use_prior:
+            prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
+            prior_boundaries = to_intrinsic(
+                self.sdata, prior_boundaries, self.element_name
+            ).geometry
 
         log.info(f"Making {len(self)} sub-CSV for Baysor")
         for i, patch in enumerate(tqdm(self.polygons)):
-            patch_dir = (baysor_dir / str(i)).absolute()
+            patch_dir = (baysor_temp_dir / str(i)).absolute()
             patch_dir.mkdir(parents=True, exist_ok=True)
             patch_path = patch_dir / SopaFiles.BAYSOR_TRANSCRIPTS
 
@@ -168,20 +174,22 @@ class Patches2D:
             if patch.area < box(*patch.bounds).area:
                 sub_df = sub_df.compute()  # TODO: make it more efficient using map partitions?
 
-                points = [Point(row) for row in sub_df[["x", "y"]].values]
+                points = [Point(*row) for row in sub_df[["x", "y"]].values]
                 tree = shapely.STRtree(points)
                 indices = tree.query(patch, predicate="intersects")
                 sub_df = sub_df.iloc[indices]
 
-                if prior_boundaries:
-                    sub_df[SopaKeys.BAYSOR_CELL_KEY] = _tree_to_cell_id(
-                        tree, points, prior_boundaries
+                if prior_boundaries is not None:
+                    map_transcript_to_cell(
+                        self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df, prior_boundaries
                     )
 
                 sub_df.to_csv(patch_path)
             else:
                 if prior_boundaries is not None:
-                    map_transcript_to_cell(self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df)
+                    map_transcript_to_cell(
+                        self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df, prior_boundaries
+                    )
                 sub_df.to_csv(patch_path, single_file=True)
 
-        log.info(f"Patches saved in directory {baysor_dir}")
+        log.info(f"Patches saved in directory {baysor_temp_dir}")
