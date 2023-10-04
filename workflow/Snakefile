@@ -1,7 +1,5 @@
 from utils import WorkflowPaths, Args
 
-assert "sdata_path" in config.keys(), "Argument --sdata_path is required"
-
 paths = WorkflowPaths(config)
 args = Args(paths, config)
 
@@ -10,19 +8,18 @@ rule all:
         paths.annotations,
         paths.explorer_experiment,
 
-rule to_spatialdata: # TODO: update
+rule to_spatialdata:
     input:
-        paths.raw,
+        paths.data_path,
     output:
-        paths.sdata_zgroup,
+        paths.sdata_zgroup if paths.data_path else [],
     conda:
         "spatial"
     params:
-        reader_name = config["reader"]["name"],
-        reader_args = f"--kwargs {args['reader']['args']}" if "args" in args["reader"] else ""
+        args_reader = str(args['read'])
     shell:
         """
-        sopa read {params.reader_name} {paths.data_path} {paths.sdata_path} {params.reader_args}
+        sopa read {paths.data_path} --sdata-path {paths.sdata_path} {params.args_reader}
         """
 
 checkpoint patchify_cellpose:
@@ -30,7 +27,7 @@ checkpoint patchify_cellpose:
         paths.sdata_zgroup,
     output:
         n_patches = paths.smk_n_patches_cellpose,
-        patches = directory(paths.patches),
+        patches = touch(paths.smk_patches),
     params:
         args_patchify = str(args["patchify"].where(contains="pixel")),
     conda:
@@ -43,7 +40,7 @@ checkpoint patchify_cellpose:
 checkpoint patchify_baysor:
     input:
         paths.sdata_zgroup,
-        paths.cellpose_boundaries if args.cellpose else [],
+        paths.smk_cellpose_boundaries if args.cellpose else [],
     output:
         n_patches = paths.smk_n_patches_baysor,
         baysor_temp_dir = directory(paths.baysor_temp_dir),
@@ -61,7 +58,7 @@ checkpoint patchify_baysor:
 rule patch_segmentation_cellpose:
     input:
         paths.smk_n_patches_cellpose,
-        paths.patches,
+        paths.smk_patches,
     output:
         f"{paths.cellpose_temp_dir}/{{index}}.zarr.zip",
     conda:
@@ -103,7 +100,7 @@ rule resolve_cellpose:
     input:
         get_input_resolve("cellpose"),
     output:
-        directory(paths.cellpose_boundaries),
+        touch(paths.smk_cellpose_boundaries),
     conda:
         "spatial"
     params:
@@ -117,7 +114,7 @@ rule resolve_baysor:
     input:
         get_input_resolve("baysor"),
     output:
-        directory(paths.baysor_boundaries),
+        touch(paths.smk_baysor_boundaries),
         touch(paths.smk_table)
     conda:
         "spatial"
@@ -129,7 +126,7 @@ rule resolve_baysor:
 
 rule aggregate:
     input:
-        paths.baysor_boundaries if args.baysor else paths.cellpose_boundaries,
+        paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
     output:
         touch(paths.smk_aggregation),
     conda:
@@ -157,7 +154,7 @@ rule annotate:
 
 rule explorer:
     input:
-        paths.baysor_boundaries if args.baysor else paths.cellpose_boundaries,
+        paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
         paths.smk_aggregation if args.aggregate else paths.smk_table,
         paths.annotations if args.annotate else [],
     output:

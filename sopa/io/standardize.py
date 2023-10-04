@@ -1,6 +1,6 @@
 import logging
+from pathlib import Path
 
-import spatialdata
 from spatialdata import SpatialData
 
 log = logging.getLogger(__name__)
@@ -26,4 +26,8 @@ def write_standardized(sdata: SpatialData, sdata_path: str):
 
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
 
-    # sdata.write(sdata_path)
+    sdata_path: Path = Path(sdata_path)
+    if sdata_path.exists() and not any(sdata_path.iterdir()):
+        sdata_path.rmdir()
+
+    sdata.write(sdata_path)

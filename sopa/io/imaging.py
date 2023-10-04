@@ -28,7 +28,7 @@ def qptiff(
 
         log.info(f"Found channel names {names}")
 
-        if len(channels_renaming):
+        if channels_renaming is not None and len(channels_renaming):
             log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
             names = [channels_renaming.get(name, name) for name in names]
             log.info(f"New names are: {names}")

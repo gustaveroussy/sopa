@@ -8,8 +8,19 @@ class ConfigConstants:
 
 
 def _sanity_check_config(config: dict):
-    for key in ["sdata_path"]:
-        assert key in config.keys(), f"config['{key}'] is required to run the pipeline"
+    assert (
+        "data_path" in config or "sdata_path" in config
+    ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
+
+    if "data_path" in config and not "sdata_path" in config:
+        config["sdata_path"] = Path(config["data_path"]).with_suffix(".zarr")
+        print(f"SpatialData object path set to default: {config['sdata_path']}")
+
+    if "data_path" not in config:
+        assert Path(
+            config["sdata_path"]
+        ).exists(), f"When `data_path` is not provided, the spatial data object must exist, but the directory doesn't exists: {config['sdata_path']}"
+        config["data_path"] = []
 
     return config
 
@@ -19,8 +30,8 @@ class WorkflowPaths:
         self.config = _sanity_check_config(config)
 
         self.sdata_path = Path(self.config["sdata_path"])
+        self.data_path = self.config["data_path"]
         self.sdata_zgroup = self.sdata_path / ".zgroup"  # trick to fix snakemake ChildIOException
-        self.data_path = self.sdata_path.with_suffix(".qptiff")  # TODO: make it general
 
         self.shapes_dir = self.sdata_path / "shapes"
         self.points_dir = self.sdata_path / "points"
@@ -33,8 +44,11 @@ class WorkflowPaths:
 
         self.smk_files = self.sdata_path / ".smk_files"
         self.smk_table = self.smk_files / "table"
+        self.smk_patches = self.smk_files / "patches"
         self.smk_n_patches_cellpose = self.smk_files / "n_patches_cellpose"
         self.smk_n_patches_baysor = self.smk_files / "n_patches_baysor"
+        self.smk_cellpose_boundaries = self.smk_files / "cellpose_boundaries"
+        self.smk_baysor_boundaries = self.smk_files / "baysor_boundaries"
         self.smk_aggregation = self.smk_files / "aggregation"
 
         self.annotations = []

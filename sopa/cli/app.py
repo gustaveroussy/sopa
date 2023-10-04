@@ -18,8 +18,8 @@ app.add_typer(app_patchify, name="patchify")
 
 @app.command()
 def read(
-    technology: str,
     data_path: str,
+    technology: str = option,
     sdata_path: str = None,
     kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
