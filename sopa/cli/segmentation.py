@@ -37,7 +37,7 @@ def cellpose(
     segmentation = StainingSegmentation(sdata, method, channels)
 
     if patch_index is not None:
-        segmentation.write_patch_polygons(patch_dir, patch_index)
+        segmentation.write_patch_cells(patch_dir, patch_index)
         return
 
     cells = segmentation.run_patches(patch_width, patch_overlap)

@@ -15,7 +15,7 @@ def get_channel_name(description):
     return re.search(r"<Name>(.*?)</Name>", description).group(1)
 
 
-def read_qptiff(
+def qptiff(
     path: Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
 ) -> SpatialData:
     image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
@@ -28,7 +28,7 @@ def read_qptiff(
 
         log.info(f"Found channel names {names}")
 
-        if channels_renaming is not None:
+        if len(channels_renaming):
             log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
             names = [channels_renaming.get(name, name) for name in names]
             log.info(f"New names are: {names}")

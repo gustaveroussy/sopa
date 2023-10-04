@@ -2,13 +2,9 @@ import json
 from pathlib import Path
 
 import anndata
-import geopandas as gpd
-import numpy as np
 import pandas as pd
 from anndata import AnnData
 from shapely.geometry import Polygon, shape
-
-from .. import shapes
 
 
 def read_baysor(
@@ -37,7 +33,7 @@ def read_baysor(
 
 
 def read_all_baysor_patches(
-    baysor_temp_dir: str, min_area: float = 0, n: int = None
+    baysor_temp_dir: str, min_area: float = 0, n: int | None = None
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     baysor_temp_dir = Path(baysor_temp_dir)
 
@@ -49,27 +45,3 @@ def read_all_baysor_patches(
     patches_cells, adatas = zip(*outs)
 
     return patches_cells, adatas
-
-
-def resolve(
-    patches_cells: list[list[Polygon]], adatas: list[AnnData]
-) -> tuple[gpd.GeoDataFrame, np.ndarray, np.ndarray]:
-    patch_ids = [adata.obs_names for adata in adatas]
-
-    patch_indices = np.arange(len(patches_cells)).repeat([len(cells) for cells in patches_cells])
-    cells = [cell for cells in patches_cells for cell in cells]
-    baysor_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
-
-    cells_resolved, cells_indices = shapes.solve_conflicts(
-        cells, patch_indices=patch_indices, return_indices=True
-    )
-
-    existing_ids = baysor_ids[cells_indices[cells_indices >= 0]]
-    new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))
-    index = np.concatenate([existing_ids, new_ids])
-
-    return (
-        gpd.GeoDataFrame({"geometry": cells_resolved}, index=index),
-        cells_indices,
-        new_ids,
-    )

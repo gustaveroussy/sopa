@@ -4,7 +4,6 @@ import typer
 
 from .annotate import app_annotate
 from .patchify import app_patchify
-from .read import app_read
 from .resolve import app_resolve
 from .segmentation import app_segmentation
 
@@ -13,9 +12,29 @@ option = typer.Option()
 app = typer.Typer()
 app.add_typer(app_annotate, name="annotate")
 app.add_typer(app_segmentation, name="segmentation")
-app.add_typer(app_read, name="read")
 app.add_typer(app_resolve, name="resolve")
 app.add_typer(app_patchify, name="patchify")
+
+
+@app.command()
+def read(
+    technology: str,
+    data_path: str,
+    sdata_path: str = None,
+    kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
+):
+    from pathlib import Path
+
+    from sopa import io
+
+    sdata_path = Path(data_path).with_suffix(".zarr") if sdata_path is None else sdata_path
+
+    assert hasattr(
+        io, technology
+    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, qptiff"
+
+    sdata = getattr(io, technology)(data_path, **kwargs)
+    io.write_standardized(sdata, sdata_path)
 
 
 @app.command()

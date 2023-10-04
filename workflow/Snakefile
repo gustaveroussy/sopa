@@ -19,9 +19,10 @@ rule to_spatialdata: # TODO: update
         "spatial"
     params:
         reader_name = config["reader"]["name"],
+        reader_args = f"--kwargs {args['reader']['args']}" if "args" in args["reader"] else ""
     shell:
         """
-        sopa read {params.reader_name} {paths.sdata_path} {paths.raw}
+        sopa read {params.reader_name} {paths.data_path} {paths.sdata_path} {params.reader_args}
         """
 
 checkpoint patchify_cellpose:

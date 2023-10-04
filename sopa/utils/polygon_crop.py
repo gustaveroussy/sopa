@@ -40,6 +40,7 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
             len(image.coords["c"]) in VALID_N_CHANNELS
         ), f"Choose one or three channels among {image.c.values} by using the -c argument"
 
+    log.info(f"Resizing image by a factor of {scale_factor}")
     return image_key, resize(image, scale_factor).compute()
 
 
@@ -73,8 +74,9 @@ def _draw_polygon(image: np.ndarray, scale_factor: float, margin_ratio: float):
 def intermediate_selection(
     intermediate_image: str, intermediate_polygon: str, margin_ratio: float = 0.1
 ):
-    z = zarr.open(intermediate_image, mode="r")
+    log.info(f"Reading intermediate image {intermediate_image}")
 
+    z = zarr.open(intermediate_image, mode="r")
     image = z[ROI.IMAGE_ARRAY_KEY][:]
 
     polygon = _draw_polygon(image, z.attrs[ROI.SCALE_FACTOR], margin_ratio)
@@ -117,3 +119,5 @@ def polygon_selection(
     geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True))
     sdata.add_shapes(ROI.KEY, geo_df)
+
+    log.info(f"Polygon saved in sdata['{ROI.KEY}']")

@@ -49,7 +49,7 @@ class StainingSegmentation:
 
         return [affinity.translate(cell, *bounds[:2]) for cell in cells]
 
-    def write_patch_polygons(self, patch_dir: str, patch_index: int):
+    def write_patch_cells(self, patch_dir: str, patch_index: int):
         patch = self.sdata[SopaKeys.PATCHES].geometry[patch_index]
         cells = self._run_patch(patch)
 
