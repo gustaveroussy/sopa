@@ -40,7 +40,7 @@ segmentation:
         confidence_nn_id: 16
 
       segmentation:
-        scale: 6.15                        # typical cell radius
+        scale: 100                        # typical cell radius
         scale_std: "25%"                   # cell radius standard deviation
         prior_segmentation_confidence: 1 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false

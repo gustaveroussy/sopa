@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 import dask.dataframe as dd
 import numpy as np
@@ -64,9 +65,10 @@ def average_channels(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
     return intensities / areas[:, None].clip(1)
 
 
-def _tree_to_cell_id(
-    tree: shapely.STRtree, points: list[Point], polygons: list[Polygon]
-) -> np.ndarray:
+def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame) -> np.ndarray:
+    points = partition[["x", "y"]].apply(Point, axis=1)
+    tree = shapely.STRtree(points)
+
     polygon_indices, points_indices = tree.query(polygons, predicate="contains")
 
     unique_values, indices = np.unique(points_indices, return_index=True)
@@ -88,15 +90,12 @@ def map_transcript_to_cell(
     if polygons is None:
         polygons = get_boundaries(sdata).geometry
 
-    def _get_cell_id(partition: pd.DataFrame) -> np.ndarray:
-        points = [Point(x, y) for x, y in partition[["x", "y"]].values]
-        tree = shapely.STRtree(points)
-        return _tree_to_cell_id(tree, points, polygons)
+    get_cell_id = partial(_get_cell_id, polygons)
 
     if isinstance(df, dd.DataFrame):
-        df[cell_key] = df.map_partitions(_get_cell_id)
+        df[cell_key] = df.map_partitions(get_cell_id)
     elif isinstance(df, pd.DataFrame):
-        df[cell_key] = _get_cell_id(df)
+        df[cell_key] = get_cell_id(df)
     else:
         raise ValueError(f"Invalid dataframe type: {type(df)}")
 

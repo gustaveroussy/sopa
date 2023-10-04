@@ -1,5 +1,6 @@
 import dask.array as da
 import numpy as np
+import pandas as pd
 import xarray as xr
 from shapely.geometry import box
 
@@ -24,3 +25,14 @@ def test_average_channels():
     )
 
     assert (means == true_means).all()
+
+
+def test_get_cell_id():
+    polygons = [box(10, 10, 20, 28), box(15, 18, 25, 22), box(30, 35, 34, 42)]
+    df = pd.DataFrame(
+        {"x": [1.5, 16, 23, 67, 33, 19, 22, 10], "y": [15, 21, 34, 5, 40, 20, 21, 10]}
+    )
+
+    cell_id = aggregate._get_cell_id(polygons, df)
+
+    assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 0]

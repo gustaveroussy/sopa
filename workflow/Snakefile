@@ -94,7 +94,7 @@ rule patch_segmentation_baysor:
 
 def get_input_resolve(name):
     def _(wilcards):
-        with open(getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.n_patches, 'r') as f:
+        with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.n_patches.open() as f:
             return paths.cells_paths(int(f.read()), name)
     return _
 

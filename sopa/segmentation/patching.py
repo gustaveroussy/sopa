@@ -15,7 +15,7 @@ from spatialdata.transformations import get_transformation
 
 from .._constants import ROI, SopaFiles, SopaKeys
 from .._sdata import get_spatial_image, to_intrinsic
-from .aggregate import _tree_to_cell_id, map_transcript_to_cell
+from .aggregate import map_transcript_to_cell
 
 log = logging.getLogger(__name__)
 
@@ -174,7 +174,7 @@ class Patches2D:
             if patch.area < box(*patch.bounds).area:
                 sub_df = sub_df.compute()  # TODO: make it more efficient using map partitions?
 
-                points = [Point(*row) for row in sub_df[["x", "y"]].values]
+                points = sub_df[["x", "y"]].apply(Point, axis=1)
                 tree = shapely.STRtree(points)
                 indices = tree.query(patch, predicate="intersects")
                 sub_df = sub_df.iloc[indices]
