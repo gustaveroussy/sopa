@@ -57,7 +57,7 @@ def write_explorer(
 
     path.mkdir(parents=True, exist_ok=True)
 
-    image_key, image = get_spatial_image(sdata, "images", image_key)
+    image_key, image = get_spatial_image(sdata, image_key)
     shapes_key, geo_df = get_boundaries(sdata, return_key=True)
     assert image_key is not None, "An image is required to convert to the Xenium Explorer inputs"
 
