@@ -1,6 +1,7 @@
 import logging
 from functools import partial
 
+import dask.array as da
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
@@ -16,27 +17,18 @@ from spatialdata.models import TableModel
 from .._constants import SopaKeys
 from .._sdata import (
     get_boundaries,
-    get_element,
     get_intrinsic_cs,
+    get_item,
     get_key,
     get_spatial_image,
+    to_intrinsic,
 )
 from . import shapes
 
 log = logging.getLogger(__name__)
 
 
-def average_channels(
-    sdata: SpatialData, image: SpatialImage, geo_df: gpd.GeoDataFrame
-) -> np.ndarray:
-    import dask.array as da
-
-    pixels_cs = get_intrinsic_cs(sdata, image)
-    geo_df = sdata.transform_element_to_coordinate_system(geo_df, pixels_cs)
-    cells = geo_df.geometry
-
-    log.info(f"Averaging intensities over {len(cells)} cells")
-
+def _average_channels(image: SpatialImage, cells: list[Polygon]):
     tree = shapely.STRtree(cells)
 
     intensities = np.zeros((len(cells), len(image.coords["c"])))
@@ -72,6 +64,16 @@ def average_channels(
     return intensities / areas[:, None].clip(1)
 
 
+def average_channels(
+    sdata: SpatialData, image: SpatialImage, geo_df: gpd.GeoDataFrame
+) -> np.ndarray:
+    geo_df = to_intrinsic(sdata, geo_df, image)
+    cells = geo_df.geometry
+
+    log.info(f"Averaging intensities over {len(cells)} cells")
+    return _average_channels(image, cells)
+
+
 def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame) -> np.ndarray:
     points = partition[["x", "y"]].apply(Point, axis=1)
     tree = shapely.STRtree(points)
@@ -92,10 +94,12 @@ def map_transcript_to_cell(
     polygons: list[Polygon] | None = None,
 ):
     if df is None:
-        df = get_element(sdata, "points")
+        points_key, df = get_item(sdata, "points")
 
     if polygons is None:
-        polygons = get_boundaries(sdata).geometry
+        geo_df = get_boundaries(sdata)
+
+    polygons = to_intrinsic(sdata, geo_df, points_key).geometry
 
     get_cell_id = partial(_get_cell_id, polygons)
 

@@ -18,7 +18,7 @@ def test_average_channels():
     # One cell is on the first block, one is overlapping on both blocks, and one is on the last block
     cells = [box(x, y, x + cell_size - 1, y + cell_size - 1) for x, y in cell_start]
 
-    means = aggregate.average_channels(xarr, cells)
+    means = aggregate._average_channels(xarr, cells)
 
     true_means = np.stack(
         [image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start]

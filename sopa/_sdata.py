@@ -4,6 +4,7 @@ import geopandas as gpd
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatialdata import SpatialData
+from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
 
 from ._constants import SopaKeys
@@ -27,20 +28,29 @@ def get_boundaries(sdata: SpatialData, return_key: bool = False) -> gpd.GeoDataF
     log.warn("sdata object has no cellpose boundaries and no baysor boundaries")
 
 
-def get_intrinsic_cs(sdata: SpatialData, element_name: str) -> str:
-    for cs, transform in get_transformation(sdata[element_name], get_all=True).items():
+def get_intrinsic_cs(
+    sdata: SpatialData, element: SpatialElement | str, name: str | None = None
+) -> str:
+    if name is None:
+        name = f"_{element if isinstance(element, str) else hash(element)}_intrinsic"
+
+    if isinstance(element, str):
+        element = sdata[element]
+
+    for cs, transform in get_transformation(element, get_all=True).items():
         if isinstance(transform, Identity):
             return cs
 
-    cs = f"_{element_name}_intrinsic"
-    set_transformation(sdata[element_name], Identity(), cs)
-    return cs
+    set_transformation(element, Identity(), name)
+    return name
 
 
-def to_intrinsic(sdata: SpatialData, element, element_name_cs: str):
+def to_intrinsic(
+    sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str
+):
     if isinstance(element, str):
         element = sdata[element]
-    cs = get_intrinsic_cs(sdata, element_name_cs)
+    cs = get_intrinsic_cs(sdata, element_cs)
     return sdata.transform_element_to_coordinate_system(element, cs)
 
 
