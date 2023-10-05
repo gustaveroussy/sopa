@@ -1,4 +1,5 @@
 import logging
+from math import ceil
 
 import numpy as np
 import tifffile as tf
@@ -34,11 +35,11 @@ def write_image(
     image = to_multiscale(image, [2, 2, 2, 2, 2])
 
     scale_names = list(image.children)
-    channel_names = list(image[scale_names[0]].c.values)
+    channel_names = list(map(str, image[scale_names[0]].c.values))
 
     metadata = image_metadata(channel_names, pixelsize)
 
-    # TODO : make it memory efficient
+    # TODO : switch to lazy
     with tf.TiffWriter(path, bigtiff=True) as tif:
         tif.write(
             _astype_uint8(image[scale_names[0]][image_key].values),
@@ -58,3 +59,59 @@ def write_image(
                 ),
                 **image_options(),
             )
+
+
+def get_tiles(image, tile_width: int):
+    # TODO: WIP: do it with dask
+    for c in range(image.shape[0]):
+        for x in range(ceil(image.shape[2] / tile_width)):
+            for y in range(ceil(image.shape[1] / tile_width)):
+                tile = image[
+                    c, tile_width * x : tile_width * (x + 1), tile_width * y : tile_width * (y + 1)
+                ]
+                yield tile
+
+
+def write_image_lazy(
+    path: str,
+    image: SpatialImage,
+    image_key: str,
+    pixelsize: float = 0.2125,
+):
+    log.info("Writing multiscale image")
+
+    image = to_multiscale(image, [2, 2, 2, 2, 2])
+
+    scale_names = list(image.children)
+    channel_names = list(map(str, image[scale_names[0]].c.values))
+
+    metadata = image_metadata(channel_names, pixelsize)
+
+    with tf.TiffWriter(path, bigtiff=True) as tif:
+        im = _astype_uint8(image[scale_names[0]][image_key].values)
+        tif.write(
+            get_tiles(im),
+            subifds=len(scale_names) - 1,
+            resolution=(1e4 / pixelsize, 1e4 / pixelsize),
+            metadata=metadata,
+            shape=im.shape,
+            dtype=im.dtype,
+            **image_options(),
+        )
+
+        for i, scale in enumerate(scale_names[1:]):
+            im = _astype_uint8(image[scale][image_key].values)
+            tif.write(
+                get_tiles(im),
+                subfiletype=1,
+                resolution=(
+                    1e4 * 2 ** (i + 1) / pixelsize,
+                    1e4 * 2 ** (i + 1) / pixelsize,
+                ),
+                metadata=metadata,
+                shape=im.shape,
+                dtype=im.dtype,
+                **image_options(),
+            )
+
+        return im
