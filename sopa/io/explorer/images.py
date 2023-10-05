@@ -3,6 +3,7 @@ from math import ceil
 
 import numpy as np
 import tifffile as tf
+import xarray as xr
 from multiscale_spatial_image import to_multiscale
 from spatial_image import SpatialImage
 
@@ -61,7 +62,7 @@ def write_image(
             )
 
 
-def get_tiles(image, tile_width: int):
+def get_tiles(image: xr.DataArray, tile_width: int):
     # TODO: WIP: do it with dask
     for c in range(image.shape[0]):
         for x in range(ceil(image.shape[2] / tile_width)):
@@ -69,7 +70,19 @@ def get_tiles(image, tile_width: int):
                 tile = image[
                     c, tile_width * x : tile_width * (x + 1), tile_width * y : tile_width * (y + 1)
                 ]
-                yield tile
+                yield _astype_uint8(tile)
+
+
+def _write_image_level(tif: tf.TiffWriter, image: xr.DataArray, resolution, metadata, **kwargs):
+    tif.write(
+        get_tiles(image),
+        resolution=(resolution, resolution),
+        metadata=metadata,
+        shape=image.shape,
+        dtype=image.dtype,
+        **image_options(),
+        **kwargs,
+    )
 
 
 def write_image_lazy(
@@ -88,30 +101,19 @@ def write_image_lazy(
     metadata = image_metadata(channel_names, pixelsize)
 
     with tf.TiffWriter(path, bigtiff=True) as tif:
-        im = _astype_uint8(image[scale_names[0]][image_key].values)
-        tif.write(
-            get_tiles(im),
+        _write_image_level(
+            tif,
+            image[scale_names[0]][image_key],
+            1e4 / pixelsize,
+            metadata,
             subifds=len(scale_names) - 1,
-            resolution=(1e4 / pixelsize, 1e4 / pixelsize),
-            metadata=metadata,
-            shape=im.shape,
-            dtype=im.dtype,
-            **image_options(),
         )
 
         for i, scale in enumerate(scale_names[1:]):
-            im = _astype_uint8(image[scale][image_key].values)
-            tif.write(
-                get_tiles(im),
+            _write_image_level(
+                tif,
+                image[scale][image_key],
+                1e4 * 2 ** (i + 1) / pixelsize,
+                metadata,
                 subfiletype=1,
-                resolution=(
-                    1e4 * 2 ** (i + 1) / pixelsize,
-                    1e4 * 2 ** (i + 1) / pixelsize,
-                ),
-                metadata=metadata,
-                shape=im.shape,
-                dtype=im.dtype,
-                **image_options(),
             )
-
-        return im
