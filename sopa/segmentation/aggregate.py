@@ -81,7 +81,7 @@ def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame) -> np.ndarray
 def map_transcript_to_cell(
     sdata: SpatialData,
     cell_key: str,
-    df: dd.DataFrame | pd.DataFrame | None = None,
+    df: dd.DataFrame | None = None,
     polygons: list[Polygon] | None = None,
 ):
     if df is None:
@@ -94,8 +94,6 @@ def map_transcript_to_cell(
 
     if isinstance(df, dd.DataFrame):
         df[cell_key] = df.map_partitions(get_cell_id)
-    elif isinstance(df, pd.DataFrame):
-        df[cell_key] = get_cell_id(df)
     else:
         raise ValueError(f"Invalid dataframe type: {type(df)}")
 

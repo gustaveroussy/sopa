@@ -1,10 +1,10 @@
 import logging
+from functools import partial
 from math import ceil
 from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
-import numpy as np
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Polygon, box
@@ -16,6 +16,7 @@ from spatialdata.transformations import get_transformation
 from .._constants import ROI, SopaFiles, SopaKeys
 from .._sdata import get_spatial_image, to_intrinsic
 from .aggregate import map_transcript_to_cell
+from .shapes import where_transcripts_inside_patch
 
 log = logging.getLogger(__name__)
 
@@ -146,16 +147,13 @@ class Patches2D:
         unassigned_value: int | str = None,
         use_prior: bool = False,
     ):
-        import shapely
-        from shapely.geometry import Point
         from tqdm import tqdm
 
-        df = self.element
+        baysor_temp_dir = Path(baysor_temp_dir)
+        df: dd.DataFrame = self.element
 
         if cell_key is not None and unassigned_value is not None:
             df[cell_key] = df[cell_key].replace(unassigned_value, 0)
-
-        baysor_temp_dir = Path(baysor_temp_dir)
 
         prior_boundaries = None
         if use_prior:
@@ -166,32 +164,20 @@ class Patches2D:
 
         log.info(f"Making {len(self)} sub-CSV for Baysor")
         for i, patch in enumerate(tqdm(self.polygons)):
-            patch_dir = (baysor_temp_dir / str(i)).absolute()
-            patch_dir.mkdir(parents=True, exist_ok=True)
-            patch_path = patch_dir / SopaFiles.BAYSOR_TRANSCRIPTS
+            patch_path: Path = baysor_temp_dir / str(i) / SopaFiles.BAYSOR_TRANSCRIPTS
+            patch_path.parent.mkdir(parents=True, exist_ok=True)
 
             tx0, ty0, tx1, ty1 = patch.bounds
             sub_df = df[(df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)]
 
             if patch.area < box(*patch.bounds).area:
-                sub_df = sub_df.compute()  # TODO: make it more efficient using map partitions?
+                where_inside_patch = partial(where_transcripts_inside_patch, patch)
+                sub_df = sub_df[sub_df.map_partitions(where_inside_patch)]
 
-                points = sub_df[["x", "y"]].apply(Point, axis=1)
-                tree = shapely.STRtree(points)
-                indices = tree.query(patch, predicate="intersects")
-                sub_df = sub_df.iloc[indices]
-
-                if prior_boundaries is not None:
-                    map_transcript_to_cell(
-                        self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df, prior_boundaries
-                    )
-
-                sub_df.to_csv(patch_path)
-            else:
-                if prior_boundaries is not None:
-                    map_transcript_to_cell(
-                        self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df, prior_boundaries
-                    )
-                sub_df.to_csv(patch_path, single_file=True)
+            if prior_boundaries is not None:
+                map_transcript_to_cell(
+                    self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df, prior_boundaries
+                )
+            sub_df.to_csv(patch_path, single_file=True)
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")

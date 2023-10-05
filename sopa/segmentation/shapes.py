@@ -2,10 +2,10 @@ import logging
 from math import ceil, floor
 
 import numpy as np
+import pandas as pd
 import shapely
 import shapely.affinity
-import xarray as xr
-from shapely.geometry import MultiPolygon, Polygon, box
+from shapely.geometry import MultiPolygon, Point, Polygon
 
 log = logging.getLogger(__name__)
 
@@ -124,3 +124,12 @@ def rasterize(
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
     coords = np.array(cell_translated.boundary.coords)[None, :].astype(np.int32)
     return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
+
+
+def where_transcripts_inside_patch(patch: Polygon, partition: pd.DataFrame) -> np.ndarray:
+    points = partition[["x", "y"]].apply(Point, axis=1)
+    tree = shapely.STRtree(points)
+    indices = tree.query(patch, predicate="intersects")
+    where = np.full(len(partition), False)
+    where[indices] = True
+    return where
