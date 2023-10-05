@@ -3,7 +3,7 @@ from pathlib import Path
 
 from spatialdata import SpatialData
 
-from ..._sdata import get_boundaries, get_element, get_intrinsic_cs, get_spatial_image
+from ..._sdata import get_boundaries, get_element, get_spatial_image, to_intrinsic
 from . import (
     write_cell_categories,
     write_gene_counts,
@@ -67,10 +67,8 @@ def write_explorer(
         write_gene_counts(path / FileNames.TABLE, adata, layer)
         write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
 
-    pixels_cs = get_intrinsic_cs(sdata, image_key)
-
     if geo_df is not None:
-        geo_df = sdata.transform_element_to_coordinate_system(geo_df, pixels_cs)
+        geo_df = to_intrinsic(sdata, geo_df, image)
         write_polygons(path / FileNames.SHAPES, geo_df.geometry, polygon_max_vertices)
 
     df = get_element(sdata, "points", points_key)
@@ -78,7 +76,7 @@ def write_explorer(
         assert (
             gene_column is not None
         ), "The argument 'gene_column' has to be provided to save the transcripts"
-        df = sdata.transform_element_to_coordinate_system(df, pixels_cs)
+        df = to_intrinsic(sdata, df, image)
         write_transcripts(path / FileNames.POINTS, df, gene_column)
 
     write_image(path / FileNames.IMAGE, image)
