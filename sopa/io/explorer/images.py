@@ -4,16 +4,15 @@ from math import ceil
 import numpy as np
 import tifffile as tf
 import xarray as xr
-from multiscale_spatial_image import to_multiscale
+from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 from spatial_image import SpatialImage
 
-from ._constants import image_metadata, image_options
+from ._constants import image_metadata
 
 log = logging.getLogger(__name__)
 
 
 def _astype_uint8(arr: np.ndarray) -> np.ndarray:
-    log.info(f"   Image of shape {arr.shape}")
     assert np.issubdtype(
         arr.dtype, np.integer
     ), f"The image dtype has to be an integer dtype. Found {arr.dtype}"
@@ -25,75 +24,46 @@ def _astype_uint8(arr: np.ndarray) -> np.ndarray:
     return (arr * factor).astype(np.uint8)
 
 
-def write_image(
-    path: str,
-    image: SpatialImage,
-    image_key: str,
-    pixelsize: float = 0.2125,
-):
-    log.info("Writing multiscale image")
-
-    image = to_multiscale(image, [2, 2, 2, 2, 2])
-
-    scale_names = list(image.children)
-    channel_names = list(map(str, image[scale_names[0]].c.values))
-
-    metadata = image_metadata(channel_names, pixelsize)
-
-    # TODO : switch to lazy
-    with tf.TiffWriter(path, bigtiff=True) as tif:
-        tif.write(
-            _astype_uint8(image[scale_names[0]][image_key].values),
-            subifds=len(scale_names) - 1,
-            resolution=(1e4 / pixelsize, 1e4 / pixelsize),
-            metadata=metadata,
-            **image_options(),
-        )
-
-        for i, scale in enumerate(scale_names[1:]):
-            tif.write(
-                _astype_uint8(image[scale][image_key].values),
-                subfiletype=1,
-                resolution=(
-                    1e4 * 2 ** (i + 1) / pixelsize,
-                    1e4 * 2 ** (i + 1) / pixelsize,
-                ),
-                **image_options(),
-            )
-
-
-def get_tiles(image: xr.DataArray, tile_width: int):
-    # TODO: WIP: do it with dask
-    for c in range(image.shape[0]):
-        for x in range(ceil(image.shape[2] / tile_width)):
-            for y in range(ceil(image.shape[1] / tile_width)):
-                tile = image[
-                    c, tile_width * x : tile_width * (x + 1), tile_width * y : tile_width * (y + 1)
-                ]
+def _get_tiles(xarr: xr.DataArray, tile_width: int):
+    log.info(f"   Image of shape {xarr.shape}")
+    for c in range(xarr.shape[0]):
+        for index_x in range(ceil(xarr.shape[2] / tile_width)):
+            for index_y in range(ceil(xarr.shape[1] / tile_width)):
+                tile = xarr[
+                    c,
+                    tile_width * index_x : tile_width * (index_x + 1),
+                    tile_width * index_y : tile_width * (index_y + 1),
+                ].values
                 yield _astype_uint8(tile)
 
 
-def _write_image_level(tif: tf.TiffWriter, image: xr.DataArray, resolution, metadata, **kwargs):
+def _write_image_level(
+    tif: tf.TiffWriter, xarr: xr.DataArray, tile_width, metadata, resolution, **kwargs
+):
     tif.write(
-        get_tiles(image),
+        _get_tiles(xarr, tile_width),
+        tile=(tile_width, tile_width),
         resolution=(resolution, resolution),
         metadata=metadata,
-        shape=image.shape,
-        dtype=image.dtype,
-        **image_options(),
+        shape=xarr.shape,
+        dtype=xarr.dtype,
+        photometric="minisblack",
+        compression="jpeg2000",
+        resolutionunit="CENTIMETER",
         **kwargs,
     )
 
 
-def write_image_lazy(
+def write_image(
     path: str,
     image: SpatialImage,
-    image_key: str,
     pixelsize: float = 0.2125,
+    tile_width: int = 1024,
 ):
     log.info("Writing multiscale image")
 
-    image = to_multiscale(image, [2, 2, 2, 2, 2])
+    image_key = image.name
+    image: MultiscaleSpatialImage = to_multiscale(image, [2, 2, 2, 2, 2])
 
     scale_names = list(image.children)
     channel_names = list(map(str, image[scale_names[0]].c.values))
@@ -104,8 +74,9 @@ def write_image_lazy(
         _write_image_level(
             tif,
             image[scale_names[0]][image_key],
-            1e4 / pixelsize,
+            tile_width,
             metadata,
+            1e4 / pixelsize,
             subifds=len(scale_names) - 1,
         )
 
@@ -113,7 +84,8 @@ def write_image_lazy(
             _write_image_level(
                 tif,
                 image[scale][image_key],
-                1e4 * 2 ** (i + 1) / pixelsize,
+                tile_width,
                 metadata,
+                1e4 * 2 ** (i + 1) / pixelsize,
                 subfiletype=1,
             )

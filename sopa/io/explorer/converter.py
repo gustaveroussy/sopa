@@ -81,7 +81,7 @@ def write_explorer(
         df = sdata.transform_element_to_coordinate_system(df, pixels_cs)
         write_transcripts(path / FileNames.POINTS, df, gene_column)
 
-    write_image(path / FileNames.IMAGE, image, image_key)
+    write_image(path / FileNames.IMAGE, image)
 
     n_obs = (
         sdata.table.n_obs if sdata.table is not None else (len(geo_df) if geo_df is not None else 0)

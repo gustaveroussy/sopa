@@ -112,15 +112,6 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int) -> dict:
     }
 
 
-def image_options() -> dict:
-    return {
-        "photometric": "minisblack",
-        "tile": (1024, 1024),
-        "compression": "jpeg2000",
-        "resolutionunit": "CENTIMETER",
-    }
-
-
 def image_metadata(channel_names: list[str], pixelsize: float) -> dict:
     return {
         "SignificantBits": 8,
