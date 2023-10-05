@@ -52,7 +52,7 @@ class MultiscaleImageWriter:
             resolution=(resolution, resolution),
             metadata=self.metadata,
             shape=xarr.shape,
-            dtype=xarr.dtype,
+            dtype=self.dtype,
             photometric=self.photometric,
             compression=self.compression,
             resolutionunit=self.resolutionunit,
