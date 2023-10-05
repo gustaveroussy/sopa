@@ -162,7 +162,7 @@ rule explorer:
     conda:
         "spatial"
     resources:
-        mem_mb=128_000,
+        mem_mb=32_000,
     params:
         args_explorer = str(args["explorer"]),
     shell:
