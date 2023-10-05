@@ -50,7 +50,7 @@ def resolve(
     min_area: float = 0,
 ):
     patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, n)
-    geo_df, cells_indices, new_ids = resolve(patches_cells, adatas)
+    geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")
     points_key, points = get_item(sdata, "points")

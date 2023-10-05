@@ -75,7 +75,7 @@ def get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str, 
 
     assert key is not None, "One image in `sdata.images` is required"
 
-    image = sdata.images[key]  # TODO: switch axes for c,y,x
+    image = sdata.images[key]
 
     if isinstance(image, MultiscaleSpatialImage):
         return key, image["scale0"][key]
