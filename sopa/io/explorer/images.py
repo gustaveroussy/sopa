@@ -2,7 +2,8 @@ import logging
 
 import numpy as np
 import tifffile as tf
-from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
+from multiscale_spatial_image import to_multiscale
+from spatial_image import SpatialImage
 
 from ._constants import image_metadata, image_options
 
@@ -24,14 +25,13 @@ def _astype_uint8(arr: np.ndarray) -> np.ndarray:
 
 def write_image(
     path: str,
-    image: MultiscaleSpatialImage,
+    image: SpatialImage,
     image_key: str,
     pixelsize: float = 0.2125,
 ):
     log.info("Writing multiscale image")
 
-    if not isinstance(image, MultiscaleSpatialImage):
-        image = to_multiscale(image, [2, 2, 2, 2, 2])
+    image = to_multiscale(image, [2, 2, 2, 2, 2])
 
     scale_names = list(image.children)
     channel_names = list(image[scale_names[0]].c.values)
