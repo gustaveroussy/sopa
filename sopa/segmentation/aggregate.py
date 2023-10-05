@@ -2,13 +2,14 @@ import logging
 from functools import partial
 
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import shapely
 import shapely.affinity
-import xarray as xr
 from anndata import AnnData
 from shapely.geometry import Point, Polygon, box
+from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
 
@@ -25,14 +26,20 @@ from . import shapes
 log = logging.getLogger(__name__)
 
 
-def average_channels(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
+def average_channels(
+    sdata: SpatialData, image: SpatialImage, geo_df: gpd.GeoDataFrame
+) -> np.ndarray:
     import dask.array as da
+
+    pixels_cs = get_intrinsic_cs(sdata, image)
+    geo_df = sdata.transform_element_to_coordinate_system(geo_df, pixels_cs)
+    cells = geo_df.geometry
 
     log.info(f"Averaging intensities over {len(cells)} cells")
 
     tree = shapely.STRtree(cells)
 
-    intensities = np.zeros((len(cells), len(xarr.coords["c"])))
+    intensities = np.zeros((len(cells), len(image.coords["c"])))
     areas = np.zeros(len(cells))
 
     def func(x, block_info=None):
@@ -60,7 +67,7 @@ def average_channels(xarr: xr.DataArray, cells: list[Polygon]) -> np.ndarray:
                 areas[index] += np.sum(mask)
         return da.zeros_like(x)
 
-    xarr.data.rechunk({0: -1}).map_blocks(func).compute()
+    image.data.rechunk({0: -1}).map_blocks(func).compute()
 
     return intensities / areas[:, None].clip(1)
 
@@ -122,7 +129,7 @@ def aggregate(
         ).table
 
     if intensity_mean:
-        mean_intensities = average_channels(image, geo_df.geometry)
+        mean_intensities = average_channels(sdata, image, geo_df)
 
     if table is None:
         table = AnnData(
