@@ -22,6 +22,9 @@ def write_standardized(sdata: SpatialData, sdata_path: str):
         )
 
     if sdata.table is not None:
+        log.info(
+            "The table (i.e. `sdata.table`) will not be saved, since it will be created later by sopa"
+        )
         del sdata.table
 
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
