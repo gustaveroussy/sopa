@@ -66,8 +66,7 @@ def write_explorer(
         adata = sdata.table
 
         shapes_key = adata.uns["spatialdata_attrs"]["region"]
-        index = adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]].values
-        geo_df = sdata[shapes_key].loc[index]
+        geo_df = sdata[shapes_key]
 
         write_gene_counts(path / FileNames.TABLE, adata, layer)
         write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
