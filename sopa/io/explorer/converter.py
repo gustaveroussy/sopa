@@ -76,7 +76,7 @@ def write_explorer(
 
     ### Saving cell boundaries
     if geo_df is not None:
-        geo_df = to_intrinsic(sdata, geo_df, image)
+        geo_df = to_intrinsic(sdata, geo_df, image_key)
         write_polygons(path / FileNames.SHAPES, geo_df.geometry, polygon_max_vertices)
 
     ### Saving transcripts
@@ -85,7 +85,7 @@ def write_explorer(
         assert (
             gene_column is not None
         ), "The argument 'gene_column' has to be provided to save the transcripts"
-        df = to_intrinsic(sdata, df, image)
+        df = to_intrinsic(sdata, df, image_key)
         write_transcripts(path / FileNames.POINTS, df, gene_column)
 
     ### Saving image
