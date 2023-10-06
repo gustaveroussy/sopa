@@ -36,7 +36,7 @@ def read(
 
     if config_path is not None:
         assert not kwargs, "Provide either a path to a config, or some kwargs, but not both"
-        with open("data.yaml", "r") as f:
+        with open(config_path, "r") as f:
             import yaml
 
             kwargs = yaml.safe_load(f)["reader"]["kwargs"]
