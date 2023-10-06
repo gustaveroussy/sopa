@@ -85,9 +85,9 @@ class MultiscaleImageWriter:
     def __len__(self):
         return len(self.scale_names)
 
-    def mode(self):
+    def procedure(self):
         if not self.lazy:
-            return "in-memory (consider lazy mode if it crashes because of RAM)"
+            return "in-memory (consider lazy procedure if it crashes because of RAM)"
         if self.ram_ratio_threshold is None:
             return "lazy (slower but low RAM usage)"
         return "semi-lazy (load in memory when possible)"
@@ -96,7 +96,7 @@ class MultiscaleImageWriter:
         self.lazy = lazy
         self.ram_ratio_threshold = ram_ratio_threshold
 
-        log.info(f"Writing multiscale image with mode={self.mode()}")
+        log.info(f"Writing multiscale image with procedure={self.procedure()}")
 
         with tf.TiffWriter(path, bigtiff=True) as tif:
             self._write_image_level(tif, 0, subifds=len(self) - 1)

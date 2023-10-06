@@ -70,6 +70,7 @@ class WorkflowPaths:
         self.explorer_directory.mkdir(parents=True, exist_ok=True)
 
         self.explorer_experiment = self.explorer_directory / "experiment.xenium"
+        self.explorer_image = self.explorer_directory / "morphology.ome.tif"
 
     def cells_paths(self, n: int, name):
         if name == "cellpose":
@@ -96,7 +97,7 @@ class Args:
 
     def where(self, keys: list[str] | None = None, contains: str | None = None):
         if keys is not None:
-            return Args(self.paths, {key: self.config[key] for key in keys})
+            return Args(self.paths, {key: self.config[key] for key in keys if key in self.config})
         if contains is not None:
             return Args(
                 self.paths,

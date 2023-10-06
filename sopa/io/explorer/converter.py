@@ -1,6 +1,8 @@
 import json
+import logging
 from pathlib import Path
 
+import geopandas as gpd
 from spatialdata import SpatialData
 
 from ..._sdata import get_boundaries, get_element, get_spatial_image, to_intrinsic
@@ -13,30 +15,27 @@ from . import (
 )
 from ._constants import FileNames, experiment_dict
 
+log = logging.getLogger(__name__)
 
-def _reorder_instances(sdata: SpatialData, shapes_key: str):
-    adata = sdata.table
 
-    instance_key = adata.uns["spatialdata_attrs"]["instance_key"]
-    region_key = adata.uns["spatialdata_attrs"]["region_key"]
-
-    adata = adata[adata.obs[region_key] == shapes_key].copy()
-    adata.obs.set_index(instance_key, inplace=True)
-    adata = adata[sdata.shapes[shapes_key].index].copy()
-    return adata
+def _check_explorer_directory(path: Path):
+    assert (
+        not path.exists() or path.is_dir()
+    ), f"A path to an existing file was provided. It should be a path to a directory."
+    path.mkdir(parents=True, exist_ok=True)
 
 
 def write_explorer(
     path: str,
     sdata: SpatialData,
     image_key: str | None = None,
-    shapes_key: str | None = None,
-    points_key: str | None = None,
     gene_column: str | None = None,
+    points_key: str | None = None,
     layer: str | None = None,
     polygon_max_vertices: int = 13,
     lazy: bool = True,
     ram_ratio_threshold: float | None = None,
+    save_image_mode: int = 1,
 ) -> None:
     """
     Transform a SpatialData object into inputs for the Xenium Explorer.
@@ -53,26 +52,34 @@ def write_explorer(
         polygon_max_vertices: Maximum number of vertices for the cell polygons.
     """
     path: Path = Path(path)
-    assert (
-        not path.exists() or path.is_dir()
-    ), f"A path to an existing file was provided. It should be a path to a directory."
-
-    path.mkdir(parents=True, exist_ok=True)
+    _check_explorer_directory(path)
 
     image_key, image = get_spatial_image(sdata, image_key)
-    shapes_key, geo_df = get_boundaries(sdata, return_key=True)
-    assert image_key is not None, "An image is required to convert to the Xenium Explorer inputs"
 
+    if save_image_mode == 2:
+        log.info(f"{save_image_mode:=}: only the image will be saved")
+        write_image(
+            path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold
+        )
+        return
+
+    ### Saving cell categories and gene counts
     if sdata.table is not None:
-        adata = _reorder_instances(sdata, shapes_key)
+        adata = sdata.table
+        shapes_key = adata.uns["spatialdata_attrs"]["region"]
+        geo_df = sdata[shapes_key][adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]].values]
 
         write_gene_counts(path / FileNames.TABLE, adata, layer)
         write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
+    else:
+        shapes_key, geo_df = get_boundaries(sdata, return_key=True)
 
+    ### Saving cell boundaries
     if geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image)
         write_polygons(path / FileNames.SHAPES, geo_df.geometry, polygon_max_vertices)
 
+    ### Saving transcripts
     df = get_element(sdata, "points", points_key)
     if df is not None:
         assert (
@@ -81,12 +88,21 @@ def write_explorer(
         df = to_intrinsic(sdata, df, image)
         write_transcripts(path / FileNames.POINTS, df, gene_column)
 
-    write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold)
+    ### Saving image
+    if save_image_mode:
+        write_image(
+            path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold
+        )
+    else:
+        log.info(f"{save_image_mode:=}: the image will not be saved")
 
-    n_obs = (
-        sdata.table.n_obs if sdata.table is not None else (len(geo_df) if geo_df is not None else 0)
-    )
-
-    EXPERIMENT = experiment_dict(image_key, shapes_key, n_obs)
+    ### Saving experiment.xenium file
     with open(path / FileNames.METADATA, "w") as f:
+        EXPERIMENT = experiment_dict(image_key, shapes_key, _get_n_obs(sdata, geo_df))
         json.dump(EXPERIMENT, f, indent=4)
+
+
+def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
+    if sdata.table is not None:
+        return sdata.table.n_obs
+    return len(geo_df) if geo_df is not None else 0

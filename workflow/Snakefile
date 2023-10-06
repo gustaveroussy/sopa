@@ -7,6 +7,7 @@ rule all:
     input:
         paths.annotations,
         paths.explorer_experiment,
+        paths.explorer_image,
 
 rule to_spatialdata:
     input:
@@ -152,6 +153,22 @@ rule annotate:
         sopa annotate fluorescence {paths.sdata_path} {params.args_fluorescence}
         """
 
+rule image_write:
+    input:
+        paths.sdata_zgroup,
+    output:
+        paths.explorer_image,
+    conda:
+        "spatial"
+    resources:
+        mem_mb=64_000,
+    params:
+        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_ratio_threshold'])),
+    shell:
+        """
+        sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer} --save-image-mode 2
+        """
+
 rule explorer:
     input:
         paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
@@ -165,5 +182,5 @@ rule explorer:
         args_explorer = str(args["explorer"]),
     shell:
         """
-        sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer}
+        sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer} --save-image-mode 0
         """
