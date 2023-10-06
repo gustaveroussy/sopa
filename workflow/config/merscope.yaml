@@ -62,6 +62,7 @@ aggregate:
 
 explorer:
   gene_column: "gene"
+  ram_ratio_threshold: 0.25
 
 executables:
   baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor
