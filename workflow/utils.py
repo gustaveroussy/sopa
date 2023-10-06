@@ -56,7 +56,10 @@ class WorkflowPaths:
         self.annotations = []
         if "annotation" in self.config:
             self.annotations = (
-                self.table_dir / "table" / "obs" / self.config["annotation"][ConfigConstants.CT_KEY]
+                self.table_dir
+                / "table"
+                / "obs"
+                / self.config["annotation"].get(ConfigConstants.CT_KEY, ConfigConstants.CT_KEY)
             )
 
         self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
