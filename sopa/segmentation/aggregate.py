@@ -115,7 +115,7 @@ def aggregate(
     image_key, image = get_spatial_image(sdata)
     shapes_key, geo_df = get_boundaries(sdata, return_key=True)
 
-    table = table if sdata.table is None else sdata.table
+    table = sdata.table
 
     assert (
         intensity_mean or gene_column is not None or table is not None
