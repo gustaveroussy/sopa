@@ -134,10 +134,11 @@ class Args:
         return self._dump()
 
     @property
-    def baysor_cell_key(self):
-        if not self.baysor or "cell_key" not in self.config["segmentation"]["baysor"]:
+    def baysor_prior_seg(self):
+        if not self.baysor:
             return ""
-        return f":{self.config['segmentation']['baysor']['cell_key']}"
+        key = self.config["segmentation"]["baysor"].get("cell_key", "cell")
+        return f":{key}"
 
     @property
     def gene_column(self):

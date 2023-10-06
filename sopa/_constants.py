@@ -9,7 +9,7 @@ class SopaKeys:
     REGION_KEY = "region"
     SLIDE_KEY = "slide"
     INSTANCE_KEY = "cell_id"
-    BAYSOR_CELL_KEY = "cell"
+    BAYSOR_DEFAULT_CELL_KEY = "cell"
 
     Z_SCORES = "z_scores"
 

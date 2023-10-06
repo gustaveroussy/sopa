@@ -78,7 +78,7 @@ rule patch_segmentation_baysor:
     output:
         f"{paths.baysor_temp_dir}/{{index}}/segmentation_polygons.json"
     params:
-        args_baysor_cell_key = args.baysor_cell_key,
+        args_baysor_prior_seg = args.baysor_prior_seg,
     resources:
         mem_mb=64_000,
     shell:
@@ -88,7 +88,7 @@ rule patch_segmentation_baysor:
         fi
         
         cd {input.baysor_patch}
-        {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
+        {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
         """
 
 def get_input_resolve(name):

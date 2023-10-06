@@ -154,6 +154,9 @@ class Patches2D:
         if cell_key is not None and unassigned_value is not None:
             df[cell_key] = df[cell_key].replace(unassigned_value, 0)
 
+        if cell_key is None:
+            cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
+
         prior_boundaries = None
         if use_prior:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
@@ -171,9 +174,7 @@ class Patches2D:
                 sub_df = sub_df[sub_df.map_partitions(where_inside_patch)]
 
             if prior_boundaries is not None:
-                map_transcript_to_cell(
-                    self.sdata, SopaKeys.BAYSOR_CELL_KEY, sub_df, prior_boundaries
-                )
+                map_transcript_to_cell(self.sdata, cell_key, sub_df, prior_boundaries)
             sub_df.to_csv(patch_path, single_file=True)
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")
