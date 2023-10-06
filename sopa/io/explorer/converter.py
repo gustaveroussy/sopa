@@ -57,7 +57,7 @@ def write_explorer(
     image_key, image = get_spatial_image(sdata, image_key, return_key=True)
 
     if save_image_mode == 2:
-        log.info(f"{save_image_mode=}: only the image will be saved")
+        log.info(f"{save_image_mode=} (only the image will be saved)")
         write_image(
             path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold
         )
@@ -94,7 +94,7 @@ def write_explorer(
             path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold
         )
     else:
-        log.info(f"{save_image_mode:=}: the image will not be saved")
+        log.info(f"{save_image_mode:=} (the image will not be saved)")
 
     ### Saving experiment.xenium file
     with open(path / FileNames.METADATA, "w") as f:
