@@ -113,7 +113,14 @@ def aggregate(
 
 
 @app.command()
-def explorer(sdata_path: str, path: str, shapes_key: str = None, gene_column: str = None):
+def explorer(
+    sdata_path: str,
+    path: str,
+    shapes_key: str = None,
+    gene_column: str = None,
+    lazy: bool = True,
+    ram_ratio_threshold: float = None,
+):
     """Convert a spatialdata object to Xenium Explorer's inputs
 
     Args:\n
@@ -127,5 +134,10 @@ def explorer(sdata_path: str, path: str, shapes_key: str = None, gene_column: st
 
     sdata = SpatialData.read(sdata_path)
     write_explorer(
-        path, sdata, shapes_key=shapes_key, gene_column=gene_column
-    )  # TODO: add more args
+        path,
+        sdata,
+        shapes_key=shapes_key,
+        gene_column=gene_column,
+        lazy=lazy,
+        ram_ratio_threshold=ram_ratio_threshold,
+    )

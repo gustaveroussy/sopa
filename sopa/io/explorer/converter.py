@@ -35,6 +35,8 @@ def write_explorer(
     gene_column: str | None = None,
     layer: str | None = None,
     polygon_max_vertices: int = 13,
+    lazy: bool = True,
+    ram_ratio_threshold: float | None = None,
 ) -> None:
     """
     Transform a SpatialData object into inputs for the Xenium Explorer.
@@ -79,7 +81,7 @@ def write_explorer(
         df = to_intrinsic(sdata, df, image)
         write_transcripts(path / FileNames.POINTS, df, gene_column)
 
-    write_image(path / FileNames.IMAGE, image)
+    write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold)
 
     n_obs = (
         sdata.table.n_obs if sdata.table is not None else (len(geo_df) if geo_df is not None else 0)

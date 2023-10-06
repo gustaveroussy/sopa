@@ -36,3 +36,6 @@ annotation:
       FAP: Fibroblast
       CD68: Macrophage
       CD20: B cell
+
+explorer:
+  ram_ratio_threshold: 0.25
