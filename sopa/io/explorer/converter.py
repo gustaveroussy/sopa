@@ -64,8 +64,10 @@ def write_explorer(
     ### Saving cell categories and gene counts
     if sdata.table is not None:
         adata = sdata.table
+
         shapes_key = adata.uns["spatialdata_attrs"]["region"]
-        geo_df = sdata[shapes_key][adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]].values]
+        index = adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]].values
+        geo_df = sdata[shapes_key].loc[index]
 
         write_gene_counts(path / FileNames.TABLE, adata, layer)
         write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
