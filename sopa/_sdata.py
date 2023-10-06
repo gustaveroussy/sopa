@@ -3,6 +3,7 @@ import logging
 import geopandas as gpd
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
+from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
@@ -88,6 +89,6 @@ def get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str, 
     image = sdata.images[key]
 
     if isinstance(image, MultiscaleSpatialImage):
-        return key, image["scale0"][key]
+        return key, SpatialImage(image["scale0"][key])
 
     return key, image

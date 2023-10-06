@@ -23,7 +23,6 @@ def write_transcripts(
     max_levels: int = 15,
 ):
     # TODO: make everything using dask instead of pandas
-    log.info(f"Writing {len(df)} transcripts")
     df = df.compute()
 
     num_transcripts = len(df)
@@ -35,6 +34,7 @@ def write_transcripts(
 
     if location.min() < 0:
         log.warn("Some transcripts are located outside of the image (pixels < 0)")
+    log.info(f"Writing {len(df)} transcripts")
 
     xmax, ymax = location[:, :2].max(axis=0)
 
@@ -84,7 +84,7 @@ def write_transcripts(
         grids = g.create_group("grids")
 
         for level in range(max_levels):
-            log.info(f"   Level {level}: {len(location)} transcripts")
+            log.info(f"   > Level {level}: {len(location)} transcripts")
             level_group = grids.create_group(level)
 
             tile_size = ExplorerConstants.GRID_SIZE * 2**level
