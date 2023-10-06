@@ -34,7 +34,7 @@ def write_explorer(
     layer: str | None = None,
     polygon_max_vertices: int = 13,
     lazy: bool = True,
-    ram_ratio_threshold: float | None = None,
+    ram_threshold: int | None = None,
     save_image_mode: int = 1,
 ) -> None:
     """
@@ -58,9 +58,7 @@ def write_explorer(
 
     if save_image_mode == 2:
         log.info(f"{save_image_mode=} (only the image will be saved)")
-        write_image(
-            path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold
-        )
+        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold=ram_threshold)
         return
 
     ### Saving cell categories and gene counts
@@ -90,9 +88,7 @@ def write_explorer(
 
     ### Saving image
     if save_image_mode:
-        write_image(
-            path / FileNames.IMAGE, image, lazy=lazy, ram_ratio_threshold=ram_ratio_threshold
-        )
+        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold=ram_threshold)
     else:
         log.info(f"{save_image_mode:=} (the image will not be saved)")
 
