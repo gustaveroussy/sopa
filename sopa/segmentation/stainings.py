@@ -24,7 +24,7 @@ class StainingSegmentation:
         self.method = method
         self.channels = channels
 
-        self.image_key, self.image = get_spatial_image(sdata)
+        self.image_key, self.image = get_spatial_image(sdata, return_key=True)
 
         assert np.isin(
             channels, self.image.c

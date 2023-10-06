@@ -112,7 +112,7 @@ def map_transcript_to_cell(
 def aggregate(
     sdata: SpatialData, gene_column: str | None, intensity_mean: bool = True, overwrite: bool = True
 ):
-    image_key, image = get_spatial_image(sdata)
+    image_key, image = get_spatial_image(sdata, return_key=True)
     shapes_key, geo_df = get_boundaries(sdata, return_key=True)
 
     table = sdata.table

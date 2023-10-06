@@ -114,7 +114,7 @@ def polygon_selection(
         z = zarr.open(intermediate_polygon, mode="r")
         polygon = Polygon(z[ROI.POLYGON_ARRAY_KEY][:])
 
-        _, image = get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
+        image = get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
 
     geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True))

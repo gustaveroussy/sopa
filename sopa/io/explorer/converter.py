@@ -54,7 +54,7 @@ def write_explorer(
     path: Path = Path(path)
     _check_explorer_directory(path)
 
-    image_key, image = get_spatial_image(sdata, image_key)
+    image_key, image = get_spatial_image(sdata, image_key, return_key=True)
 
     if save_image_mode == 2:
         log.info(f"{save_image_mode=}: only the image will be saved")

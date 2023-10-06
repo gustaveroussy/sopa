@@ -1,7 +1,6 @@
 import logging
 
 import geopandas as gpd
-import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
@@ -81,14 +80,17 @@ def get_item(sdata: SpatialData, attr: str, key: str | None = None):
     return key, sdata[key] if key is not None else None
 
 
-def get_spatial_image(sdata: SpatialData, key: str | None = None) -> tuple[str, xr.DataArray]:
+def get_spatial_image(
+    sdata: SpatialData, key: str | None = None, return_key: bool = False
+) -> SpatialImage | tuple[str, SpatialImage]:
     key = get_key(sdata, "images", key)
 
     assert key is not None, "One image in `sdata.images` is required"
 
     image = sdata.images[key]
-
     if isinstance(image, MultiscaleSpatialImage):
-        return key, SpatialImage(image["scale0"][key])
+        image = SpatialImage(image["scale0"][key])
 
-    return key, image
+    if return_key:
+        return key, image
+    return image
