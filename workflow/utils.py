@@ -62,7 +62,7 @@ class WorkflowPaths:
                 / self.config["annotation"].get(ConfigConstants.CT_KEY, ConfigConstants.CT_KEY)
             )
 
-        self.temp_dir = self.sdata_path.parent / f"{self.sdata_path.name}_temp"
+        self.temp_dir = self.sdata_path.parent / f".smk_intermediate_{self.sdata_path.name}"
         self.cellpose_temp_dir = self.temp_dir / "cellpose"
         self.baysor_temp_dir = self.temp_dir / "baysor"
 

@@ -91,7 +91,7 @@ def write_explorer(
     if save_image_mode:
         write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold=ram_threshold)
     else:
-        log.info(f"{save_image_mode:=} (the image will not be saved)")
+        log.info(f"{save_image_mode=} (the image will not be saved)")
 
     ### Saving experiment.xenium file
     with open(path / FileNames.METADATA, "w") as f:
