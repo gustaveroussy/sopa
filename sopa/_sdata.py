@@ -32,7 +32,7 @@ def get_intrinsic_cs(
     sdata: SpatialData, element: SpatialElement | str, name: str | None = None
 ) -> str:
     if name is None:
-        name = f"_{element if isinstance(element, str) else hash(element)}_intrinsic"
+        name = f"_{element if isinstance(element, str) else id(element)}_intrinsic"
 
     if isinstance(element, str):
         element = sdata[element]
