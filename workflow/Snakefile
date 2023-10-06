@@ -83,11 +83,11 @@ rule patch_segmentation_baysor:
         mem_mb=64_000,
     shell:
         """
-        cd {input.baysor_patch}
         if command -v module &> /dev/null; then
             module purge
         fi
         
+        cd {input.baysor_patch}
         {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_cell_key}
         """
 
@@ -119,10 +119,11 @@ rule resolve_baysor:
         touch(paths.smk_table)
     conda:
         "spatial"
+    params:
+        n_patches = lambda wildcards, input: len(input.files),
     shell:
         """
-        N=$(echo {input.files} | tr ' ' '\\n' | wc -l);
-        sopa resolve baysor {paths.sdata_path} --baysor-temp-dir {paths.baysor_temp_dir} --gene-column {args.gene_column} --n $N
+        sopa resolve baysor {paths.sdata_path} --baysor-temp-dir {paths.baysor_temp_dir} --gene-column {args.gene_column} --n {params.n_patches}
         """
 
 rule aggregate:

@@ -2,12 +2,18 @@ read:
   technology: merscope
 
 patchify:
-  patch_width_pixel: 2000
-  patch_overlap_pixel: 40
+  patch_width_pixel: 6000
+  patch_overlap_pixel: 150
   patch_width_microns: 4000
   patch_overlap_microns: 30
 
 segmentation:
+  cellpose:
+    diameter: 60
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+
   baysor:
     cell_key: cell_id
     unassigned_value: -1
@@ -25,9 +31,9 @@ segmentation:
         confidence_nn_id: 16
 
       segmentation:
-        scale: 6.25                        # typical cell radius
-        scale_std: "25%"                   # cell radius standard deviation
-        prior_segmentation_confidence: 0.5 # confidence of the cellpose confidence (float in [0, 1])
+        scale: 6.25                         # typical cell radius
+        scale_std: "25%"                    # cell radius standard deviation
+        prior_segmentation_confidence: 0.75 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false
         n_clusters: 4
         iters: 500
