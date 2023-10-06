@@ -21,6 +21,7 @@ def read(
     data_path: str,
     technology: str = option,
     sdata_path: str = None,
+    config_path: str = None,
     kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
     from pathlib import Path
@@ -32,6 +33,13 @@ def read(
     assert hasattr(
         io, technology
     ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, qptiff"
+
+    if config_path is not None:
+        assert not kwargs, "Provide either a path to a config, or some kwargs, but not both"
+        with open("data.yaml", "r") as f:
+            import yaml
+
+            kwargs = yaml.safe_load(f)["reader"]["kwargs"]
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path)
