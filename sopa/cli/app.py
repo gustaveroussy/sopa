@@ -39,7 +39,7 @@ def read(
         with open(config_path, "r") as f:
             import yaml
 
-            kwargs = yaml.safe_load(f)["reader"]["kwargs"]
+            kwargs = yaml.safe_load(f)["read"]["kwargs"]
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path)
