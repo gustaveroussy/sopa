@@ -91,12 +91,12 @@ def map_transcript_to_cell(
     sdata: SpatialData,
     cell_key: str,
     df: dd.DataFrame | None = None,
-    polygons: list[Polygon] | None = None,
+    geo_df: gpd.GeoDataFrame | None = None,
 ):
     if df is None:
         points_key, df = get_item(sdata, "points")
 
-    if polygons is None:
+    if geo_df is None:
         geo_df = get_boundaries(sdata)
 
     polygons = to_intrinsic(sdata, geo_df, points_key).geometry

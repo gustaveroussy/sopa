@@ -157,9 +157,6 @@ class Patches2D:
         prior_boundaries = None
         if use_prior:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
-            prior_boundaries = to_intrinsic(
-                self.sdata, prior_boundaries, self.element_name
-            ).geometry
 
         log.info(f"Making {len(self)} sub-CSV for Baysor")
         for i, patch in enumerate(tqdm(self.polygons)):
