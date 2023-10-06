@@ -17,6 +17,17 @@ def resize(xarr: xr.DataArray, scale_factor: float) -> da.Array:
     )
 
 
+def resize_numpy(
+    arr: np.ndarray, scale_factor: float, dims: list[str], output_shape: list[int]
+) -> np.ndarray:
+    resize_dims = [dim in ["x", "y"] for dim in dims]
+    transform = np.diag([scale_factor if resize_dim else 1 for resize_dim in resize_dims])
+
+    return dask_image.ndinterp.affine_transform(
+        arr, matrix=transform, output_shape=output_shape
+    ).compute()
+
+
 def _check_integer_dtype(dtype: np.dtype):
     assert np.issubdtype(dtype, np.integer), f"Expecting integer dtype, but found {dtype}"
 
