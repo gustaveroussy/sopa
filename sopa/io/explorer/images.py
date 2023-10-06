@@ -37,7 +37,7 @@ class MultiscaleImageWriter:
                         c,
                         self.tile_width * index_y : self.tile_width * (index_y + 1),
                         self.tile_width * index_x : self.tile_width * (index_x + 1),
-                    ].compute()
+                    ].values
                     yield scale_dtype(tile, self.dtype)
 
     def _should_load_memory(self, shape: tuple[int, int, int], dtype: np.dtype):
@@ -60,10 +60,10 @@ class MultiscaleImageWriter:
             data = self._get_tiles(xarr)
         else:
             if self.data is not None:
-                log.info(f"     (Loading image of shape {xarr.shape}) in memory")
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
             else:
-                self.data = scale_dtype(xarr.compute(), self.dtype)
+                log.info(f"     (Loading image of shape {xarr.shape}) in memory")
+                self.data = scale_dtype(xarr.values, self.dtype)
             data = self.data
 
         log.info(f"   > Image of shape {xarr.shape}")
