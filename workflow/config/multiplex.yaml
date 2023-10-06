@@ -1,0 +1,38 @@
+read:
+  technology: qptiff
+  kwargs:
+    channels_renaming:
+      DAPI MSI: DAPI
+      Opal 780 MSI: CK
+      Opal 480 MSI: CD3
+      Cy5 MSI: CD31
+      FITC: FAP
+      Cy3: CD68
+      Texas Red: CD20
+
+patchify:
+  patch_width_pixel: 3000
+  patch_overlap_pixel: 40
+
+segmentation:
+  cellpose:
+    diameter: 15
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+
+shapes:
+  expand_radius: 2
+
+aggregate:
+  intensity_mean: true
+
+annotation:
+  fluorescence:
+    marker_cell_dict:
+      CK: Tumoral cell
+      CD3: T cell
+      CD31: Endothelial
+      FAP: Fibroblast
+      CD68: Macrophage
+      CD20: B cell

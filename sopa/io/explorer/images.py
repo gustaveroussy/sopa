@@ -29,6 +29,7 @@ class MultiscaleImageWriter:
         self.metadata = image_metadata(self.channel_names, pixelsize)
 
     def _get_tiles(self, xarr: xr.DataArray):
+        # TODO: make it faster: load at most 4 adjacent chunks in memory?
         for c in range(xarr.shape[0]):
             for index_y in range(ceil(xarr.shape[1] / self.tile_width)):
                 for index_x in range(ceil(xarr.shape[2] / self.tile_width)):
