@@ -19,7 +19,7 @@ app.add_typer(app_patchify, name="patchify")
 @app.command()
 def read(
     data_path: str,
-    technology: str = option,
+    technology: str = None,
     sdata_path: str = None,
     config_path: str = None,
     kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
@@ -30,16 +30,23 @@ def read(
 
     sdata_path = Path(data_path).with_suffix(".zarr") if sdata_path is None else sdata_path
 
-    assert hasattr(
-        io, technology
-    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, qptiff"
+    assert (
+        technology is not None or config_path is not None
+    ), "Provide the argument `--technology` or `--config-path`"
 
     if config_path is not None:
         assert not kwargs, "Provide either a path to a config, or some kwargs, but not both"
         with open(config_path, "r") as f:
             import yaml
 
-            kwargs = yaml.safe_load(f)["read"]["kwargs"]
+            config = yaml.safe_load(f)
+
+        technology = config["read"]["technology"]
+        kwargs = config["read"]["kwargs"]
+
+    assert hasattr(
+        io, technology
+    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, qptiff"
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path)
