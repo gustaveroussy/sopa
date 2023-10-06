@@ -68,7 +68,7 @@ def average_channels(
     sdata: SpatialData, image: SpatialImage, geo_df: gpd.GeoDataFrame
 ) -> np.ndarray:
     geo_df = to_intrinsic(sdata, geo_df, image)
-    cells = geo_df.geometry
+    cells = list(geo_df.geometry)
 
     log.info(f"Averaging intensities over {len(cells)} cells")
     return _average_channels(image, cells)
