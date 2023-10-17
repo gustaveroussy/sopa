@@ -12,6 +12,9 @@ class ExplorerConstants:
     QUALITY_SCORE = 40
     MICRONS_TO_PIXELS = 4.705882
 
+    COLORS = [400, 500, 550, 600, 650, 700]
+    KNOWN_CHANNELS = {"DAPI": 400}
+
 
 class Versions:
     EXPERIMENT = [2, 0]

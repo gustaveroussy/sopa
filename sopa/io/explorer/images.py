@@ -1,4 +1,5 @@
 import logging
+import re
 from math import ceil
 
 import numpy as np
@@ -8,7 +9,7 @@ from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 from spatial_image import SpatialImage
 
 from ...utils.image import resize_numpy, scale_dtype
-from ._constants import image_metadata
+from ._constants import ExplorerConstants, image_metadata
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ class MultiscaleImageWriter:
 
         self.scale_names = list(image.children)
         self.channel_names = list(map(str, image[self.scale_names[0]].c.values))
+        self.channel_names = _set_colors(self.channel_names)
         self.metadata = image_metadata(self.channel_names, pixelsize)
         self.data = None
 
@@ -101,6 +103,35 @@ class MultiscaleImageWriter:
 
             for i in range(1, len(self)):
                 self._write_image_level(tif, i, subfiletype=1)
+
+
+def _is_color_valid(channel_name: str) -> bool:
+    """The color is valid if it contains a wavelength (e.g., `550`) or is known by the Xenium Explorer"""
+    known_colors = set(ExplorerConstants.KNOWN_CHANNELS.keys())
+    contains_wavelength = bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", channel_name))
+    return contains_wavelength or channel_name in known_colors
+
+
+def _set_colors(channel_names: list[str]) -> list[str]:
+    """
+    Trick to provide a color to all channels on the Xenium Explorer.
+
+    Some colors are automatically colored by the Xenium explorer (e.g., DAPI is colored in blue).
+    But some channels colors are set to white by default. This functions allows to color these
+    channels with an available wavelength color (e.g., `550`).
+    """
+    colors_valid = [_is_color_valid(name) for name in channel_names]
+
+    already_assigned_colors = {ExplorerConstants.KNOWN_CHANNELS.get(name) for name in channel_names}
+    available_colors = sorted(list(set(ExplorerConstants.COLORS) - already_assigned_colors))
+
+    n_invalid = len(colors_valid) - sum(colors_valid)
+    color_indices = list(np.linspace(0, len(available_colors) - 1, n_invalid).round().astype(int))
+
+    return [
+        name if is_valid else f"{name} (color={available_colors[color_indices.pop()]})"
+        for name, is_valid in zip(channel_names, colors_valid)
+    ]
 
 
 def write_image(
