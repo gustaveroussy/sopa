@@ -3,7 +3,7 @@ from pathlib import Path
 
 from spatialdata import SpatialData
 
-from .._constants import Dims
+from .._constants import VALID_DIMENSIONS
 from .._sdata import get_spatial_image
 
 log = logging.getLogger(__name__)
@@ -33,12 +33,10 @@ def write_standardized(sdata: SpatialData, sdata_path: str):
         )
         del sdata.table
 
-    image_key, image = get_spatial_image(sdata, return_key=True)
-    assert sorted(image.dims) == sorted(
-        Dims.VALID_DIMENSIONS
-    ), f"Image must have the following three dimensions: {Dims.VALID_DIMENSIONS} (whatever the order). Found {image.dims}"
-
-    sdata[image_key] = sdata[image_key].transpose(*Dims.VALID_DIMENSIONS)
+    image = get_spatial_image(sdata)
+    assert (
+        image.dims == VALID_DIMENSIONS
+    ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
 
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
 
