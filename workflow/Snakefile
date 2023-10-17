@@ -17,7 +17,7 @@ rule to_spatialdata:
     conda:
         "spatial"
     resources:
-        mem_mb=16_000,
+        mem_mb=64_000,
     params:
         args_reader = str(args['read'])
     shell:
