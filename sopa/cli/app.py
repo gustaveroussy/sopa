@@ -118,7 +118,7 @@ def explorer(
     path: str,
     gene_column: str = None,
     lazy: bool = True,
-    ram_threshold: int = None,
+    ram_threshold_gb: int = None,
     save_image_mode: int = 1,
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs
@@ -138,6 +138,6 @@ def explorer(
         sdata,
         gene_column=gene_column,
         lazy=lazy,
-        ram_threshold=ram_threshold,
+        ram_threshold_gb=ram_threshold_gb,
         save_image_mode=save_image_mode,
     )

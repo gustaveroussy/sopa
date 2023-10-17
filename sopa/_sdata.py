@@ -89,7 +89,7 @@ def get_spatial_image(
 
     image = sdata.images[key]
     if isinstance(image, MultiscaleSpatialImage):
-        image = SpatialImage(image["scale0"][key])
+        image = SpatialImage(next(iter(image["scale0"].values())))
 
     if return_key:
         return key, image

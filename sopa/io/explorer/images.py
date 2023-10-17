@@ -44,13 +44,13 @@ class MultiscaleImageWriter:
         if not self.lazy:
             return True
 
-        if self.ram_threshold is None:
+        if self.ram_threshold_gb is None:
             return False
 
         itemsize = max(np.dtype(dtype).itemsize, np.dtype(self.dtype).itemsize)
         size = shape[0] * shape[1] * shape[2] * itemsize
 
-        return size <= self.ram_threshold * 1024**3
+        return size <= self.ram_threshold_gb * 1024**3
 
     def _write_image_level(self, tif: tf.TiffWriter, scale_index: int, **kwargs):
         xarr: xr.DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
@@ -62,7 +62,7 @@ class MultiscaleImageWriter:
             if self.data is not None:
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
             else:
-                log.info(f"     (Loading image of shape {xarr.shape}) in memory")
+                log.info(f"   (Loading image of shape {xarr.shape}) in memory")
                 self.data = scale_dtype(xarr.values, self.dtype)
             data = self.data
 
@@ -86,13 +86,13 @@ class MultiscaleImageWriter:
     def procedure(self):
         if not self.lazy:
             return "in-memory (consider lazy procedure if it crashes because of RAM)"
-        if self.ram_threshold is None:
+        if self.ram_threshold_gb is None:
             return "lazy (slower but low RAM usage)"
         return "semi-lazy (load in memory when possible)"
 
-    def write(self, path, lazy=True, ram_threshold=None):
+    def write(self, path, lazy=True, ram_threshold_gb=None):
         self.lazy = lazy
-        self.ram_threshold = ram_threshold
+        self.ram_threshold_gb = ram_threshold_gb
 
         log.info(f"Writing multiscale image with procedure={self.procedure()}")
 
@@ -110,7 +110,7 @@ def write_image(
     tile_width: int = 1024,
     n_subscales: int = 5,
     pixelsize: float = 0.2125,
-    ram_threshold: int | None = None,
+    ram_threshold_gb: int | None = None,
 ):
     if isinstance(image, np.ndarray):
         assert len(image.shape) == 3, "Can only write channels with shape (C,Y,X)"
@@ -120,4 +120,4 @@ def write_image(
     image: MultiscaleSpatialImage = to_multiscale(image, [2] * n_subscales)
 
     image_writer = MultiscaleImageWriter(image, pixelsize=pixelsize, tile_width=tile_width)
-    image_writer.write(path, lazy=lazy, ram_threshold=ram_threshold)
+    image_writer.write(path, lazy=lazy, ram_threshold_gb=ram_threshold_gb)

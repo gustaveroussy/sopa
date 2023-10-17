@@ -38,4 +38,4 @@ annotation:
       CD20: B cell
 
 explorer:
-  ram_threshold: 8
+  ram_threshold_gb: 8

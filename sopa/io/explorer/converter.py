@@ -34,7 +34,7 @@ def write_explorer(
     layer: str | None = None,
     polygon_max_vertices: int = 13,
     lazy: bool = True,
-    ram_threshold: int | None = None,
+    ram_threshold_gb: int | None = None,
     save_image_mode: int = 1,
 ) -> None:
     """
@@ -58,7 +58,7 @@ def write_explorer(
 
     if save_image_mode == 2:
         log.info(f"{save_image_mode=} (only the image will be saved)")
-        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold=ram_threshold)
+        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
         return
 
     ### Saving cell categories and gene counts
@@ -89,17 +89,21 @@ def write_explorer(
 
     ### Saving image
     if save_image_mode:
-        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold=ram_threshold)
+        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
     else:
         log.info(f"{save_image_mode=} (the image will not be saved)")
 
     ### Saving experiment.xenium file
-    with open(path / FileNames.METADATA, "w") as f:
-        EXPERIMENT = experiment_dict(image_key, shapes_key, _get_n_obs(sdata, geo_df))
-        json.dump(EXPERIMENT, f, indent=4)
+    write_metadata(path / FileNames.METADATA, image_key, shapes_key, _get_n_obs(sdata, geo_df))
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
     if sdata.table is not None:
         return sdata.table.n_obs
     return len(geo_df) if geo_df is not None else 0
+
+
+def write_metadata(path: str, image_key: str = "NA", shapes_key: str = "NA", n_obs: int = 0):
+    with open(path, "w") as f:
+        metadata = experiment_dict(image_key, shapes_key, n_obs)
+        json.dump(metadata, f, indent=4)

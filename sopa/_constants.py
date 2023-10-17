@@ -14,6 +14,10 @@ class SopaKeys:
     Z_SCORES = "z_scores"
 
 
+class Dims:
+    VALID_DIMENSIONS = ["c", "y", "x"]
+
+
 class ROI:
     KEY = "region_of_interest"
     SCALE_FACTOR = "scale_factor"

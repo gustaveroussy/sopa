@@ -18,9 +18,9 @@ segmentation:
     cell_key: cell_id
     config:
       data:
-        exclude_genes: "Blank*"      # genes excluded from the Baysor segmentation
-        force_2d: true               # if false, uses 3D mode
-        min_molecules_per_cell: 30   # min number of transcripts per cell
+        exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
+        force_2d: true # if false, uses 3D mode
+        min_molecules_per_cell: 30 # min number of transcripts per cell
         x: "x"
         y: "y"
         z: "z"
@@ -30,8 +30,8 @@ segmentation:
         confidence_nn_id: 16
 
       segmentation:
-        scale: 6.25                         # typical cell radius
-        scale_std: "25%"                    # cell radius standard deviation
+        scale: 6.25 # typical cell radius
+        scale_std: "25%" # cell radius standard deviation
         prior_segmentation_confidence: 0.75 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false
         n_clusters: 4
@@ -61,7 +61,7 @@ aggregate:
 
 explorer:
   gene_column: "gene"
-  ram_threshold: 8
+  ram_threshold_gb: 8
 
 executables:
   baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor

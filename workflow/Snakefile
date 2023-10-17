@@ -164,7 +164,7 @@ rule image_write:
     resources:
         mem_mb=64_000,
     params:
-        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold'])),
+        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb'])),
     shell:
         """
         sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer} --save-image-mode 2
