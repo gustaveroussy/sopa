@@ -16,6 +16,8 @@ rule to_spatialdata:
         paths.sdata_zgroup if paths.data_path else [],
     conda:
         "spatial"
+    resources:
+        mem_mb=16_000,
     params:
         args_reader = str(args['read'])
     shell:
