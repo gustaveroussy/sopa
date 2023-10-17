@@ -7,6 +7,7 @@ import tifffile as tf
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 from spatial_image import SpatialImage
+from tqdm import tqdm
 
 from ...utils.image import resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, image_metadata
@@ -31,10 +32,13 @@ class MultiscaleImageWriter:
         self.metadata = image_metadata(self.channel_names, pixelsize)
         self.data = None
 
+    def _n_tiles_axis(self, xarr: xr.DataArray, axis: int) -> int:
+        return ceil(xarr.shape[axis] / self.tile_width)
+
     def _get_tiles(self, xarr: xr.DataArray):
         for c in range(xarr.shape[0]):
-            for index_y in range(ceil(xarr.shape[1] / self.tile_width)):
-                for index_x in range(ceil(xarr.shape[2] / self.tile_width)):
+            for index_y in range(self._n_tiles_axis(xarr, 1)):
+                for index_x in range(self._n_tiles_axis(xarr, 2)):
                     tile = xarr[
                         c,
                         self.tile_width * index_y : self.tile_width * (index_y + 1),
@@ -59,7 +63,9 @@ class MultiscaleImageWriter:
         resolution = 1e4 * 2**scale_index / self.pixelsize
 
         if not self._should_load_memory(xarr.shape, xarr.dtype):
+            n_tiles = xarr.shape[0] * self._n_tiles_axis(xarr, 1) * self._n_tiles_axis(xarr, 2)
             data = self._get_tiles(xarr)
+            data = iter(tqdm(data, total=n_tiles - 1))
         else:
             if self.data is not None:
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
