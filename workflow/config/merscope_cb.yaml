@@ -4,7 +4,7 @@ read:
 patchify:
   patch_width_pixel: 6000
   patch_overlap_pixel: 150
-  patch_width_microns: 2000
+  patch_width_microns: 1000
   patch_overlap_microns: 20
 
 segmentation:
