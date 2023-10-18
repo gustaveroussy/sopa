@@ -98,7 +98,7 @@ rule patch_segmentation_baysor:
 def get_input_resolve(name):
     def _(wilcards):
         with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.n_patches.open() as f:
-            return paths.cells_paths(int(f.read()), name)
+            return paths.cells_paths(f.read(), name)
     return _
 
 rule resolve_cellpose:
@@ -124,10 +124,10 @@ rule resolve_baysor:
     conda:
         "spatial"
     params:
-        n_patches = lambda wildcards, input: len(input.files),
+        args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {file}" for file in input.files),
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --baysor-temp-dir {paths.baysor_temp_dir} --gene-column {args.gene_column} --n {params.n_patches}
+        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {input.args_patches_dirs}
         """
 
 rule aggregate:

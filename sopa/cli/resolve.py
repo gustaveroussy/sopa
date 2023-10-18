@@ -31,15 +31,19 @@ def cellpose(
 @app_resolve.command()
 def baysor(
     sdata_path: str,
-    baysor_temp_dir: str = option,
     gene_column: str = option,
+    baysor_temp_dir: str = None,
     min_area: float = 0,
-    n: int = None,
+    patches_dirs: list[str] = None,
 ):
     import spatialdata
 
     from sopa.segmentation.baysor.resolve import resolve
 
+    assert (
+        baysor_temp_dir is not None or patches_dirs is not None
+    ), "Provide either a baysor directory (--baysor_temp_dir) or a list of all subdirectories (--patches_dirs)"
+
     sdata = spatialdata.read_zarr(sdata_path)
 
-    resolve(sdata, baysor_temp_dir, gene_column, n, min_area)
+    resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area)

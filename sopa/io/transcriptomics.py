@@ -160,22 +160,23 @@ def merscope(
     z_layers = [z_layers] if isinstance(z_layers, int) else z_layers or []
 
     stainings = _get_channel_names(images_dir)
-    for z_layer in z_layers:
-        im = da.stack(
-            [
-                imread(images_dir / f"mosaic_{stain}_z{z_layer}.tif", **imread_kwargs).squeeze()
-                for stain in stainings
-            ],
-            axis=0,
-        )
-        parsed_im = Image2DModel.parse(
-            im,
-            dims=("c", "y", "x"),
-            transformations={"microns": microns_to_pixels.inverse()},
-            c_coords=stainings,
-            **image_models_kwargs,
-        )
-        images[f"{dataset_id}_z{z_layer}"] = parsed_im
+    if stainings:
+        for z_layer in z_layers:
+            im = da.stack(
+                [
+                    imread(images_dir / f"mosaic_{stain}_z{z_layer}.tif", **imread_kwargs).squeeze()
+                    for stain in stainings
+                ],
+                axis=0,
+            )
+            parsed_im = Image2DModel.parse(
+                im,
+                dims=("c", "y", "x"),
+                transformations={"microns": microns_to_pixels.inverse()},
+                c_coords=stainings,
+                **image_models_kwargs,
+            )
+            images[f"{dataset_id}_z{z_layer}"] = parsed_im
 
     # Transcripts
     points = {}
@@ -184,7 +185,7 @@ def merscope(
         points[f"{dataset_id}_transcripts"] = _get_points(transcript_path)
     else:
         logger.warning(
-            f"Transcript file {transcript_path} not existing. Transcripts are not loaded."
+            f"Transcript file {transcript_path} does not exist. Transcripts are not loaded."
         )
 
     # Polygons
@@ -193,7 +194,7 @@ def merscope(
         shapes[f"{dataset_id}_polygons"] = _get_polygons(boundaries_path)
     else:
         logger.warning(
-            f"Boundary file {boundaries_path} not existing. Cell boundaries are not loaded."
+            f"Boundary file {boundaries_path} does not exist. Cell boundaries are not loaded."
         )
 
     # Table
@@ -202,13 +203,13 @@ def merscope(
         table = _get_table(count_path, obs_path, vizgen_region, slide_name, dataset_id, region)
     else:
         logger.warning(
-            f"At least one of the following files is not existing: {count_path}, {obs_path}. The table is not loaded."
+            f"At least one of the following files does not exist: {count_path}, {obs_path}. The table is not loaded."
         )
 
     return SpatialData(shapes=shapes, points=points, images=images, table=table)
 
 
-def _get_points(transcript_path):
+def _get_points(transcript_path: Path):
     transcript_df = dd.read_csv(transcript_path)
     transcripts = PointsModel.parse(
         transcript_df,
@@ -223,7 +224,7 @@ def _get_points(transcript_path):
     return transcripts
 
 
-def _get_polygons(boundaries_path: str) -> geopandas.GeoDataFrame:
+def _get_polygons(boundaries_path: Path) -> geopandas.GeoDataFrame:
     geo_df = geopandas.read_parquet(boundaries_path)
     geo_df = geo_df.rename_geometry("geometry")
     geo_df = geo_df[geo_df[MerscopeKeys.Z_INDEX] == 0]  # Avoid duplicate boundaries on all z-levels
@@ -236,8 +237,8 @@ def _get_polygons(boundaries_path: str) -> geopandas.GeoDataFrame:
 
 
 def _get_table(
-    count_path: str,
-    obs_path: str,
+    count_path: Path,
+    obs_path: Path,
     vizgen_region: str,
     slide_name: str,
     dataset_id: str,

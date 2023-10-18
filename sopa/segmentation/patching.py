@@ -145,7 +145,7 @@ class Patches2D:
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
-    ):
+    ) -> list[int]:
         from tqdm import tqdm
 
         baysor_temp_dir = Path(baysor_temp_dir)
@@ -160,6 +160,8 @@ class Patches2D:
         prior_boundaries = None
         if use_prior:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
+
+        valid_indices = []
 
         log.info(f"Making {len(self)} sub-CSV for Baysor")
         for i, patch in enumerate(tqdm(self.polygons)):
@@ -177,4 +179,18 @@ class Patches2D:
                 map_transcript_to_cell(self.sdata, cell_key, sub_df, prior_boundaries)
             sub_df.to_csv(patch_path, single_file=True)
 
+            if _check_min_lines(patch_path, 20):
+                valid_indices.append(i)
+            else:
+                log.info(f"Patch {i} has too few transcripts. Baysor will not be run on it.")
+
         log.info(f"Patches saved in directory {baysor_temp_dir}")
+        return valid_indices
+
+
+def _check_min_lines(path: str, n: int) -> bool:
+    with open(path, "r") as f:
+        for count, _ in enumerate(f):
+            if count + 1 >= n:
+                return True
+        return False

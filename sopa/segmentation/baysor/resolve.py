@@ -1,11 +1,13 @@
+import json
 import logging
+from pathlib import Path
 
 import anndata
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, shape
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, TableModel
 from spatialdata.transformations import get_transformation
@@ -13,9 +15,48 @@ from spatialdata.transformations import get_transformation
 from ..._constants import SopaKeys
 from ..._sdata import get_intrinsic_cs, get_item, get_key
 from .. import shapes
-from .aggregate import read_all_baysor_patches
 
 log = logging.getLogger(__name__)
+
+
+def read_baysor(
+    directory: str, min_area: float = 0, min_vertices: int = 4
+) -> tuple[list[Polygon], AnnData]:
+    directory = Path(directory)
+
+    adata = anndata.read_loom(
+        directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
+    )
+    adata = adata[adata.obs.area >= min_area].copy()
+
+    cells_num = pd.Series(adata.obs_names.str.split("-").str[-1].astype(int), index=adata.obs_names)
+
+    with open(directory / "segmentation_polygons.json") as f:
+        polygons_dict = json.load(f)
+        polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
+
+    cells_num = cells_num[
+        cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
+    ]
+
+    cells = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
+
+    return cells, adata[cells_num.index].copy()
+
+
+def read_all_baysor_patches(
+    baysor_temp_dir: str, min_area: float = 0, patches_dirs: list[str] | None = None
+) -> tuple[list[list[Polygon]], list[AnnData]]:
+    baysor_temp_dir = Path(baysor_temp_dir)
+
+    if patches_dirs is None:
+        outs = [read_baysor(directory, min_area) for directory in baysor_temp_dir.iterdir()]
+    else:
+        outs = [read_baysor(path, min_area) for path in patches_dirs]
+
+    patches_cells, adatas = zip(*outs)
+
+    return patches_cells, adatas
 
 
 def resolve_patches(
@@ -46,10 +87,10 @@ def resolve(
     sdata: SpatialData,
     baysor_temp_dir: str,
     gene_column: str,
-    n: int | None = None,
+    patches_dirs: list[str] | None = None,
     min_area: float = 0,
 ):
-    patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, n)
+    patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, patches_dirs)
     geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")

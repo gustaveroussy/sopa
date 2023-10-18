@@ -57,11 +57,13 @@ def baysor(
 
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
-    patches.patchify_transcripts(baysor_temp_dir, cell_key, unassigned_value, use_prior)
+    valid_indices = patches.patchify_transcripts(
+        baysor_temp_dir, cell_key, unassigned_value, use_prior
+    )
 
     for i in range(len(patches)):
         path = Path(baysor_temp_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
         to_toml(path, config)
 
-    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES_BAYSOR, "w") as f:
-        f.write(str(len(patches)))
+    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.PATCHES_DIRS_BAYSOR, "w") as f:
+        f.write("\n".join(map(str, valid_indices)))
