@@ -137,6 +137,8 @@ rule aggregate:
         touch(paths.smk_aggregation),
     conda:
         "spatial"
+    resources:
+        mem_mb=32_000,
     params:
         args_aggregate = str(args["aggregate"]),
     shell:
