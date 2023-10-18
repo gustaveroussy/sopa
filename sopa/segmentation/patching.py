@@ -179,7 +179,7 @@ class Patches2D:
                 map_transcript_to_cell(self.sdata, cell_key, sub_df, prior_boundaries)
             sub_df.to_csv(patch_path, single_file=True)
 
-            if _check_min_lines(patch_path, 500):
+            if _check_min_lines(patch_path, 1000):
                 valid_indices.append(i)
             else:
                 log.info(f"Patch {i} has too few transcripts. Baysor will not be run on it.")
