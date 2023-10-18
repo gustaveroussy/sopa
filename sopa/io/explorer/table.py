@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 def write_gene_counts(path: str, adata: AnnData, layer: str | None) -> None:
-    log.info(f"Writing table of {adata.n_vars} genes")
+    log.info(f"Writing table of {adata.n_vars} columns")
     counts = adata.X if layer is None else adata.layers[layer]
     counts = csr_matrix(counts)
 
