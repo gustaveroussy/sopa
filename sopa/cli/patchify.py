@@ -27,7 +27,7 @@ def cellpose(
     patches = Patches2D(sdata, image_key, patch_width_pixel, patch_overlap_pixel)
     patches.write()
 
-    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.NUM_PATCHES_CELLPOSE, "w") as f:
+    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.PATCHES_FILE_CELLPOSE, "w") as f:
         f.write(str(len(patches)))
 
 

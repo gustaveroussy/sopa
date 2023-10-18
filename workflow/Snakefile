@@ -29,7 +29,7 @@ checkpoint patchify_cellpose:
     input:
         paths.sdata_zgroup,
     output:
-        n_patches = paths.smk_n_patches_cellpose,
+        patches_file = paths.smk_patches_file_cellpose,
         patches = touch(paths.smk_patches),
     params:
         args_patchify = str(args["patchify"].where(contains="pixel")),
@@ -45,7 +45,7 @@ checkpoint patchify_baysor:
         paths.sdata_zgroup,
         paths.smk_cellpose_boundaries if args.cellpose else [],
     output:
-        n_patches = paths.smk_n_patches_baysor,
+        patches_file = paths.smk_patches_file_baysor,
         baysor_temp_dir = directory(paths.baysor_temp_dir),
     params:
         args_patchify = str(args["patchify"].where(contains="micron")),
@@ -62,7 +62,7 @@ checkpoint patchify_baysor:
 
 rule patch_segmentation_cellpose:
     input:
-        paths.smk_n_patches_cellpose,
+        paths.smk_patches_file_cellpose,
         paths.smk_patches,
     output:
         f"{paths.cellpose_temp_dir}/{{index}}.zarr.zip",
@@ -77,7 +77,7 @@ rule patch_segmentation_cellpose:
 
 rule patch_segmentation_baysor:
     input:
-        n_patches = paths.smk_n_patches_baysor,
+        patches_file = paths.smk_patches_file_baysor,
         baysor_patch = f"{paths.baysor_temp_dir}/{{index}}",
     output:
         f"{paths.baysor_temp_dir}/{{index}}/segmentation_polygons.json"
@@ -97,7 +97,7 @@ rule patch_segmentation_baysor:
 
 def get_input_resolve(name):
     def _(wilcards):
-        with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.n_patches.open() as f:
+        with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.patches_file.open() as f:
             return paths.cells_paths(f.read(), name)
     return _
 
