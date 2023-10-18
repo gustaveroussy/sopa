@@ -20,14 +20,14 @@ segmentation:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
-        min_molecules_per_cell: 30 # min number of transcripts per cell
+        min_molecules_per_cell: 10 # min number of transcripts per cell
         x: "x"
         y: "y"
         z: "z"
         gene: "gene"
         min_molecules_per_gene: 0
-        min_molecules_per_segment: 8
-        confidence_nn_id: 16
+        min_molecules_per_segment: 3
+        confidence_nn_id: 6
 
       segmentation:
         scale: 6.25 # typical cell radius
