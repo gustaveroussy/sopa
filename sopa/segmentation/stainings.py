@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -7,10 +8,12 @@ from shapely.geometry import Polygon, box
 from spatialdata import SpatialData
 from tqdm import tqdm
 
-from .._constants import SopaKeys
+from .._constants import MIN_INTENSITY_RATIO, SopaKeys
 from .._sdata import get_spatial_image
 from . import shapes
 from .patching import Patches2D
+
+log = logging.getLogger(__name__)
 
 
 class StainingSegmentation:
@@ -44,6 +47,10 @@ class StainingSegmentation:
 
         if patch.area < box(*bounds).area:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
+
+        if image.max() <= MIN_INTENSITY_RATIO * np.iinfo(image.dtype).max:
+            log.warn("Patch too dark. Skipping it.")
+            return []
 
         cells = shapes.geometrize(self.method(image))
 
