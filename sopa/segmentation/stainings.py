@@ -76,7 +76,11 @@ class StainingSegmentation:
     ) -> list[Polygon]:
         self.patches = Patches2D(self.sdata, self.image_key, patch_width, patch_overlap)
 
-        cells = [cell for patch in tqdm(self.patches.polygons) for cell in self._run_patch(patch)]
+        cells = [
+            cell
+            for patch in tqdm(self.patches.polygons, desc="Run on patches")
+            for cell in self._run_patch(patch)
+        ]
         cells = shapes.solve_conflicts(cells)
         return cells
 
@@ -85,7 +89,7 @@ class StainingSegmentation:
         cells = []
 
         files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".zip"]
-        for file in tqdm(files):
+        for file in tqdm(files, desc="Reading patches"):
             z = zarr.open(file, mode="r")
             for _, coords_zarr in z.arrays():
                 cells.append(Polygon(coords_zarr[:]))

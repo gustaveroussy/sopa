@@ -6,6 +6,7 @@ import pandas as pd
 import shapely
 import shapely.affinity
 from shapely.geometry import MultiPolygon, Point, Polygon
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ def solve_conflicts(
     else:
         conflicts = conflicts[:, conflicts[0] != conflicts[1]].T
 
-    for i1, i2 in conflicts:
+    for i1, i2 in tqdm(conflicts, desc="Resolving conflicts"):
         resolved_i1, resolved_i2 = resolved_indices[i1], resolved_indices[i2]
         cell1, cell2 = cells[resolved_i1], cells[resolved_i2]
 

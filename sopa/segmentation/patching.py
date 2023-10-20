@@ -163,8 +163,7 @@ class Patches2D:
 
         valid_indices = []
 
-        log.info(f"Making {len(self)} sub-CSV for Baysor")
-        for i, patch in enumerate(tqdm(self.polygons)):
+        for i, patch in enumerate(tqdm(self.polygons, desc="Splitting CSVs for Baysor")):
             patch_path: Path = baysor_temp_dir / str(i) / SopaFiles.BAYSOR_TRANSCRIPTS
             patch_path.parent.mkdir(parents=True, exist_ok=True)
 

@@ -65,7 +65,7 @@ class MultiscaleImageWriter:
         if not self._should_load_memory(xarr.shape, xarr.dtype):
             n_tiles = xarr.shape[0] * self._n_tiles_axis(xarr, 1) * self._n_tiles_axis(xarr, 2)
             data = self._get_tiles(xarr)
-            data = iter(tqdm(data, total=n_tiles - 1))
+            data = iter(tqdm(data, total=n_tiles - 1, desc="Writing tiles"))
         else:
             if self.data is not None:
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
