@@ -216,11 +216,7 @@ def _get_points(transcript_path: Path):
         coordinates={"x": MerscopeKeys.GLOBAL_X, "y": MerscopeKeys.GLOBAL_Y},
         transformations={"microns": Identity()},
     )
-    categories = transcripts["gene"].compute().astype("category")
-    gene_categorical = dd.from_pandas(categories, npartitions=transcripts.npartitions).reset_index(
-        drop=True
-    )
-    transcripts["gene"] = gene_categorical
+    transcripts["gene"] = transcripts["gene"].astype("category")
     return transcripts
 
 
