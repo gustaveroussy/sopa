@@ -47,9 +47,8 @@ def read_baysor(
 def read_all_baysor_patches(
     baysor_temp_dir: str, min_area: float = 0, patches_dirs: list[str] | None = None
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
-    baysor_temp_dir = Path(baysor_temp_dir)
-
     if patches_dirs is None:
+        baysor_temp_dir = Path(baysor_temp_dir)
         outs = [read_baysor(directory, min_area) for directory in baysor_temp_dir.iterdir()]
     else:
         outs = [read_baysor(path, min_area) for path in patches_dirs]
