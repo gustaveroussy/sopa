@@ -8,6 +8,11 @@ rule all:
         paths.annotations,
         paths.explorer_experiment,
         paths.explorer_image,
+    shell:
+        """
+        echo SpatialData output directory: {paths.sdata_path}
+        echo Explorer output directory: {paths.explorer_directory}
+        """
 
 rule to_spatialdata:
     input:
