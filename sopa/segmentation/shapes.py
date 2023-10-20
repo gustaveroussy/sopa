@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import shapely
 import shapely.affinity
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
@@ -123,6 +123,12 @@ def rasterize(
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
+
+    if not isinstance(cell_translated.boundary, LineString):
+        print("cell_translated:", cell_translated)
+        print("boundary:", cell_translated.boundary)
+        cell_translated = cell_translated.buffer(0)
+
     coords = np.array(cell_translated.boundary.coords)[None, :].astype(np.int32)
     return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
 
