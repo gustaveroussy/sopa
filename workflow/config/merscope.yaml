@@ -38,7 +38,7 @@ segmentation:
         new_component_fraction: 0.3
 
 shapes:
-  expand_radius: 2
+  expand_radius: 0
   min_area: 20
 
 aggregate:
