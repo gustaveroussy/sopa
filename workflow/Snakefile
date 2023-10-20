@@ -127,7 +127,7 @@ rule resolve_baysor:
         args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {file}" for file in input.files),
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {input.args_patches_dirs}
+        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs}
         """
 
 rule aggregate:
