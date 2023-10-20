@@ -34,6 +34,7 @@ def baysor(
     gene_column: str = option,
     baysor_temp_dir: str = None,
     min_area: float = 0,
+    expand_radius: float = 0,
     patches_dirs: list[str] = None,
 ):
     import spatialdata
@@ -46,4 +47,4 @@ def baysor(
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area)
+    resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area, expand_radius)

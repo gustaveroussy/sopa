@@ -124,9 +124,10 @@ rule resolve_baysor:
         "spatial"
     params:
         args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
+        args_shapes = str(args["shapes"]),
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs}
+        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs} {params.args_shapes}
         """
 
 rule aggregate:

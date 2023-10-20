@@ -44,6 +44,7 @@ segmentation:
 
 shapes:
   expand_radius: 2
+  min_area: 20
 
 aggregate:
   intensity_mean: true

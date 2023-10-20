@@ -20,14 +20,14 @@ log = logging.getLogger(__name__)
 
 
 def read_baysor(
-    directory: str, min_area: float = 0, min_vertices: int = 4
+    directory: str, min_area: float = 0, expand_radius: float = 0, min_vertices: int = 4
 ) -> tuple[list[Polygon], AnnData]:
     directory = Path(directory)
 
     adata = anndata.read_loom(
         directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
     )
-    adata = adata[adata.obs.area >= min_area].copy()
+    adata = adata[adata.obs.area > min_area].copy()
 
     cells_num = pd.Series(adata.obs_names.str.split("-").str[-1].astype(int), index=adata.obs_names)
 
@@ -39,19 +39,25 @@ def read_baysor(
         cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
     ]
 
-    cells = [shape(polygons_dict[cell_num]).buffer(0) for cell_num in cells_num]
+    cells = [shape(polygons_dict[cell_num]).buffer(expand_radius) for cell_num in cells_num]
 
     return cells, adata[cells_num.index].copy()
 
 
 def read_all_baysor_patches(
-    baysor_temp_dir: str, min_area: float = 0, patches_dirs: list[str] | None = None
+    baysor_temp_dir: str,
+    min_area: float = 0,
+    expand_radius: float = 0,
+    patches_dirs: list[str] | None = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     if patches_dirs is None:
         baysor_temp_dir = Path(baysor_temp_dir)
-        outs = [read_baysor(directory, min_area) for directory in baysor_temp_dir.iterdir()]
+        outs = [
+            read_baysor(directory, min_area, expand_radius)
+            for directory in baysor_temp_dir.iterdir()
+        ]
     else:
-        outs = [read_baysor(path, min_area) for path in patches_dirs]
+        outs = [read_baysor(path, min_area, expand_radius) for path in patches_dirs]
 
     patches_cells, adatas = zip(*outs)
 
@@ -88,8 +94,11 @@ def resolve(
     gene_column: str,
     patches_dirs: list[str] | None = None,
     min_area: float = 0,
+    expand_radius: float = 0,
 ):
-    patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, patches_dirs)
+    patches_cells, adatas = read_all_baysor_patches(
+        baysor_temp_dir, min_area, expand_radius, patches_dirs
+    )
     geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")
