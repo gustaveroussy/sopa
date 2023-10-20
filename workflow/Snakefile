@@ -3,6 +3,8 @@ from utils import WorkflowPaths, Args
 paths = WorkflowPaths(config)
 args = Args(paths, config)
 
+localrules: all
+
 rule all:
     input:
         paths.annotations,
