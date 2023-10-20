@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import shapely
 import shapely.affinity
-from shapely.geometry import LineString, MultiPolygon, Point, Polygon
+from shapely.geometry import MultiPolygon, Point, Polygon
 
 log = logging.getLogger(__name__)
 
