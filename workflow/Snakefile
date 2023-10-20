@@ -95,10 +95,10 @@ rule patch_segmentation_baysor:
         {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
         """
 
-def get_input_resolve(name):
+def get_input_resolve(name, dirs=False):
     def _(wilcards):
         with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.patches_file.open() as f:
-            return paths.cells_paths(f.read(), name)
+            return paths.cells_paths(f.read(), name, dirs=dirs)
     return _
 
 rule resolve_cellpose:
@@ -118,13 +118,14 @@ rule resolve_cellpose:
 rule resolve_baysor:
     input:
         files = get_input_resolve("baysor"),
+        dirs = get_input_resolve("baysor", dirs=True),
     output:
         touch(paths.smk_baysor_boundaries),
         touch(paths.smk_table)
     conda:
         "spatial"
     params:
-        args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {file}" for file in input.files),
+        args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
     shell:
         """
         sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs}

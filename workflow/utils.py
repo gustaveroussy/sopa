@@ -72,12 +72,15 @@ class WorkflowPaths:
         self.explorer_experiment = self.explorer_directory / "experiment.xenium"
         self.explorer_image = self.explorer_directory / "morphology.ome.tif"
 
-    def cells_paths(self, file_content: str, name):
+    def cells_paths(self, file_content: str, name, dirs: bool = False):
         if name == "cellpose":
             return [str(self.cellpose_temp_dir / f"{i}.zarr.zip") for i in range(int(file_content))]
         if name == "baysor":
             indices = map(int, file_content.split())
             BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]
+
+            if dirs:
+                return [str(self.baysor_temp_dir / str(i)) for i in indices]
             return [
                 str(self.baysor_temp_dir / str(i) / file) for i in indices for file in BAYSOR_FILES
             ]
