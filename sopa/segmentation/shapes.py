@@ -34,7 +34,7 @@ def solve_conflicts(
         intersection = cell1.intersection(cell2).area
         if intersection / min(cell1.area, cell2.area) >= threshold:
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
-            cells.append(cell1.union(cell2))
+            cells.append(cell1.union(cell2).buffer(0))
 
     unique_indices = np.unique(resolved_indices)
     unique_cells = np.array(cells)[unique_indices]
