@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import shapely
 import shapely.affinity
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
@@ -35,7 +35,12 @@ def solve_conflicts(
         intersection = cell1.intersection(cell2).area
         if intersection / min(cell1.area, cell2.area) >= threshold:
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
-            cells.append(cell1.union(cell2).buffer(0))
+            cell = cell1.union(cell2).buffer(0)
+            cells.append(cell)
+            if not isinstance(cell.boundary, LineString):
+                print("cell1", cell1)
+                print("cell2", cell2)
+                print("cell_res", cell)
 
     unique_indices = np.unique(resolved_indices)
     unique_cells = np.array(cells)[unique_indices]
