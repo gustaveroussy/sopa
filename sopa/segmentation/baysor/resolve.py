@@ -39,7 +39,7 @@ def read_baysor(
         cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
     ]
 
-    cells = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
+    cells = [shape(polygons_dict[cell_num]).buffer(0) for cell_num in cells_num]
 
     return cells, adata[cells_num.index].copy()
 
