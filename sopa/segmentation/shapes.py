@@ -36,11 +36,9 @@ def solve_conflicts(
         if intersection / min(cell1.area, cell2.area) >= threshold:
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
             cell = cell1.union(cell2).buffer(0)
+            if cell.interiors:
+                cell = Polygon(list(cell.exterior.coords))
             cells.append(cell)
-            if not isinstance(cell.boundary, LineString):
-                print("cell1", cell1)
-                print("cell2", cell2)
-                print("cell_res", cell)
 
     unique_indices = np.unique(resolved_indices)
     unique_cells = np.array(cells)[unique_indices]
