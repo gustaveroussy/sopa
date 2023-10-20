@@ -77,8 +77,9 @@ class WorkflowPaths:
             return [str(self.cellpose_temp_dir / f"{i}.zarr.zip") for i in range(int(file_content))]
         if name == "baysor":
             indices = map(int, file_content.split())
+            BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]
             return [
-                str(self.baysor_temp_dir / str(i) / "segmentation_polygons.json") for i in indices
+                str(self.baysor_temp_dir / str(i) / file) for i in indices for file in BAYSOR_FILES
             ]
 
 
