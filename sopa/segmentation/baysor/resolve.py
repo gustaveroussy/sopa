@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from shapely.geometry import Polygon, shape
+from shapely.validation import make_valid
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, TableModel
 from spatialdata.transformations import get_transformation
@@ -39,11 +40,11 @@ def read_baysor(
         cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
     ]
 
-    cells = [shape(polygons_dict[cell_num]).buffer(expand_radius) for cell_num in cells_num]
+    cells: list[Polygon] = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
 
-    for cell in cells:
-        if not isinstance(cell, Polygon):
-            print(directory)
+    cells = [make_valid(cell) for cell in cells]
+    if expand_radius > 0:
+        cells = [cell.buffer(expand_radius) for cell in cells]
 
     return cells, adata[cells_num.index].copy()
 
