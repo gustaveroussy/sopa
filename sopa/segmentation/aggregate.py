@@ -108,7 +108,9 @@ class Aggregator:
             if min_intensity_ratio > 0:
                 means = mean_intensities.mean(axis=1)
                 intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
-                self.filter_cells(means < intensity_threshold)
+                where_filter = means < intensity_threshold
+                self.filter_cells(where_filter)
+                mean_intensities = mean_intensities[~where_filter]
 
             if self.table is None:
                 self.table = AnnData(

@@ -29,13 +29,14 @@ def solve_conflicts(
         conflicts = conflicts[:, conflicts[0] != conflicts[1]].T
 
     for i1, i2 in tqdm(conflicts, desc="Resolving conflicts"):
-        resolved_i1, resolved_i2 = resolved_indices[i1], resolved_indices[i2]
+        resolved_i1: int = resolved_indices[i1]
+        resolved_i2: int = resolved_indices[i2]
         cell1, cell2 = cells[resolved_i1], cells[resolved_i2]
 
         intersection = cell1.intersection(cell2).area
         if intersection / min(cell1.area, cell2.area) >= threshold:
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
-            cell = cell1.union(cell2).buffer(0)
+            cell: Polygon = cell1.union(cell2).buffer(0)
             if cell.interiors:
                 cell = Polygon(list(cell.exterior.coords))
             cells.append(cell)
