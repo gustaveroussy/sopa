@@ -28,42 +28,6 @@ from . import shapes
 log = logging.getLogger(__name__)
 
 
-def _average_channels(image: SpatialImage, cells: list[Polygon]):
-    tree = shapely.STRtree(cells)
-
-    intensities = np.zeros((len(cells), len(image.coords["c"])))
-    areas = np.zeros(len(cells))
-
-    def func(x, block_info=None):
-        if block_info is not None:
-            (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
-            patch = box(xmin, ymin, xmax, ymax)
-            intersections = tree.query(patch, predicate="intersects")
-
-            for index in intersections:
-                cell = cells[index]
-                bounds = shapes.pixel_outer_bounds(cell.bounds)
-
-                sub_image = x[
-                    :,
-                    max(bounds[1] - ymin, 0) : bounds[3] - ymin,
-                    max(bounds[0] - xmin, 0) : bounds[2] - xmin,
-                ]
-
-                if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
-                    continue
-
-                mask = shapes.rasterize(cell, sub_image.shape[1:], bounds)
-
-                intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
-                areas[index] += np.sum(mask)
-        return da.zeros_like(x)
-
-    image.data.rechunk({0: -1}).map_blocks(func).compute()
-
-    return intensities / areas[:, None].clip(1)
-
-
 class Aggregator:
     def __init__(self, sdata: SpatialData, overwrite: bool = True):
         self.sdata = sdata
@@ -164,6 +128,42 @@ class Aggregator:
             del self.sdata.table
 
         self.sdata.table = self.table
+
+
+def _average_channels(image: SpatialImage, cells: list[Polygon]):
+    tree = shapely.STRtree(cells)
+
+    intensities = np.zeros((len(cells), len(image.coords["c"])))
+    areas = np.zeros(len(cells))
+
+    def func(x, block_info=None):
+        if block_info is not None:
+            (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
+            patch = box(xmin, ymin, xmax, ymax)
+            intersections = tree.query(patch, predicate="intersects")
+
+            for index in intersections:
+                cell = cells[index]
+                bounds = shapes.pixel_outer_bounds(cell.bounds)
+
+                sub_image = x[
+                    :,
+                    max(bounds[1] - ymin, 0) : bounds[3] - ymin,
+                    max(bounds[0] - xmin, 0) : bounds[2] - xmin,
+                ]
+
+                if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
+                    continue
+
+                mask = shapes.rasterize(cell, sub_image.shape[1:], bounds)
+
+                intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
+                areas[index] += np.sum(mask)
+        return da.zeros_like(x)
+
+    image.data.rechunk({0: -1}).map_blocks(func).compute()
+
+    return intensities / areas[:, None].clip(1)
 
 
 def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame) -> np.ndarray:
