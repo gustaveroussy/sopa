@@ -52,6 +52,8 @@ def solve_conflicts(
 
 
 def expand(cells: list[Polygon], expand_radius: float) -> list[Polygon]:
+    if expand_radius == 0:
+        return cells
     return [cell.buffer(expand_radius) for cell in cells]
 
 
@@ -73,7 +75,6 @@ def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
     log.warn(
         f"""Geometry is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
     )
-
     return max(cell.geoms, key=lambda polygon: polygon.area)
 
 
