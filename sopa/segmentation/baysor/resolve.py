@@ -42,7 +42,7 @@ def read_baysor(
 
     cells: list[Polygon] = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
 
-    cells = [make_valid(cell) for cell in cells]
+    cells = [shapes._ensure_polygon(make_valid(cell)) for cell in cells]
     if expand_radius > 0:
         cells = [cell.buffer(expand_radius) for cell in cells]
 

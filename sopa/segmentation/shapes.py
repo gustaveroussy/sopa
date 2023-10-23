@@ -66,6 +66,17 @@ def _find_contours(cell_mask: np.ndarray) -> list[Polygon]:
     return [Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4]
 
 
+def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
+    if isinstance(cell, Polygon):
+        return cell
+
+    log.warn(
+        f"""Geometry is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
+    )
+
+    return max(cell.geoms, key=lambda polygon: polygon.area)
+
+
 def _geometrize_cell(
     mask: np.ndarray, cell_id: int, smooth_radius: int, tolerance: float
 ) -> Polygon | None:
@@ -88,14 +99,7 @@ def _geometrize_cell(
     if cell.is_empty:
         return None
 
-    if isinstance(cell, Polygon):
-        return cell
-
-    log.warn(
-        f"""Geometry index {cell_id} is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
-    )
-
-    return max(cell.geoms, key=lambda polygon: polygon.area)
+    return _ensure_polygon(cell)
 
 
 def geometrize(mask: np.ndarray, smooth_radius: int = 5, tolerance: float = 2) -> list[Polygon]:
