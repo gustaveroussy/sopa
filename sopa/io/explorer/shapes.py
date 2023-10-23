@@ -7,7 +7,8 @@ import numpy as np
 import zarr
 from shapely.geometry import Polygon
 
-from ._constants import ExplorerConstants, cell_summary_attrs, group_attrs
+from ._constants import ExplorerConstants, FileNames, cell_summary_attrs, group_attrs
+from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +30,11 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np
     return pad_polygon(polygon, max_vertices, tolerance + 1)
 
 
-def write_polygons(path: Path, polygons: Iterable[Polygon], max_vertices: int) -> None:
+def write_polygons(
+    path: Path, polygons: Iterable[Polygon], max_vertices: int, is_dir: bool = True
+) -> None:
+    path = explorer_file_path(path, FileNames.SHAPES, is_dir)
+
     log.info(f"Writing {len(polygons)} cell polygons")
     coordinates = np.stack([pad_polygon(p, max_vertices) for p in polygons])
     coordinates /= ExplorerConstants.MICRONS_TO_PIXELS

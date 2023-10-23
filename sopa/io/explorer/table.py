@@ -5,12 +5,15 @@ import zarr
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 
-from ._constants import cell_categories_attrs
+from ._constants import FileNames, cell_categories_attrs
+from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
 
-def write_gene_counts(path: str, adata: AnnData, layer: str | None) -> None:
+def write_gene_counts(path: str, adata: AnnData, layer: str | None, is_dir: bool = True) -> None:
+    path = explorer_file_path(path, FileNames.TABLE, is_dir)
+
     log.info(f"Writing table of {adata.n_vars} columns")
     counts = adata.X if layer is None else adata.layers[layer]
     counts = csr_matrix(counts)
@@ -75,7 +78,9 @@ def _write_categorical_column(
     group.array("indptr", indptr, dtype="uint32", chunks=(len(indptr),))
 
 
-def write_cell_categories(path: str, adata: AnnData) -> None:
+def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> None:
+    path = explorer_file_path(path, FileNames.CELL_CATEGORIES, is_dir)
+
     # TODO: consider also columns that can be transformed to a categorical column?
     cat_columns = [name for name, cat in adata.obs.dtypes.items() if cat == "category"]
 
@@ -89,6 +94,12 @@ def write_cell_categories(path: str, adata: AnnData) -> None:
         cell_groups = g.create_group("cell_groups")
 
         for i, name in enumerate(cat_columns):
+            if adata.obs[name].isna().any():
+                log.warn(
+                    f"Categorical column {name} contains NA values, which is not supported yet. This column will not appear on the Xenium Explorer."
+                )
+                continue
+
             categories = list(adata.obs[name].cat.categories)
             ATTRS["grouping_names"].append(name)
             ATTRS["group_names"].append(categories)

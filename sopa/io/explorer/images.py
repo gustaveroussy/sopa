@@ -10,7 +10,8 @@ from spatial_image import SpatialImage
 from tqdm import tqdm
 
 from ...utils.image import resize_numpy, scale_dtype
-from ._constants import ExplorerConstants, image_metadata
+from ._constants import ExplorerConstants, FileNames, image_metadata
+from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
@@ -148,7 +149,10 @@ def write_image(
     n_subscales: int = 5,
     pixelsize: float = 0.2125,
     ram_threshold_gb: int | None = None,
+    is_dir: bool = True,
 ):
+    path = explorer_file_path(path, FileNames.IMAGE, is_dir)
+
     if isinstance(image, np.ndarray):
         assert len(image.shape) == 3, "Can only write channels with shape (C,Y,X)"
         log.info(f"Converting image of shape {image.shape} into a SpatialImage (with dims: C,Y,X)")

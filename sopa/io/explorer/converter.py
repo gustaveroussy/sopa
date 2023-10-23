@@ -14,6 +14,7 @@ from . import (
     write_transcripts,
 )
 from ._constants import FileNames, experiment_dict
+from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def write_explorer(
 
     if save_image_mode == 2:
         log.info(f"{save_image_mode=} (only the image will be saved)")
-        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
+        write_image(path, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
         return
 
     ### Saving cell categories and gene counts
@@ -68,15 +69,15 @@ def write_explorer(
         shapes_key = adata.uns["spatialdata_attrs"]["region"]
         geo_df = sdata[shapes_key]
 
-        write_gene_counts(path / FileNames.TABLE, adata, layer)
-        write_cell_categories(path / FileNames.CELL_CATEGORIES, adata)
+        write_gene_counts(path, adata, layer)
+        write_cell_categories(path, adata)
     else:
         shapes_key, geo_df = get_boundaries(sdata, return_key=True)
 
     ### Saving cell boundaries
     if geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image_key)
-        write_polygons(path / FileNames.SHAPES, geo_df.geometry, polygon_max_vertices)
+        write_polygons(path, geo_df.geometry, polygon_max_vertices)
 
     ### Saving transcripts
     df = get_element(sdata, "points", points_key)
@@ -85,16 +86,16 @@ def write_explorer(
             gene_column is not None
         ), "The argument 'gene_column' has to be provided to save the transcripts"
         df = to_intrinsic(sdata, df, image_key)
-        write_transcripts(path / FileNames.POINTS, df, gene_column)
+        write_transcripts(path, df, gene_column)
 
     ### Saving image
     if save_image_mode:
-        write_image(path / FileNames.IMAGE, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
+        write_image(path, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
     else:
         log.info(f"{save_image_mode=} (the image will not be saved)")
 
     ### Saving experiment.xenium file
-    write_metadata(path / FileNames.METADATA, image_key, shapes_key, _get_n_obs(sdata, geo_df))
+    write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df))
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
@@ -103,7 +104,11 @@ def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
     return len(geo_df) if geo_df is not None else 0
 
 
-def write_metadata(path: str, image_key: str = "NA", shapes_key: str = "NA", n_obs: int = 0):
+def write_metadata(
+    path: str, image_key: str = "NA", shapes_key: str = "NA", n_obs: int = 0, is_dir: bool = True
+):
+    path = explorer_file_path(path, FileNames.METADATA, is_dir)
+
     with open(path, "w") as f:
         metadata = experiment_dict(image_key, shapes_key, n_obs)
         json.dump(metadata, f, indent=4)

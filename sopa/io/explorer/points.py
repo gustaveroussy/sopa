@@ -6,7 +6,8 @@ import dask.dataframe as dd
 import numpy as np
 import zarr
 
-from ._constants import ExplorerConstants
+from ._constants import ExplorerConstants, FileNames
+from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,10 @@ def write_transcripts(
     df: dd.DataFrame,
     gene: str = "gene",
     max_levels: int = 15,
+    is_dir: bool = True,
 ):
+    path = explorer_file_path(path, FileNames.POINTS, is_dir)
+
     # TODO: make everything using dask instead of pandas
     df = df.compute()
 
