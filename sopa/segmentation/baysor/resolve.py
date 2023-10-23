@@ -41,6 +41,10 @@ def read_baysor(
 
     cells = [shape(polygons_dict[cell_num]).buffer(expand_radius) for cell_num in cells_num]
 
+    for cell in cells:
+        if not isinstance(cell, Polygon):
+            print(directory)
+
     return cells, adata[cells_num.index].copy()
 
 

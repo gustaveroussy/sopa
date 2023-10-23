@@ -20,14 +20,8 @@ def solve_conflicts(
     n_cells = len(cells)
     resolved_indices = np.arange(n_cells)
 
-    for cell in cells:
-        assert isinstance(cell, Polygon)
-
     tree = shapely.STRtree(cells)
     conflicts = tree.query(cells, predicate="intersects")
-
-    for cell in cells:
-        assert isinstance(cell, Polygon)
 
     if patch_indices is not None:
         conflicts = conflicts[:, patch_indices[conflicts[0]] != patch_indices[conflicts[1]]].T
@@ -43,14 +37,9 @@ def solve_conflicts(
         if intersection >= threshold * min(cell1.area, cell2.area):
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
             cell: Polygon = cell1.union(cell2).buffer(0)
-            if isinstance(cell, MultiPolygon):
-                print("indices:", i1, i2)
-                print(cell1)
-                print(cell2)
-                print(cell)
             if cell.interiors:
                 cell = Polygon(list(cell.exterior.coords))
-            assert isinstance(cell, Polygon)
+
             cells.append(cell)
 
     unique_indices = np.unique(resolved_indices)
