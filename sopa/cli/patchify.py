@@ -16,11 +16,13 @@ def cellpose(
 
     import spatialdata
 
-    sdata = spatialdata.read_zarr(sdata_path)
-
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
+    from sopa.io.standardize import sanity_check
     from sopa.segmentation.patching import Patches2D
+
+    sdata = spatialdata.read_zarr(sdata_path)
+    sanity_check(sdata)
 
     image_key = get_key(sdata, "images")
 
@@ -48,10 +50,12 @@ def baysor(
 
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
+    from sopa.io.standardize import sanity_check
     from sopa.segmentation.baysor.prepare import to_toml
     from sopa.segmentation.patching import Patches2D
 
     sdata = spatialdata.read_zarr(sdata_path)
+    sanity_check(sdata)
 
     assert config is not None
 

@@ -49,7 +49,7 @@ def read(
     ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, qptiff"
 
     sdata = getattr(io, technology)(data_path, **kwargs)
-    io.write_standardized(sdata, sdata_path)
+    io.write_standardized(sdata, sdata_path, delete_table=True)
 
 
 @app.command()
