@@ -33,16 +33,18 @@ def solve_conflicts(
         resolved_i2: int = resolved_indices[i2]
         cell1, cell2 = cells[resolved_i1], cells[resolved_i2]
 
-        for c in [cell1, cell2]:
-            if isinstance(c, MultiPolygon):
-                print(c)
-
         intersection = cell1.intersection(cell2).area
         if intersection / min(cell1.area, cell2.area) >= threshold:
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
             cell: Polygon = cell1.union(cell2).buffer(0)
+            if isinstance(cell, MultiPolygon):
+                print("indices:", i1, i2)
+                print(cell1)
+                print(cell2)
+                print(cell)
             if cell.interiors:
                 cell = Polygon(list(cell.exterior.coords))
+            assert isinstance(cell, Polygon)
             cells.append(cell)
 
     unique_indices = np.unique(resolved_indices)
