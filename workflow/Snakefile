@@ -85,7 +85,8 @@ rule patch_segmentation_baysor:
         patches_file = paths.smk_patches_file_baysor,
         baysor_patch = f"{paths.baysor_temp_dir}/{{index}}",
     output:
-        f"{paths.baysor_temp_dir}/{{index}}/segmentation_polygons.json"
+        f"{paths.baysor_temp_dir}/{{index}}/segmentation_polygons.json",
+        f"{paths.baysor_temp_dir}/{{index}}/segmentation_counts.loom",
     params:
         args_baysor_prior_seg = args.baysor_prior_seg,
     resources:
