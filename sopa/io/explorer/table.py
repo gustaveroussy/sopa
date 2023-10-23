@@ -11,10 +11,12 @@ from .utils import explorer_file_path
 log = logging.getLogger(__name__)
 
 
-def write_gene_counts(path: str, adata: AnnData, layer: str | None, is_dir: bool = True) -> None:
+def write_gene_counts(
+    path: str, adata: AnnData, layer: str | None = None, is_dir: bool = True
+) -> None:
     path = explorer_file_path(path, FileNames.TABLE, is_dir)
 
-    log.info(f"Writing table of {adata.n_vars} columns")
+    log.info(f"Writing table with {adata.n_vars} columns")
     counts = adata.X if layer is None else adata.layers[layer]
     counts = csr_matrix(counts)
 
@@ -35,10 +37,10 @@ def write_gene_counts(path: str, adata: AnnData, layer: str | None, is_dir: bool
     data, indices, indptr = [], [], [0]
 
     for i in range(adata.n_vars):
-        nonzero_counts = counts[:, i].data
-        data.append(nonzero_counts)
-        indices.append(counts[:, i].nonzero()[0])
-        indptr.append(indptr[-1] + len(nonzero_counts))
+        row_indices = counts[:, i].nonzero()[0]
+        data.append(counts[row_indices, i].data)
+        indices.append(row_indices)
+        indptr.append(indptr[-1] + len(row_indices))
 
     total_counts = counts.sum(1).A1
     loc = total_counts > 0

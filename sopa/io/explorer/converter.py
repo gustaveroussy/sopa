@@ -69,7 +69,7 @@ def write_explorer(
         shapes_key = adata.uns["spatialdata_attrs"]["region"]
         geo_df = sdata[shapes_key]
 
-        write_gene_counts(path, adata, layer)
+        write_gene_counts(path, adata, layer=layer)
         write_cell_categories(path, adata)
     else:
         shapes_key, geo_df = get_boundaries(sdata, return_key=True)
