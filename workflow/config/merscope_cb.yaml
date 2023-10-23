@@ -47,7 +47,7 @@ shapes:
   min_area: 20
 
 aggregate:
-  intensity_mean: true
+  average_intensities: true
   #gene_column: ""
 
 # annotation:

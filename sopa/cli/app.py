@@ -100,16 +100,19 @@ def crop(
 @app.command()
 def aggregate(
     sdata_path: str,
-    intensity_mean: bool = True,
     gene_column: str = None,
+    average_intensities: bool = True,
+    min_transcripts: int = 0,
+    min_intensity_ratio: float = 0,
 ):
     import spatialdata
 
-    from sopa.segmentation.aggregate import aggregate
+    from sopa.segmentation.aggregate import Aggregator
 
     sdata = spatialdata.read_zarr(sdata_path)
 
-    aggregate(sdata, gene_column, intensity_mean)
+    aggregrator = Aggregator(sdata)
+    aggregrator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)
 
 
 @app.command()

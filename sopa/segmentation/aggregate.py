@@ -64,14 +64,106 @@ def _average_channels(image: SpatialImage, cells: list[Polygon]):
     return intensities / areas[:, None].clip(1)
 
 
-def average_channels(
-    sdata: SpatialData, image: SpatialImage, geo_df: gpd.GeoDataFrame
-) -> np.ndarray:
-    geo_df = to_intrinsic(sdata, geo_df, image)
-    cells = list(geo_df.geometry)
+class Aggregator:
+    def __init__(self, sdata: SpatialData, overwrite: bool = True):
+        self.sdata = sdata
+        self.overwrite = overwrite
 
-    log.info(f"Averaging intensities over {len(cells)} cells")
-    return _average_channels(image, cells)
+        self.image_key, self.image = get_spatial_image(sdata, return_key=True)
+        self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
+
+        self.table = sdata.table
+
+    def average_channels(self) -> np.ndarray:
+        geo_df = to_intrinsic(self.sdata, self.geo_df, self.image)
+        cells = list(geo_df.geometry)
+
+        return _average_channels(self.image, cells)
+
+    def standardize_table(self):
+        self.table.obsm["spatial"] = np.array(
+            [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
+        )
+        self.table.obs[SopaKeys.REGION_KEY] = pd.Series(
+            self.shapes_key, index=self.table.obs_names, dtype="category"
+        )
+        self.table.obs[SopaKeys.SLIDE_KEY] = pd.Series(
+            self.image_key, index=self.table.obs_names, dtype="category"
+        )
+        self.table.obs[SopaKeys.INSTANCE_KEY] = self.geo_df.index
+
+        if "spatialdata_attrs" in self.table.uns:
+            del self.table.uns["spatialdata_attrs"]
+
+        self.table = TableModel.parse(
+            self.table,
+            region_key=SopaKeys.REGION_KEY,
+            region=self.shapes_key,
+            instance_key=SopaKeys.INSTANCE_KEY,
+        )
+
+    def filter_cells(self, where_filter: np.ndarray):
+        log.info(f"Filtering {where_filter.sum()} cells")
+
+        self.geo_df = self.geo_df[~where_filter]
+        self.sdata.add_shapes(self.shapes_key, self.geo_df, overwrite=True)
+
+        if self.table is not None:
+            self.table = self.table[~where_filter]
+
+    def update_table(
+        self,
+        gene_column: str | None,
+        average_intensities: bool,
+        min_transcripts: int,
+        min_intensity_ratio: float,
+    ):
+        assert (
+            average_intensities or gene_column is not None or self.table is not None
+        ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
+
+        if gene_column is not None:
+            log.info(f"Aggregating transcripts over {len(self.geo_df)} cells")
+            points_key = get_key(self.sdata, "points")
+
+            table = self.sdata.aggregate(
+                values=points_key,
+                by=self.shapes_key,
+                value_key=gene_column,
+                agg_func="count",
+                target_coordinate_system=get_intrinsic_cs(self.sdata, points_key),
+            ).table
+
+        if table is not None and min_transcripts > 0:
+            self.filter_cells(table.X.sum(axis=1) < min_transcripts)
+
+        if average_intensities:
+            log.info(f"Averaging channels intensity over {len(self.geo_df)} cells")
+            mean_intensities = self.average_channels()
+
+            if min_intensity_ratio > 0:
+                means = mean_intensities.mean(axis=1)
+                intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
+                self.filter_cells(means < intensity_threshold)
+
+            if table is None:
+                table = AnnData(
+                    mean_intensities,
+                    dtype=mean_intensities.dtype,
+                    var=pd.DataFrame(index=self.image.c),
+                    obs=pd.DataFrame(index=self.geo_df.index),
+                )
+            else:
+                table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
+                    mean_intensities, columns=self.image.coords["c"].values, index=table.obs_names
+                )
+
+        self.standardize_table()
+
+        if self.sdata.table is not None and self.overwrite:
+            del self.sdata.table
+
+        self.sdata.table = self.table
 
 
 def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame) -> np.ndarray:
@@ -107,62 +199,3 @@ def map_transcript_to_cell(
         df[cell_key] = df.map_partitions(get_cell_id)
     else:
         raise ValueError(f"Invalid dataframe type: {type(df)}")
-
-
-def aggregate(
-    sdata: SpatialData, gene_column: str | None, intensity_mean: bool = True, overwrite: bool = True
-):
-    image_key, image = get_spatial_image(sdata, return_key=True)
-    shapes_key, geo_df = get_boundaries(sdata, return_key=True)
-
-    table = sdata.table
-
-    assert (
-        intensity_mean or gene_column is not None or table is not None
-    ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
-
-    if gene_column is not None:
-        points_key = get_key(sdata, "points")
-
-        table = sdata.aggregate(
-            values=points_key,
-            by=shapes_key,
-            value_key=gene_column,
-            agg_func="count",
-            target_coordinate_system=get_intrinsic_cs(sdata, points_key),
-        ).table
-
-    if intensity_mean:
-        mean_intensities = average_channels(sdata, image, geo_df)
-
-    if table is None:
-        table = AnnData(
-            mean_intensities,
-            dtype=mean_intensities.dtype,
-            var=pd.DataFrame(index=image.c),
-            obs=pd.DataFrame(index=geo_df.index),
-        )
-    elif intensity_mean:
-        table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
-            mean_intensities, columns=image.coords["c"].values, index=table.obs_names
-        )
-
-    table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
-    table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
-    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(image_key, index=table.obs_names, dtype="category")
-    table.obs[SopaKeys.INSTANCE_KEY] = geo_df.index
-
-    if "spatialdata_attrs" in table.uns:
-        del table.uns["spatialdata_attrs"]
-
-    table = TableModel.parse(
-        table,
-        region_key=SopaKeys.REGION_KEY,
-        region=shapes_key,
-        instance_key=SopaKeys.INSTANCE_KEY,
-    )
-
-    if sdata.table is not None and overwrite:
-        del sdata.table
-
-    sdata.table = table

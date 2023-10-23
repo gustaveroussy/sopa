@@ -25,7 +25,8 @@ shapes:
   expand_radius: 2
 
 aggregate:
-  intensity_mean: true
+  average_intensities: true
+  min_intensity_ratio: 0.1
 
 annotation:
   fluorescence:
