@@ -90,7 +90,7 @@ class Aggregator:
             log.info(f"Aggregating transcripts over {len(self.geo_df)} cells")
             points_key = get_key(self.sdata, "points")
 
-            table = self.sdata.aggregate(
+            self.table = self.sdata.aggregate(
                 values=points_key,
                 by=self.shapes_key,
                 value_key=gene_column,
@@ -98,8 +98,8 @@ class Aggregator:
                 target_coordinate_system=get_intrinsic_cs(self.sdata, points_key),
             ).table
 
-        if table is not None and min_transcripts > 0:
-            self.filter_cells(table.X.sum(axis=1) < min_transcripts)
+        if self.table is not None and min_transcripts > 0:
+            self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
         if average_intensities:
             log.info(f"Averaging channels intensity over {len(self.geo_df)} cells")
@@ -110,16 +110,18 @@ class Aggregator:
                 intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
                 self.filter_cells(means < intensity_threshold)
 
-            if table is None:
-                table = AnnData(
+            if self.table is None:
+                self.table = AnnData(
                     mean_intensities,
                     dtype=mean_intensities.dtype,
                     var=pd.DataFrame(index=self.image.c),
                     obs=pd.DataFrame(index=self.geo_df.index),
                 )
             else:
-                table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
-                    mean_intensities, columns=self.image.coords["c"].values, index=table.obs_names
+                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
+                    mean_intensities,
+                    columns=self.image.coords["c"].values,
+                    index=self.table.obs_names,
                 )
 
         self.standardize_table()
