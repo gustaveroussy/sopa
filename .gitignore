@@ -5,6 +5,7 @@ workflow/logs
 archive/
 explore
 sandbox
+*.html
 
 # OS related
 .DS_Store
@@ -100,6 +101,3 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-
-# Misc
-jobs/
