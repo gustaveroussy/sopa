@@ -22,14 +22,13 @@ def cellpose(
     Args:\n
         sdata_path: Path to the sdata.zarr directory.\n
     """
-    import spatialdata
-
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
     from sopa.segmentation.cellpose import cellpose_patch
     from sopa.segmentation.cellpose.update import add_shapes
     from sopa.segmentation.stainings import StainingSegmentation
 
-    sdata = spatialdata.read_zarr(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
 
     method = cellpose_patch(
         diameter, channels, flow_threshold=flow_threshold, cellprob_threshold=cellprob_threshold

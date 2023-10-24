@@ -78,8 +78,7 @@ def crop(
 
     _check_zip([intermediate_image, intermediate_polygon])
 
-    import spatialdata
-
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.utils.polygon_crop import intermediate_selection, polygon_selection
 
     if sdata_path is None:
@@ -90,7 +89,7 @@ def crop(
         intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
         return
 
-    sdata = spatialdata.read_zarr(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
 
     polygon_selection(
         sdata, intermediate_image, intermediate_polygon, list(channels), scale_factor, margin_ratio
@@ -105,11 +104,10 @@ def aggregate(
     min_transcripts: int = 0,
     min_intensity_ratio: float = 0,
 ):
-    import spatialdata
-
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.aggregate import Aggregator
 
-    sdata = spatialdata.read_zarr(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
 
     aggregrator = Aggregator(sdata)
     aggregrator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)

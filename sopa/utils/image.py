@@ -29,7 +29,9 @@ def resize_numpy(
 
 
 def _check_integer_dtype(dtype: np.dtype):
-    assert np.issubdtype(dtype, np.integer), f"Expecting integer dtype, but found {dtype}"
+    assert np.issubdtype(
+        dtype, np.integer
+    ), f"Expecting image to have an intenger dtype, but found {dtype}"
 
 
 def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:

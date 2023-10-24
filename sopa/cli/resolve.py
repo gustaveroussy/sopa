@@ -10,14 +10,13 @@ def cellpose(
     patch_dir: str = option,
     expand_radius: float = typer.Option(default=0),
 ):
-    import spatialdata
-
     from sopa._sdata import get_key
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
     from sopa.segmentation.cellpose.update import add_shapes
     from sopa.segmentation.stainings import StainingSegmentation
 
-    sdata = spatialdata.read_zarr(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
 
     image_key = get_key(sdata, "images")
 
@@ -37,14 +36,13 @@ def baysor(
     expand_radius: float = 0,
     patches_dirs: list[str] = None,
 ):
-    import spatialdata
-
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.baysor.resolve import resolve
 
     assert (
         baysor_temp_dir is not None or patches_dirs is not None
     ), "Provide either a baysor directory (--baysor_temp_dir) or a list of all subdirectories (--patches_dirs)"
 
-    sdata = spatialdata.read_zarr(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
 
     resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area, expand_radius)

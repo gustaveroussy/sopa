@@ -14,11 +14,10 @@ def fluorescence(
 ):
     from pathlib import Path
 
-    import spatialdata
-
     from sopa.annotation.fluorescence import higher_z_score
+    from sopa.io.standardize import read_zarr_standardized
 
-    sdata = spatialdata.read_zarr(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
 
     assert sdata.table is not None, f"Annotation requires `sdata.table` to be not None"
 
