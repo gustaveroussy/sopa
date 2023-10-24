@@ -25,7 +25,7 @@ def get_boundaries(sdata: SpatialData, return_key: bool = False) -> gpd.GeoDataF
         if res is not None:
             return res
 
-    log.warn("sdata object has no cellpose boundaries and no baysor boundaries")
+    raise ValueError("sdata object has no cellpose boundaries and no baysor boundaries")
 
 
 def get_intrinsic_cs(

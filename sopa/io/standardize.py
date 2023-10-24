@@ -32,6 +32,8 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
         image.dims == VALID_DIMENSIONS
     ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
 
+    # TODO: check that the image intensities are integers
+
     if sdata.table is not None:
         if delete_table:
             log.info(

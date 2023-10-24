@@ -13,6 +13,7 @@ python = ">=3.10,<3.11"
 botocore = "^1.31.47"
 spatialdata = "^0.0.13"
 spatialdata-io = "^0.0.8"
+spatial-image = "<1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"

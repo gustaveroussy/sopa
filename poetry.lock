@@ -4038,14 +4038,14 @@ files = [
 
 [[package]]
 name = "spatial-image"
-version = "1.0.0"
+version = "0.3.0"
 description = "spatial-image"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "spatial_image-1.0.0-py3-none-any.whl", hash = "sha256:08efa442b5b8f46bffa6cad4ff046c77e375021655686904c33fd1065b2dfb30"},
-    {file = "spatial_image-1.0.0.tar.gz", hash = "sha256:55373e54a5e4c8de8e2cf3039f2caa4efb23fad1ac1137f279172fb31f979e2e"},
+    {file = "spatial_image-0.3.0-py3-none-any.whl", hash = "sha256:aa4bd9a6c538146c00ac7f27fa05cad1070174df8522f88db10e680622dd8211"},
+    {file = "spatial_image-0.3.0.tar.gz", hash = "sha256:508ed434d1cdba5147c1dd358aea0ea41a0f913b02a73e0fd36fcbdbee14b40d"},
 ]
 
 [package.dependencies]
@@ -4785,4 +4785,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "9cea744731a66535ae81d574b62f7cbbe83e436575de854f7f73b5cc50c283ce"
+content-hash = "ce91bcdd0a5cab6559a6c534de775524292af173f763d0ac44b6fa02b11ec7c3"
