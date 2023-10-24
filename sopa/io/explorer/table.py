@@ -83,7 +83,7 @@ def _write_categorical_column(
 def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> None:
     path = explorer_file_path(path, FileNames.CELL_CATEGORIES, is_dir)
 
-    # TODO: consider also columns that can be transformed to a categorical column?
+    adata.strings_to_categoricals()
     cat_columns = [name for name, cat in adata.obs.dtypes.items() if cat == "category"]
 
     log.info(f"Writing {len(cat_columns)} cell categories: {', '.join(cat_columns)}")
@@ -97,10 +97,9 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
 
         for i, name in enumerate(cat_columns):
             if adata.obs[name].isna().any():
-                log.warn(
-                    f"Categorical column {name} contains NA values, which is not supported yet. This column will not appear on the Xenium Explorer."
-                )
-                continue
+                NA = "NA"
+                log.warn(f"Column {name} has nan values. They will be displayed as '{NA}'")
+                adata.obs[name] = adata.obs[name].cat.add_categories(NA).fillna(NA)
 
             categories = list(adata.obs[name].cat.categories)
             ATTRS["grouping_names"].append(name)
