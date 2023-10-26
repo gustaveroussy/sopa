@@ -73,6 +73,11 @@ class MultiscaleImageWriter:
             else:
                 log.info(f"   (Loading image of shape {xarr.shape}) in memory")
                 self.data = scale_dtype(xarr.values, self.dtype)
+
+            if self.data.max() > 127:
+                log.info("Max too high")
+                self.data = self.data.clip(0, 127)
+
             data = self.data
 
         log.info(f"   > Image of shape {xarr.shape}")
