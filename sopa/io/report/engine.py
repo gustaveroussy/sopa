@@ -1,12 +1,19 @@
-from pathlib import Path
+import base64
+from io import BytesIO
 from typing import Optional
+
+from matplotlib.figure import Figure
+
+from .css import BULMA_CSS
 
 
 class Renderable:
     @property
     def children(self) -> list["Renderable"]:
         if hasattr(self, "_children") and self._children is not None:
-            return self._children
+            if isinstance(self._children, list):
+                return self._children
+            return [self._children]
         return []
 
     @property
@@ -20,12 +27,44 @@ class Renderable:
         return self.children_html
 
 
+class Title(Renderable):
+    def __init__(self, text: str, level: int, subtitle: bool = False) -> None:
+        self.text = text
+        self.level = level
+        self.subtitle = subtitle
+
+    def __str__(self) -> str:
+        return f"""<h1 class="{'subtitle' if self.subtitle else 'title'} is-{self.level}">{self.text}</h1>"""
+
+
 class Paragraph(Renderable):
     def __init__(self, text: str) -> None:
         self.text = text
 
     def __str__(self) -> str:
         return f"""<p>{self.text}</p>"""
+
+
+class Message(Renderable):
+    def __init__(self, text: str, is_light: bool = True, color: str = "primary") -> None:
+        self.text = text
+        self.color = color
+        self.is_light = is_light
+
+    def __str__(self) -> str:
+        return f"""
+        <div class='notification is-{self.color} {'is-light' if self.is_light else ''}'>
+            {self.text}
+        </div>
+        """
+
+
+class Block(Renderable):
+    def __init__(self, content: list[Renderable]) -> None:
+        self._children = content
+
+    def __str__(self) -> str:
+        return f"""<div class="block">{self.children_html}</div>"""
 
 
 class CodeBlock(Renderable):
@@ -36,57 +75,35 @@ class CodeBlock(Renderable):
         return f"""<pre>{self.text}</pre>"""
 
 
-# class ProgressBar(Renderable):
-#     def __init__(
-#         self,
-#         value: float,
-#         th: list[float],
-#         text: Optional[str] = None,
-#         valuemax: int = 1,
-#     ) -> None:
-#         super().__init__(value, th)
-#         self.text = text
-#         self.valuemax = valuemax
+class ProgressBar(Renderable):
+    def __init__(
+        self,
+        value: float,
+        valuemax: int = 1,
+        text: Optional[str] = None,
+        color: str = "primary",
+        is_light: bool = False,
+    ) -> None:
+        self.value = value
+        self.valuemax = valuemax
+        self.text = text
+        self.color = color
+        self.is_light = is_light
 
-#     @property
-#     def perc(self):
-#         return int(100 * self.value / self.valuemax)
-
-#     def __str__(self) -> str:
-#         return f"""
-#     {"" if self.text is None else Paragraph(self.text)}
-#     <div class="progress my-2">
-#         <div
-#             class="progress-bar bg-{self.color}"
-#             role="progressbar"
-#             style="width: {self.perc}%"
-#             aria-valuenow="{self.value}"
-#             aria-valuemin="0"
-#             aria-valuemax="{self.valuemax}"
-#           >
-#             {self.perc}%
-#         </div>
-#     </div>
-#     """
-
-
-# class Alert(Renderable):
-#     def __init__(self, value: float, th: list[float], text: str) -> None:
-#         super().__init__(value, th)
-#         self.text = text
-
-#     def __str__(self) -> str:
-#         return f"""
-#     <div class="alert alert-{self.color}" role="alert">
-#         {self.text}
-#     </div>
-#     """
+    def __str__(self) -> str:
+        return f"""
+        {"" if self.text is None else Paragraph(self.text)}
+        <progress class="progress is-{self.color} {'is-light' if self.is_light else ''}"
+            value="{self.value}"
+            max="{self.valuemax}">{self.value}
+        </progress>
+    """
 
 
 class Section(Renderable):
-    def __init__(self, name: str, children: list["Section"] = None) -> None:
+    def __init__(self, name: str, content: list["Section"] = None) -> None:
         self.name = name
-        self._children = children
+        self._children = content
         self.subtitle = False
 
     @property
@@ -113,7 +130,7 @@ class SubSection(Section):
     def __str__(self) -> str:
         return f"""
         <section id="{self.id}" class="py-2">
-            <h2 class="subtitle is-4">{self.name}</h2>
+            {Title(self.name, 4, subtitle=True)}
             {self.children_html}
         </section>
         """
@@ -145,78 +162,56 @@ class Navbar(Renderable):
 
     def __str__(self) -> str:
         return f"""
-        <h3 class="title is-3">Sopa report</h3>
-        <div class="notification is-primary is-light">
-        This report was generated <br />by the
-        <a href="https://github.com/gustaveroussy/sopa">Sopa</a> HTML
-        engine.
-        </div>
+        {Title("Sopa report", 3)}
+        {Message("This report was generated <br />by the <a href='https://github.com/gustaveroussy/sopa'>Sopa</a> HTML engine.")}
         {self.children_html}
     """
 
 
-# class Flex(Renderable):
-#     def __init__(self, children: list[Renderable]) -> None:
-#         self._children = children
+class Columns(Renderable):
+    def __init__(self, content: list[Renderable], is_centered: bool = True) -> None:
+        self._children = content
+        self.is_centered = is_centered
 
-#     def __str__(self) -> str:
-#         return f"""
-#     <div class="d-flex p-2 justify-content-center">
-#         {self.children}
-#     </div>
-#     """
+    def __str__(self) -> str:
+        return f"""
+    <div block style="display: flex; {'justify-content: center;' if self.is_centered else ''}">
+        {self.children_html}
+    </div>
+    """
 
 
-# class Image(Renderable):
-#     ASSETS_PATH: Path = None
+class Image(Renderable):
+    def __init__(self, fig: Figure, width: float = 50, extension: str = "png"):
+        self.fig = fig
+        self.width = width
+        self.extension = extension
 
-#     def __init__(self, fig: Figure, name: str, width: float = 50, extension: str = "svg"):
-#         self.fig = fig
-#         self.name = name
-#         self.width = width
-#         self.extension = extension
+    def encod(self):
+        tmpfile = BytesIO()
+        self.fig.savefig(tmpfile, format=self.extension, transparent=True)
+        return base64.b64encode(tmpfile.getvalue()).decode("utf-8")
 
-#     @property
-#     def fullname(self):
-#         return f"{self.name}.{self.extension}"
-
-#     def save(self):
-#         self.ASSETS_PATH.mkdir(exist_ok=True, parents=True)
-#         self.fig.savefig(self.ASSETS_PATH / self.fullname, bbox_inches="tight")
-
-#     def __str__(self) -> str:
-#         self.save()
-#         return f"""
-#     <img
-#         src="{self.ASSETS_PATH.name}/{self.fullname}" width="{self.width}%" height="auto"
-#     />"""
+    def __str__(self) -> str:
+        return f"""<img src=\'data:image/{self.extension};base64,{self.encod()}\'  width="{self.width}%" height="auto"/>"""
 
 
 class Root(Renderable):
-    CSS = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    JS = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-    ASSETS_NAME = "figures"
-
     def __init__(self, sections: list[Section], doc_title: str = "Sopa report"):
         self.doc_title = doc_title
         self._children = sections
-
         self.nav = Navbar(sections)
 
     def sanity_check(self):
-        assert len(self.children) == len(
-            set(section.id for section in self._children)
-        ), "Sections IDs must be unique"
+        section_ids = [section.id for section in self.children]
+        assert len(section_ids) == len(set(section_ids)), "Sections IDs must be unique"
 
-        # images = [child for child in self.children_rec() if isinstance(child, Image)]
-        # assert len(images) == len(
-        #     set(image.name for image in images)
-        # ), "Images names must be unique"
+        subsections_ids = [sub.id for section in self.children for sub in section.children]
+        assert len(subsections_ids) == len(set(subsections_ids)), "Subsections IDs must be unique"
 
     def write(self, path: str) -> None:
         self.sanity_check()
 
-        # Image.ASSETS_PATH = Path(path).parent / self.ASSETS_NAME
         with open(path, "w") as f:
             f.write(str(self))
 
@@ -228,11 +223,8 @@ class Root(Renderable):
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{self.doc_title}</title>
-        <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
-        />
         <style>
+        {BULMA_CSS}
         .menu {{
             position: sticky;
             flex: 0 0 260px;
