@@ -21,6 +21,7 @@ class MultiscaleImageWriter:
     compression = "jpeg2000"
     resolutionunit = "CENTIMETER"
     dtype = np.uint8
+    max_intensity = 127
 
     def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixelsize: float):
         self.image = image
@@ -74,9 +75,9 @@ class MultiscaleImageWriter:
                 log.info(f"   (Loading image of shape {xarr.shape}) in memory")
                 self.data = scale_dtype(xarr.values, self.dtype)
 
-            if self.data.max() > 127:
-                log.info("Max too high")
-                self.data = self.data.clip(0, 127)
+            if self.data.max() > self.max_intensity:
+                log.warn(f"Max intensity is too high, clipping values at {self.max_intensity}")
+                self.data = self.data.clip(0, self.max_intensity)
 
             data = self.data
 
