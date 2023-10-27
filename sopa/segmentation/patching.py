@@ -176,9 +176,11 @@ class Patches2D:
 
             if prior_boundaries is not None:
                 map_transcript_to_cell(self.sdata, cell_key, sub_df, prior_boundaries)
-            sub_df.to_csv(patch_path, single_file=True)
 
             if _check_min_lines(patch_path, 1000):
+                print(f"Computing CSV {i}")
+                sub_df.compute().to_csv(patch_path)  # , single_file=True)
+                print(f"Done {i}")
                 valid_indices.append(i)
             else:
                 log.info(f"Patch {i} has too few transcripts. Baysor will not be run on it.")
