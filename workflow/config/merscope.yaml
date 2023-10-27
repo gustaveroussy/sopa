@@ -45,11 +45,11 @@ aggregate:
   average_intensities: true
   #gene_column: ""
 
-annotation:
-  method: tangram
-  args:
-    sc_reference_path: "..."
-    cell_type_key: ct
+# annotation:
+#   method: tangram
+#   args:
+#     sc_reference_path: "..."
+#     cell_type_key: ct
 
 explorer:
   gene_column: "gene"

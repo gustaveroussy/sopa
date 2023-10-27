@@ -5,6 +5,7 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
+from memory_profiler import profile  # TODO: remove this
 from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Polygon, box
 from spatial_image import SpatialImage
@@ -139,6 +140,7 @@ class Patches2D:
 
         log.info(f"{len(geo_df)} patches where saved in sdata['{SopaKeys.PATCHES}']")
 
+    @profile
     def patchify_transcripts(
         self,
         baysor_temp_dir: str,

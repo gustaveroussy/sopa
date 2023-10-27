@@ -60,6 +60,8 @@ checkpoint patchify_baysor:
         arg_prior = "--use-prior" if args.cellpose else ""
     conda:
         "spatial"
+    resources:
+        mem_mb=128_000,
     shell:
         """
         sopa patchify baysor {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
