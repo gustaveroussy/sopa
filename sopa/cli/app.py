@@ -109,8 +109,8 @@ def aggregate(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    aggregrator = Aggregator(sdata)
-    aggregrator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)
+    aggregator = Aggregator(sdata)
+    aggregator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)
 
 
 @app.command()
