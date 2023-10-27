@@ -22,6 +22,7 @@ pytest = "^7.1.3"
 ipykernel = "^6.25.2"
 mkdocs-material = "^9.3.2"
 scanpy = "^1.9.5"
+memory-profiler = "^0.61.0"
 
 
 [tool.poetry.group.cli.dependencies]
@@ -36,6 +37,10 @@ opencv-python = "^4.8.0.76"
 [tool.poetry.group.baysor.dependencies]
 toml = "^0.10.2"
 loompy = "^3.0.7"
+
+
+[tool.poetry.group.tangram.dependencies]
+tangram-sc = "^1.0.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

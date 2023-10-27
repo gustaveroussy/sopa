@@ -45,15 +45,11 @@ aggregate:
   average_intensities: true
   #gene_column: ""
 
-# annotation:
-#   fluorescence:
-#     marker_cell_dict:
-#       CK: Tumoral cell
-#       CD3: T cell
-#       CD31: Endothelial
-#       FAP: Fibroblast
-#       CD68: Macrophage
-#       CD20: B cell
+annotation:
+  method: tangram
+  args:
+    sc_reference_path: "..."
+    cell_type_key: ct
 
 explorer:
   gene_column: "gene"

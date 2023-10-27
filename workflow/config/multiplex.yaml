@@ -29,7 +29,8 @@ aggregate:
   min_intensity_ratio: 0.1
 
 annotation:
-  fluorescence:
+  method: fluorescence
+  args:
     marker_cell_dict:
       CK: Tumoral cell
       CD3: T cell
