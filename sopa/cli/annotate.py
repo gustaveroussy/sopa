@@ -31,6 +31,7 @@ def tangram(
     sc_reference_path: str = option,
     cell_type_key: str = "cell_type",
     bag_size: int = 10_000,
+    max_obs_reference: int = 10_000,
 ):
     from pathlib import Path
 
@@ -42,5 +43,7 @@ def tangram(
     sdata = read_zarr_standardized(sdata_path)
     adata_sc = anndata.read(sc_reference_path)
 
-    tangram_annotate(sdata, adata_sc, cell_type_key, bag_size=bag_size)
+    tangram_annotate(
+        sdata, adata_sc, cell_type_key, bag_size=bag_size, max_obs_reference=max_obs_reference
+    )
     sdata.table.write_zarr(Path(sdata_path) / "table" / "table")

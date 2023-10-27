@@ -13,11 +13,18 @@ log = logging.getLogger(__name__)
 
 
 def tangram_annotate(
-    sdata: SpatialData, adata_sc: AnnData, cell_type_key: str, bag_size: int = 10_000, **kwargs
+    sdata: SpatialData,
+    adata_sc: AnnData,
+    cell_type_key: str,
+    bag_size: int = 10_000,
+    max_obs_reference: int = 10_000,
+    **kwargs,
 ):
     ad_sp = sdata.table
 
-    MultiLevelAnnotation(ad_sp, adata_sc, cell_type_key, bag_size, **kwargs).run()
+    MultiLevelAnnotation(
+        ad_sp, adata_sc, cell_type_key, bag_size, max_obs_reference, **kwargs
+    ).run()
 
 
 class MultiLevelAnnotation:
@@ -27,7 +34,7 @@ class MultiLevelAnnotation:
         ad_sc: AnnData,
         cell_type_key: str,
         bag_size: int,
-        max_obs_reference: int = 10_000,
+        max_obs_reference: int,
         clip_percentile: float = 0.95,
     ):
         self.ad_sp = ad_sp
@@ -37,8 +44,12 @@ class MultiLevelAnnotation:
         self.max_obs_reference = max_obs_reference
         self.clip_percentile = clip_percentile
 
+        assert (
+            cell_type_key in ad_sc.obs
+        ), f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        log.info("Using device:", self.device)
+        log.info(f"Using device: {self.device}")
 
     def _level_suffix(self, level: int) -> str:
         return "" if level == 0 else f"_level{level}"
@@ -56,14 +67,16 @@ class MultiLevelAnnotation:
             i += 1
         return i
 
-    def split_indices(self, indices: pd.Series, n_splits: int) -> list(np.ndarray):
+    def split_indices(self, indices: pd.Series, n_splits: int) -> list[np.ndarray]:
         indices = indices.values.copy()
         np.random.shuffle(indices)
         return np.array_split(indices, n_splits)
 
     def init_obsm(self, level: int):
         self.ad_sp.obsm[self.probs_key(level)] = pd.DataFrame(
-            0.0, index=self.ad_sp.obs_names, columns=self.ad_sc.obs[level].unique()
+            0.0,
+            index=self.ad_sp.obs_names,
+            columns=self.ad_sc.obs[self.level_obs_key(level)].unique(),
         )
 
     def get_hard_labels(self, df: pd.DataFrame) -> pd.Series:
@@ -73,7 +86,7 @@ class MultiLevelAnnotation:
         df = (df - df.min()) / (df.max() - df.min())
         return df.idxmax(1)
 
-    def pp_adata(self, ad_sp_: AnnData, split: np.ndarray) -> AnnData:
+    def pp_adata(self, ad_sp_: AnnData, ad_sc_: AnnData, split: np.ndarray) -> AnnData:
         "Copied and updated from Tangram pp_adatas()"
 
         ad_sp_split = ad_sp_[split].copy()
@@ -88,11 +101,31 @@ class MultiLevelAnnotation:
         rna_count_per_spot = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
         ad_sp_split.obs["rna_count_based_density"] = rna_count_per_spot / np.sum(rna_count_per_spot)
 
+        ad_sp_split.var["counts"] = np.array(ad_sp_split.layers["counts"].sum(0)).flatten()
+        ad_sc_.var["counts"] = np.array(ad_sc_.layers["counts"].sum(0)).flatten()
+
+        sp_lower_to_name = {gene.lower(): gene for gene in ad_sp_split.var_names}
+        ad_sc_.var_names = [sp_lower_to_name.get(gene.lower(), gene) for gene in ad_sc_.var_names]
+
+        log.info(
+            f"Genes with zero counts: {(ad_sp_split.var['counts'] == 0).sum()} spatial, {(ad_sc_.var['counts'] == 0).sum()} ref"
+        )
+
+        selection = list(
+            set(ad_sp_split.var_names[ad_sp_split.var.counts > 0])
+            & set(ad_sc_.var_names[ad_sc_.var.counts > 0])
+        )
+        log.info(f"Keeping {len(selection)} shared genes")
+
+        for ad_ in [ad_sp_split, ad_sc_]:
+            for uns_key in ["training_genes", "overlap_genes"]:
+                ad_.uns[uns_key] = selection
+
         return ad_sp_split
 
     def run(self):
         for level in range(self.levels):
-            log.info(f"> Running on level {level}")
+            log.info(f"Running on level {level}")
 
             self.init_obsm(level)
             self.ad_sp.obs[self.level_obs_key(level)] = np.nan
@@ -114,10 +147,10 @@ class MultiLevelAnnotation:
                     self.ad_sp.obsm[self.probs_key(level)].loc[indices_sp, sub_cts[0]] = 1
                     continue
 
-                log.info(f"\n[Cell type {ct}]")
+                log.info(f"[Cell type {ct}]")
                 self.run_group(level, indices_sp, group.index)
 
-        log.info("\nFinished running Tangram")
+        log.info("Finished running Tangram")
 
     def run_group(self, level: int = 0, indices_sp=None, indices_sc=None):
         if indices_sp is not None and len(indices_sp) == 0:
@@ -134,7 +167,7 @@ class MultiLevelAnnotation:
             log.info(f"Subsampling reference to {self.max_obs_reference} cells...")
             sc.pp.subsample(ad_sc_, n_obs=self.max_obs_reference)
 
-        log.info(f"(n_obs_spatial={ad_sp_.n_obs}, n_obs_ref={ad_sc_.n_obs})\n")
+        log.info(f"(n_obs_spatial={ad_sp_.n_obs}, n_obs_ref={ad_sc_.n_obs})")
 
         if not self.can_run(ad_sp_, ad_sc_):
             log.info("No annotations at this level")
@@ -142,9 +175,9 @@ class MultiLevelAnnotation:
 
         n_splits = math.ceil(ad_sp_.n_obs / self.bag_size)
         for i, split in enumerate(self.split_indices(indices_sp, n_splits)):
-            log.info(f"   > Split {i + 1} / {n_splits}")
+            log.info(f"--- Split {i + 1} / {n_splits} ---")
 
-            ad_sp_split = self.pp_adata(ad_sp_, split)
+            ad_sp_split = self.pp_adata(ad_sp_, ad_sc_, split)
 
             ad_map = tg.map_cells_to_space(
                 ad_sc_,
