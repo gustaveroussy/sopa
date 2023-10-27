@@ -162,8 +162,8 @@ rule annotate:
     conda:
         "spatial"
     params:
-        method_name = args['annotation']['method']
-        args_annotation = str(args['annotation']['args'])
+        method_name = args['annotation']['method'],
+        args_annotation = str(args['annotation']['args']),
     shell:
         """
         sopa annotate {params.method_name} {paths.sdata_path} {params.args_annotation}
