@@ -184,17 +184,20 @@ class Columns(Renderable):
 
 
 class Image(Renderable):
-    def __init__(self, fig: Figure, width: float = 50, extension: str = "png"):
+    def __init__(
+        self, fig: Figure, width: float = 50, extension: str = "png", pretty_legend: bool = True
+    ):
         self.fig = fig
         self.width = width
         self.extension = extension
 
-        self.make_figure_pretty()
+        self.make_figure_pretty(pretty_legend)
 
-    def make_figure_pretty(self):
-        self.fig.legend(
-            bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False
-        )
+    def make_figure_pretty(self, pretty_legend: bool):
+        if pretty_legend:
+            self.fig.legend(
+                bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False
+            )
         sns.despine(fig=self.fig, offset=10, trim=True)
 
     def encod(self):

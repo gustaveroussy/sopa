@@ -100,7 +100,10 @@ class Args:
         self.aggregate = "aggregate" in self.config
 
     def __getitem__(self, name):
-        return Args(self.paths, self.config.get(name, {}))
+        subconfig = self.config.get(name, {})
+        if not isinstance(subconfig, dict):
+            return subconfig
+        return Args(self.paths, subconfig)
 
     def where(self, keys: list[str] | None = None, contains: str | None = None):
         if keys is not None:

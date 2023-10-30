@@ -49,7 +49,8 @@ aggregate:
   average_intensities: true
 
 annotation:
-  fluorescence:
+  method: fluorescence
+  args:
     marker_cell_dict:
       EPCAM: Tumoral cell
       CD3: T cell

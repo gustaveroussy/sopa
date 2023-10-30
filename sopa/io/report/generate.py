@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import scanpy as sc
 import seaborn as sns
-import spatialdata
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
@@ -49,7 +48,7 @@ class SectionBuilder:
                         Paragraph(
                             f"Sopa is using <a href='https://spatialdata.scverse.org/en/latest/'>SpatialData</a> under the hood. This is how the object looks like:"
                         ),
-                        CodeBlock(str(sdata)),
+                        CodeBlock(str(self.sdata)),
                     ],
                 )
             ],
@@ -57,7 +56,7 @@ class SectionBuilder:
 
     def cell_section(self):
         shapes_key, gdf = get_boundaries(self.sdata, return_key=True)
-        coord_system = get_intrinsic_cs(sdata, shapes_key)
+        coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
         sns.kdeplot(gdf.area)
@@ -162,7 +161,7 @@ class SectionBuilder:
         return Section(
             "Representation",
             [
-                SubSection("UMAP", Columns([Image(fig)])),
+                SubSection("UMAP", Columns([Image(fig, pretty_legend=False)])),
             ],
         )
 
@@ -175,8 +174,3 @@ class SectionBuilder:
             self.representation_section(),
         ]
         return [section for section in sections if section is not None]
-
-
-sdata = spatialdata.read_zarr("/Volumes/T7_Quentin/data/test_sopa/dummy.zarr")
-# sdata = None
-write_report("sopa/io/report/test.html", sdata)

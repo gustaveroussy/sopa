@@ -23,7 +23,8 @@ aggregate:
   gene_column: "genes"
 
 annotation:
-  fluorescence:
+  method: fluorescence
+  args:
     marker_cell_dict:
       EPCAM: Tumoral cell
       CD3: T cell
