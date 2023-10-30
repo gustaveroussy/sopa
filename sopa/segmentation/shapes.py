@@ -136,12 +136,3 @@ def rasterize(
 
     coords = np.array(cell_translated.exterior.coords)[None, :].astype(np.int32)
     return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
-
-
-def where_transcripts_inside_patch(patch: Polygon, partition: pd.DataFrame) -> np.ndarray:
-    points = partition[["x", "y"]].apply(Point, axis=1)
-    tree = shapely.STRtree(points)
-    indices = tree.query(patch, predicate="intersects")
-    where = np.full(len(partition), False)
-    where[indices] = True
-    return where

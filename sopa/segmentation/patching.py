@@ -5,9 +5,10 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
-from memory_profiler import profile  # TODO: remove this
+import pandas as pd
+import shapely
 from multiscale_spatial_image import MultiscaleSpatialImage
-from shapely.geometry import Polygon, box
+from shapely.geometry import Point, Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
@@ -16,7 +17,6 @@ from spatialdata.transformations import get_transformation
 from .._constants import ROI, SopaFiles, SopaKeys
 from .._sdata import get_spatial_image, to_intrinsic
 from .aggregate import map_transcript_to_cell
-from .shapes import where_transcripts_inside_patch
 
 log = logging.getLogger(__name__)
 
@@ -140,7 +140,6 @@ class Patches2D:
 
         log.info(f"{len(geo_df)} patches where saved in sdata['{SopaKeys.PATCHES}']")
 
-    @profile
     def patchify_transcripts(
         self,
         baysor_temp_dir: str,
@@ -148,53 +147,85 @@ class Patches2D:
         unassigned_value: int | str = None,
         use_prior: bool = False,
     ) -> list[int]:
-        from tqdm import tqdm
+        return BaysorPatches(self, self.element).write(
+            baysor_temp_dir, cell_key, unassigned_value, use_prior
+        )
 
-        baysor_temp_dir = Path(baysor_temp_dir)
-        df: dd.DataFrame = self.element
+
+class BaysorPatches:
+    def __init__(self, patches_2d: Patches2D, df: dd.DataFrame):
+        self.patches_2d = patches_2d
+        self.df = df
+        self.sdata = self.patches_2d.sdata
+
+    def write(
+        self,
+        baysor_temp_dir: str,
+        cell_key: str = None,
+        unassigned_value: int | str = None,
+        use_prior: bool = False,
+    ):
+        self.baysor_temp_dir = Path(baysor_temp_dir)
+        self._clean_directory()
 
         if cell_key is not None and unassigned_value is not None:
-            df[cell_key] = df[cell_key].replace(unassigned_value, 0)
+            self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
 
         if cell_key is None:
             cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
 
-        prior_boundaries = None
         if use_prior:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
+            map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
 
-        valid_indices = []
+        tree = shapely.STRtree(self.patches_2d.polygons)
+        df_query = self.df.map_partitions(partial(self._query_points_partition, tree))
+        df_merged: dd.DataFrame = self.df.merge(
+            df_query, left_index=True, right_on="point_index", how="right"
+        )
 
-        for i, patch in enumerate(tqdm(self.polygons, desc="Splitting CSVs for Baysor")):
-            patch_path: Path = baysor_temp_dir / str(i) / SopaFiles.BAYSOR_TRANSCRIPTS
-            patch_path.parent.mkdir(parents=True, exist_ok=True)
-
-            tx0, ty0, tx1, ty1 = patch.bounds
-            sub_df = df[(df.x >= tx0) & (df.x <= tx1) & (df.y >= ty0) & (df.y <= ty1)]
-
-            if patch.area < box(*patch.bounds).area:
-                where_inside_patch = partial(where_transcripts_inside_patch, patch)
-                sub_df = sub_df[sub_df.map_partitions(where_inside_patch)]
-
-            if prior_boundaries is not None:
-                map_transcript_to_cell(self.sdata, cell_key, sub_df, prior_boundaries)
-
-            print(f"Computing CSV {i}")
-            sub_df.compute().to_csv(patch_path)  # , single_file=True)
-            print(f"Done {i}")
-
-            if _check_min_lines(patch_path, 1000):
-                valid_indices.append(i)
-            else:
-                log.info(f"Patch {i} has too few transcripts. Baysor will not be run on it.")
+        df_merged.map_partitions(self._write_partition).compute()
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")
-        return valid_indices
+        return list(self.valid_indices())
 
+    def _patch_path(self, index: int) -> Path:
+        return self.baysor_temp_dir / str(index) / SopaFiles.BAYSOR_TRANSCRIPTS
 
-def _check_min_lines(path: str, n: int) -> bool:
-    with open(path, "r") as f:
-        for count, _ in enumerate(f):
-            if count + 1 >= n:
-                return True
-        return False
+    def _clean_directory(self):
+        for index in range(len(self.patches_2d)):
+            patch_path = self._patch_path(index)
+            if patch_path.exists():
+                patch_path.unlink()
+
+    def valid_indices(self):
+        for index in range(len(self.patches_2d)):
+            patch_path = self._patch_path(index)
+            if self._check_min_lines(patch_path, 1000):
+                yield index
+            else:
+                log.info(f"Patch {index} has < 1000 transcripts. Baysor will not be run on it.")
+
+    def _write_partition(self, df: pd.DataFrame, partition_info=None) -> None:
+        if partition_info is not None:
+            for index, patch_df in df.groupby("patch_index"):
+                patch_path = self._patch_path(index)
+                patch_path.parent.mkdir(parents=True, exist_ok=True)
+                patch_df.to_csv(
+                    patch_path, mode="a", header=not Path(patch_path).exists(), index=False
+                )
+
+    def _query_points_partition(
+        self, tree: shapely.STRtree, df: pd.DataFrame, partition_info=None
+    ) -> pd.DataFrame:
+        points = [Point(xy) for xy in zip(df.x, df.y)]
+        df_query = pd.DataFrame(tree.query(points).T, columns=["point_index", "patch_index"])
+        df_query["point_index"] += (partition_info or {}).get("division") or 0
+        return df_query
+
+    def _check_min_lines(self, path: str, n: int) -> bool:
+        with open(path, "r") as f:
+            for count, _ in enumerate(f):
+                if count + 1 >= n:
+                    return True
+            return False
