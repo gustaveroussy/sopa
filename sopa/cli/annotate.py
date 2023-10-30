@@ -10,7 +10,7 @@ option = typer.Option()
 def fluorescence(
     sdata_path: str,
     marker_cell_dict: str = typer.Option(default={}, callback=ast.literal_eval),
-    key: str = "cell_type",
+    cell_type_key: str = "cell_type",
 ):
     from pathlib import Path
 
@@ -21,7 +21,7 @@ def fluorescence(
 
     assert sdata.table is not None, f"Annotation requires `sdata.table` to be not None"
 
-    higher_z_score(sdata.table, marker_cell_dict, key)
+    higher_z_score(sdata.table, marker_cell_dict, cell_type_key)
     sdata.table.write_zarr(Path(sdata_path) / "table" / "table")
 
 
