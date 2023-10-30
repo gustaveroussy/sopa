@@ -186,7 +186,9 @@ class BaysorPatches:
         )
 
         with ProgressBar():
-            df_merged.map_partitions(self._write_partition).compute()
+            df_merged.to_parquet(
+                self.baysor_temp_dir / "full.parquet"
+            )  # map_partitions(self._write_partition).compute()
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")
         return list(self.valid_indices())
