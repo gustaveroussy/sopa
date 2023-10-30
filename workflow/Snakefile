@@ -10,6 +10,7 @@ rule all:
         paths.annotations,
         paths.explorer_experiment,
         paths.explorer_image,
+        paths.report,
     shell:
         """
         echo SpatialData output directory: {paths.sdata_path}
@@ -183,6 +184,20 @@ rule image_write:
     shell:
         """
         sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer} --save-image-mode 2
+        """
+
+rule report:
+    input:
+        paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
+        paths.smk_aggregation if args.aggregate else paths.smk_table,
+        paths.annotations if args.annotate else [],
+    output:
+        paths.report,
+    conda:
+        "spatial"
+    shell:
+        """
+        sopa report {paths.sdata_path} {paths.report}
         """
 
 rule explorer:

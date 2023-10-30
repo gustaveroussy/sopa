@@ -114,6 +114,19 @@ def aggregate(
 
 
 @app.command()
+def report(
+    sdata_path: str,
+    path: str,
+):
+    from sopa.io.report import write_report
+    from sopa.io.standardize import read_zarr_standardized
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    write_report(path, sdata)
+
+
+@app.command()
 def explorer(
     sdata_path: str,
     path: str,
@@ -129,11 +142,10 @@ def explorer(
         path: Path to a directory where Xenium Explorer's outputs will be saved\n
         shapes_key: Key for the boundaries\n
     """
-    from spatialdata import SpatialData
-
     from sopa.io.explorer import write_explorer
+    from sopa.io.standardize import read_zarr_standardized
 
-    sdata = SpatialData.read(sdata_path)
+    sdata = read_zarr_standardized(sdata_path)
     write_explorer(
         path,
         sdata,

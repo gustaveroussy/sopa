@@ -72,6 +72,8 @@ class WorkflowPaths:
         self.explorer_experiment = self.explorer_directory / "experiment.xenium"
         self.explorer_image = self.explorer_directory / "morphology.ome.tif"
 
+        self.report = self.explorer_directory / "analysis_summary.html"
+
     def cells_paths(self, file_content: str, name, dirs: bool = False):
         if name == "cellpose":
             return [str(self.cellpose_temp_dir / f"{i}.zarr.zip") for i in range(int(file_content))]
