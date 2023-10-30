@@ -7,6 +7,7 @@ import dask.dataframe as dd
 import geopandas as gpd
 import pandas as pd
 import shapely
+from dask.diagnostics import ProgressBar
 from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Point, Polygon, box
 from spatial_image import SpatialImage
@@ -184,7 +185,8 @@ class BaysorPatches:
             df_query, left_index=True, right_on="point_index", how="right"
         )
 
-        df_merged.map_partitions(self._write_partition).compute()
+        with ProgressBar():
+            df_merged.map_partitions(self._write_partition).compute()
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")
         return list(self.valid_indices())
