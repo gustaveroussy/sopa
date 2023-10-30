@@ -2,6 +2,8 @@ import base64
 from io import BytesIO
 from typing import Optional
 
+import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.figure import Figure
 
 from .css import BULMA_CSS
@@ -187,9 +189,17 @@ class Image(Renderable):
         self.width = width
         self.extension = extension
 
+        self.make_figure_pretty()
+
+    def make_figure_pretty(self):
+        self.fig.legend(
+            bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False
+        )
+        sns.despine(fig=self.fig, offset=10, trim=True)
+
     def encod(self):
         tmpfile = BytesIO()
-        self.fig.savefig(tmpfile, format=self.extension, transparent=True)
+        self.fig.savefig(tmpfile, format=self.extension, transparent=True, bbox_inches="tight")
         return base64.b64encode(tmpfile.getvalue()).decode("utf-8")
 
     def __str__(self) -> str:

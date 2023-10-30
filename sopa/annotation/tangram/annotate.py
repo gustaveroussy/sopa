@@ -9,6 +9,8 @@ import torch
 from anndata import AnnData
 from spatialdata import SpatialData
 
+from sopa._constants import SopaKeys
+
 log = logging.getLogger(__name__)
 
 
@@ -151,6 +153,10 @@ class MultiLevelAnnotation:
                 self.run_group(level, indices_sp, group.index)
 
         log.info("Finished running Tangram")
+
+        self.ad_sp.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_CELL_TYPES] = [
+            self.level_obs_key(level) for level in self.levels
+        ]
 
     def run_group(self, level: int = 0, indices_sp=None, indices_sc=None):
         if indices_sp is not None and len(indices_sp) == 0:

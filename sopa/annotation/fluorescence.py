@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-import pandas as pd
 from anndata import AnnData
 
 from .._constants import SopaKeys
@@ -23,5 +22,6 @@ def higher_z_score(adata: AnnData, marker_cell_dict: dict, key: str = "cell_type
     ct_indices = adata.obsm[SopaKeys.Z_SCORES][markers].values.argmax(1)
 
     adata.obs[key] = cell_types[ct_indices]
+    adata.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_CELL_TYPES] = [key]
 
     log.info(f"Annotation counts: {adata.obs[key].value_counts()}")

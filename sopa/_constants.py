@@ -4,6 +4,11 @@ class SopaKeys:
     PATCHES = "sopa_patches"
     BOUNDS = "bounds"
 
+    UNS_KEY = "sopa_attrs"
+    UNS_HAS_TRANSCRIPTS = "transcripts"
+    UNS_HAS_INTENSITIES = "intensities"
+    UNS_CELL_TYPES = "cell_types"
+
     INTENSITIES_OBSM = "intensities"
 
     REGION_KEY = "region"
@@ -16,6 +21,7 @@ class SopaKeys:
 
 VALID_DIMENSIONS = ("c", "y", "x")
 MIN_INTENSITY_RATIO = 0.05
+LOW_AVERAGE_COUNT = 0.5
 
 
 class ROI:

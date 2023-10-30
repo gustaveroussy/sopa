@@ -7,7 +7,7 @@ localrules: all
 
 rule all:
     input:
-        paths.annotations,
+        paths.annotations if args.annotate else [],
         paths.explorer_experiment,
         paths.explorer_image,
         paths.report,

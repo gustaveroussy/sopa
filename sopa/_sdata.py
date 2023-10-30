@@ -1,6 +1,7 @@
 import logging
 
 import geopandas as gpd
+import pandas as pd
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
@@ -19,7 +20,9 @@ def _try_get_boundaries(
         return (shapes_key, sdata[shapes_key]) if return_key else sdata[shapes_key]
 
 
-def get_boundaries(sdata: SpatialData, return_key: bool = False) -> gpd.GeoDataFrame | None:
+def get_boundaries(
+    sdata: SpatialData, return_key: bool = False
+) -> gpd.GeoDataFrame | tuple[str, gpd.GeoDataFrame] | None:
     for shapes_key in [SopaKeys.BAYSOR_BOUNDARIES, SopaKeys.CELLPOSE_BOUNDARIES]:
         res = _try_get_boundaries(sdata, shapes_key, return_key)
         if res is not None:
@@ -78,6 +81,16 @@ def get_element(sdata: SpatialData, attr: str, key: str | None = None):
 def get_item(sdata: SpatialData, attr: str, key: str | None = None):
     key = get_key(sdata, attr, key)
     return key, sdata[key] if key is not None else None
+
+
+def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
+    if not sdata.table.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_INTENSITIES]:
+        return None
+
+    if sdata.table.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_TRANSCRIPTS]:
+        return sdata.table.obsm[SopaKeys.INTENSITIES_OBSM]
+
+    return sdata.table.to_df()
 
 
 def get_spatial_image(
