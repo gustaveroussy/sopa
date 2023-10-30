@@ -14,6 +14,8 @@ from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
 
+import sopa
+
 from .._constants import SopaKeys
 from .._sdata import (
     get_boundaries,
@@ -82,8 +84,10 @@ class Aggregator:
         min_transcripts: int,
         min_intensity_ratio: float,
     ):
+        count_transcripts = self.table is not None or gene_column is not None
+
         assert (
-            average_intensities or gene_column is not None or self.table is not None
+            average_intensities or count_transcripts
         ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
 
         if gene_column is not None:
@@ -98,7 +102,7 @@ class Aggregator:
                 target_coordinate_system=get_intrinsic_cs(self.sdata, points_key),
             ).table
 
-        if self.table is not None and min_transcripts > 0:
+        if count_transcripts and min_transcripts > 0:
             self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
         if average_intensities:
@@ -112,7 +116,7 @@ class Aggregator:
                 self.filter_cells(where_filter)
                 mean_intensities = mean_intensities[~where_filter]
 
-            if self.table is None:
+            if not count_transcripts:
                 self.table = AnnData(
                     mean_intensities,
                     dtype=mean_intensities.dtype,
@@ -125,6 +129,12 @@ class Aggregator:
                     columns=self.image.coords["c"].values,
                     index=self.table.obs_names,
                 )
+
+        self.table.uns["sopa_attrs"] = {
+            "version": sopa.__version__,
+            "transcripts": count_transcripts,
+            "intensities": average_intensities,
+        }
 
         self.standardize_table()
 
