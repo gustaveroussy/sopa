@@ -193,6 +193,7 @@ class BaysorPatches:
     def _clean_directory(self):
         for index in range(len(self.patches_2d)):
             patch_path = self._patch_path(index)
+            patch_path.parent.mkdir(parents=True, exist_ok=True)
             if patch_path.exists():
                 patch_path.unlink()
             pd.DataFrame(columns=self.df.columns).to_csv(patch_path, index=False)
