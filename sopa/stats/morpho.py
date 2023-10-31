@@ -1,9 +1,13 @@
+import logging
 from collections import defaultdict
 
 import numpy as np
 import pandas as pd
 from anndata import AnnData
 from scipy.sparse.csgraph import connected_components
+from tqdm import tqdm
+
+log = logging.getLogger(__name__)
 
 
 def triangle_area(adata: AnnData, i: int, j: int, k: int) -> float:
@@ -57,7 +61,7 @@ def morphology(
     component_counts = 0
     geo_stats = []
 
-    for label in range(n_components):
+    for label in tqdm(range(n_components)):
         component_indices = np.where(mask)[0][np.where(component_labels == label)[0]]
         if len(component_indices) >= min_component_size:
             component_counts += 1
@@ -71,12 +75,23 @@ def morphology(
     else:
         res = pd.Series([np.nan, np.nan, np.nan, np.nan])
 
-    res.index = [f"{domain_id} domain {name}" for name in GEO_SERIES_INDEX]
+    res.index = GEO_SERIES_INDEX
+    res.name = domain_id
     return res
 
 
 def morphologies(adata: AnnData, domain_key: str, min_component_size: int = 20):
-    ...
+    domain_ids = adata.obs[domain_key].unique()
+    log.info(f"Computing morphologies of {len(domain_ids)} domains")
+    res = pd.concat(
+        [
+            morphology(adata, domain_key, domain_id, min_component_size=min_component_size)
+            for domain_id in domain_ids
+        ],
+        axis=1,
+    ).T
+    res.index.name = domain_key
+    return res
 
 
 def interface_ratio(adata: AnnData, domain_key: str):

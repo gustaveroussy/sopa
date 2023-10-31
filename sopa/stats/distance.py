@@ -1,22 +1,38 @@
+import logging
+
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from tqdm import tqdm
+
+log = logging.getLogger(__name__)
 
 
-def cells_to_domains(
-    adata: AnnData, domain_key: str, key_added_prefix: str | None = "distance_domain_"
+def cells_to_groups(
+    adata: AnnData,
+    group_key: str,
+    key_added_prefix: str | None = "distance_group_",
+    ignore_zeros: bool = False,
 ) -> pd.DataFrame | None:
-    distances_to_domains = {}
+    distances_to_groups = {}
 
-    for domain_id in adata.obs[domain_key].unique():
-        domain_nodes = np.where(adata.obs[domain_key] == domain_id)[0]
+    if not adata.obs[group_key].dtype.name == "category":
+        log.info(f"Converting adata.obs['{group_key}'] to category")
+        adata.obs[group_key] = adata.obs[group_key].astype("category")
+
+    for group_id in tqdm(adata.obs[group_key].cat.categories):
+        group_nodes = np.where(adata.obs[group_key] == group_id)[0]
 
         distances = np.full(adata.n_obs, np.nan)
-        current_distance = 0
-        distances[domain_nodes] = current_distance
 
-        visited = set(domain_nodes)
-        queue = domain_nodes
+        if not ignore_zeros:
+            distances[group_nodes] = 0
+            visited = set(group_nodes)
+        else:
+            visited = set()
+
+        queue = group_nodes
+        current_distance = 0
 
         while len(queue):
             distances[queue] = current_distance
@@ -27,34 +43,24 @@ def cells_to_domains(
 
             current_distance += 1
 
-        if key_added_prefix is None:
-            distances_to_domains[domain_id] = distances
-        else:
-            adata.obs[f"{key_added_prefix}{domain_id}"] = distances
+        distances_to_groups[group_id] = distances
+
+    df_distances = pd.DataFrame(distances_to_groups, index=adata.obs_names)
 
     if key_added_prefix is None:
-        return pd.DataFrame(distances_to_domains, index=adata.obs_names)
+        return df_distances
+    adata.obsm[f"{key_added_prefix}{group_key}"] = df_distances
 
 
-def mean_distance_group_to_group():
-    ...
+def mean_distance(
+    adata: AnnData, group_key: str, target_group_key: str | None = None, ignore_zeros: bool = False
+) -> pd.DataFrame:
+    target_group_key = group_key if target_group_key is None else target_group_key
 
+    df_distances = cells_to_groups(adata, target_group_key, None, ignore_zeros=ignore_zeros)
 
-def mean_distance_domain_to_domain():
-    ...
+    if ignore_zeros:
+        df_distances.replace(0, np.nan, inplace=True)
 
-
-def mean_distance_group_to_domains(adata: AnnData, domain_key: str, group_key: str) -> pd.DataFrame:
-    series = []
-    for domain_id in adata.obs[domain_key].unique():
-        key = f"distance_to_niche_{domain_id}"
-        obs = adata.obs
-        obs = obs[obs[key] > 0]
-        s = obs.groupby(group_key)[key].mean()
-        series.append(s)
-
-    return pd.concat(
-        series,
-        axis=1,
-        keys=[f"Mean distance to niche: {niche}" for niche in adata.obs[domain_key].unique()],
-    )
+    df_distances[group_key] = adata.obs[group_key]
+    return df_distances.groupby(group_key, observed=False).mean()
