@@ -11,6 +11,7 @@ def cellpose(
     channels: list[str] = option,
     flow_threshold: int = option,
     cellprob_threshold: int = option,
+    model_type: str = "cyto2",
     patch_width: int = typer.Option(default=None),
     patch_overlap: int = typer.Option(default=None),
     expand_radius: int = typer.Option(default=0),
@@ -25,6 +26,7 @@ def cellpose(
         channels: Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel.\n
         flow_threshold: Cellpose flow_threshold parameter\n
         cellprob_threshold: Cellpose cellprob_threshold parameter\n
+        model_type: Name of the cellpose model\n
         patch_width: Ignore this if you already run 'sopa patchify'. Patch width in pixels.\n
         patch_overlap: Ignore this if you already run 'sopa patchify'. Patches overlaps in pixels.\n
         expand_radius: Ignore this if you already run 'sopa patchify'. Cell boundaries radius expansion in pixels.\n
@@ -40,7 +42,11 @@ def cellpose(
     sdata = read_zarr_standardized(sdata_path)
 
     method = cellpose_patch(
-        diameter, channels, flow_threshold=flow_threshold, cellprob_threshold=cellprob_threshold
+        diameter,
+        channels,
+        flow_threshold=flow_threshold,
+        cellprob_threshold=cellprob_threshold,
+        model_type=model_type,
     )
     segmentation = StainingSegmentation(sdata, method, channels)
 

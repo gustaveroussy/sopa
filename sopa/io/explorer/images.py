@@ -33,6 +33,9 @@ class MultiscaleImageWriter:
         self.metadata = image_metadata(self.channel_names, pixelsize)
         self.data = None
 
+        self.lazy = True
+        self.ram_threshold_gb = None
+
     def _n_tiles_axis(self, xarr: xr.DataArray, axis: int) -> int:
         return ceil(xarr.shape[axis] / self.tile_width)
 

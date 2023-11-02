@@ -1,0 +1,37 @@
+read:
+  technology: merscope
+
+patchify:
+  patch_width_pixel: 6000
+  patch_overlap_pixel: 150
+  patch_width_microns: 1000
+  patch_overlap_microns: 20
+
+segmentation:
+  cellpose:
+    diameter: 60
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+
+shapes:
+  expand_radius: 0
+  min_area: 20
+
+aggregate:
+  average_intensities: true
+  #gene_column: ""
+
+annotation:
+  method: tangram
+  args:
+    sc_reference_path: /mnt/beegfs/merfish/data/reference/thyroid-atc-v1.h5ad
+    cell_type_key: ct_level0
+    reference_preprocessing: log1p
+
+explorer:
+  gene_column: "gene"
+  ram_threshold_gb: 16
+
+executables:
+  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor
