@@ -10,10 +10,24 @@ from .segmentation import app_segmentation
 option = typer.Option()
 
 app = typer.Typer()
-app.add_typer(app_annotate, name="annotate")
-app.add_typer(app_segmentation, name="segmentation")
-app.add_typer(app_resolve, name="resolve")
-app.add_typer(app_patchify, name="patchify")
+app.add_typer(
+    app_annotate,
+    name="annotate",
+    help="Perform cell-type annotation (based on transcripts and/or channel intensities)",
+)
+app.add_typer(
+    app_segmentation,
+    name="segmentation",
+    help="Perform cell segmentation on patches (you first need to run 'sopa patchify'). NB: for 'baysor', use directly the 'baysor' command line.",
+)
+app.add_typer(
+    app_resolve, name="resolve", help="Resolve the segmentation conflicts over patches overlaps"
+)
+app.add_typer(
+    app_patchify,
+    name="patchify",
+    help="Create patches with overlaps. Afterwards, segmentation will be run on each patch",
+)
 
 
 @app.command()
@@ -24,6 +38,15 @@ def read(
     config_path: str = None,
     kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
+    """Read any technology data, and write a standardized SpatialData object
+
+    Args:\n
+        data_path: Path to one data sample (most of the time, this corresponds to a directory)\n
+        technology: Name of the technology used to collected the data (e.g., 'xenium', 'merfish', ...)\n
+        sdata_path: Optional path to write the SpatialData object. If not provided, will write to the '{data_path}.zarr' directory\n
+        config_path: Path to the snakemake config. This can be useful in order not to provide the 'technology' and the 'kwargs' arguments\n
+        kwargs: Dictionary provided to the reader function.\n
+    """
     from pathlib import Path
 
     from sopa import io
@@ -64,7 +87,7 @@ def crop(
     """Crop an image based on a user-defined polygon (interactive mode).
     If the interactive mode is not available where the data is stored,
     then we can export an intermediate resized image, then make the selection locally,
-    and transfer back the resulting polygon.
+    and transfer back the resulting polygon
 
     Args:\n
         sdata_path: Path to the sdata.zarr directory. Defaults to None.\n
@@ -104,6 +127,15 @@ def aggregate(
     min_transcripts: int = 0,
     min_intensity_ratio: float = 0,
 ):
+    """Create an `anndata` table containing the transcript count and/or the channel intensities per cell
+
+    Args:\n
+        sdata_path: Path to the SpatialData zarr directory\n
+        gene_column: Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count\n
+        average_intensities: Whether to average the channel intensities inside each cell\n
+        min_transcripts: Cells with less transcript than this integer will be filtered\n
+        min_intensity_ratio: Cells whose mean channel intensity is less than min_intensity_ratio * quantile_90 will be filtered\n
+    """
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.aggregate import Aggregator
 
@@ -118,6 +150,12 @@ def report(
     sdata_path: str,
     path: str,
 ):
+    """Create a HTML report of the pipeline run and some quality controls
+
+    Args:\n
+        sdata_path: Path to the SpatialData zarr directory\n
+        path: Path to the HTML report\n
+    """
     from sopa.io.report import write_report
     from sopa.io.standardize import read_zarr_standardized
 
@@ -138,7 +176,7 @@ def explorer(
     """Convert a spatialdata object to Xenium Explorer's inputs
 
     Args:\n
-        sdata_path: Path to the sdata.zarr directory\n
+        sdata_path: Path to the SpatialData zarr directory\n
         path: Path to a directory where Xenium Explorer's outputs will be saved\n
         shapes_key: Key for the boundaries\n
     """

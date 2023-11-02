@@ -17,10 +17,19 @@ def cellpose(
     patch_index: int = typer.Option(default=None),
     patch_dir: str = typer.Option(default=None),
 ):
-    """Perform cellpose segmentation on a SpatialData object
+    """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch (provide 'patch_dir' and 'patch_index')
 
     Args:\n
-        sdata_path: Path to the sdata.zarr directory.\n
+        sdata_path: Path to the SpatialData zarr directory\n
+        diameter: Cellpose diameter parameter\n
+        channels: Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel.\n
+        flow_threshold: Cellpose flow_threshold parameter\n
+        cellprob_threshold: Cellpose cellprob_threshold parameter\n
+        patch_width: Ignore this if you already run 'sopa patchify'. Patch width in pixels.\n
+        patch_overlap: Ignore this if you already run 'sopa patchify'. Patches overlaps in pixels.\n
+        expand_radius: Ignore this if you already run 'sopa patchify'. Cell boundaries radius expansion in pixels.\n
+        patch_index: Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`.\n
+        patch_dir: Path to the temporary cellpose directory inside which we will store each individual patch segmentation\n
     """
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes

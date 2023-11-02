@@ -172,7 +172,7 @@ class BaysorPatches:
         if cell_key is None:
             cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
 
-        if unassigned_value is not None:
+        if unassigned_value is not None and unassigned_value != 0:
             self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
 
         if use_prior:

@@ -12,6 +12,13 @@ def cellpose(
     patch_width_pixel: float = None,
     patch_overlap_pixel: float = None,
 ):
+    """Prepare patches for Cellpose segmentation
+
+    Args:\n
+        sdata_path: Path to the SpatialData zarr directory\n
+        patch_width_pixel: Width (and height) of each patch in pixels\n
+        patch_overlap_pixel: Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell\n
+    """
     from pathlib import Path
 
     from sopa._constants import SopaFiles
@@ -42,6 +49,18 @@ def baysor(
     unassigned_value: int = None,
     use_prior: bool = False,
 ):
+    """Prepare the patches for Baysor segmentation
+
+    Args:\n
+        sdata_path: Path to the SpatialData zarr directory\n
+        patch_width_microns: Width (and height) of each patch in microns\n
+        patch_overlap_microns: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell\n
+        baysor_temp_dir: Temporary directory where baysor inputs and outputs will be saved\n
+        config: Path to the snakemake config containing the baysor arguments\n
+        cell_key: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is\n
+        unassigned_value: If 'cell_key' is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)\n
+        use_prior: Whether to use cellpose segmentation as a prior for baysor\n
+    """
     from pathlib import Path
 
     from sopa._constants import SopaFiles
