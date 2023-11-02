@@ -160,6 +160,9 @@ rule annotate:
         directory(paths.annotations),
     conda:
         "spatial"
+    resources:
+        partition="gpgpuq" if args['annotation']['method'] == "tangram" else "shortq",
+        gpu="a100:1" if args['annotation']['method'] == "tangram" else 0,
     params:
         method_name = args['annotation']['method'],
         args_annotation = str(args['annotation']['args']),
