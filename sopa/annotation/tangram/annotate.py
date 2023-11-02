@@ -18,6 +18,7 @@ def tangram_annotate(
     sdata: SpatialData,
     adata_sc: AnnData,
     cell_type_key: str,
+    reference_preprocessing: str = None,
     bag_size: int = 10_000,
     max_obs_reference: int = 10_000,
     **kwargs,
@@ -25,7 +26,13 @@ def tangram_annotate(
     ad_sp = sdata.table
 
     MultiLevelAnnotation(
-        ad_sp, adata_sc, cell_type_key, bag_size, max_obs_reference, **kwargs
+        ad_sp,
+        adata_sc,
+        cell_type_key,
+        reference_preprocessing,
+        bag_size,
+        max_obs_reference,
+        **kwargs,
     ).run()
 
 
@@ -35,6 +42,7 @@ class MultiLevelAnnotation:
         ad_sp: AnnData,
         ad_sc: AnnData,
         cell_type_key: str,
+        reference_preprocessing: str | None,
         bag_size: int,
         max_obs_reference: int,
         clip_percentile: float = 0.95,
@@ -42,6 +50,7 @@ class MultiLevelAnnotation:
         self.ad_sp = ad_sp
         self.ad_sc = ad_sc
         self.cell_type_key = cell_type_key
+        self.reference_preprocessing = reference_preprocessing
         self.bag_size = bag_size
         self.max_obs_reference = max_obs_reference
         self.clip_percentile = clip_percentile
@@ -52,6 +61,17 @@ class MultiLevelAnnotation:
 
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         log.info(f"Using device: {self.device}")
+
+    def _preprocess(self, adata: AnnData):
+        if self.reference_preprocessing == "log1p":
+            log.info("Performing normalize_total and log1p on the spatial adata object")
+            sc.pp.normalize_total(adata)
+            sc.pp.log1p(adata)
+        elif self.reference_preprocessing == "normalized":
+            log.info("Performing normalize_total on the spatial adata object")
+            sc.pp.normalize_total(adata)
+        else:
+            log.info("Using raw counts for the spatial adata object")
 
     def _level_suffix(self, level: int) -> str:
         return "" if level == 0 else f"_level{level}"
@@ -92,6 +112,7 @@ class MultiLevelAnnotation:
         "Copied and updated from Tangram pp_adatas()"
 
         ad_sp_split = ad_sp_[split].copy()
+        self._preprocess(ad_sp_split)
         sc.pp.filter_genes(ad_sp_split, min_cells=1)
 
         # Calculate uniform density prior as 1/number_of_spots
