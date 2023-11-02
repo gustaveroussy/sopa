@@ -118,6 +118,7 @@ def resolve(
         geo_df_new = gpd.GeoDataFrame({"geometry": new_cells})
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
+        log.info("Aggregating transcripts on merged cells")
         table_conflicts = sdata.aggregate(
             values=points_key,
             by=geo_df_new,
@@ -127,6 +128,7 @@ def resolve(
         ).table
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
+        log.info("Done")
 
     valid_ids = set(list(geo_df.index))
     table = anndata.concat(
