@@ -12,6 +12,7 @@ from shapely.validation import make_valid
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, TableModel
 from spatialdata.transformations import get_transformation
+from tqdm import tqdm
 
 from ..._constants import SopaKeys
 from ..._sdata import get_intrinsic_cs, get_item, get_key
@@ -28,7 +29,7 @@ def read_baysor(
     adata = anndata.read_loom(
         directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
     )
-    adata = adata[adata.obs.area > min_area].copy()
+    adata = adata[adata.obs.area > min_area]
 
     cells_num = pd.Series(adata.obs_names.str.split("-").str[-1].astype(int), index=adata.obs_names)
 
@@ -56,12 +57,12 @@ def read_all_baysor_patches(
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     if patches_dirs is None:
         baysor_temp_dir = Path(baysor_temp_dir)
-        outs = [
-            read_baysor(directory, min_area, expand_radius)
-            for directory in baysor_temp_dir.iterdir()
-        ]
-    else:
-        outs = [read_baysor(path, min_area, expand_radius) for path in patches_dirs]
+        patches_dirs = list(baysor_temp_dir.iterdir())
+
+    outs = [
+        read_baysor(path, min_area, expand_radius)
+        for path in tqdm(patches_dirs, desc="Reading baysor outputs")
+    ]
 
     patches_cells, adatas = zip(*outs)
 
