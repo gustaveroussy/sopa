@@ -176,7 +176,7 @@ class MultiLevelAnnotation:
         log.info("Finished running Tangram")
 
         self.ad_sp.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_CELL_TYPES] = [
-            self.level_obs_key(level) for level in self.levels
+            self.level_obs_key(level) for level in range(self.levels)
         ]
 
     def run_group(self, level: int = 0, indices_sp=None, indices_sc=None):
