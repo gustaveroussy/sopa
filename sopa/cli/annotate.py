@@ -55,7 +55,7 @@ def tangram(
 
     import anndata
 
-    from sopa.annotation.tangram.annotate import tangram_annotate
+    from sopa.annotation.tangram.run import tangram_annotate
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)

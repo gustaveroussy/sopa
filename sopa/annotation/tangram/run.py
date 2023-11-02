@@ -124,8 +124,8 @@ class MultiLevelAnnotation:
         rna_count_per_spot = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
         ad_sp_split.obs["rna_count_based_density"] = rna_count_per_spot / np.sum(rna_count_per_spot)
 
-        ad_sp_split.var["counts"] = np.array(ad_sp_split.layers["counts"].sum(0)).flatten()
-        ad_sc_.var["counts"] = np.array(ad_sc_.layers["counts"].sum(0)).flatten()
+        ad_sp_split.var["counts"] = np.array((ad_sp_split.X > 0).sum(0)).flatten()
+        ad_sc_.var["counts"] = np.array((ad_sc_.X > 0).sum(0)).flatten()
 
         sp_lower_to_name = {gene.lower(): gene for gene in ad_sp_split.var_names}
         ad_sc_.var_names = [sp_lower_to_name.get(gene.lower(), gene) for gene in ad_sc_.var_names]
