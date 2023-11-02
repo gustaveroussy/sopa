@@ -168,17 +168,18 @@ class BaysorPatches:
     ):
         log.info("Writing sub-CSV for baysor")
         self.baysor_temp_dir = Path(baysor_temp_dir)
-        self._clean_directory()
-
-        if cell_key is not None and unassigned_value is not None:
-            self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
 
         if cell_key is None:
             cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
 
+        if unassigned_value is not None:
+            self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
+
         if use_prior:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
             map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
+
+        self._clean_directory()
 
         tree = shapely.STRtree(self.patches_2d.polygons)
         with ProgressBar():
