@@ -3,6 +3,7 @@ import ast
 import typer
 
 from .annotate import app_annotate
+from .check import app_check
 from .patchify import app_patchify
 from .resolve import app_resolve
 from .segmentation import app_segmentation
@@ -27,6 +28,11 @@ app.add_typer(
     app_patchify,
     name="patchify",
     help="Create patches with overlaps. Afterwards, segmentation will be run on each patch",
+)
+app.add_typer(
+    app_check,
+    name="check",
+    help="Run some sanity checks (e.g., on the YAML config, on the tangram reference, ...)",
 )
 
 
