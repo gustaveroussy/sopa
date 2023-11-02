@@ -59,7 +59,7 @@ class WorkflowPaths:
                 self.table_dir
                 / "table"
                 / "obs"
-                / self.config["annotation"].get(ConfigConstants.CT_KEY, ConfigConstants.CT_KEY)
+                / self.config["annotation"].get("cell_type_key", ConfigConstants.CT_KEY)
             )
 
         self.temp_dir = self.sdata_path.parent / f".smk_intermediate_{self.sdata_path.name}"
