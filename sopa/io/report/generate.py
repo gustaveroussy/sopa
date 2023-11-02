@@ -122,8 +122,8 @@ class SectionBuilder:
         if not self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             return None
 
-        transcript_count = self.sdata.table.X.sum(0).A1
-        low_average = transcript_count / self.sdata.table.n_obs < LOW_AVERAGE_COUNT
+        mean_transcript_count = self.sdata.table.X.mean(0).A1
+        low_average = mean_transcript_count < LOW_AVERAGE_COUNT
 
         QC_subsubsections = []
         if low_average.sum():
@@ -137,8 +137,8 @@ class SectionBuilder:
             )
 
         fig1 = plt.figure()
-        sns.kdeplot(transcript_count)
-        plt.xlabel("Total count per transcript")
+        sns.kdeplot(mean_transcript_count)
+        plt.xlabel("Count per transcript (average / cells)")
 
         fig2 = plt.figure()
         sns.kdeplot(self.sdata.table.X.sum(1).A1)

@@ -21,7 +21,7 @@ class SopaKeys:
 
 VALID_DIMENSIONS = ("c", "y", "x")
 MIN_INTENSITY_RATIO = 0.05
-LOW_AVERAGE_COUNT = 0.5
+LOW_AVERAGE_COUNT = 0.1
 
 
 class ROI:
