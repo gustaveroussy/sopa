@@ -1,3 +1,5 @@
+import logging
+
 import matplotlib.pyplot as plt
 import scanpy as sc
 import seaborn as sns
@@ -16,16 +18,18 @@ from .engine import (
     Image,
     Message,
     Paragraph,
-    ProgressBar,
     Root,
     Section,
     SubSection,
 )
 
+log = logging.getLogger(__name__)
+
 
 def write_report(path: str, sdata: SpatialData):
     sections = SectionBuilder(sdata).compute_sections()
 
+    log.info(f"Writing report to {path}")
     Root(sections).write(path)
 
 
@@ -155,6 +159,7 @@ class SectionBuilder:
 
         colors = self._table_has(SopaKeys.UNS_CELL_TYPES, None)
 
+        log.info("Computing UMAP")
         sc.pl.umap(adata, color=colors, show=False)
         fig = plt.gcf()
 

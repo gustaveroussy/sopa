@@ -2,7 +2,6 @@ import base64
 from io import BytesIO
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.figure import Figure
 
