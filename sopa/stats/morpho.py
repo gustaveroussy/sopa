@@ -16,8 +16,8 @@ def triangle_area(adata: AnnData, i: int, j: int, k: int) -> float:
     return np.abs((coordinates[:, 0] * dy).sum()) / 2
 
 
-def _component_morphology(adata_niche: AnnData) -> list[float]:
-    dist = adata_niche.obsp["spatial_distances"]
+def _component_morphology(adata_component: AnnData) -> list[float]:
+    dist = adata_component.obsp["spatial_distances"]
 
     to_visit = {0}
     visited = set()
@@ -43,17 +43,15 @@ def _component_morphology(adata_niche: AnnData) -> list[float]:
         to_visit |= set(nghs) - visited
 
     perimeter = sum(dist[i, j] for (i, j), count in triangle_counter.items() if count == 6)
-    area = sum(triangle_area(adata_niche, *indices) for indices in triangles)
+    area = sum(triangle_area(adata_component, *indices) for indices in triangles)
     roundness = 4 * np.pi * area / perimeter**2
 
-    return [perimeter, area, roundness]
+    return {"perimeter": perimeter, "area": area, "roundness": roundness}
 
 
 def morphology(
     adata: AnnData, domain_key: str, domain_id: str, min_component_size: int = 20
 ) -> pd.DataFrame:
-    GEO_SERIES_INDEX = ["perimeter", "area", "roundness", "count"]
-
     mask = adata.obs[domain_key] == domain_id
     subgraph = adata.obsp["spatial_connectivities"][mask][:, mask]
     n_components, component_labels = connected_components(subgraph, directed=False)
@@ -70,12 +68,12 @@ def morphology(
             geo_stats.append(_component_morphology(adata_))
 
     if geo_stats:
-        geo_stats = np.array(geo_stats).mean(0)
-        res = pd.Series(list(geo_stats) + [component_counts])
+        res = pd.concat([pd.Series(d) for d in geo_stats], axis=1).mean(1)
+        res["count"] = component_counts
     else:
         res = pd.Series([np.nan, np.nan, np.nan, np.nan])
+        res.index = ["perimeter", "area", "roundness", "count"]
 
-    res.index = GEO_SERIES_INDEX
     res.name = domain_id
     return res
 
