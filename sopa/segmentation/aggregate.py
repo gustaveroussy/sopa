@@ -222,28 +222,30 @@ def count_transcripts(
 
 def _add_coo(
     adata: AnnData,
-    polygons: list[Polygon],
+    cells: list[Polygon],
     partition: pd.DataFrame,
     gene_column: list[str],
     gene_names: list[str],
 ) -> None:
-    indices = _get_cell_id(polygons, partition, na_cells=-1)
-    in_cells = indices >= 0
+    cells_indices, points_indices = _get_cell_id(cells, partition, return_query=True)
 
-    row_indices = indices[in_cells]
-    column_indices = partition[in_cells][gene_column].cat.codes.values
+    column_indices = partition.iloc[points_indices][gene_column].cat.codes.values
 
     adata.X += coo_matrix(
-        (np.full(len(row_indices), 1), (row_indices, column_indices)),
-        shape=(len(polygons), len(gene_names)),
+        (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
+        shape=(len(cells), len(gene_names)),
     )
 
 
-def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame, na_cells: int = 0) -> np.ndarray:
+def _get_cell_id(
+    polygons: list[Polygon], partition: pd.DataFrame, return_query: bool = False, na_cells: int = 0
+) -> np.ndarray:
     points = partition[["x", "y"]].apply(Point, axis=1)
     tree = shapely.STRtree(points)
 
-    polygon_indices, points_indices = tree.query(polygons, predicate="contains")
+    polygon_indices, points_indices = tree.query(polygons, predicate="intersects")
+    if return_query:
+        return polygon_indices, points_indices
 
     unique_values, indices = np.unique(points_indices, return_index=True)
     cell_id = np.full(len(points), na_cells, dtype=int)

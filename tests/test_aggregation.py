@@ -36,7 +36,7 @@ def test_get_cell_id():
 
     cell_id = aggregate._get_cell_id(polygons, df)
 
-    assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 0]
+    assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 1]
 
 
 def test_count_transcripts():
@@ -55,6 +55,6 @@ def test_count_transcripts():
     ]
 
     adata = aggregate._count_transcripts_geometries(polygons, points, "gene")
-    expected = np.array([[0, 2, 0], [1, 0, 0], [1, 0, 1]])
+    expected = np.array([[0, 3, 1], [2, 0, 1], [2, 3, 1]])
 
     assert (adata.X.toarray() == expected).all()
