@@ -51,10 +51,14 @@ def solve_conflicts(
     return unique_cells
 
 
-def expand(cells: list[Polygon], expand_radius: float) -> list[Polygon]:
+def expand_one(cell: Polygon, expand_radius: float) -> Polygon:
     if expand_radius == 0:
-        return cells
-    return [cell.buffer(expand_radius) for cell in cells]
+        return cell
+    return cell.buffer(expand_radius)
+
+
+def expand(cells: list[Polygon], expand_radius: float) -> list[Polygon]:
+    return [expand_one(cell, expand_radius) for cell in cells]
 
 
 def smooth(cell: Polygon, dist: float, tolerance: float) -> Polygon:
@@ -72,10 +76,14 @@ def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
     if isinstance(cell, Polygon):
         return cell
 
-    log.warn(
-        f"""Geometry is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
-    )
-    return max(cell.geoms, key=lambda polygon: polygon.area)
+    if isinstance(cell, MultiPolygon):
+        log.warn(
+            f"""Geometry is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
+        )
+        return max(cell.geoms, key=lambda polygon: polygon.area)
+
+    log.warn(f"Invalid Polygon type: {type(cell)}. It will not be kept")
+    return None
 
 
 def _geometrize_cell(

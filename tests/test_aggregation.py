@@ -1,8 +1,9 @@
 import dask.array as da
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from shapely.geometry import box
+from shapely.geometry import Polygon, box
 
 from sopa.segmentation import aggregate
 
@@ -36,3 +37,24 @@ def test_get_cell_id():
     cell_id = aggregate._get_cell_id(polygons, df)
 
     assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 0]
+
+
+def test_count_transcripts():
+    df_pandas = pd.DataFrame(
+        {
+            "x": [1, 2, 3, 7, 11, 1, 2, 2],
+            "y": [1, 1, 2, 8, 0, 2, 3, 3],
+            "gene": ["a", "a", "b", "c", "a", "c", "b", "b"],
+        }
+    )
+    points = dd.from_pandas(df_pandas, npartitions=2)
+    polygons = [
+        Polygon(((1, 2), (3, 2), (3, 4), (1, 4))),
+        Polygon(((0, 0), (2, 0), (2, 2), (0, 2))),
+        Polygon(((0, 0), (3, 0), (3, 3), (0, 3))),
+    ]
+
+    adata = aggregate._count_transcripts_geometries(polygons, points, "gene")
+    expected = np.array([[0, 2, 0], [1, 0, 0], [1, 0, 1]])
+
+    assert (adata.X.toarray() == expected).all()

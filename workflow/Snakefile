@@ -23,7 +23,7 @@ rule to_spatialdata:
     output:
         paths.sdata_zgroup if paths.data_path else [],
     conda:
-        "spatial"
+        "sopa"
     resources:
         mem_mb=128_000,
     params:
@@ -42,7 +42,7 @@ checkpoint patchify_cellpose:
     params:
         args_patchify = str(args["patchify"].where(contains="pixel")),
     conda:
-        "spatial"
+        "sopa"
     shell:
         """
         sopa patchify cellpose {paths.sdata_path} {params.args_patchify}
@@ -60,7 +60,7 @@ checkpoint patchify_baysor:
         args_baysor = args.dump_baysor_patchify() if args.baysor else "",
         arg_prior = "--use-prior" if args.cellpose else ""
     conda:
-        "spatial"
+        "sopa"
     shell:
         """
         sopa patchify baysor {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
@@ -73,7 +73,7 @@ rule patch_segmentation_cellpose:
     output:
         f"{paths.cellpose_temp_dir}/{{index}}.zarr.zip",
     conda:
-        "spatial"
+        "sopa"
     params:
         args_cellpose = str(args["segmentation"]["cellpose"]),
     shell:
@@ -114,7 +114,7 @@ rule resolve_cellpose:
     output:
         touch(paths.smk_cellpose_boundaries),
     conda:
-        "spatial"
+        "sopa"
     params:
         args_expand_radius = args.expand_radius,
     shell:
@@ -130,7 +130,7 @@ rule resolve_baysor:
         touch(paths.smk_baysor_boundaries),
         touch(paths.smk_table)
     conda:
-        "spatial"
+        "sopa"
     params:
         args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
         args_shapes = str(args["shapes"]),
@@ -145,7 +145,7 @@ rule aggregate:
     output:
         touch(paths.smk_aggregation),
     conda:
-        "spatial"
+        "sopa"
     params:
         args_aggregate = str(args["aggregate"]),
     shell:
@@ -159,7 +159,7 @@ rule annotate:
     output:
         directory(paths.annotations),
     conda:
-        "spatial"
+        "sopa"
     resources:
         partition="gpgpuq" if args['annotation']['method'] == "tangram" else "shortq",
         gpu="a100:1" if args['annotation']['method'] == "tangram" else 0,
@@ -177,7 +177,7 @@ rule image_write:
     output:
         paths.explorer_image,
     conda:
-        "spatial"
+        "sopa"
     resources:
         mem_mb=64_000,
     params:
@@ -195,7 +195,7 @@ rule report:
     output:
         paths.report,
     conda:
-        "spatial"
+        "sopa"
     shell:
         """
         sopa report {paths.sdata_path} {paths.report}
@@ -209,7 +209,7 @@ rule explorer:
     output:
         paths.explorer_experiment,
     conda:
-        "spatial"
+        "sopa"
     params:
         args_explorer = str(args["explorer"]),
     shell:

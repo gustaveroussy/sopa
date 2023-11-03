@@ -41,12 +41,15 @@ def read_baysor(
         cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
     ]
 
-    cells: list[Polygon] = [shape(polygons_dict[cell_num]) for cell_num in cells_num]
+    gdf = gpd.GeoDataFrame(
+        index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num]
+    )
 
-    cells = [shapes._ensure_polygon(make_valid(cell)) for cell in cells]
-    cells = shapes.expand(cells, expand_radius)
+    gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(make_valid(cell)))
+    gdf = gdf[~gdf.geometry.isna()]
+    gdf.geometry = gdf.geometry.map(lambda cell: shapes.expand_one(cell, expand_radius))
 
-    return cells, adata[cells_num.index].copy()
+    return gdf.geometry.values, adata[gdf.index].copy()
 
 
 def read_all_baysor_patches(
@@ -119,7 +122,7 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
-        table_conflicts = aggregate.aggregate_points(sdata, gene_column)
+        table_conflicts = aggregate.count_transcripts(sdata, gene_column, geo_df=geo_df_new)
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 

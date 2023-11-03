@@ -79,19 +79,19 @@ class Aggregator:
         min_transcripts: int,
         min_intensity_ratio: float,
     ):
-        count_transcripts = self.table is not None or gene_column is not None
+        does_count = self.table is not None or gene_column is not None
 
         assert (
-            average_intensities or count_transcripts
+            average_intensities or does_count
         ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
 
         if gene_column is not None:
             if self.table is not None:
                 log.warn("sdata.table is already existing. Transcripts are not count.")
             else:
-                self.table = aggregate_points(self.sdata, gene_column, shapes_key=self.shapes_key)
+                self.table = count_transcripts(self.sdata, gene_column, shapes_key=self.shapes_key)
 
-        if count_transcripts and min_transcripts > 0:
+        if does_count and min_transcripts > 0:
             self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
         if average_intensities:
@@ -104,7 +104,7 @@ class Aggregator:
                 self.filter_cells(where_filter)
                 mean_intensities = mean_intensities[~where_filter]
 
-            if not count_transcripts:
+            if not does_count:
                 self.table = AnnData(
                     mean_intensities,
                     dtype=mean_intensities.dtype,
@@ -120,7 +120,7 @@ class Aggregator:
 
         self.table.uns["sopa_attrs"] = {
             "version": sopa.__version__,
-            "transcripts": count_transcripts,
+            "transcripts": does_count,
             "intensities": average_intensities,
         }
 
@@ -182,7 +182,7 @@ def average_channels(
     return _average_channels_geometries(image, cells)
 
 
-def _aggregate_points_geometries(
+def _count_transcripts_geometries(
     polygons: list[Polygon], points: dd.DataFrame, value_key: str
 ) -> AnnData:
     points[value_key] = points[value_key].astype("category").cat.as_known()
@@ -193,28 +193,39 @@ def _aggregate_points_geometries(
 
     with ProgressBar():
         points.map_partitions(
-            partial(_add_coo, adata, polygons, gene_column=value_key), meta=()
+            partial(_add_coo, adata, polygons, gene_column=value_key, gene_names=gene_names),
+            meta=(),
         ).compute()
 
     adata.X = adata.X.tocsr()
     return adata
 
 
-def aggregate_points(
-    sdata: SpatialData, gene_column: str, shapes_key: str = None, points_key: str = None
+def count_transcripts(
+    sdata: SpatialData,
+    gene_column: str,
+    shapes_key: str = None,
+    points_key: str = None,
+    geo_df: gpd.GeoDataFrame = None,
 ) -> AnnData:
     points_key, points = get_item(sdata, "points", points_key)
 
-    geo_df = get_element(sdata, "shapes", shapes_key)
-    geo_df = to_intrinsic(sdata, geo_df, points_key)
+    if geo_df is None:
+        geo_df = get_element(sdata, "shapes", shapes_key)
+        geo_df = to_intrinsic(sdata, geo_df, points_key)
+
     cells = list(geo_df.geometry)
 
     log.info(f"Aggregating transcripts over {len(cells)} cells")
-    return _aggregate_points_geometries(cells, points, gene_column)
+    return _count_transcripts_geometries(cells, points, gene_column)
 
 
 def _add_coo(
-    adata: AnnData, polygons: list[Polygon], partition: pd.DataFrame, gene_column: str
+    adata: AnnData,
+    polygons: list[Polygon],
+    partition: pd.DataFrame,
+    gene_column: list[str],
+    gene_names: list[str],
 ) -> None:
     indices = _get_cell_id(polygons, partition, na_cells=-1)
     in_cells = indices >= 0
@@ -224,7 +235,7 @@ def _add_coo(
 
     adata.X += coo_matrix(
         (np.full(len(row_indices), 1), (row_indices, column_indices)),
-        shape=(len(polygons), len(gene_column)),
+        shape=(len(polygons), len(gene_names)),
     )
 
 
