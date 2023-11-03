@@ -17,7 +17,7 @@ from spatialdata.transformations import get_transformation
 
 from .._constants import ROI, SopaFiles, SopaKeys
 from .._sdata import get_spatial_image, to_intrinsic
-from .aggregate import map_transcript_to_cell
+from .aggregate import _map_transcript_to_cell
 
 log = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ class BaysorPatches:
 
         if use_prior:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
-            map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
+            _map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
 
         self._clean_directory()
 

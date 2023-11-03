@@ -9,6 +9,8 @@ import pandas as pd
 import shapely
 import shapely.affinity
 from anndata import AnnData
+from dask.diagnostics import ProgressBar
+from scipy.sparse import coo_matrix
 from shapely.geometry import Point, Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
@@ -19,9 +21,8 @@ import sopa
 from .._constants import SopaKeys
 from .._sdata import (
     get_boundaries,
-    get_intrinsic_cs,
+    get_element,
     get_item,
-    get_key,
     get_spatial_image,
     to_intrinsic,
 )
@@ -39,12 +40,6 @@ class Aggregator:
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
 
         self.table = sdata.table
-
-    def average_channels(self) -> np.ndarray:
-        geo_df = to_intrinsic(self.sdata, self.geo_df, self.image)
-        cells = list(geo_df.geometry)
-
-        return _average_channels(self.image, cells)
 
     def standardize_table(self):
         self.table.obsm["spatial"] = np.array(
@@ -91,23 +86,16 @@ class Aggregator:
         ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
 
         if gene_column is not None:
-            log.info(f"Aggregating transcripts over {len(self.geo_df)} cells")
-            points_key = get_key(self.sdata, "points")
-
-            self.table = self.sdata.aggregate(
-                values=points_key,
-                by=self.shapes_key,
-                value_key=gene_column,
-                agg_func="count",
-                target_coordinate_system=get_intrinsic_cs(self.sdata, points_key),
-            ).table
+            if self.table is not None:
+                log.warn("sdata.table is already existing. Transcripts are not count.")
+            else:
+                self.table = aggregate_points(self.sdata, gene_column, shapes_key=self.shapes_key)
 
         if count_transcripts and min_transcripts > 0:
             self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
         if average_intensities:
-            log.info(f"Averaging channels intensity over {len(self.geo_df)} cells")
-            mean_intensities = self.average_channels()
+            mean_intensities = average_channels(self.sdata, shapes_key=self.shapes_key)
 
             if min_intensity_ratio > 0:
                 means = mean_intensities.mean(axis=1)
@@ -144,7 +132,7 @@ class Aggregator:
         self.sdata.table = self.table
 
 
-def _average_channels(image: SpatialImage, cells: list[Polygon]):
+def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
     tree = shapely.STRtree(cells)
 
     intensities = np.zeros((len(cells), len(image.coords["c"])))
@@ -180,20 +168,81 @@ def _average_channels(image: SpatialImage, cells: list[Polygon]):
     return intensities / areas[:, None].clip(1)
 
 
-def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame) -> np.ndarray:
+def average_channels(
+    sdata: SpatialData, image_key: str = None, shapes_key: str = None
+) -> np.ndarray:
+    image = get_spatial_image(sdata, image_key)
+
+    geo_df = get_element(sdata, "shapes", shapes_key)
+    geo_df = to_intrinsic(sdata, geo_df, image)
+
+    cells = list(geo_df.geometry)
+
+    log.info(f"Averaging channels intensity over {len(cells)} cells")
+    return _average_channels_geometries(image, cells)
+
+
+def _aggregate_points_geometries(
+    polygons: list[Polygon], points: dd.DataFrame, value_key: str
+) -> AnnData:
+    points[value_key] = points[value_key].astype("category").cat.as_known()
+    gene_names = points[value_key].cat.categories
+
+    X = coo_matrix((len(polygons), len(gene_names)), dtype=int)
+    adata = AnnData(X=X, var=pd.DataFrame(index=gene_names))
+
+    with ProgressBar():
+        points.map_partitions(
+            partial(_add_coo, adata, polygons, gene_column=value_key), meta=()
+        ).compute()
+
+    adata.X = adata.X.tocsr()
+    return adata
+
+
+def aggregate_points(
+    sdata: SpatialData, gene_column: str, shapes_key: str = None, points_key: str = None
+) -> AnnData:
+    points_key, points = get_item(sdata, "points", points_key)
+
+    geo_df = get_element(sdata, "shapes", shapes_key)
+    geo_df = to_intrinsic(sdata, geo_df, points_key)
+    cells = list(geo_df.geometry)
+
+    log.info(f"Aggregating transcripts over {len(cells)} cells")
+    return _aggregate_points_geometries(cells, points, gene_column)
+
+
+def _add_coo(
+    adata: AnnData, polygons: list[Polygon], partition: pd.DataFrame, gene_column: str
+) -> None:
+    indices = _get_cell_id(polygons, partition, na_cells=-1)
+    in_cells = indices >= 0
+
+    row_indices = indices[in_cells]
+    column_indices = partition[in_cells][gene_column].cat.codes.values
+
+    adata.X += coo_matrix(
+        (np.full(len(row_indices), 1), (row_indices, column_indices)),
+        shape=(len(polygons), len(gene_column)),
+    )
+
+
+def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame, na_cells: int = 0) -> np.ndarray:
     points = partition[["x", "y"]].apply(Point, axis=1)
     tree = shapely.STRtree(points)
 
     polygon_indices, points_indices = tree.query(polygons, predicate="contains")
 
     unique_values, indices = np.unique(points_indices, return_index=True)
-    cell_id = np.zeros(len(points), dtype=int)
-    cell_id[unique_values] = 1 + polygon_indices[indices]
+    cell_id = np.full(len(points), na_cells, dtype=int)
+
+    cell_id[unique_values] = polygon_indices[indices] + 1 + na_cells
 
     return cell_id
 
 
-def map_transcript_to_cell(
+def _map_transcript_to_cell(
     sdata: SpatialData,
     cell_key: str,
     df: dd.DataFrame | None = None,

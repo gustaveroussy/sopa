@@ -15,8 +15,8 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from ..._constants import SopaKeys
-from ..._sdata import get_intrinsic_cs, get_item, get_key
-from .. import shapes
+from ..._sdata import get_element, get_key
+from .. import aggregate, shapes
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ def resolve(
     geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")
-    points_key, points = get_item(sdata, "points")
+    points = get_element(sdata, "points")
     transformations = get_transformation(points, get_all=True)
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
@@ -119,16 +119,9 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
-        table_conflicts = sdata.aggregate(
-            values=points_key,
-            by=geo_df_new,
-            value_key=gene_column,
-            agg_func="count",
-            target_coordinate_system=get_intrinsic_cs(sdata, points_key),
-        ).table
+        table_conflicts = aggregate.aggregate_points(sdata, gene_column)
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
-        log.info("Done")
 
     valid_ids = set(list(geo_df.index))
     table = anndata.concat(
