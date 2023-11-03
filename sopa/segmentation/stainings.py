@@ -8,7 +8,7 @@ from shapely.geometry import Polygon, box
 from spatialdata import SpatialData
 from tqdm import tqdm
 
-from .._constants import MIN_INTENSITY_RATIO, SopaKeys
+from .._constants import SopaKeys
 from .._sdata import get_spatial_image
 from . import shapes
 from .patching import Patches2D

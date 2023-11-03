@@ -7,7 +7,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import shapely
-import shapely.affinity
 from anndata import AnnData
 from dask.diagnostics import ProgressBar
 from scipy.sparse import coo_matrix

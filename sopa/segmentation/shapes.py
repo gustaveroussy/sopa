@@ -2,10 +2,9 @@ import logging
 from math import ceil, floor
 
 import numpy as np
-import pandas as pd
 import shapely
 import shapely.affinity
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import MultiPolygon, Polygon
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
