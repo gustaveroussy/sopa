@@ -210,6 +210,8 @@ rule explorer:
         paths.explorer_experiment,
     conda:
         "sopa"
+    resources:
+        mem_mb=64_000,
     params:
         args_explorer = str(args["explorer"]),
     shell:
