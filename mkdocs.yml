@@ -7,6 +7,7 @@ theme:
   favicon: assets/sopa_favicon.png
 nav:
   - Home: index.md
+  - CLI: cli.md
 plugins:
   - search
 markdown_extensions:
@@ -23,5 +24,10 @@ markdown_extensions:
       generic: true
   - pymdownx.tabbed:
       alternate_style: true
+extra_css:
+  - css/termynal.css
+  - css/custom.css
 extra_javascript:
-  - javascripts/mathjax.js
+  - js/mathjax.js
+  - js/termynal.js
+  - js/custom.js
