@@ -35,7 +35,13 @@ def reference(reference_path: str, cell_type_key: str = "cell_type"):
 
     log = logging.getLogger(__name__)
 
-    adata = anndata.read(reference_path)
+    try:
+        adata = anndata.read_h5ad(reference_path)
+    except:
+        log.warn(
+            f"scRNAseq reference at '{reference_path}' could't be read. Make sure that the file exist and that it can be open by `anndata.read_h5ad`"
+        )
+        return
 
     MIN_GENES = 100
     MIN_CELLS = 1_000
@@ -72,6 +78,44 @@ def reference(reference_path: str, cell_type_key: str = "cell_type"):
     log.info("Reference sanity check completed")
 
 
+def _get(config, *args):
+    for arg in args:
+        if not arg in config:
+            return False
+        config = config[arg]
+    return config
+
+
+def _check_dict(config: dict, d: dict, log, prefix: str = "config"):
+    for key, values in d.items():
+        if not key in config:
+            log.warn(f"Required config key {prefix}['{key}'] not found")
+        elif isinstance(values, dict):
+            _check_dict(config[key], values, log, f"{prefix}['{key}']")
+        elif isinstance(values, list):
+            for element in values:
+                if isinstance(element, str) and element in config[key]:
+                    break
+                if all(x in config[key] for x in element):
+                    break
+            else:
+                display = "\n  - ".join(
+                    element if isinstance(element, str) else " AND ".join(element)
+                    for element in values
+                )
+                log.warn(f"One of these element must be in {prefix}['{key}']:\n  - {display}")
+
+
+CONFIG_REQUIREMENTS = {
+    "read": ["technology"],
+    "patchify": [
+        ["patch_width_pixel", "patch_overlap_pixel"],
+        ["patch_width_microns", "patch_overlap_microns"],
+    ],
+    "segmentation": ["cellpose", "baysor"],
+}
+
+
 @app_check.command()
 def config(path: str):
     """Perform sanity checks on a sopa yaml config
@@ -85,16 +129,14 @@ def config(path: str):
 
     config = _open_config(path)
 
-    REQUIRED_KEYS = ["read", "patchify", "segmentation", "aggregate"]
+    _check_dict(config, CONFIG_REQUIREMENTS, log)
 
-    for key in REQUIRED_KEYS:
-        if not key in config:
-            log.warn(f"Key '{key}' is missing from the config")
-        elif not isinstance(config[key], dict):
-            log.warn(
-                f"config['{key}'] must be a dictionary (i.e. YAML indentation). But found {type(config[key])}"
-            )
+    if _get(config, "annotation", "method") == "tangram":
+        sc_reference_path = _get(config, "annotation", "args", "sc_reference_path")
+        if not sc_reference_path:
+            log.warn("Tangram used but no config['annotation']['args']['sc_reference_path'] found")
+        else:
+            cell_type_key = _get(config, "annotation", "args", "cell_type_key") or "cell_type"
+            reference(sc_reference_path, cell_type_key=cell_type_key)
 
-    # TODO: more complete check
-
-    log.info("Config sanity check completed")
+    log.info("Minimal config sanity check completed")

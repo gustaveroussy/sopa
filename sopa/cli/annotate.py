@@ -59,7 +59,7 @@ def tangram(
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
-    adata_sc = anndata.read(sc_reference_path)
+    adata_sc = anndata.read_h5ad(sc_reference_path)
 
     tangram_annotate(
         sdata,
