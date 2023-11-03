@@ -42,8 +42,6 @@ shapes:
   min_area: 20
 
 aggregate:
-  average_intensities: true
-  #gene_column: ""
 
 annotation:
   method: tangram

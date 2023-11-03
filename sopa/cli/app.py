@@ -129,7 +129,7 @@ def crop(
 def aggregate(
     sdata_path: str,
     gene_column: str = None,
-    average_intensities: bool = True,
+    average_intensities: bool = False,
     min_transcripts: int = 0,
     min_intensity_ratio: float = 0,
 ):
