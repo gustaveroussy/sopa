@@ -21,14 +21,18 @@ def _try_get_boundaries(
 
 
 def get_boundaries(
-    sdata: SpatialData, return_key: bool = False
+    sdata: SpatialData, return_key: bool = False, warn: bool = False
 ) -> gpd.GeoDataFrame | tuple[str, gpd.GeoDataFrame] | None:
     for shapes_key in [SopaKeys.BAYSOR_BOUNDARIES, SopaKeys.CELLPOSE_BOUNDARIES]:
         res = _try_get_boundaries(sdata, shapes_key, return_key)
         if res is not None:
             return res
 
-    raise ValueError("sdata object has no cellpose boundaries and no baysor boundaries")
+    error_message = "sdata object has no cellpose boundaries and no baysor boundaries"
+
+    if not warn:
+        raise ValueError(error_message)
+    log.warn(error_message)
 
 
 def get_intrinsic_cs(

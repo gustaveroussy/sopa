@@ -30,8 +30,9 @@ def write_explorer(
     path: str,
     sdata: SpatialData,
     image_key: str | None = None,
-    gene_column: str | None = None,
+    shapes_key: str | None = None,
     points_key: str | None = None,
+    gene_column: str | None = None,
     layer: str | None = None,
     polygon_max_vertices: int = 13,
     lazy: bool = True,
@@ -51,6 +52,9 @@ def write_explorer(
         gene_column: Column name of the points dataframe containing the gene names.
         layer: Layer of `sdata.table` where the gene counts are saved. If `None`, uses `sdata.table.X`.
         polygon_max_vertices: Maximum number of vertices for the cell polygons.
+        lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).
+        ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
+        save_image_mode: `1` is normal mode. `0` doesn't save the image. `2` saves **only** the image.
     """
     path: Path = Path(path)
     _check_explorer_directory(path)
@@ -71,10 +75,13 @@ def write_explorer(
 
         write_gene_counts(path, adata, layer=layer)
         write_cell_categories(path, adata)
-    else:
-        shapes_key, geo_df = get_boundaries(sdata, return_key=True)
 
     ### Saving cell boundaries
+    if shapes_key is None:
+        shapes_key, geo_df = get_boundaries(sdata, return_key=True, warn=True)
+    else:
+        geo_df = sdata[shapes_key]
+
     if geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image_key)
         write_polygons(path, geo_df.geometry, polygon_max_vertices)

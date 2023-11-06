@@ -175,6 +175,7 @@ def explorer(
     sdata_path: str,
     path: str,
     gene_column: str = None,
+    shapes_key: str = None,
     lazy: bool = True,
     ram_threshold_gb: int = None,
     save_image_mode: int = 1,
@@ -184,7 +185,11 @@ def explorer(
     Args:\n
         sdata_path: Path to the SpatialData zarr directory\n
         path: Path to a directory where Xenium Explorer's outputs will be saved\n
-        shapes_key: Key for the boundaries\n
+        shapes_key: Key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries.\n
+        gene_column: Column name of the points dataframe containing the gene names.\n
+        lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).\n
+        ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.\n
+        save_image_mode: `1` is normal mode. `0` doesn't save the image. `2` saves **only** the image.\n
     """
     from sopa.io.explorer import write_explorer
     from sopa.io.standardize import read_zarr_standardized
@@ -193,6 +198,7 @@ def explorer(
     write_explorer(
         path,
         sdata,
+        shapes_key=shapes_key,
         gene_column=gene_column,
         lazy=lazy,
         ram_threshold_gb=ram_threshold_gb,

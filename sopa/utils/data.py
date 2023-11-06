@@ -1,8 +1,79 @@
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
+from scipy.ndimage import gaussian_filter
+from shapely.geometry import Point, box
 from spatialdata import SpatialData
 from spatialdata.datasets import BlobsDataset
+from spatialdata.models import Image2DModel, PointsModel, ShapesModel
+
+
+def uniform(
+    length: int = 2_048,
+    cell_density: float = 0.08,
+    n_points_per_cell: int = 50,
+    n_genes: int = 5,
+    c_coords: list[str] = ["DAPI", "CK", "CD20", "CD68"],
+    sigma_factor: float = 0.4,
+) -> SpatialData:
+    """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
+
+    Args:
+        length: Size of the square, in pixels
+        cell_density: Density of cells per pixel^2
+        n_points_per_cell: Mean number of transcripts per cell
+        n_genes: Number of gene names
+        c_coords: Channel names
+        sigma_factor: Factor used to determine `sigma` for the gaussian blur.
+
+    Returns:
+        A SpatialData object with a 2D image, the cells polygon boundaries, and the transcripts
+    """
+    grid_width = int(length * cell_density)
+    dx = length / grid_width
+    sigma = dx * sigma_factor
+    n_cells = grid_width**2
+    n_points = n_points_per_cell * n_cells
+
+    # Compute cell vertices (xy array)
+    vertices_x = dx / 2 + np.arange(grid_width) * dx
+    x, y = np.meshgrid(vertices_x, vertices_x)
+    xy = np.stack([x.ravel(), y.ravel()], axis=1)
+    xy += np.random.uniform(-dx / 2, dx / 2, size=xy.shape)
+    xy = xy.clip(0, length - 1).astype(int)
+
+    # Create image
+    image = np.zeros((4, length, length))
+    image[0, xy[:, 1], xy[:, 0]] += 1
+    if len(c_coords) > 1:
+        image[np.random.randint(1, len(c_coords), len(xy)), xy[:, 1], xy[:, 0]] += 1
+    image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
+    image = (image / image.max() * 255).astype(np.uint8)
+
+    # Create cell boundaries
+    cells = [Point(vertex).buffer(sigma).simplify(tolerance=1) for vertex in xy]
+    bbox = box(0, 0, length - 1, length - 1)
+    cells = [cell.intersection(bbox) for cell in cells]
+    gdf = gpd.GeoDataFrame(geometry=cells)
+
+    # Create transcripts
+    point_cell_index = np.random.randint(0, n_cells, n_points)
+    points_coords = sigma / 2 * np.random.randn(n_points, 2) + xy[point_cell_index]
+    points_coords = points_coords.clip(0, length - 1)
+    df = pd.DataFrame(
+        {
+            "x": points_coords[:, 0],
+            "y": points_coords[:, 1],
+            "gene": np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_points),
+        }
+    )
+
+    return SpatialData(
+        images={"image": Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])},
+        points={"transcripts": PointsModel.parse(df)},
+        shapes={"cells": ShapesModel.parse(gdf)},
+    )
 
 
 def blobs(
@@ -12,6 +83,7 @@ def blobs(
     c_coords=["DAPI", "CD3", "EPCAM", "CD20"],
     **kwargs,
 ) -> SpatialData:
+    """Adapts the blobs dataset from SpatialData for sopa. Please refer to the SpatialData documentation"""
     _blobs = BlobsDataset(
         length=length, n_points=n_points, c_coords=c_coords, n_channels=len(c_coords), **kwargs
     )
