@@ -155,7 +155,7 @@ rule aggregate:
 
 rule annotate:
     input:
-        paths.smk_table if not args.aggregate else paths.smk_aggregation,
+        paths.smk_aggregation,
     output:
         directory(paths.annotations),
     conda:
@@ -190,7 +190,7 @@ rule image_write:
 rule report:
     input:
         paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
-        paths.smk_aggregation if args.aggregate else paths.smk_table,
+        paths.smk_aggregation,
         paths.annotations if args.annotate else [],
     output:
         paths.report,
@@ -204,7 +204,7 @@ rule report:
 rule explorer:
     input:
         paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
-        paths.smk_aggregation if args.aggregate else paths.smk_table,
+        paths.smk_aggregation,
         paths.annotations if args.annotate else [],
     output:
         paths.explorer_experiment,

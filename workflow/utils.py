@@ -99,7 +99,6 @@ class Args:
         self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
         self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
         self.annotate = ConfigConstants.ANNOTATION in self.config
-        self.aggregate = "aggregate" in self.config
 
     def __getitem__(self, name):
         subconfig = self.config.get(name, {})
