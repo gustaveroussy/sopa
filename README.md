@@ -43,18 +43,20 @@ Sopa comes with three different flavors, each corresponding to a different use c
 
 ### Snakemake pipeline
 
-Clone our repository, choose a config (or create your own), and execute our pipeline locally or on a high-performance cluster:
+Clone our repository, choose a config [here](TODO) (or create your own), and execute our pipeline locally or on a high-performance cluster:
 ```bash
 git clone https://github.com/gustaveroussy/sopa.git
 cd sopa/workflow
 snakemake --configfile=/path/to/yaml_config --config data_path=/path/to/data_directory
 ```
 
+For more details on `snakemake` configuration and how to properly setup your environments, please refer to the [documentation](TODO).
+
 ### CLI
 
 ```bash
 # Example
-> sopa --help # show command line commands and arguments
+> sopa --help # show commands names and arguments
 > sopa read merscope_directory --technology merscope # read some data
 > sopa patchify merscope_directory.zarr # make patches for low-memory segmentation
 > sopa segmentation cellpose merscope_directory.zarr --diameter 60 --channels DAPI # segmentation
@@ -63,17 +65,17 @@ snakemake --configfile=/path/to/yaml_config --config data_path=/path/to/data_dir
 > sopa explorer merscope_directory.zarr merscope_directory.explorer # convert for interactive viz
 ```
 
-For a full description of the API, please refer to the documentation.
+For a full description of the API, please refer to the [documentation](TODO).
 
 ### API
 
 ```python
 import sopa
 
-# use sopa package
+# use the 'sopa' package
 ```
 
-For a full description of the API, please refer to the documentation.
+For a full description of the API, please refer to the [documentation](TODO).
 
 # Cite us
 Our article is not published yet. In the meantime, you can cite our **preprint**: TODO
