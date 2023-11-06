@@ -16,6 +16,7 @@ def uniform(
     n_genes: int = 5,
     c_coords: list[str] = ["DAPI", "CK", "CD20", "CD68"],
     sigma_factor: float = 0.4,
+    seed: int = 0,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -30,6 +31,8 @@ def uniform(
     Returns:
         A SpatialData object with a 2D image, the cells polygon boundaries, and the transcripts
     """
+    np.random.seed(seed)
+
     grid_width = int(length * cell_density)
     dx = length / grid_width
     sigma = dx * sigma_factor
@@ -42,6 +45,8 @@ def uniform(
     xy = np.stack([x.ravel(), y.ravel()], axis=1)
     xy += np.random.uniform(-dx / 2, dx / 2, size=xy.shape)
     xy = xy.clip(0, length - 1).astype(int)
+
+    vertices = pd.DataFrame(xy, columns=["x", "y"])
 
     # Create image
     image = np.zeros((4, length, length))
@@ -71,9 +76,34 @@ def uniform(
 
     return SpatialData(
         images={"image": Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])},
-        points={"transcripts": PointsModel.parse(df)},
+        points={"transcripts": PointsModel.parse(df), "vertices": PointsModel.parse(vertices)},
         shapes={"cells": ShapesModel.parse(gdf)},
     )
+
+
+def _to_mask(length: int, xy: list[tuple[int, int]], sigma: float):
+    radius = int(sigma)
+    circle_size = 2 * radius + 1
+    circle = np.zeros((circle_size, circle_size), dtype=np.uint8)
+
+    circle_y, circle_y = np.meshgrid(np.arange(circle_size), np.arange(circle_size))
+    distance = np.sqrt((circle_y - radius) ** 2 + (circle_y - radius) ** 2)
+    circle[distance <= radius] = 1
+
+    mask = np.zeros((length, length))
+    where = np.stack(np.where(circle), axis=1) - radius
+
+    for i, (x, y) in enumerate(xy):
+        where_i = where + np.array([y, x])
+        where_i = where_i[
+            (where_i[:, 0] >= 0)
+            & (where_i[:, 1] >= 0)
+            & (where_i[:, 0] < length)
+            & (where_i[:, 1] < length)
+        ].astype(int)
+        mask[where_i[:, 0], where_i[:, 1]] = i + 1
+
+    return mask
 
 
 def blobs(
