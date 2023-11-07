@@ -236,18 +236,15 @@ def _add_coo(
     )
 
 
-def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame, na_cells: int = 0) -> np.ndarray:
-    points = partition[["x", "y"]].apply(Point, axis=1)
-    tree = shapely.STRtree(points)
+def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int = 0) -> pd.Series:
+    points_gdf = gpd.GeoDataFrame(
+        partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
+    )
+    spatial_join = points_gdf.sjoin(gdf, how="left")
+    spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
+    cell_ids = (spatial_join["index_right"].fillna(-1) + 1 + na_cells).astype(int)
 
-    polygon_indices, points_indices = tree.query(polygons, predicate="intersects")
-
-    unique_values, indices = np.unique(points_indices, return_index=True)
-    cell_id = np.full(len(points), na_cells, dtype=int)
-
-    cell_id[unique_values] = polygon_indices[indices] + 1 + na_cells
-
-    return cell_id
+    return cell_ids
 
 
 def _map_transcript_to_cell(
@@ -262,9 +259,9 @@ def _map_transcript_to_cell(
     if geo_df is None:
         geo_df = get_boundaries(sdata)
 
-    polygons = to_intrinsic(sdata, geo_df, df).geometry
+    geo_df = to_intrinsic(sdata, geo_df, df)
 
-    get_cell_id = partial(_get_cell_id, polygons)
+    get_cell_id = partial(_get_cell_id, geo_df)
 
     if isinstance(df, dd.DataFrame):
         df[cell_key] = df.map_partitions(get_cell_id)

@@ -90,4 +90,5 @@ class StainingSegmentation:
             for _, coords_zarr in z.arrays():
                 cells.append(Polygon(coords_zarr[:]))
 
+        log.info(f"Found {len(cells)} total cells")
         return cells

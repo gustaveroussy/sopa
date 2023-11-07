@@ -181,9 +181,9 @@ class BaysorPatches:
 
         self._clean_directory()
 
-        tree = shapely.STRtree(self.patches_2d.polygons)
+        gdf = gpd.GeoDataFrame(geometry=self.patches_2d.polygons)
         with ProgressBar():
-            self.df.map_partitions(partial(self._query_points_partition, tree), meta=()).compute()
+            self.df.map_partitions(partial(self._query_points_partition, gdf), meta=()).compute()
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")
         return list(self.valid_indices())
@@ -207,15 +207,14 @@ class BaysorPatches:
             else:
                 log.info(f"Patch {index} has < 1000 transcripts. Baysor will not be run on it.")
 
-    def _query_points_partition(self, tree: shapely.STRtree, df: pd.DataFrame) -> pd.DataFrame:
-        points = [Point(xy) for xy in zip(df.x, df.y)]
-        df_query = pd.DataFrame(tree.query(points).T, columns=["point_index", "patch_index"])
-        df_merged = df.merge(df_query, left_index=True, right_on="point_index", how="right")
+    def _query_points_partition(self, gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:
+        points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
+        df_merged: gpd.GeoDataFrame = points_gdf.sjoin(gdf)
 
-        for index, patch_df in df_merged.groupby("patch_index"):
+        for index, patch_df in df_merged.groupby("index_right"):
             patch_path = self._patch_path(index)
             patch_path.parent.mkdir(parents=True, exist_ok=True)
-            patch_df = patch_df.drop(columns=["patch_index", "point_index"])
+            patch_df = patch_df.drop(columns=["index_right", "geometry"])
             patch_df.to_csv(patch_path, mode="a", header=False, index=False)
 
     def _check_min_lines(self, path: str, n: int) -> bool:
