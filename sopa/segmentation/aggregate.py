@@ -182,17 +182,17 @@ def average_channels(
 
 
 def _count_transcripts_geometries(
-    polygons: list[Polygon], points: dd.DataFrame, value_key: str
+    geo_df: gpd.GeoDataFrame, points: dd.DataFrame, value_key: str
 ) -> AnnData:
     points[value_key] = points[value_key].astype("category").cat.as_known()
     gene_names = points[value_key].cat.categories
 
-    X = coo_matrix((len(polygons), len(gene_names)), dtype=int)
+    X = coo_matrix((len(geo_df), len(gene_names)), dtype=int)
     adata = AnnData(X=X, var=pd.DataFrame(index=gene_names))
 
     with ProgressBar():
         points.map_partitions(
-            partial(_add_coo, adata, polygons, gene_column=value_key, gene_names=gene_names),
+            partial(_add_coo, adata, geo_df, gene_column=value_key, gene_names=gene_names),
             meta=(),
         ).compute()
 
@@ -213,38 +213,34 @@ def count_transcripts(
         geo_df = get_element(sdata, "shapes", shapes_key)
         geo_df = to_intrinsic(sdata, geo_df, points_key)
 
-    cells = list(geo_df.geometry)
-
-    log.info(f"Aggregating transcripts over {len(cells)} cells")
-    return _count_transcripts_geometries(cells, points, gene_column)
+    log.info(f"Aggregating transcripts over {len(geo_df)} cells")
+    return _count_transcripts_geometries(geo_df, points, gene_column)
 
 
 def _add_coo(
     adata: AnnData,
-    cells: list[Polygon],
+    geo_df: gpd.GeoDataFrame,
     partition: pd.DataFrame,
     gene_column: list[str],
     gene_names: list[str],
 ) -> None:
-    cells_indices, points_indices = _get_cell_id(cells, partition, return_query=True)
-
-    column_indices = partition.iloc[points_indices][gene_column].cat.codes.values
+    points_gdf = gpd.GeoDataFrame(
+        partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
+    )
+    joined = geo_df.sjoin(points_gdf)
+    cells_indices, column_indices = joined.index, joined[gene_column].cat.codes
 
     adata.X += coo_matrix(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
-        shape=(len(cells), len(gene_names)),
+        shape=(len(geo_df), len(gene_names)),
     )
 
 
-def _get_cell_id(
-    polygons: list[Polygon], partition: pd.DataFrame, return_query: bool = False, na_cells: int = 0
-) -> np.ndarray:
+def _get_cell_id(polygons: list[Polygon], partition: pd.DataFrame, na_cells: int = 0) -> np.ndarray:
     points = partition[["x", "y"]].apply(Point, axis=1)
     tree = shapely.STRtree(points)
 
     polygon_indices, points_indices = tree.query(polygons, predicate="intersects")
-    if return_query:
-        return polygon_indices, points_indices
 
     unique_values, indices = np.unique(points_indices, return_index=True)
     cell_id = np.full(len(points), na_cells, dtype=int)

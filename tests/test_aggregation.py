@@ -1,5 +1,6 @@
 import dask.array as da
 import dask.dataframe as dd
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -54,7 +55,9 @@ def test_count_transcripts():
         Polygon(((0, 0), (3, 0), (3, 3), (0, 3))),
     ]
 
-    adata = aggregate._count_transcripts_geometries(polygons, points, "gene")
+    gdf = gpd.GeoDataFrame(geometry=polygons)
+
+    adata = aggregate._count_transcripts_geometries(gdf, points, "gene")
     expected = np.array([[0, 3, 1], [2, 0, 1], [2, 3, 1]])
 
     assert (adata.X.toarray() == expected).all()
