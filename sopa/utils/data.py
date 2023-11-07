@@ -14,9 +14,10 @@ def uniform(
     cell_density: float = 0.08,
     n_points_per_cell: int = 50,
     n_genes: int = 5,
-    c_coords: list[str] = ["DAPI", "CK", "CD20", "CD68"],
+    c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
     sigma_factor: float = 0.4,
     seed: int = 0,
+    save_vertices: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -70,13 +71,16 @@ def uniform(
         {
             "x": points_coords[:, 0],
             "y": points_coords[:, 1],
-            "gene": np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_points),
+            "genes": np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_points),
         }
     )
+    points = {"transcripts": PointsModel.parse(df)}
+    if save_vertices:
+        points["vertices"] = PointsModel.parse(vertices)
 
     return SpatialData(
         images={"image": Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])},
-        points={"transcripts": PointsModel.parse(df), "vertices": PointsModel.parse(vertices)},
+        points=points,
         shapes={"cells": ShapesModel.parse(gdf)},
     )
 
@@ -110,7 +114,7 @@ def blobs(
     *_,
     length: int = 1_024,
     n_points: int = 10_000,
-    c_coords=["DAPI", "CD3", "EPCAM", "CD20"],
+    c_coords=["DAPI", "CK", "CD3", "CD20"],
     **kwargs,
 ) -> SpatialData:
     """Adapts the blobs dataset from SpatialData for sopa. Please refer to the SpatialData documentation"""

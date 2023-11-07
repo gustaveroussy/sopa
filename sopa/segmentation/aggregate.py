@@ -189,7 +189,9 @@ def _count_transcripts_geometries(
 
     X = coo_matrix((len(geo_df), len(gene_names)), dtype=int)
     adata = AnnData(X=X, var=pd.DataFrame(index=gene_names))
+    adata.obs_names = geo_df.index
 
+    geo_df = geo_df.reset_index()
     with ProgressBar():
         points.map_partitions(
             partial(_add_coo, adata, geo_df, gene_column=value_key, gene_names=gene_names),
@@ -260,6 +262,7 @@ def _map_transcript_to_cell(
         geo_df = get_boundaries(sdata)
 
     geo_df = to_intrinsic(sdata, geo_df, df)
+    geo_df = geo_df.reset_index()
 
     get_cell_id = partial(_get_cell_id, geo_df)
 
