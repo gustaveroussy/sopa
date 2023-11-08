@@ -126,15 +126,15 @@ class Args:
         option = f"--{prefix}{key.replace('_', '-')}"
         if isinstance(value, list):
             for v in value:
-                yield from (option, str(v))
+                yield from (option, stringify_for_cli(v))
         elif isinstance(value, dict):
-            yield from (option, '"' + str(value) + '"')
+            yield from (option, '"' + stringify_for_cli(value) + '"')
         elif value is True:
             yield option
         elif value is False:
             yield f"--no-{prefix}{key.replace('_', '-')}"
         else:
-            yield from (option, str(value))
+            yield from (option, stringify_for_cli(value))
 
     def _dump(self, prefix=""):
         return " ".join(
@@ -158,3 +158,9 @@ class Args:
     @property
     def expand_radius(self):
         return self.config["shapes"]["expand_radius"]
+
+
+def stringify_for_cli(value) -> str:
+    if isinstance(value, str):
+        return f"'{value}'"
+    return str(value)
