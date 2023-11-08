@@ -19,6 +19,8 @@ def solve_conflicts(
     n_cells = len(cells)
     resolved_indices = np.arange(n_cells)
 
+    assert n_cells > 0, f"No cells was segmented, cannot continue"
+
     tree = shapely.STRtree(cells)
     conflicts = tree.query(cells, predicate="intersects")
 
