@@ -16,6 +16,17 @@ def solve_conflicts(
     patch_indices: np.ndarray | None = None,
     return_indices: bool = False,
 ) -> np.ndarray[Polygon]:
+    """Resolve segmentation conflicts (i.e. overlap) after running segmentation on patches
+
+    Args:
+        cells: List of cell polygons
+        threshold: When two cells are overlapping, we look at the area of intersection over the area of the smallest cell. If this value is higher than the `threshold`, the cells are merged
+        patch_indices: Patch from which each cell belongs.
+        return_indices: If `True`, returns also the cells indices.
+
+    Returns:
+        Array of resolved cells polygons
+    """
     n_cells = len(cells)
     resolved_indices = np.arange(n_cells)
 

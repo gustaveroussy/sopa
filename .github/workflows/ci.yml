@@ -1,7 +1,7 @@
-name: ci 
+name: ci
 on:
   push:
-    tags:        
+    tags:
       - v*
 jobs:
   deploy:
@@ -36,7 +36,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install
+        run: poetry install --extras "dev"
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------

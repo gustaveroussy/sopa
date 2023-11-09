@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "sopa"
 version = "0.1.0"
-description = "Spatial-omics preprocessing and analysis"
+description = "Spatial-omics pipeline and analysis"
 authors = ["Quentin Blampey <quentin.blampey@gmail.com>"]
 packages = [{ include = "sopa" }]
 
@@ -30,12 +30,22 @@ toml = { version = "^0.10.2", optional = true }
 loompy = { version = "^3.0.7", optional = true }
 
 tangram-sc = { version = "^1.0.4", optional = true }
+mkdocstrings = { version = "^0.23.0", optional = true }
+mkdocstrings-python = { version = "^1.7.3", optional = true }
 
 [tool.poetry.extras]
 cellpose = ["cellpose", "opencv-python"]
 baysor = ["toml", "loompy"]
 tangram = ["tangram-sc"]
-dev = ["black", "isort", "pytest", "ipykernel", "mkdocs-material"]
+dev = [
+  "black",
+  "isort",
+  "pytest",
+  "ipykernel",
+  "mkdocs-material",
+  "mkdocstrings",
+  "mkdocstrings-python",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

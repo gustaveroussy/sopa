@@ -1,0 +1,1 @@
+::: sopa.segmentation.shapes.solve_conflicts

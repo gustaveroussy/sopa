@@ -7,9 +7,15 @@ theme:
   favicon: assets/sopa_favicon.png
 nav:
   - Home: index.md
+  - Getting Started: getting_started.md
   - CLI: cli.md
+  - API:
+    - sopa.segmentation:
+      - sopa.segmentation.shapes: api/segmentation/shapes.md
+  - Cite us: cite_us.md
 plugins:
   - search
+  - mkdocstrings
 markdown_extensions:
   - admonition
   - attr_list
