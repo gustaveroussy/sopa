@@ -27,6 +27,7 @@ mkdocstrings-python = { version = "^1.7.3", optional = true }
 
 cellpose = { version = "^2.2.3", optional = true }
 opencv-python = { version = "^4.8.0.76", optional = true }
+torch = { version = ">=2.0.0, !=2.0.1, !=2.1.0", optional = true }
 
 toml = { version = "^0.10.2", optional = true }
 loompy = { version = "^3.0.7", optional = true }
@@ -34,7 +35,7 @@ loompy = { version = "^3.0.7", optional = true }
 tangram-sc = { version = "^1.0.4", optional = true }
 
 [tool.poetry.extras]
-cellpose = ["cellpose", "opencv-python"]
+cellpose = ["cellpose", "opencv-python", "torch"]
 baysor = ["toml", "loompy"]
 tangram = ["tangram-sc"]
 dev = [
