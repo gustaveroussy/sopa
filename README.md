@@ -17,7 +17,7 @@ TODO
 # Installation
 
 ### PyPI installation
-Sopa can be installed via `PyPI` on all operating system. Make sure you have an environment with `python>=3.10`, and run the following command:
+Sopa can be installed via `PyPI` on all operating system. Make sure you have an environment with `python==3.10`, and run the following command:
 ```
 pip install sopa
 ```
