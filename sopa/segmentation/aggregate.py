@@ -236,37 +236,3 @@ def _add_coo(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
         shape=(len(geo_df), len(gene_names)),
     )
-
-
-def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int = 0) -> pd.Series:
-    points_gdf = gpd.GeoDataFrame(
-        partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
-    )
-    spatial_join = points_gdf.sjoin(gdf, how="left")
-    spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
-    cell_ids = (spatial_join["index_right"].fillna(-1) + 1 + na_cells).astype(int)
-
-    return cell_ids
-
-
-def _map_transcript_to_cell(
-    sdata: SpatialData,
-    cell_key: str,
-    df: dd.DataFrame | None = None,
-    geo_df: gpd.GeoDataFrame | None = None,
-):
-    if df is None:
-        df = get_item(sdata, "points")
-
-    if geo_df is None:
-        geo_df = get_boundaries(sdata)
-
-    geo_df = to_intrinsic(sdata, geo_df, df)
-    geo_df = geo_df.reset_index()
-
-    get_cell_id = partial(_get_cell_id, geo_df)
-
-    if isinstance(df, dd.DataFrame):
-        df[cell_key] = df.map_partitions(get_cell_id)
-    else:
-        raise ValueError(f"Invalid dataframe type: {type(df)}")

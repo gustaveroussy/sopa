@@ -29,18 +29,6 @@ def test_average_channels_geometries():
     assert (means == true_means).all()
 
 
-def test_get_cell_id():
-    polygons = [box(10, 10, 20, 28), box(15, 18, 25, 22), box(30, 35, 34, 42)]
-    gdf = gpd.GeoDataFrame(geometry=polygons)
-    df = pd.DataFrame(
-        {"x": [1.5, 16, 23, 67, 33, 19, 22, 10], "y": [15, 21, 34, 5, 40, 20, 21, 10]}
-    )
-
-    cell_id = aggregate._get_cell_id(gdf, df)
-
-    assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 1]
-
-
 def test_count_transcripts():
     df_pandas = pd.DataFrame(
         {
