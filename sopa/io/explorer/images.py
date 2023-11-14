@@ -152,7 +152,7 @@ def write_image(
     tile_width: int = 1024,
     n_subscales: int = 5,
     pixelsize: float = 0.2125,
-    ram_threshold_gb: int | None = None,
+    ram_threshold_gb: int | None = 4,
     is_dir: bool = True,
 ):
     path = explorer_file_path(path, FileNames.IMAGE, is_dir)

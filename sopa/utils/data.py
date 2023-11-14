@@ -50,7 +50,7 @@ def uniform(
     vertices = pd.DataFrame(xy, columns=["x", "y"])
 
     # Create image
-    image = np.zeros((4, length, length))
+    image = np.zeros((len(c_coords), length, length))
     image[0, xy[:, 1], xy[:, 0]] += 1
     if len(c_coords) > 1:
         image[np.random.randint(1, len(c_coords), len(xy)), xy[:, 1], xy[:, 0]] += 1

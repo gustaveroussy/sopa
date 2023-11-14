@@ -177,7 +177,7 @@ def explorer(
     gene_column: str = None,
     shapes_key: str = None,
     lazy: bool = True,
-    ram_threshold_gb: int = None,
+    ram_threshold_gb: int = 4,
     save_image_mode: int = 1,
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs

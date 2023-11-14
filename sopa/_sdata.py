@@ -32,7 +32,9 @@ def get_boundaries(
 
     if not warn:
         raise ValueError(error_message)
+
     log.warn(error_message)
+    return (None, None) if return_key else None
 
 
 def get_intrinsic_cs(

@@ -36,7 +36,7 @@ def write_explorer(
     layer: str | None = None,
     polygon_max_vertices: int = 13,
     lazy: bool = True,
-    ram_threshold_gb: int | None = None,
+    ram_threshold_gb: int | None = 4,
     save_image_mode: int = 1,
 ) -> None:
     """
@@ -89,11 +89,11 @@ def write_explorer(
     ### Saving transcripts
     df = get_element(sdata, "points", points_key)
     if df is not None:
-        assert (
-            gene_column is not None
-        ), "The argument 'gene_column' has to be provided to save the transcripts"
-        df = to_intrinsic(sdata, df, image_key)
-        write_transcripts(path, df, gene_column)
+        if gene_column is not None:
+            df = to_intrinsic(sdata, df, image_key)
+            write_transcripts(path, df, gene_column)
+        else:
+            log.warn("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
     if save_image_mode:
