@@ -9,9 +9,8 @@ import pandas as pd
 import shapely
 from anndata import AnnData
 from dask.diagnostics import ProgressBar
-from dask.distributed import performance_report
 from scipy.sparse import coo_matrix
-from shapely.geometry import Point, Polygon, box
+from shapely.geometry import Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
@@ -138,10 +137,8 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
     intensities = np.zeros((len(cells), len(image.coords["c"])))
     areas = np.zeros(len(cells))
 
-    def func(x, block_info=None):
+    def func(chunk, block_info=None):
         if block_info is not None:
-            x = x.compute()
-
             (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
             patch = box(xmin, ymin, xmax, ymax)
             intersections = tree.query(patch, predicate="intersects")
@@ -150,7 +147,7 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
                 cell = cells[index]
                 bounds = shapes.pixel_outer_bounds(cell.bounds)
 
-                sub_image = x[
+                sub_image = chunk[
                     :,
                     max(bounds[1] - ymin, 0) : bounds[3] - ymin,
                     max(bounds[0] - xmin, 0) : bounds[2] - xmin,
@@ -163,11 +160,10 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
 
                 intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
                 areas[index] += np.sum(mask)
-        return da.zeros_like(x)
+        return da.zeros(chunk.shape[1:])
 
     with ProgressBar():
-        with performance_report(filename="dask-report.html"):
-            image.data.rechunk({0: -1}).map_blocks(func).compute()
+        image.data.map_blocks(func, drop_axis=0).compute()
 
     return intensities / areas[:, None].clip(1)
 
