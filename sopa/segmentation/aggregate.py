@@ -9,6 +9,7 @@ import pandas as pd
 import shapely
 from anndata import AnnData
 from dask.diagnostics import ProgressBar
+from dask.distributed import Client
 from scipy.sparse import coo_matrix
 from shapely.geometry import Point, Polygon, box
 from spatial_image import SpatialImage
@@ -136,6 +137,9 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
 
     intensities = np.zeros((len(cells), len(image.coords["c"])))
     areas = np.zeros(len(cells))
+
+    client = Client()
+    log.info(client)
 
     def func(x, block_info=None):
         if block_info is not None:
