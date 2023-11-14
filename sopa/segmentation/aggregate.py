@@ -9,7 +9,7 @@ import pandas as pd
 import shapely
 from anndata import AnnData
 from dask.diagnostics import ProgressBar
-from dask.distributed import Client
+from dask.distributed import performance_report
 from scipy.sparse import coo_matrix
 from shapely.geometry import Point, Polygon, box
 from spatial_image import SpatialImage
@@ -166,7 +166,8 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
         return da.zeros_like(x)
 
     with ProgressBar():
-        image.data.rechunk({0: -1}).map_blocks(func).compute()
+        with performance_report(filename="dask-report.html"):
+            image.data.rechunk({0: -1}).map_blocks(func).compute()
 
     return intensities / areas[:, None].clip(1)
 
