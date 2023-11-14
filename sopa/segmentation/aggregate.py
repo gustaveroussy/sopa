@@ -197,9 +197,6 @@ def _count_transcripts_geometries(
 
     geo_df = geo_df.reset_index()
 
-    client = Client()
-    log.info(client)
-
     with ProgressBar():
         points.map_partitions(
             partial(_add_coo, adata, geo_df, gene_column=value_key, gene_names=gene_names),
