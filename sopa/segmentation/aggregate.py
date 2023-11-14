@@ -162,8 +162,12 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
                 areas[index] += np.sum(mask)
         return da.zeros(chunk.shape[1:])
 
-    with ProgressBar():
-        image.data.map_blocks(func, drop_axis=0).compute()
+    from dask.distributed import Client, performance_report
+
+    client = Client()
+    with performance_report(filename="dask-report.html"):
+        with ProgressBar():
+            image.data.map_blocks(func, drop_axis=0).compute()
 
     return intensities / areas[:, None].clip(1)
 

@@ -28,7 +28,7 @@ def get_boundaries(
         if res is not None:
             return res
 
-    error_message = "sdata object has no cellpose boundaries and no baysor boundaries"
+    error_message = "sdata object has no cellpose boundaries and no baysor boundaries. Consider running segmentation first."
 
     if not warn:
         raise ValueError(error_message)
