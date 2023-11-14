@@ -132,10 +132,13 @@ class Aggregator:
 
 
 def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
+    log.info(image)
+    log.info("Before tree")
     tree = shapely.STRtree(cells)
 
     intensities = np.zeros((len(cells), len(image.coords["c"])))
     areas = np.zeros(len(cells))
+    log.info("Init ok")
 
     def func(x, block_info=None):
         if block_info is not None:
