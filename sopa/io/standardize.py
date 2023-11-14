@@ -47,6 +47,19 @@ def read_zarr_standardized(path: str) -> SpatialData:
     return sdata
 
 
+def _check_can_write_zarr(sdata_path: str):
+    sdata_path = Path(sdata_path)
+
+    if not sdata_path.exists():
+        return
+
+    assert not any(
+        sdata_path.iterdir()
+    ), f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files."
+
+    sdata_path.rmdir()
+
+
 def write_standardized(sdata: SpatialData, sdata_path: str, delete_table: bool = False):
     sanity_check(sdata, delete_table)
 
@@ -60,7 +73,6 @@ def write_standardized(sdata: SpatialData, sdata_path: str, delete_table: bool =
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
 
     sdata_path: Path = Path(sdata_path)
-    if sdata_path.exists() and not any(sdata_path.iterdir()):
-        sdata_path.rmdir()
 
+    _check_can_write_zarr(sdata_path)
     sdata.write(sdata_path)

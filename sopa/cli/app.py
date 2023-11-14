@@ -57,7 +57,9 @@ def read(
 
     from sopa import io
 
-    sdata_path = Path(data_path).with_suffix(".zarr") if sdata_path is None else sdata_path
+    sdata_path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
+
+    io.standardize._check_can_write_zarr(sdata_path)
 
     assert (
         technology is not None or config_path is not None
