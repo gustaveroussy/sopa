@@ -138,11 +138,10 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
     intensities = np.zeros((len(cells), len(image.coords["c"])))
     areas = np.zeros(len(cells))
 
-    client = Client()
-    log.info(client)
-
     def func(x, block_info=None):
         if block_info is not None:
+            x = x.compute()
+
             (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
             patch = box(xmin, ymin, xmax, ymax)
             intersections = tree.query(patch, predicate="intersects")
@@ -197,6 +196,10 @@ def _count_transcripts_geometries(
     adata.obs_names = geo_df.index
 
     geo_df = geo_df.reset_index()
+
+    client = Client()
+    log.info(client)
+
     with ProgressBar():
         points.map_partitions(
             partial(_add_coo, adata, geo_df, gene_column=value_key, gene_names=gene_names),
