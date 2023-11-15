@@ -13,6 +13,7 @@ nav:
   - API:
     - sopa.segmentation:
       - sopa.segmentation.shapes: api/segmentation/shapes.md
+  - Toy examples: toy.md
   - Cite us: cite_us.md
 plugins:
   - search

@@ -10,6 +10,7 @@ from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 
 
 def uniform(
+    *_,
     length: int = 2_048,
     cell_density: float = 0.08,
     n_points_per_cell: int = 50,

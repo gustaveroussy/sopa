@@ -1,5 +1,5 @@
 read:
-  technology: blobs
+  technology: uniform
 
 patchify:
   patch_width_pixel: 6000

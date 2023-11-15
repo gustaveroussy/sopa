@@ -1,0 +1,37 @@
+read:
+  technology: uniform
+
+patchify:
+  patch_width_pixel: 6000
+  patch_overlap_pixel: 150
+  patch_width_microns: 3000
+  patch_overlap_microns: 40
+
+segmentation:
+  cellpose:
+    diameter: 60
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+
+shapes:
+  expand_radius: 0
+  min_area: 2
+
+aggregate:
+  average_intensities: true
+
+annotation:
+  method: fluorescence
+  args:
+    marker_cell_dict:
+      CK: Tumoral cell
+      CD3: T cell
+      CD20: B cell
+      
+explorer:
+  gene_column: "genes"
+  ram_threshold_gb: 16
+
+executables:
+  baysor: ~/.julia/bin/baysor
