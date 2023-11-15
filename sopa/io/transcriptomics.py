@@ -1,3 +1,4 @@
+import json
 import re
 from collections.abc import Mapping
 from pathlib import Path
@@ -10,12 +11,14 @@ import geopandas
 import numpy as np
 import pandas as pd
 from dask import array as da
+from dask.dataframe import read_parquet
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata._logging import logger
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel, TableModel
 from spatialdata.transformations import Affine, Identity
-from spatialdata_io._constants._constants import MerscopeKeys
+from spatialdata.transformations.transformations import Identity, Scale
+from spatialdata_io._constants._constants import MerscopeKeys, XeniumKeys
 from spatialdata_io._docs import inject_docs
 
 
@@ -261,3 +264,115 @@ def _get_table(
         instance_key=MerscopeKeys.METADATA_CELL_KEY.value,
     )
     return table
+
+
+@inject_docs(xx=XeniumKeys)
+def xenium(
+    path: str | Path,
+    imread_kwargs=MappingProxyType({}),
+    image_models_kwargs=MappingProxyType({}),
+) -> SpatialData:
+    """
+    Read a *10X Genomics Xenium* dataset into a SpatialData object.
+
+    This function reads the following files:
+
+        - ``{xx.XENIUM_SPECS!r}``: File containing specifications.
+        - ``{xx.NUCLEUS_BOUNDARIES_FILE!r}``: Polygons of nucleus boundaries.
+        - ``{xx.CELL_BOUNDARIES_FILE!r}``: Polygons of cell boundaries.
+        - ``{xx.TRANSCRIPTS_FILE!r}``: File containing transcripts.
+        - ``{xx.CELL_FEATURE_MATRIX_FILE!r}``: File containing cell feature matrix.
+        - ``{xx.CELL_METADATA_FILE!r}``: File containing cell metadata.
+        - ``{xx.MORPHOLOGY_MIP_FILE!r}``: File containing morphology mip.
+        - ``{xx.MORPHOLOGY_FOCUS_FILE!r}``: File containing morphology focus.
+
+    .. seealso::
+
+        - `10X Genomics Xenium file format  <https://cf.10xgenomics.com/supp/xenium/xenium_documentation.html>`_.
+
+    Parameters
+    ----------
+    path
+        Path to the dataset.
+    n_jobs
+        Number of jobs to use for parallel processing.
+    cells_as_shapes
+        Whether to read cells also as shapes. Useful for visualization.
+    nucleus_boundaries
+        Whether to read nucleus boundaries.
+    transcripts
+        Whether to read transcripts.
+    morphology_mip
+        Whether to read morphology mip.
+    morphology_focus
+        Whether to read morphology focus.
+    imread_kwargs
+        Keyword arguments to pass to the image reader.
+    image_models_kwargs
+        Keyword arguments to pass to the image models.
+
+    Returns
+    -------
+    :class:`spatialdata.SpatialData`
+    """
+    if "chunks" not in image_models_kwargs:
+        if isinstance(image_models_kwargs, MappingProxyType):
+            image_models_kwargs = {}
+        assert isinstance(image_models_kwargs, dict)
+        image_models_kwargs["chunks"] = (1, 4096, 4096)
+    if "scale_factors" not in image_models_kwargs:
+        if isinstance(image_models_kwargs, MappingProxyType):
+            image_models_kwargs = {}
+        assert isinstance(image_models_kwargs, dict)
+        image_models_kwargs["scale_factors"] = [2, 2, 2, 2]
+
+    path = Path(path)
+    with open(path / XeniumKeys.XENIUM_SPECS) as f:
+        specs = json.load(f)
+
+    points = {"transcripts": _get_points_xenium(path, specs)}
+
+    images = {
+        "morphology_focus": _get_images_xenium(
+            path,
+            XeniumKeys.MORPHOLOGY_FOCUS_FILE,
+            imread_kwargs,
+            image_models_kwargs,
+        )
+    }
+
+    return SpatialData(images=images, points=points)
+
+
+def _get_points_xenium(path: Path, specs: dict[str, Any]):
+    table = read_parquet(path / XeniumKeys.TRANSCRIPTS_FILE)
+    table["feature_name"] = table["feature_name"].apply(
+        lambda x: x.decode("utf-8") if isinstance(x, bytes) else str(x),
+        meta=("feature_name", "object"),
+    )
+
+    transform = Scale([1.0 / specs["pixel_size"], 1.0 / specs["pixel_size"]], axes=("x", "y"))
+    points = PointsModel.parse(
+        table,
+        coordinates={
+            "x": XeniumKeys.TRANSCRIPTS_X,
+            "y": XeniumKeys.TRANSCRIPTS_Y,
+            "z": XeniumKeys.TRANSCRIPTS_Z,
+        },
+        feature_key=XeniumKeys.FEATURE_NAME,
+        instance_key=XeniumKeys.CELL_ID,
+        transformations={"global": transform},
+    )
+    return points
+
+
+def _get_images_xenium(
+    path: Path,
+    file: str,
+    imread_kwargs: Mapping[str, Any] = MappingProxyType({}),
+    image_models_kwargs: Mapping[str, Any] = MappingProxyType({}),
+):
+    image = imread(path / file, **imread_kwargs)
+    return Image2DModel.parse(
+        image, transformations={"global": Identity()}, dims=("c", "y", "x"), **image_models_kwargs
+    )
