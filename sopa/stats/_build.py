@@ -130,3 +130,9 @@ def _build_connectivity(
     Dst.setdiag(0.0)
 
     return Adj, Dst
+
+
+def _check_has_delaunay(adata: AnnData):
+    message = " key not in adata.obsp, consider running 'spatial_neighbors' (from sopa.stats import spatial_neighbors)"
+    assert "spatial_connectivities" in adata.obsp, "spatial_connectivities" + message
+    assert "spatial_distances" in adata.obsp, "spatial_distances" + message

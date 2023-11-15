@@ -5,6 +5,8 @@ import pandas as pd
 from anndata import AnnData
 from tqdm import tqdm
 
+from ._build import _check_has_delaunay
+
 log = logging.getLogger(__name__)
 
 
@@ -14,6 +16,8 @@ def cells_to_groups(
     key_added_prefix: str | None = "distance_group_",
     ignore_zeros: bool = False,
 ) -> pd.DataFrame | None:
+    _check_has_delaunay(adata)
+
     distances_to_groups = {}
 
     if not adata.obs[group_key].dtype.name == "category":
