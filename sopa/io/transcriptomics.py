@@ -333,9 +333,9 @@ def xenium(
     points = {"transcripts": _get_points_xenium(path, specs)}
 
     images = {
-        "morphology_focus": _get_images_xenium(
+        "morphology_mip": _get_images_xenium(
             path,
-            XeniumKeys.MORPHOLOGY_FOCUS_FILE,
+            XeniumKeys.MORPHOLOGY_MIP_FILE,
             imread_kwargs,
             image_models_kwargs,
         )
