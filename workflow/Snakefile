@@ -148,6 +148,7 @@ rule aggregate:
         "sopa"
     params:
         args_aggregate = str(args["aggregate"] or ""),
+        mem_mb=64_000,
     shell:
         """
         sopa aggregate {paths.sdata_path} {params.args_aggregate}
