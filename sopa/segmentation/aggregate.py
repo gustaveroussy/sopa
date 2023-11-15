@@ -9,7 +9,7 @@ import pandas as pd
 import shapely
 from anndata import AnnData
 from dask.diagnostics import ProgressBar
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 from shapely.geometry import Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
@@ -78,7 +78,9 @@ class Aggregator:
         min_transcripts: int,
         min_intensity_ratio: float,
     ):
-        does_count = self.table is not None or gene_column is not None
+        does_count = (
+            self.table is not None and isinstance(self.table.X, csr_matrix)
+        ) or gene_column is not None
 
         assert (
             average_intensities or does_count
@@ -119,8 +121,8 @@ class Aggregator:
 
         self.table.uns["sopa_attrs"] = {
             "version": sopa.__version__,
-            "transcripts": does_count,
-            "intensities": average_intensities,
+            SopaKeys.UNS_HAS_TRANSCRIPTS: does_count,
+            SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
         }
 
         self.standardize_table()
