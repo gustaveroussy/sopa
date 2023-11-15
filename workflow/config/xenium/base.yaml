@@ -10,7 +10,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 30
-    channels: ["DAPI"]
+    channels: [0]
     flow_threshold: 2
     cellprob_threshold: -6
 
@@ -22,7 +22,7 @@ segmentation:
         x: "x"
         y: "y"
         z: "z"
-        gene: "gene"
+        gene: "feature_name"
         min_molecules_per_gene: 0
         min_molecules_per_segment: 3
         confidence_nn_id: 6
@@ -48,7 +48,7 @@ aggregate:
 
 
 explorer:
-  gene_column: "gene"
+  gene_column: "feature_name"
   ram_threshold_gb: 16
 
 executables:
