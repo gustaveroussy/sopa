@@ -12,7 +12,11 @@ The easiest way to getting started with `sopa` is to check [our documentation](T
 
 # Overview
 
-TODO
+The following illustration describes the main steps of `sopa`:
+
+<p align="center">
+  <img src="docs/assets/overview.png" alt="sopa_overview" width="100%"/>
+</p>
 
 # Installation
 
