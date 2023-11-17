@@ -35,7 +35,7 @@ def uniform(
     """
     np.random.seed(seed)
 
-    grid_width = int(length * cell_density)
+    grid_width = max(1, int(length * cell_density))
     dx = length / grid_width
     sigma = dx * sigma_factor
     n_cells = grid_width**2
