@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import dask.array as da
+import numpy as np
 import pandas as pd
 import tifffile as tf
 from dask_image.imread import imread
@@ -106,3 +107,42 @@ def qptiff(
         )
 
         return SpatialData(images={image_name: image})
+
+
+def phenocycler(path: Path, *args):
+    return qptiff(path, *args)
+
+
+def _get_channel_names_hyperion(files: list[Path]):
+    return [file.name[:-9].split("_")[1] for file in files]
+
+
+def hyperion(
+    path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
+) -> SpatialData:
+    image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
+    if "chunks" not in image_models_kwargs:
+        image_models_kwargs["chunks"] = (1, 4096, 4096)
+    imread_kwargs = {} if imread_kwargs is None else imread_kwargs
+
+    files = [file for file in Path(path).iterdir() if file.suffix == ".tiff"]
+
+    names = _get_channel_names_hyperion(files)
+    image = da.concatenate(
+        [imread(file, **imread_kwargs) for file in files],
+        axis=0,
+    )
+    image = (image / image.max().compute() * 255).astype(np.uint8)
+
+    log.info(f"Found channel names {names}")
+
+    image_name = Path(path).absolute().stem
+    image = Image2DModel.parse(
+        image,
+        dims=("c", "y", "x"),
+        transformations={"pixels": Identity()},
+        c_coords=names,
+        **image_models_kwargs,
+    )
+
+    return SpatialData(images={image_name: image})
