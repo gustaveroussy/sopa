@@ -40,6 +40,10 @@ def spatial_neighbors(
     if isinstance(adata, SpatialData):
         adata = adata.table
 
+    assert (
+        radius is None or len(radius) == 2
+    ), f"Radius is expected to be a tuple (min_radius, max_radius)"
+
     log.info("Computing delaunay graph")
 
     if library_key is not None:

@@ -6,6 +6,7 @@ import pandas as pd
 from anndata import AnnData
 from scipy.spatial import Delaunay
 
+from .._constants import SopaKeys
 from ._build import _check_has_delaunay
 from ._graph import Component
 
@@ -42,9 +43,11 @@ def geometrize_niches(adata: AnnData, niche_key: str) -> gpd.GeoDataFrame:
 
     gdf = gpd.GeoDataFrame(data)
 
-    gdf["length"] = gdf.length
-    gdf["area"] = gdf.area
-    gdf["roundness"] = 4 * np.pi * gdf["area"] / gdf["length"] ** 2
+    gdf[SopaKeys.GEOMETRY_LENGTH] = gdf.length
+    gdf[SopaKeys.GEOMETRY_AREA] = gdf.area
+    gdf[SopaKeys.GEOMETRY_ROUNDNESS] = (
+        4 * np.pi * gdf[SopaKeys.GEOMETRY_AREA] / gdf[SopaKeys.GEOMETRY_LENGTH] ** 2
+    )
 
     return gdf
 
@@ -56,6 +59,8 @@ def niches_geometry_stats(
     key_added_suffix: str = "_distance_to_niche_",
 ) -> gpd.GeoDataFrame:
     gdf = geometrize_niches(adata, niche_key)
+
+    assert len(gdf), f"No niche geometry found, stats can't be computed"
 
     pairwise_distances: pd.DataFrame = gdf.geometry.apply(lambda g: gdf.distance(g))
     pairwise_distances[niche_key] = gdf[niche_key]

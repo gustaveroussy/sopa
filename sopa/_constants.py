@@ -18,6 +18,10 @@ class SopaKeys:
 
     Z_SCORES = "z_scores"
 
+    GEOMETRY_AREA = "area"
+    GEOMETRY_LENGTH = "length"
+    GEOMETRY_ROUNDNESS = "roundness"
+
 
 VALID_DIMENSIONS = ("c", "y", "x")
 LOW_AVERAGE_COUNT = 0.01
