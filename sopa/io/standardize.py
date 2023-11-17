@@ -37,7 +37,7 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
     image_channels: np.ndarray = image.coords["c"].values
     if image_channels.dtype.type is not np.str_:
         log.warn(f"Channel names are not strings. Converting {image_channels} to string values.")
-        sdata[image_key] = sdata[image_key].assign_coords(c=image_channels.astype(str))
+        sdata[image_key].rename({"c": image_channels.astype(str)})
 
     if sdata.table is not None:
         if delete_table:
