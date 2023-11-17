@@ -1,7 +1,9 @@
 import logging
+from typing import Iterator
 
 import geopandas as gpd
 import pandas as pd
+import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
@@ -97,6 +99,15 @@ def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
         return sdata.table.obsm[SopaKeys.INTENSITIES_OBSM]
 
     return sdata.table.to_df()
+
+
+def iter_scales(image: MultiscaleSpatialImage) -> Iterator[xr.DataArray]:
+    assert isinstance(
+        image, MultiscaleSpatialImage
+    ), f"Multiscale iteration is reserved for type MultiscaleSpatialImage. Found {type(image)}"
+
+    for scale in image:
+        yield next(iter(image[scale].values()))
 
 
 def get_spatial_image(
