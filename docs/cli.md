@@ -78,7 +78,7 @@ Prepare patches for Cellpose segmentation
 
 > Usage: `sopa patchify cellpose [OPTIONS] SDATA_PATH`
 
-```
+```txt
 [Args]                                                             
 sdata_path: Path to the SpatialData zarr directory
 
@@ -259,6 +259,7 @@ Tangram segmentation (i.e., uses an annotated scRNAseq reference to transfer cel
 
 > Usage: `sopa annotate tangram [OPTIONS] SDATA_PATH`
 
+```txt
 [Args]
 sdata_path: Path to the SpatialData zarr directory
 
@@ -269,7 +270,6 @@ reference_preprocessing: Preprocessing method applied to the reference. Either N
 bag_size: Number of cells in each bag of the spatial table. Low values will decrease the memory usage
 max_obs_reference: Maximum samples to be considered in the reference for tangram. Low values will decrease the memory usage
 
-```txt
 ╭─ Arguments ──────────────────────────────────────────────────────────────╮
 │ *    sdata_path      TEXT  [default: None] [required]                    │
 ╰──────────────────────────────────────────────────────────────────────────╯
@@ -291,6 +291,7 @@ highest z-score is attributed.
 
 > Usage: `sopa annotate fluorescence [OPTIONS] SDATA_PATH`
 
+```txt
 [Args]
 sdata_path: Path to the SpatialData zarr directory
 
@@ -298,7 +299,6 @@ sdata_path: Path to the SpatialData zarr directory
 marker_cell_dict: Dictionary chose keys are channel names, and values are the corresponding cell types
 cell_type_key: Key added in 'adata.obs' corresponding to the cell type
 
-```txt
 ╭─ Arguments ─────────────────────────────────────────────────╮
 │ *    sdata_path      TEXT  [default: None] [required]       │
 ╰─────────────────────────────────────────────────────────────╯
@@ -315,11 +315,11 @@ Create a HTML report of the pipeline run and some quality controls
 
 > Usage: `sopa report [OPTIONS] SDATA_PATH PATH`
 
+```txt
 [Args]
 sdata_path: Path to the SpatialData zarr directory
 path: Path to the HTML report
 
-```txt
 ╭─ Arguments ───────────────────────────────────────────╮
 │ *    sdata_path      TEXT  [default: None] [required] │
 │ *    path            TEXT  [default: None] [required] │
@@ -335,6 +335,7 @@ Convert a spatialdata object to Xenium Explorer's inputs
 
 > Usage: sopa explorer [OPTIONS] SDATA_PATH
 
+```txt
 [Args]
 sdata_path: Path to the SpatialData zarr directory
 
@@ -346,7 +347,6 @@ lazy: If `True`, will not load the full images in memory (except if the image me
 ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
 save_image_mode: `1` is normal mode. `0` doesn't save the image. `2` saves **only** the image.
 
-```txt
 ╭─ Arguments ─────────────────────────────────────────────────────────────╮
 │ *    sdata_path      TEXT  [default: None] [required]                   │
 ╰─────────────────────────────────────────────────────────────────────────╯
