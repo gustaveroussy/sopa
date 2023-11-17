@@ -29,9 +29,10 @@ class StainingSegmentation:
 
         self.image_key, self.image = get_spatial_image(sdata, return_key=True)
 
+        image_channels = self.image.coords["c"].values
         assert np.isin(
-            channels, self.image.c
-        ).all(), f"Channel names must be a subset of: {', '.join(self.image.c)}"
+            channels, image_channels
+        ).all(), f"Channel names must be a subset of: {', '.join(image_channels)}"
 
     def _run_patch(
         self,

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import numpy as np
 import spatialdata
 from spatialdata import SpatialData
 
@@ -32,6 +33,11 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
     ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
 
     _check_integer_dtype(image.dtype)
+
+    image_channels: np.ndarray = image.coords["c"].values
+    if image_channels.dtype.type is not np.str_:
+        log.warn(f"Channel names are not strings. Converting {image_channels} to string values.")
+        image.coords["c"] = image_channels.astype(str)
 
     if sdata.table is not None:
         if delete_table:
