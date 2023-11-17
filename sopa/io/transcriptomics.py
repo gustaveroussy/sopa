@@ -374,5 +374,9 @@ def _get_images_xenium(
 ):
     image = imread(path / file, **imread_kwargs)
     return Image2DModel.parse(
-        image, transformations={"global": Identity()}, dims=("c", "y", "x"), **image_models_kwargs
+        image,
+        transformations={"global": Identity()},
+        dims=("c", "y", "x"),
+        c_coords=list(map(str, range(len(image)))),
+        **image_models_kwargs,
     )
