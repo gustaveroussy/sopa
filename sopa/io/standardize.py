@@ -3,11 +3,10 @@ from pathlib import Path
 
 import numpy as np
 import spatialdata
-from multiscale_spatial_image import MultiscaleSpatialImage
 from spatialdata import SpatialData
 
 from .._constants import VALID_DIMENSIONS
-from .._sdata import get_spatial_image, iter_scales
+from .._sdata import get_spatial_image
 from ..utils.image import _check_integer_dtype
 
 log = logging.getLogger(__name__)
@@ -38,12 +37,7 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
     image_channels: np.ndarray = image.coords["c"].values
     if image_channels.dtype.type is not np.str_:
         log.warn(f"Channel names are not strings. Converting {image_channels} to string values.")
-        spatial_image = sdata[image_key]
-        if isinstance(spatial_image, MultiscaleSpatialImage):
-            for xarr in iter_scales(spatial_image):
-                xarr.coords["c"] = image_channels.astype(str)
-        else:
-            spatial_image.coords["c"] = image_channels.astype(str)
+        sdata[image_key] = sdata[image_key].assign_coords(c=image_channels.astype(str))
 
     if sdata.table is not None:
         if delete_table:
