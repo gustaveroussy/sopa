@@ -181,7 +181,7 @@ rule image_write:
         "sopa"
     resources:
         mem_mb=64_000,
-        partition="mediumq"
+        partition="longq"
     params:
         args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb'])),
     shell:
