@@ -25,9 +25,11 @@ def _open_config(path: str) -> dict:
 def reference(reference_path: str, cell_type_key: str = "cell_type"):
     """Perform sanity checks on a tangram scRNAseq reference
 
-    Args:\n
+    [Args]\n
         reference_path: Path to the scRNAseq reference (usually, a h5ad file)\n
-        cell_type_key: Key of adata.obs containing the cell types
+    \n
+    [Options]\n
+        cell_type_key: Key of adata.obs containing the cell types\n
     """
     import logging
 
@@ -120,7 +122,7 @@ CONFIG_REQUIREMENTS = {
 def config(path: str):
     """Perform sanity checks on a sopa yaml config
 
-    Args:\n
+    [Args]\n
         path: Path to the YAML config\n
     """
     import logging

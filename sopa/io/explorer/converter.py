@@ -104,6 +104,9 @@ def write_explorer(
     ### Saving experiment.xenium file
     write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df))
 
+    log.info(f"Saved all files in the following directory: {path}")
+    log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
+
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
     if sdata.table is not None:

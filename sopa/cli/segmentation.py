@@ -18,10 +18,12 @@ def cellpose(
     patch_index: int = typer.Option(default=None),
     patch_dir: str = typer.Option(default=None),
 ):
-    """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch (provide 'patch_dir' and 'patch_index')
+    """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch (provide `--patch-dir` and `--patch-index`)
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         diameter: Cellpose diameter parameter\n
         channels: Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel.\n
         flow_threshold: Cellpose flow_threshold parameter\n

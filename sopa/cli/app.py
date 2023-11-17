@@ -19,7 +19,7 @@ app.add_typer(
 app.add_typer(
     app_segmentation,
     name="segmentation",
-    help="Perform cell segmentation on patches (you first need to run 'sopa patchify'). NB: for 'baysor', use directly the 'baysor' command line.",
+    help="Perform cell segmentation on patches. NB: for 'baysor', use directly the 'baysor' command line.",
 )
 app.add_typer(
     app_resolve, name="resolve", help="Resolve the segmentation conflicts over patches overlaps"
@@ -44,10 +44,13 @@ def read(
     config_path: str = None,
     kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
 ):
-    """Read any technology data, and write a standardized SpatialData object
+    """Read any technology data, and write a standardized SpatialData object.
+    Either --technology or --config-path has to be provided.
 
-    Args:\n
+    [Args]\n
         data_path: Path to one data sample (most of the time, this corresponds to a directory)\n
+    \n
+    [Options]\n
         technology: Name of the technology used to collected the data (e.g., 'xenium', 'merfish', ...)\n
         sdata_path: Optional path to write the SpatialData object. If not provided, will write to the '{data_path}.zarr' directory\n
         config_path: Path to the snakemake config. This can be useful in order not to provide the 'technology' and the 'kwargs' arguments\n
@@ -95,15 +98,15 @@ def crop(
     """Crop an image based on a user-defined polygon (interactive mode).
     If the interactive mode is not available where the data is stored,
     then we can export an intermediate resized image, then make the selection locally,
-    and transfer back the resulting polygon
+    and transfer back the resulting polygon.
 
-    Args:\n
-        sdata_path: Path to the sdata.zarr directory. Defaults to None.\n
-        intermediate_image: Path to the intermediate image, with a .zip extension. Use this only if the interactive mode is not available. Defaults to None.\n
-        intermediate_polygon: Path to the intermediate polygon, with a .zip extension. Use this locally, after downloading the intermediate_image. Defaults to None.\n
-        channels: List of channel names to be displayed. Defaults to None.\n
-        scale_factor: Resize the image by this value (high value for a lower memory usage). Defaults to 10.\n
-        margin_ratio: Ratio of the image margin on the display (compared to the image size). Defaults to 0.1.\n
+    [Options]\n
+        sdata_path: Path to the sdata.zarr directory\n
+        intermediate_image: Path to the intermediate image, with a .zip extension. Use this only if the interactive mode is not available\n
+        intermediate_polygon: Path to the intermediate polygon, with a .zip extension. Use this locally, after downloading the intermediate_image\n
+        channels: List of channel names to be displayed\n
+        scale_factor: Resize the image by this value (high value for a lower memory usage)\n
+        margin_ratio: Ratio of the image margin on the display (compared to the image size)\n
     """
     from .utils import _check_zip
 
@@ -137,8 +140,10 @@ def aggregate(
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         gene_column: Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count\n
         average_intensities: Whether to average the channel intensities inside each cell\n
         min_transcripts: Cells with less transcript than this integer will be filtered\n
@@ -160,7 +165,7 @@ def report(
 ):
     """Create a HTML report of the pipeline run and some quality controls
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
         path: Path to the HTML report\n
     """
@@ -175,7 +180,7 @@ def report(
 @app.command()
 def explorer(
     sdata_path: str,
-    path: str,
+    output_path: str = None,
     gene_column: str = None,
     shapes_key: str = None,
     lazy: bool = True,
@@ -184,21 +189,29 @@ def explorer(
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
-        path: Path to a directory where Xenium Explorer's outputs will be saved\n
+    \n
+    [Options]\n
+        output_path: Path to a directory where Xenium Explorer's outputs will be saved. By default, writes to the same path as `sdata_path` but with the `.explorer` suffix\n
         shapes_key: Key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries.\n
         gene_column: Column name of the points dataframe containing the gene names.\n
         lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).\n
         ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.\n
         save_image_mode: `1` is normal mode. `0` doesn't save the image. `2` saves **only** the image.\n
     """
+    from pathlib import Path
+
     from sopa.io.explorer import write_explorer
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
+
+    if output_path is None:
+        output_path = Path(sdata_path).with_suffix(".explorer")
+
     write_explorer(
-        path,
+        output_path,
         sdata,
         shapes_key=shapes_key,
         gene_column=gene_column,

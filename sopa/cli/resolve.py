@@ -12,8 +12,10 @@ def cellpose(
 ):
     """Resolve patches conflicts after cellpose segmentation
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         patch_dir: Directory containing the cellpose segmentation on patches\n
         expand_radius: Number of pixels for radius expansion of each cell boundary\n
     """
@@ -45,8 +47,10 @@ def baysor(
 ):
     """Resolve patches conflicts after baysor segmentation. Provide either 'baysor_temp_dir' or 'patches_dirs'
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         gene_column: Column of the transcripts dataframe containing the genes names\n
         baysor_temp_dir: Path to the directory containing all the baysor patches (see 'sopa patchify')\n
         min_area: Cells with an area less than this value (in microns^2) will be filtered\n

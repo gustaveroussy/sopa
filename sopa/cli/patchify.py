@@ -14,8 +14,10 @@ def cellpose(
 ):
     """Prepare patches for Cellpose segmentation
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+
+    [Options]\n
         patch_width_pixel: Width (and height) of each patch in pixels\n
         patch_overlap_pixel: Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell\n
     """
@@ -51,8 +53,10 @@ def baysor(
 ):
     """Prepare the patches for Baysor segmentation
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         patch_width_microns: Width (and height) of each patch in microns\n
         patch_overlap_microns: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell\n
         baysor_temp_dir: Temporary directory where baysor inputs and outputs will be saved\n

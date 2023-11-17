@@ -12,10 +12,13 @@ def fluorescence(
     marker_cell_dict: str = typer.Option(default={}, callback=ast.literal_eval),
     cell_type_key: str = "cell_type",
 ):
-    """Simple annotation based on fluorescence, where each one channel corresponds to one cell type.
+    """Simple annotation based on fluorescence, where each provided channel corresponds to one cell type.
+    For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         marker_cell_dict: Dictionary chose keys are channel names, and values are the corresponding cell types\n
         cell_type_key: Key added in 'adata.obs' corresponding to the cell type\n
     """
@@ -43,8 +46,10 @@ def tangram(
 ):
     """Tangram segmentation (i.e., uses an annotated scRNAseq reference to transfer cell-types)
 
-    Args:\n
+    [Args]\n
         sdata_path: Path to the SpatialData zarr directory\n
+    \n
+    [Options]\n
         sc_reference_path: Path to the scRNAseq annotated reference\n
         cell_type_key: Key of 'adata_ref.obs' containing the cell-types\n
         reference_preprocessing: Preprocessing method applied to the reference. Either None (raw counts), or 'normalized' (sc.pp.normalize_total) or 'log1p' (sc.pp.normalize_total and sc.pp.log1p)\n

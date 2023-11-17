@@ -68,7 +68,7 @@ For more details on `snakemake` configuration and how to properly setup your env
 > sopa segmentation cellpose merscope_directory.zarr --diameter 60 --channels DAPI # segmentation
 > sopa resolve cellpose merscope_directory.zarr # resolve segmentation conflicts at boundaries
 > sopa aggregate merscope_directory.zarr --average-intensities # transcripts/channels aggregation
-> sopa explorer merscope_directory.zarr merscope_directory.explorer # convert for interactive viz
+> sopa explorer merscope_directory.zarr # convert for interactive viz
 ```
 
 For a full description of the API, please refer to the [documentation](TODO).

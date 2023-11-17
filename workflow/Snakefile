@@ -186,7 +186,7 @@ rule image_write:
         args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb'])),
     shell:
         """
-        sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer} --save-image-mode 2
+        sopa explorer {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --save-image-mode 2
         """
 
 rule report:
@@ -218,5 +218,5 @@ rule explorer:
         args_explorer = str(args["explorer"]),
     shell:
         """
-        sopa explorer {paths.sdata_path} {paths.explorer_directory} {params.args_explorer} --save-image-mode 0
+        sopa explorer {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --save-image-mode 0
         """
