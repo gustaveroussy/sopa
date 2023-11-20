@@ -174,7 +174,9 @@ class SectionBuilder:
         adata = self.sdata.table
 
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
-            sc.pp.log1p(adata)
+            sc.pp.normalize_total(adata)
+
+        sc.pp.log1p(adata)
         sc.pp.pca(adata)
         sc.pp.neighbors(adata)
         sc.tl.umap(adata)
