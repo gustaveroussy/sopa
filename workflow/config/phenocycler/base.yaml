@@ -1,5 +1,5 @@
 read:
-  technology: qptiff
+  technology: phenocycler
 
 patchify:
   patch_width_pixel: 3000
