@@ -1,6 +1,7 @@
 import logging
 
 import matplotlib.pyplot as plt
+import numpy as np
 import scanpy as sc
 import seaborn as sns
 from spatialdata import SpatialData
@@ -33,6 +34,12 @@ def write_report(path: str, sdata: SpatialData):
     Root(sections).write(path)
 
 
+def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):
+    threshold = np.quantile(values, quantile)
+    values = values.clip(0, threshold)
+    sns.kdeplot(values)
+
+
 class SectionBuilder:
     def __init__(self, sdata: SpatialData):
         self.sdata = sdata
@@ -43,6 +50,8 @@ class SectionBuilder:
         return self.sdata.table.uns[SopaKeys.UNS_KEY].get(key, default)
 
     def general_section(self):
+        log.info("Writing general section")
+
         return Section(
             "General",
             [
@@ -59,11 +68,13 @@ class SectionBuilder:
         )
 
     def cell_section(self):
+        log.info("Writing cell section")
+
         shapes_key, gdf = get_boundaries(self.sdata, return_key=True)
         coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
-        sns.kdeplot(gdf.area)
+        _kdeplot_vmax_quantile(gdf.area)
         plt.xlabel("Area (coordinate_system_unit ^ 2)")
 
         return Section(
@@ -86,6 +97,8 @@ class SectionBuilder:
         )
 
     def channel_section(self):
+        log.info("Writing channel section")
+
         image = get_spatial_image(self.sdata)
 
         subsections = [
@@ -99,8 +112,13 @@ class SectionBuilder:
 
         if self._table_has(SopaKeys.UNS_HAS_INTENSITIES):
             fig = plt.figure()
-            for channel, intensities in get_intensities(self.sdata).items():
-                sns.kdeplot(intensities, label=channel)
+
+            df_intensities = get_intensities(self.sdata)
+            threshold = np.quantile(df_intensities.values.ravel(), 0.95)
+
+            for channel, intensities in df_intensities.items():
+                sns.kdeplot(intensities.clip(0, threshold), label=channel)
+
             plt.xlabel("Intensity")
             plt.ylabel("Distribution density")
 
@@ -122,6 +140,8 @@ class SectionBuilder:
         if not self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             return None
 
+        log.info("Writing transcript section")
+
         mean_transcript_count = self.sdata.table.X.mean(0).A1
         low_average = mean_transcript_count < LOW_AVERAGE_COUNT
 
@@ -137,11 +157,11 @@ class SectionBuilder:
             )
 
         fig1 = plt.figure()
-        sns.kdeplot(mean_transcript_count)
+        _kdeplot_vmax_quantile(mean_transcript_count)
         plt.xlabel("Count per transcript (average / cells)")
 
         fig2 = plt.figure()
-        sns.kdeplot(self.sdata.table.X.sum(1).A1)
+        _kdeplot_vmax_quantile(self.sdata.table.X.sum(1).A1)
         plt.xlabel("Transcript count per cell")
 
         QC_subsubsections.append(Columns([Image(fig1), Image(fig2)]))
@@ -149,6 +169,8 @@ class SectionBuilder:
         return Section("Transcripts", [SubSection("Quality controls", QC_subsubsections)])
 
     def representation_section(self):
+        log.info("Writing representation section")
+
         adata = self.sdata.table
 
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
