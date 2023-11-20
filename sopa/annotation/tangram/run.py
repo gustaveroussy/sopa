@@ -49,6 +49,7 @@ class MultiLevelAnnotation:
     ):
         self.ad_sp = ad_sp
         self.ad_sc = ad_sc
+
         self.cell_type_key = cell_type_key
         self.reference_preprocessing = reference_preprocessing
         self.bag_size = bag_size
@@ -58,6 +59,9 @@ class MultiLevelAnnotation:
         assert (
             cell_type_key in ad_sc.obs
         ), f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+
+        if self.ad_sc.raw is not None:
+            del self.ad_sc.raw
 
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         log.info(f"Using device: {self.device}")
