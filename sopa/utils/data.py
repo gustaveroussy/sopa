@@ -1,3 +1,5 @@
+import logging
+
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
@@ -7,6 +9,8 @@ from shapely.geometry import Point, box
 from spatialdata import SpatialData
 from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
+
+log = logging.getLogger(__name__)
 
 
 def uniform(
@@ -19,6 +23,7 @@ def uniform(
     sigma_factor: float = 0.4,
     seed: int = 0,
     save_vertices: bool = False,
+    apply_blur: bool = True,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -41,6 +46,10 @@ def uniform(
     n_cells = grid_width**2
     n_points = n_points_per_cell * n_cells
 
+    log.info(
+        f"Image of size ({len(c_coords), length, length}) with {n_cells} cells and {n_points_per_cell} transcripts per cell"
+    )
+
     # Compute cell vertices (xy array)
     vertices_x = dx / 2 + np.arange(grid_width) * dx
     x, y = np.meshgrid(vertices_x, vertices_x)
@@ -55,7 +64,8 @@ def uniform(
     image[0, xy[:, 1], xy[:, 0]] += 1
     if len(c_coords) > 1:
         image[np.random.randint(1, len(c_coords), len(xy)), xy[:, 1], xy[:, 0]] += 1
-    image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
+    if apply_blur:
+        image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
     image = (image / image.max() * 255).astype(np.uint8)
 
     # Create cell boundaries
