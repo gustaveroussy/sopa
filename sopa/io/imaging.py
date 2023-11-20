@@ -69,6 +69,14 @@ def macsima(
 
 
 def _get_channel_name_qptiff(description):
+    import xml.etree.ElementTree as ET
+
+    root = ET.fromstring(description)
+
+    field = root.find(".//Biomarker") or root.find(".//ExcitationFilter//Bands//Name")
+    if field is not None:
+        return field.text
+
     return re.search(r"<Name>(.*?)</Name>", description).group(1)
 
 
