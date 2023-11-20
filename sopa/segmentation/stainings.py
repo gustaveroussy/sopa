@@ -21,11 +21,11 @@ class StainingSegmentation:
         self,
         sdata: SpatialData,
         method: callable,
-        channels: list[str],
+        channels: list[str] | str,
     ):
         self.sdata = sdata
         self.method = method
-        self.channels = channels
+        self.channels = [channels] if isinstance(channels, str) else channels
 
         self.image_key, self.image = get_spatial_image(sdata, return_key=True)
 
