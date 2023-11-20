@@ -73,9 +73,10 @@ def _get_channel_name_qptiff(description):
 
     root = ET.fromstring(description)
 
-    field = root.find(".//Biomarker") or root.find(".//ExcitationFilter//Bands//Name")
-    if field is not None:
-        return field.text
+    for xml_path in [".//Biomarker", ".//ExcitationFilter//Bands//Name"]:
+        field = root.find(xml_path)
+        if field is not None:
+            return field.text
 
     return re.search(r"<Name>(.*?)</Name>", description).group(1)
 
@@ -99,6 +100,7 @@ def qptiff(
         names = _get_channel_names_qptiff(page_series)
 
         log.info(f"Found channel names {names}")
+        return
 
         if channels_renaming is not None and len(channels_renaming):
             log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
