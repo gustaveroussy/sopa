@@ -48,7 +48,7 @@ class MultiscaleImageWriter:
                         self.tile_width * index_y : self.tile_width * (index_y + 1),
                         self.tile_width * index_x : self.tile_width * (index_x + 1),
                     ].values
-                    yield scale_dtype(tile, self.dtype).clip(0, np.iinfo(np.int8).max)
+                    yield self._scale(tile)
 
     def _should_load_memory(self, shape: tuple[int, int, int], dtype: np.dtype):
         if not self.lazy:
@@ -61,6 +61,9 @@ class MultiscaleImageWriter:
         size = shape[0] * shape[1] * shape[2] * itemsize
 
         return size <= self.ram_threshold_gb * 1024**3
+
+    def _scale(self, array: np.ndarray):
+        return scale_dtype(array, self.dtype).clip(0, np.iinfo(np.int8).max)
 
     def _write_image_level(self, tif: tf.TiffWriter, scale_index: int, **kwargs):
         xarr: xr.DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
@@ -75,7 +78,7 @@ class MultiscaleImageWriter:
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
             else:
                 log.info(f"   (Loading image of shape {xarr.shape}) in memory")
-                self.data = scale_dtype(xarr.values, self.dtype).clip(0, np.iinfo(np.int8).max)
+                self.data = self._scale(xarr.values)
 
             data = self.data
 
