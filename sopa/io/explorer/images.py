@@ -20,7 +20,7 @@ class MultiscaleImageWriter:
     photometric = "minisblack"
     compression = "jpeg2000"
     resolutionunit = "CENTIMETER"
-    dtype = np.int8
+    dtype = np.uint8
 
     def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixelsize: float):
         self.image = image
@@ -48,7 +48,7 @@ class MultiscaleImageWriter:
                         self.tile_width * index_y : self.tile_width * (index_y + 1),
                         self.tile_width * index_x : self.tile_width * (index_x + 1),
                     ].values
-                    yield scale_dtype(tile, self.dtype)
+                    yield scale_dtype(tile, self.dtype).clip(0, np.iinfo(np.int8).max)
 
     def _should_load_memory(self, shape: tuple[int, int, int], dtype: np.dtype):
         if not self.lazy:
@@ -75,7 +75,7 @@ class MultiscaleImageWriter:
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
             else:
                 log.info(f"   (Loading image of shape {xarr.shape}) in memory")
-                self.data = scale_dtype(xarr.values, self.dtype)
+                self.data = scale_dtype(xarr.values, self.dtype).clip(0, np.iinfo(np.int8).max)
 
             data = self.data
 
