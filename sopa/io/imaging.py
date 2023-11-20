@@ -100,7 +100,6 @@ def qptiff(
         names = _get_channel_names_qptiff(page_series)
 
         log.info(f"Found channel names {names}")
-        return
 
         if channels_renaming is not None and len(channels_renaming):
             log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
