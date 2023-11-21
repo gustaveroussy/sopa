@@ -14,6 +14,15 @@ log = logging.getLogger(__name__)
 
 
 def geometrize_niches(adata: AnnData, niche_key: str) -> gpd.GeoDataFrame:
+    """Converts the niches to shapely polygons, and put into a `GeoDataFrame`. Note that each niche can appear multiple times, as they can be separated by other niches ; in this case, we call them different "components" of the same niche ID.
+
+    Args:
+        adata: An `AnnData` object
+        niche_key: Key of `adata.obs` containing the niches
+
+    Returns:
+        A `GeoDataFrame` with geometries for each niche component. We also compute the area/perimeter/roundness of each component.
+    """
     _check_has_delaunay(adata)
     data = {"geometry": [], niche_key: []}
 
@@ -58,6 +67,17 @@ def niches_geometry_stats(
     aggregation: str | list[str] = "min",
     key_added_suffix: str = "_distance_to_niche_",
 ) -> gpd.GeoDataFrame:
+    """Computes statistics over niches geometries
+
+    Args:
+        adata: An `AnnData` object
+        niche_key: Key of `adata.obs` containing the niches
+        aggregation: Aggregation mode. Either one string such as `"min"`, or a list such as `["mean", "min"]`.
+        key_added_suffix: Suffix added in the DataFrame columns. Defaults to "_distance_to_niche_".
+
+    Returns:
+        A `DataFrame` of shape `n_niches * n_statistics`
+    """
     gdf = geometrize_niches(adata, niche_key)
 
     assert len(gdf), f"No niche geometry found, stats can't be computed"

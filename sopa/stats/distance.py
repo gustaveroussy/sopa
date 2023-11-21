@@ -13,9 +13,20 @@ log = logging.getLogger(__name__)
 def cells_to_groups(
     adata: AnnData,
     group_key: str,
-    key_added_prefix: str | None = "distance_group_",
+    key_added_prefix: str | None = None,
     ignore_zeros: bool = False,
 ) -> pd.DataFrame | None:
+    """Compute the hop-distance between each cell and a cell category/group.
+
+    Args:
+        adata: `AnnData` object
+        group_key: Key of `adata.obs` containing the groups
+        key_added_prefix: Prefix to the key added in `adata.obsm`. If `None`, will return the `DataFrame` instead of saving it.
+        ignore_zeros: If `True`, a cell distance to its own group is 0.
+
+    Returns:
+        A `Dataframe` of shape `n_obs * n_groups`, or `None` if `key_added_prefix` was provided (in this case, the dataframe is saved in `"{key_added_prefix}{group_key}"`)
+    """
     _check_has_delaunay(adata)
 
     distances_to_groups = {}
@@ -59,6 +70,17 @@ def cells_to_groups(
 def mean_distance(
     adata: AnnData, group_key: str, target_group_key: str | None = None, ignore_zeros: bool = False
 ) -> pd.DataFrame:
+    """Mean distance between two groups (typically, between cell-types, or between cell-types and domains)
+
+    Args:
+        adata: An `AnnData` object
+        group_key: Key of `adata.obs` containing the groups
+        target_group_key: Key of `adata.obs` containing the target groups (by default, uses `group_key`)
+        ignore_zeros: If `True`, a cell distance to its own group is 0.
+
+    Returns:
+        `DataFrame` of shape `n_groups * n_groups_target` of mean hop-distances
+    """
     target_group_key = group_key if target_group_key is None else target_group_key
 
     df_distances = cells_to_groups(adata, target_group_key, None, ignore_zeros=ignore_zeros)
