@@ -2,25 +2,23 @@ import ast
 
 import typer
 
+from .utils import SDATA_HELPER
+
 app_patchify = typer.Typer()
-option = typer.Option()
 
 
 @app_patchify.command()
 def cellpose(
-    sdata_path: str,
-    patch_width_pixel: float = None,
-    patch_overlap_pixel: float = None,
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    patch_width_pixel: float = typer.Option(
+        None, help="Width (and height) of each patch in pixels"
+    ),
+    patch_overlap_pixel: float = typer.Option(
+        None,
+        help="Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell",
+    ),
 ):
-    """Prepare patches for Cellpose segmentation
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-
-    [Options]\n
-        patch_width_pixel: Width (and height) of each patch in pixels\n
-        patch_overlap_pixel: Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell\n
-    """
+    """Prepare patches for Cellpose segmentation"""
     from pathlib import Path
 
     from sopa._constants import SopaFiles
@@ -42,29 +40,32 @@ def cellpose(
 
 @app_patchify.command()
 def baysor(
-    sdata_path: str,
-    patch_width_microns: float = option,
-    patch_overlap_microns: float = option,
-    baysor_temp_dir: str = option,
-    config: str = typer.Option(default={}, callback=ast.literal_eval),
-    cell_key: str = None,
-    unassigned_value: int = None,
-    use_prior: bool = False,
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    patch_width_microns: float = typer.Option(help="Width (and height) of each patch in microns"),
+    patch_overlap_microns: float = typer.Option(
+        help="Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell"
+    ),
+    baysor_temp_dir: str = typer.Option(
+        help="Temporary directory where baysor inputs and outputs will be saved"
+    ),
+    config: str = typer.Option(
+        default={},
+        callback=ast.literal_eval,
+        help="Path to the snakemake config containing the baysor arguments",
+    ),
+    cell_key: str = typer.Option(
+        None,
+        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is",
+    ),
+    unassigned_value: int = typer.Option(
+        None,
+        help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
+    ),
+    use_prior: bool = typer.Option(
+        False, help="Whether to use cellpose segmentation as a prior for baysor"
+    ),
 ):
-    """Prepare the patches for Baysor segmentation
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        patch_width_microns: Width (and height) of each patch in microns\n
-        patch_overlap_microns: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell\n
-        baysor_temp_dir: Temporary directory where baysor inputs and outputs will be saved\n
-        config: Path to the snakemake config containing the baysor arguments\n
-        cell_key: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is\n
-        unassigned_value: If 'cell_key' is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)\n
-        use_prior: Whether to use cellpose segmentation as a prior for baysor\n
-    """
+    """Prepare the patches for Baysor segmentation"""
     from pathlib import Path
 
     from sopa._constants import SopaFiles

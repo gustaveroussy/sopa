@@ -9,7 +9,7 @@ nav:
   - Home: index.md
   - Getting Started: getting_started.md
   - Snakemake pipeline: pipeline.md
-  - Command-line interface: cli.md
+  - CLI: cli.md
   - API:
     - sopa.segmentation:
       - sopa.segmentation.shapes: api/segmentation/shapes.md

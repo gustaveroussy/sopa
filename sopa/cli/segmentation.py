@@ -1,39 +1,47 @@
 import typer
 
+from .utils import SDATA_HELPER
+
 app_segmentation = typer.Typer()
-option = typer.Option()
 
 
 @app_segmentation.command()
 def cellpose(
-    sdata_path: str,
-    diameter: float = option,
-    channels: list[str] = option,
-    flow_threshold: float = option,
-    cellprob_threshold: float = option,
-    model_type: str = "cyto2",
-    patch_width: int = typer.Option(default=None),
-    patch_overlap: int = typer.Option(default=None),
-    expand_radius: int = typer.Option(default=0),
-    patch_index: int = typer.Option(default=None),
-    patch_dir: str = typer.Option(default=None),
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    diameter: float = typer.Option(help="Cellpose diameter parameter"),
+    channels: list[str] = typer.Option(
+        help="Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel"
+    ),
+    flow_threshold: float = typer.Option(help="Cellpose `flow_threshold` parameter"),
+    cellprob_threshold: float = typer.Option(help="Cellpose `cellprob_threshold` parameter"),
+    model_type: str = typer.Option("cyto2", help="Name of the cellpose model"),
+    patch_index: int = typer.Option(
+        default=None,
+        help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
+    ),
+    patch_dir: str = typer.Option(
+        default=None,
+        help="Path to the temporary cellpose directory inside which we will store each individual patch segmentation",
+    ),
+    patch_width: int = typer.Option(
+        default=None, help="Ignore this if you already run `sopa patchify`. Patch width in pixels"
+    ),
+    patch_overlap: int = typer.Option(
+        default=None,
+        help="Ignore this if you already run `sopa patchify`. Patches overlaps in pixels",
+    ),
+    expand_radius: int = typer.Option(
+        default=0,
+        help="Ignore this if you already run `sopa patchify`. Cell boundaries radius expansion in pixels",
+    ),
 ):
-    """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch (provide `--patch-dir` and `--patch-index`)
+    """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch.
 
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        diameter: Cellpose diameter parameter\n
-        channels: Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel.\n
-        flow_threshold: Cellpose flow_threshold parameter\n
-        cellprob_threshold: Cellpose cellprob_threshold parameter\n
-        model_type: Name of the cellpose model\n
-        patch_width: Ignore this if you already run 'sopa patchify'. Patch width in pixels.\n
-        patch_overlap: Ignore this if you already run 'sopa patchify'. Patches overlaps in pixels.\n
-        expand_radius: Ignore this if you already run 'sopa patchify'. Cell boundaries radius expansion in pixels.\n
-        patch_index: Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`.\n
-        patch_dir: Path to the temporary cellpose directory inside which we will store each individual patch segmentation\n
+    Usage:
+
+        - [On one patch] Use this mode to run patches in parallel. Just provide `--patch-index` and `--patch-dir`. Note that `--patch-dir` will be used during `sopa resolve cellpose` afterwards.
+
+        - [On all patches at once] For small images, you can run cellpose sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
     """
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes

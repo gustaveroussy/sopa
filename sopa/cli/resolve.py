@@ -1,24 +1,19 @@
 import typer
 
+from .utils import SDATA_HELPER
+
 app_resolve = typer.Typer()
-option = typer.Option()
 
 
 @app_resolve.command()
 def cellpose(
-    sdata_path: str,
-    patch_dir: str = option,
-    expand_radius: float = typer.Option(default=0),
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    patch_dir: str = typer.Option(help="Directory containing the cellpose segmentation on patches"),
+    expand_radius: float = typer.Option(
+        default=0, help="Number of pixels for radius expansion of each cell boundary"
+    ),
 ):
-    """Resolve patches conflicts after cellpose segmentation
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        patch_dir: Directory containing the cellpose segmentation on patches\n
-        expand_radius: Number of pixels for radius expansion of each cell boundary\n
-    """
+    """Resolve patches conflicts after cellpose segmentation"""
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
@@ -38,25 +33,24 @@ def cellpose(
 
 @app_resolve.command()
 def baysor(
-    sdata_path: str,
-    gene_column: str = option,
-    baysor_temp_dir: str = None,
-    min_area: float = 0,
-    expand_radius: float = 0,
-    patches_dirs: list[str] = None,
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    gene_column: str = typer.Option(
+        help="Column of the transcripts dataframe containing the genes names"
+    ),
+    baysor_temp_dir: str = typer.Option(
+        None, help="Path to the directory containing all the baysor patches (see `sopa patchify`)"
+    ),
+    min_area: float = typer.Option(
+        0, help="Cells with an area less than this value (in microns^2) will be filtered"
+    ),
+    expand_radius: float = typer.Option(
+        0, help="Number of microns for radius expansion of each cell boundary"
+    ),
+    patches_dirs: list[str] = typer.Option(
+        None, help="List of patches directories inside `baysor_temp_dir`"
+    ),
 ):
-    """Resolve patches conflicts after baysor segmentation. Provide either 'baysor_temp_dir' or 'patches_dirs'
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        gene_column: Column of the transcripts dataframe containing the genes names\n
-        baysor_temp_dir: Path to the directory containing all the baysor patches (see 'sopa patchify')\n
-        min_area: Cells with an area less than this value (in microns^2) will be filtered\n
-        expand_radius: Number of microns for radius expansion of each cell boundary\n
-        patches_dirs: List of patches directories inside 'baysor_temp_dir'\n
-    """
+    """Resolve patches conflicts after baysor segmentation. Provide either `--baysor-temp-dir` or `--patches-dirs`"""
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.baysor.resolve import resolve
 

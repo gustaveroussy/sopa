@@ -1,7 +1,6 @@
 import typer
 
 app_check = typer.Typer()
-option = typer.Option()
 
 
 def _open_config(path: str) -> dict:
@@ -22,15 +21,11 @@ def _open_config(path: str) -> dict:
 
 
 @app_check.command()
-def reference(reference_path: str, cell_type_key: str = "cell_type"):
-    """Perform sanity checks on a tangram scRNAseq reference
-
-    [Args]\n
-        reference_path: Path to the scRNAseq reference (usually, a h5ad file)\n
-    \n
-    [Options]\n
-        cell_type_key: Key of adata.obs containing the cell types\n
-    """
+def reference(
+    reference_path: str = typer.Argument(help="Path to the scRNAseq reference as a `.h5ad` file"),
+    cell_type_key: str = typer.Option(help="Key of adata.obs containing the cell types"),
+):
+    """Perform sanity checks on a tangram scRNAseq reference"""
     import logging
 
     import anndata
@@ -119,12 +114,8 @@ CONFIG_REQUIREMENTS = {
 
 
 @app_check.command()
-def config(path: str):
-    """Perform sanity checks on a sopa yaml config
-
-    [Args]\n
-        path: Path to the YAML config\n
-    """
+def config(path: str = typer.Argument(help="Path to the YAML config")):
+    """Perform sanity checks on a sopa yaml config"""
     import logging
 
     log = logging.getLogger(__name__)

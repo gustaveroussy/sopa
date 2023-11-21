@@ -2,25 +2,22 @@ import ast
 
 import typer
 
+from .utils import SDATA_HELPER
+
 app_annotate = typer.Typer()
-option = typer.Option()
 
 
 @app_annotate.command()
 def fluorescence(
-    sdata_path: str,
-    marker_cell_dict: str = typer.Option(default={}, callback=ast.literal_eval),
-    cell_type_key: str = "cell_type",
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    marker_cell_dict: str = typer.Option({}, callback=ast.literal_eval),
+    cell_type_key: str = typer.Option(
+        "cell_type", help="Key added in `adata.obs` corresponding to the cell type"
+    ),
 ):
     """Simple annotation based on fluorescence, where each provided channel corresponds to one cell type.
-    For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
 
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        marker_cell_dict: Dictionary chose keys are channel names, and values are the corresponding cell types\n
-        cell_type_key: Key added in 'adata.obs' corresponding to the cell type\n
+    For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
     """
     from pathlib import Path
 
@@ -37,25 +34,25 @@ def fluorescence(
 
 @app_annotate.command()
 def tangram(
-    sdata_path: str,
-    sc_reference_path: str = option,
-    cell_type_key: str = "cell_type",
-    reference_preprocessing: str = None,
-    bag_size: int = 10_000,
-    max_obs_reference: int = 10_000,
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    sc_reference_path: str = typer.Option(
+        help="Path to the scRNAseq annotated reference, as a `.h5ad` file"
+    ),
+    cell_type_key: str = typer.Option(help="Key of `adata_ref.obs` containing the cell-types"),
+    reference_preprocessing: str = typer.Option(
+        None,
+        help="Preprocessing method applied to the reference. Either None (raw counts), or `normalized` (sc.pp.normalize_total) or `log1p` (sc.pp.normalize_total and sc.pp.log1p)",
+    ),
+    bag_size: int = typer.Option(
+        10_000,
+        help="Number of cells in each bag of the spatial table. Low values will decrease the memory usage",
+    ),
+    max_obs_reference: int = typer.Option(
+        10_000,
+        help="Maximum samples to be considered in the reference for tangram. Low values will decrease the memory usage",
+    ),
 ):
-    """Tangram segmentation (i.e., uses an annotated scRNAseq reference to transfer cell-types)
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        sc_reference_path: Path to the scRNAseq annotated reference\n
-        cell_type_key: Key of 'adata_ref.obs' containing the cell-types\n
-        reference_preprocessing: Preprocessing method applied to the reference. Either None (raw counts), or 'normalized' (sc.pp.normalize_total) or 'log1p' (sc.pp.normalize_total and sc.pp.log1p)\n
-        bag_size: Number of cells in each bag of the spatial table. Low values will decrease the memory usage\n
-        max_obs_reference: Maximum samples to be considered in the reference for tangram. Low values will decrease the memory usage\n
-    """
+    """Tangram segmentation (i.e., uses an annotated scRNAseq reference to transfer cell-types)"""
     from pathlib import Path
 
     import anndata

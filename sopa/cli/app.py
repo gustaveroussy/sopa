@@ -8,8 +8,7 @@ from .explorer import app_explorer
 from .patchify import app_patchify
 from .resolve import app_resolve
 from .segmentation import app_segmentation
-
-option = typer.Option()
+from .utils import SDATA_HELPER
 
 app = typer.Typer()
 app.add_typer(
@@ -25,7 +24,7 @@ app.add_typer(
 app.add_typer(
     app_segmentation,
     name="segmentation",
-    help="Perform cell segmentation on patches. NB: for 'baysor', use directly the 'baysor' command line.",
+    help="Perform cell segmentation on patches. NB: for `baysor`, use directly the `baysor` command line.",
 )
 app.add_typer(
     app_resolve, name="resolve", help="Resolve the segmentation conflicts over patches overlaps"
@@ -44,24 +43,30 @@ app.add_typer(
 
 @app.command()
 def read(
-    data_path: str,
-    technology: str = None,
-    sdata_path: str = None,
-    config_path: str = None,
-    kwargs: str = typer.Option(default={}, callback=ast.literal_eval),
+    data_path: str = typer.Argument(
+        help="Path to one data sample (most of the time, this corresponds to a directory with images files and eventually a transcript file)"
+    ),
+    technology: str = typer.Option(
+        None,
+        help="Name of the technology used to collected the data (`xenium`/`merfish`/`cosmx`/`phenocycler`/`macsima`/`qptiff`/`hyperion`)",
+    ),
+    sdata_path: str = typer.Option(
+        None,
+        help="Optional path to write the SpatialData object. If not provided, will write to the `{data_path}.zarr` directory",
+    ),
+    config_path: str = typer.Option(
+        None,
+        help="Path to the snakemake config. This can be useful in order not to provide the `--technology` and the `--kwargs` arguments",
+    ),
+    kwargs: str = typer.Option(
+        default={},
+        callback=ast.literal_eval,
+        help="Dictionary provided to the reader function as kwargs",
+    ),
 ):
     """Read any technology data, and write a standardized SpatialData object.
-    Either --technology or --config-path has to be provided.
 
-    [Args]\n
-        data_path: Path to one data sample (most of the time, this corresponds to a directory)\n
-    \n
-    [Options]\n
-        technology: Name of the technology used to collected the data (e.g., 'xenium', 'merfish', ...)\n
-        sdata_path: Optional path to write the SpatialData object. If not provided, will write to the '{data_path}.zarr' directory\n
-        config_path: Path to the snakemake config. This can be useful in order not to provide the 'technology' and the 'kwargs' arguments\n
-        kwargs: Dictionary provided to the reader function.\n
-    """
+    Either `--technology` or `--config-path` has to be provided."""
     from pathlib import Path
 
     from sopa import io
@@ -94,25 +99,30 @@ def read(
 
 @app.command()
 def crop(
-    sdata_path: str = None,
-    intermediate_image: str = None,
-    intermediate_polygon: str = None,
-    channels: list[str] = None,
-    scale_factor: float = 10,
-    margin_ratio: float = 0.1,
+    sdata_path: str = typer.Option(None, help=SDATA_HELPER),
+    intermediate_image: str = typer.Option(
+        None,
+        help="Path to the intermediate image, with a `.zip` extension. Use this only if the interactive mode is not available",
+    ),
+    intermediate_polygon: str = typer.Option(
+        None,
+        help="Path to the intermediate polygon, with a `.zip` extension. Use this locally, after downloading the intermediate_image",
+    ),
+    channels: list[str] = typer.Option(None, help="List of channel names to be displayed"),
+    scale_factor: float = typer.Option(
+        10, help="Resize the image by this value (high value for a lower memory usage)"
+    ),
+    margin_ratio: float = typer.Option(
+        0.1, help="Ratio of the image margin on the display (compared to the image size)"
+    ),
 ):
     """Crop an image based on a user-defined polygon (interactive mode).
-    If the interactive mode is not available where the data is stored,
-    then we can export an intermediate resized image, then make the selection locally,
-    and transfer back the resulting polygon.
 
-    [Options]\n
-        sdata_path: Path to the sdata.zarr directory\n
-        intermediate_image: Path to the intermediate image, with a .zip extension. Use this only if the interactive mode is not available\n
-        intermediate_polygon: Path to the intermediate polygon, with a .zip extension. Use this locally, after downloading the intermediate_image\n
-        channels: List of channel names to be displayed\n
-        scale_factor: Resize the image by this value (high value for a lower memory usage)\n
-        margin_ratio: Ratio of the image margin on the display (compared to the image size)\n
+    Usage:
+
+        - [Locally] Only `--sdata-path` is required
+
+        - [On a cluster] Run `sopa crop` with `--sdata-path` and `--intermediate-image` on the cluster. Then, download the image locally, and run `sopa crop` with `--intermediate-image` and `--intermediate-polygon`. Then, upload the polygon and run `sopa crop` on the cluster with `--sdata-path` and `--intermediate-polygon`.
     """
     from .utils import _check_zip
 
@@ -138,23 +148,23 @@ def crop(
 
 @app.command()
 def aggregate(
-    sdata_path: str,
-    gene_column: str = None,
-    average_intensities: bool = False,
-    min_transcripts: int = 0,
-    min_intensity_ratio: float = 0,
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    gene_column: str = typer.Option(
+        None,
+        help="Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count",
+    ),
+    average_intensities: bool = typer.Option(
+        False, help="Whether to average the channel intensities inside each cell"
+    ),
+    min_transcripts: int = typer.Option(
+        0, help="Cells with less transcript than this integer will be filtered"
+    ),
+    min_intensity_ratio: float = typer.Option(
+        0,
+        help="Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered",
+    ),
 ):
-    """Create an `anndata` table containing the transcript count and/or the channel intensities per cell
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-    \n
-    [Options]\n
-        gene_column: Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count\n
-        average_intensities: Whether to average the channel intensities inside each cell\n
-        min_transcripts: Cells with less transcript than this integer will be filtered\n
-        min_intensity_ratio: Cells whose mean channel intensity is less than min_intensity_ratio * quantile_90 will be filtered\n
-    """
+    """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.aggregate import Aggregator
 
@@ -166,15 +176,10 @@ def aggregate(
 
 @app.command()
 def report(
-    sdata_path: str,
-    path: str,
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    path: str = typer.Argument(help="Path to the HTML report"),
 ):
-    """Create a HTML report of the pipeline run and some quality controls
-
-    [Args]\n
-        sdata_path: Path to the SpatialData zarr directory\n
-        path: Path to the HTML report\n
-    """
+    """Create a HTML report of the pipeline run and some quality controls"""
     from sopa.io.report import write_report
     from sopa.io.standardize import read_zarr_standardized
 
