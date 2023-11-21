@@ -2,13 +2,18 @@ import logging
 import re
 from math import ceil
 
+import dask.array as da
 import numpy as np
 import tifffile as tf
 import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 from spatial_image import SpatialImage
+from spatialdata import SpatialData
+from spatialdata.models import Image2DModel
+from spatialdata.transformations import Affine
 from tqdm import tqdm
 
+from ..._sdata import get_intrinsic_cs, get_spatial_image
 from ...utils.image import resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
@@ -169,3 +174,30 @@ def write_image(
 
     image_writer = MultiscaleImageWriter(image, pixelsize=pixelsize, tile_width=tile_width)
     image_writer.write(path, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
+
+
+def align(
+    sdata: SpatialData,
+    image: SpatialImage | da.Array | np.ndarray,
+    name: str,
+    transformation_matrix_path: str,
+    image_key: str = None,
+    c_coords: list[str] = None,
+):
+    to_pixel = Affine(
+        np.genfromtxt(transformation_matrix_path),
+        input_axes=("y", "x"),
+        output_axes=("y", "x"),
+    )
+
+    image = get_spatial_image(sdata, image_key)
+    pixel_cs = get_intrinsic_cs(sdata, image)
+
+    image = Image2DModel(
+        image,
+        dims=("c", "y", "x"),
+        transformations={pixel_cs: to_pixel},
+        c_coords=c_coords,
+    )
+
+    sdata.add_image(name, image)
