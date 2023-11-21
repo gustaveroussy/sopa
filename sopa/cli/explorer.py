@@ -46,3 +46,27 @@ def write(
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,
     )
+
+
+@app_explorer.command()
+def add_aligned(
+    sdata_path: str,
+    image_path: str,
+    transformation_matrix_path: str,
+):
+    """After alignment on the Xenium Explorer, add an image to the SpatialData object
+
+    [Args]\n
+        sdata_path: Path to the SpatialData zarr directory\n
+        image_path: Path to the image file to be added (.ome.tif used in the explorer during alignment)\n
+        transformation_matrix_path: Path to the 'matrix.csv' file returned by the Explorer after alignment\n
+    """
+    import spatialdata
+
+    from sopa import io
+    from sopa.io.explorer.images import align
+
+    sdata = spatialdata.read_zarr(sdata_path)
+    image = io.imaging.xenium_if(image_path)
+
+    align(sdata, image, transformation_matrix_path)

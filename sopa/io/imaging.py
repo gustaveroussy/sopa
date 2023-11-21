@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import tifffile as tf
 from dask_image.imread import imread
+from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
@@ -155,3 +156,33 @@ def hyperion(
     )
 
     return SpatialData(images={image_name: image})
+
+
+def _get_channel_names_xenium_if(element, names):
+    for child in element:
+        _get_channel_names_xenium_if(child, names)
+    if element.attrib:
+        if "Name" in element.attrib:
+            names.append(element.attrib["Name"])
+    return names
+
+
+def xenium_if(path: Path, imread_kwargs: dict | None = None) -> SpatialImage:
+    imread_kwargs = {} if imread_kwargs is None else imread_kwargs
+
+    image = imread(path, **imread_kwargs)
+    image_name = Path(path).absolute().name.split(".")[0]
+
+    import xml.etree.ElementTree as ET
+
+    with tf.TiffFile(path) as tif:
+        page_series = tif.series[0]
+        desc = page_series[0].description
+        root = ET.fromstring(desc)
+        names = _get_channel_names_xenium_if(root, [])
+
+    if len(names) != len(image):
+        names = [str(i) for i in range(len(image))]
+        log.warn(f"Channel names couldn't be read. Using {names} instead.")
+
+    return SpatialImage(image, dims=["c", "y", "x"], name=image_name, coords={"c": names})

@@ -179,21 +179,27 @@ def write_image(
 def align(
     sdata: SpatialData,
     image: SpatialImage | da.Array | np.ndarray,
-    name: str,
     transformation_matrix_path: str,
     image_key: str = None,
+    name: str = None,
     c_coords: list[str] = None,
 ):
+    assert name or hasattr(
+        "name", image
+    ), f"If image.name is not existing, provide the name argument"
+
+    name = name if name is not None else image.name
+
     to_pixel = Affine(
-        np.genfromtxt(transformation_matrix_path),
+        np.genfromtxt(transformation_matrix_path, delimiter=","),
         input_axes=("y", "x"),
         output_axes=("y", "x"),
     )
 
-    image = get_spatial_image(sdata, image_key)
-    pixel_cs = get_intrinsic_cs(sdata, image)
+    default_image = get_spatial_image(sdata, image_key)
+    pixel_cs = get_intrinsic_cs(sdata, default_image)
 
-    image = Image2DModel(
+    image = Image2DModel.parse(
         image,
         dims=("c", "y", "x"),
         transformations={pixel_cs: to_pixel},

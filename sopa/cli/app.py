@@ -86,7 +86,7 @@ def read(
 
     assert hasattr(
         io, technology
-    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, qptiff"
+    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, phenocycler, hyperion, macsima, qptiff"
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path, delete_table=True)
