@@ -23,17 +23,17 @@ __all__ = ["spatial_neighbors"]
 
 def spatial_neighbors(
     adata: AnnData | SpatialData,
+    radius: tuple[float, float] | None,
     library_key: str | None = None,
-    radius: tuple[float, float] | None = None,
     percentile: float | None = None,
     set_diag: bool = False,
 ):
-    """Create a graph from spatial coordinates.
+    """Create a Delaunay graph from spatial coordinates. This function comes from [squidpy](https://squidpy.readthedocs.io/en/latest/api/squidpy.gr.spatial_neighbors.html#squidpy.gr.spatial_neighbors).
 
     Args:
         adata: AnnData object
+        radius: tuple that prunes the final graph to only contain edges in interval `[min(radius), max(radius)]`. If `None`, all edges are kept.
         library_key: Optional batch key in adata.obs
-        radius: tuple that prunes the final graph to only contain edges in interval `[min(radius), max(radius)]`
         percentile: Percentile of the distances to use as threshold.
         set_diag: Whether to set the diagonal of the spatial connectivities to `1.0`.
     """
@@ -137,6 +137,6 @@ def _build_connectivity(
 
 
 def _check_has_delaunay(adata: AnnData):
-    message = " key not in adata.obsp, consider running 'spatial_neighbors' (from sopa.stats import spatial_neighbors)"
+    message = " key not in adata.obsp, consider running the delaunay graph (i.e., `from sopa.stats import spatial_neighbors; spatial_neighbors(adata, [0, 40])`)"
     assert "spatial_connectivities" in adata.obsp, "spatial_connectivities" + message
     assert "spatial_distances" in adata.obsp, "spatial_distances" + message

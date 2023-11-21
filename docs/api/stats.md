@@ -13,3 +13,7 @@
 ::: sopa.stats.niches_geometry_stats
     options:
       show_root_heading: true
+
+::: sopa.stats.spatial_neighbors
+    options:
+      show_root_heading: true
