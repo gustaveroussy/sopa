@@ -60,18 +60,19 @@ For more details on `snakemake` configuration and how to properly setup your env
 
 ### CLI
 
+Below are example of commands that can be run with the `sopa` CLI:
+
 ```bash
-# Example
-> sopa --help # show commands names and arguments
+> sopa --help # show command names and arguments
 > sopa read merscope_directory --technology merscope # read some data
-> sopa patchify merscope_directory.zarr # make patches for low-memory segmentation
+> sopa patchify cellpose merscope_directory.zarr # make patches for low-memory segmentation
 > sopa segmentation cellpose merscope_directory.zarr --diameter 60 --channels DAPI # segmentation
 > sopa resolve cellpose merscope_directory.zarr # resolve segmentation conflicts at boundaries
 > sopa aggregate merscope_directory.zarr --average-intensities # transcripts/channels aggregation
-> sopa explorer merscope_directory.zarr # convert for interactive viz
+> sopa explorer write merscope_directory.zarr # convert for interactive viz
 ```
 
-For a full description of the API, please refer to the [documentation](TODO).
+For a full description of the CLI, please refer to the [documentation](TODO).
 
 ### API
 
