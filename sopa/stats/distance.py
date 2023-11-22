@@ -76,6 +76,9 @@ def mean_distance(
 ) -> pd.DataFrame:
     """Mean distance between two groups (typically, between cell-types, or between cell-types and domains)
 
+    Note:
+        The distance is a number of hops, i.e. a distance of 10 between a pDC and a T cell means that there are 10 cells on the closest path from one to the other cell.
+
     Args:
         adata: An `AnnData` object, or a `SpatialData object`
         group_key: Key of `adata.obs` containing the groups

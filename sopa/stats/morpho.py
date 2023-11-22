@@ -23,6 +23,13 @@ def geometrize_niches(
 ) -> gpd.GeoDataFrame:
     """Converts the niches to shapely polygons, and put into a `GeoDataFrame`. Note that each niche can appear multiple times, as they can be separated by other niches ; in this case, we call them different "components" of the same niche ID.
 
+    Plot components:
+        You can show niches components with GeoPandas
+        ```py
+        gdf = geometrize_niches(adata, niche_key)
+        gdf.plot(column=niche_key)
+        ```
+
     Args:
         adata: An `AnnData` object, or a `SpatialData object`
         niche_key: Key of `adata.obs` containing the niches
@@ -88,7 +95,7 @@ def _clean_components(
         buffer = 3 * adata.obsp["spatial_distances"].data.mean()
 
     for niche, group_gdf in gdf.groupby(niche_key):
-        multi_polygon = MultiPolygon(group_gdf.geometry.values).buffer(buffer)
+        multi_polygon = MultiPolygon(group_gdf.geometry.values).buffer(buffer).buffer(-buffer)
 
         if isinstance(multi_polygon, Polygon):
             data["geometry"].append(multi_polygon)
@@ -105,11 +112,18 @@ def _clean_components(
 def niches_geometry_stats(
     adata: AnnData | SpatialData,
     niche_key: str,
-    aggregation: str | list[str] = "min",
+    aggregation: str | list[str] = "mean",
     key_added_suffix: str = "_distance_to_niche_",
     **geometrize_niches_kwargs: str,
 ) -> gpd.GeoDataFrame:
     """Computes statistics over niches geometries
+
+    Details:
+        - `n_components`: Number of connected component of a niche (a component is a group of neighbor cells with the same niche attribute)
+        - `length`: Mean distance of the exterior/boundary of the components of a niche
+        - `area`: Mean area of the components of a niche
+        - `roundness`: Float value between 0 and 1. The higher the value, the closer to a circle. Computed via `4 * pi * area / length**2`
+        - `mean_distance_to_niche_X`: mean distance to the niche (between the two closest points of the niches)
 
     Args:
         adata: An `AnnData` object, or a `SpatialData object`
