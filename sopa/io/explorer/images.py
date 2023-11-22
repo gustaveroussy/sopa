@@ -206,4 +206,5 @@ def align(
         c_coords=c_coords,
     )
 
+    log.info(f"Adding {image} to {sdata}")
     sdata.add_image(name, image)
