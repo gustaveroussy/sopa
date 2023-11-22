@@ -204,7 +204,8 @@ def align(
         dims=("c", "y", "x"),
         transformations={pixel_cs: to_pixel},
         c_coords=c_coords,
+        chunks=(1, 4096, 4096),
     )
 
-    log.info(f"Adding {image} to {sdata}")
+    log.info(f"Adding image: {image}")
     sdata.add_image(name, image)
