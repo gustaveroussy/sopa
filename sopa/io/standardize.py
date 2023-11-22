@@ -27,13 +27,12 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
         assert (
             image.dims == VALID_DIMENSIONS
         ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
+        _check_integer_dtype(image.dtype)
 
     if len(sdata.points) > 1:
         log.warn(
             f"The spatialdata object has {len(sdata.points)} points objects. It's easier to have only one (corresponding to transcripts), since sopa will use it directly without providing a key argument"
         )
-
-    _check_integer_dtype(image.dtype)
 
     # TODO: see https://github.com/scverse/spatialdata/issues/402
     # image_channels: np.ndarray = image.coords["c"].values
