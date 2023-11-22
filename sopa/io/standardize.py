@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 
-import numpy as np
 import spatialdata
 from spatialdata import SpatialData
 
@@ -12,25 +11,27 @@ from ..utils.image import _check_integer_dtype
 log = logging.getLogger(__name__)
 
 
-def sanity_check(sdata: SpatialData, delete_table: bool = False):
+def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = False):
     assert (
         len(sdata.images) > 0
     ), f"The spatialdata object has no image. Sopa is not designed for this."
 
-    if len(sdata.images) > 1:
-        log.warn(
-            f"The spatialdata object has {len(sdata.images)} images. We advise to run sopa on one image (which can have multiple channels and multiple scales)"
-        )
+    if len(sdata.images) != 1:
+        message = f"The spatialdata object has {len(sdata.images)} images. We advise to run sopa on one image (which can have multiple channels and multiple scales)"
+        if warn:
+            log.warn(message)
+        else:
+            raise ValueError(message)
+    else:
+        image = get_spatial_image(sdata)
+        assert (
+            image.dims == VALID_DIMENSIONS
+        ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
 
     if len(sdata.points) > 1:
         log.warn(
             f"The spatialdata object has {len(sdata.points)} points objects. It's easier to have only one (corresponding to transcripts), since sopa will use it directly without providing a key argument"
         )
-
-    image_key, image = get_spatial_image(sdata, return_key=True)
-    assert (
-        image.dims == VALID_DIMENSIONS
-    ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
 
     _check_integer_dtype(image.dtype)
 
@@ -48,9 +49,9 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
             del sdata.table
 
 
-def read_zarr_standardized(path: str) -> SpatialData:
+def read_zarr_standardized(path: str, warn: bool = False) -> SpatialData:
     sdata = spatialdata.read_zarr(path)
-    sanity_check(sdata)
+    sanity_check(sdata, warn=warn)
     return sdata
 
 

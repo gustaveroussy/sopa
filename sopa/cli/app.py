@@ -172,7 +172,7 @@ def aggregate(
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.aggregate import Aggregator
 
-    sdata = read_zarr_standardized(sdata_path)
+    sdata = read_zarr_standardized(sdata_path, warn=True)
 
     aggregator = Aggregator(sdata, image_key=image_key)
     aggregator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)
