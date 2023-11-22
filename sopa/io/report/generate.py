@@ -36,8 +36,8 @@ def write_report(path: str, sdata: SpatialData):
 
 def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):
     threshold = np.quantile(values, quantile)
-    values = values.clip(0, threshold)
     sns.kdeplot(values)
+    plt.xlim(0, threshold)
 
 
 class SectionBuilder:
@@ -117,8 +117,8 @@ class SectionBuilder:
             threshold = np.quantile(df_intensities.values.ravel(), 0.95)
 
             for channel, intensities in df_intensities.items():
-                sns.kdeplot(intensities.clip(0, threshold), label=channel)
-
+                sns.kdeplot(intensities, label=channel)
+            plt.xlim(0, threshold)
             plt.xlabel("Intensity")
             plt.ylabel("Distribution density")
 
@@ -176,21 +176,20 @@ class SectionBuilder:
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             sc.pp.normalize_total(adata)
 
+        log.info(f"Computing UMAP on {adata.n_obs} cells")
+
         sc.pp.log1p(adata)
         sc.pp.pca(adata)
         sc.pp.neighbors(adata)
         sc.tl.umap(adata)
 
         colors = self._table_has(SopaKeys.UNS_CELL_TYPES, None)
-
-        log.info("Computing UMAP")
         sc.pl.umap(adata, color=colors, show=False)
-        fig = plt.gcf()
 
         return Section(
             "Representation",
             [
-                SubSection("UMAP", Columns([Image(fig, pretty_legend=False)])),
+                SubSection("UMAP", Columns([Image(plt.gcf(), pretty_legend=False)])),
             ],
         )
 
