@@ -168,17 +168,20 @@ class SectionBuilder:
 
         return Section("Transcripts", [SubSection("Quality controls", QC_subsubsections)])
 
-    def representation_section(self):
+    def representation_section(self, max_obs: int = 400_000):
         log.info("Writing representation section")
 
         adata = self.sdata.table
 
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             sc.pp.normalize_total(adata)
+            sc.pp.log1p(adata)
+
+        if adata.n_obs > max_obs:
+            sc.pp.subsample(adata, n_obs=max_obs)
 
         log.info(f"Computing UMAP on {adata.n_obs} cells")
 
-        sc.pp.log1p(adata)
         sc.pp.pca(adata)
         sc.pp.neighbors(adata)
         sc.tl.umap(adata)
