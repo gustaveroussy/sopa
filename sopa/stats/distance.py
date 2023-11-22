@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from spatialdata import SpatialData
 from tqdm import tqdm
 
 from ._build import _check_has_delaunay
@@ -19,7 +20,7 @@ def cells_to_groups(
     """Compute the hop-distance between each cell and a cell category/group.
 
     Args:
-        adata: `AnnData` object
+        adata: An `AnnData` object, or a `SpatialData object`
         group_key: Key of `adata.obs` containing the groups
         key_added_prefix: Prefix to the key added in `adata.obsm`. If `None`, will return the `DataFrame` instead of saving it.
         ignore_zeros: If `True`, a cell distance to its own group is 0.
@@ -27,6 +28,9 @@ def cells_to_groups(
     Returns:
         A `Dataframe` of shape `n_obs * n_groups`, or `None` if `key_added_prefix` was provided (in this case, the dataframe is saved in `"{key_added_prefix}{group_key}"`)
     """
+    if isinstance(adata, SpatialData):
+        adata = adata.table
+
     _check_has_delaunay(adata)
 
     distances_to_groups = {}
@@ -73,7 +77,7 @@ def mean_distance(
     """Mean distance between two groups (typically, between cell-types, or between cell-types and domains)
 
     Args:
-        adata: An `AnnData` object
+        adata: An `AnnData` object, or a `SpatialData object`
         group_key: Key of `adata.obs` containing the groups
         target_group_key: Key of `adata.obs` containing the target groups (by default, uses `group_key`)
         ignore_zeros: If `True`, a cell distance to its own group is 0.
@@ -81,6 +85,9 @@ def mean_distance(
     Returns:
         `DataFrame` of shape `n_groups * n_groups_target` of mean hop-distances
     """
+    if isinstance(adata, SpatialData):
+        adata = adata.table
+
     target_group_key = group_key if target_group_key is None else target_group_key
 
     df_distances = cells_to_groups(adata, target_group_key, None, ignore_zeros=ignore_zeros)

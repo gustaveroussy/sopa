@@ -81,4 +81,4 @@ def test_niches_geometry_stats(adata: AnnData):
     )
 
     expected_a = [0, 1, 1, np.sqrt(18)] * 2  # sqrt(3**2 + 3**2)
-    assert (df_geometries_stats.iloc[0, 3:-1] == np.array(expected_a)).all()
+    assert (df_geometries_stats.iloc[0, 4:] == np.array(expected_a)).all()
