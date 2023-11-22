@@ -163,6 +163,10 @@ def aggregate(
         0,
         help="Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered",
     ),
+    image_key: str = typer.Option(
+        None,
+        help="Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on",
+    ),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
     from sopa.io.standardize import read_zarr_standardized
@@ -170,7 +174,7 @@ def aggregate(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    aggregator = Aggregator(sdata)
+    aggregator = Aggregator(sdata, image_key=image_key)
     aggregator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)
 
 

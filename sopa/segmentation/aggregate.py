@@ -31,11 +31,11 @@ log = logging.getLogger(__name__)
 
 
 class Aggregator:
-    def __init__(self, sdata: SpatialData, overwrite: bool = True):
+    def __init__(self, sdata: SpatialData, overwrite: bool = True, image_key: str | None = None):
         self.sdata = sdata
         self.overwrite = overwrite
 
-        self.image_key, self.image = get_spatial_image(sdata, return_key=True)
+        self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
 
         self.table = sdata.table
