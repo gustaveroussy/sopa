@@ -96,7 +96,9 @@ class Aggregator:
             self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
         if average_intensities:
-            mean_intensities = average_channels(self.sdata, shapes_key=self.shapes_key)
+            mean_intensities = average_channels(
+                self.sdata, image_key=self.image_key, shapes_key=self.shapes_key
+            )
 
             if min_intensity_ratio > 0:
                 means = mean_intensities.mean(axis=1)
