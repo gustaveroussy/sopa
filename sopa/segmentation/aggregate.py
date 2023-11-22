@@ -121,6 +121,8 @@ class Aggregator:
                     index=self.table.obs_names,
                 )
 
+            log.info(self.table.obsm[SopaKeys.INTENSITIES_OBSM])
+
         self.table.uns["sopa_attrs"] = {
             "version": sopa.__version__,
             SopaKeys.UNS_HAS_TRANSCRIPTS: does_count,
