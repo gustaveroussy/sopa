@@ -66,7 +66,7 @@ def test_mean_distance(adata: AnnData):
 
 
 def test_geometrize_niches(adata: AnnData):
-    gdf = geometrize_niches(adata, NICHE_KEY)
+    gdf = geometrize_niches(adata, NICHE_KEY, buffer=0)
 
     assert len(gdf) == 4
 
@@ -76,7 +76,9 @@ def test_geometrize_niches(adata: AnnData):
 
 
 def test_niches_geometry_stats(adata: AnnData):
-    df_geometries_stats = niches_geometry_stats(adata, NICHE_KEY, aggregation=["min", "mean"])
+    df_geometries_stats = niches_geometry_stats(
+        adata, NICHE_KEY, aggregation=["min", "mean"], buffer=0
+    )
 
     expected_a = [0, 1, 1, np.sqrt(18)] * 2  # sqrt(3**2 + 3**2)
-    assert (df_geometries_stats.iloc[0, 3:] == np.array(expected_a)).all()
+    assert (df_geometries_stats.iloc[0, 3:-1] == np.array(expected_a)).all()

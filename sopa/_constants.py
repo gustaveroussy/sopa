@@ -21,6 +21,7 @@ class SopaKeys:
     GEOMETRY_AREA = "area"
     GEOMETRY_LENGTH = "length"
     GEOMETRY_ROUNDNESS = "roundness"
+    GEOMETRY_COUNT = "n_components"
 
 
 VALID_DIMENSIONS = ("c", "y", "x")

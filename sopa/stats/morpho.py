@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from scipy.spatial import Delaunay
+from shapely.geometry import MultiPolygon, Polygon
 
 from .._constants import SopaKeys
 from ._build import _check_has_delaunay
@@ -13,12 +14,15 @@ from ._graph import Component
 log = logging.getLogger(__name__)
 
 
-def geometrize_niches(adata: AnnData, niche_key: str) -> gpd.GeoDataFrame:
+def geometrize_niches(
+    adata: AnnData, niche_key: str, buffer: int | str = "auto"
+) -> gpd.GeoDataFrame:
     """Converts the niches to shapely polygons, and put into a `GeoDataFrame`. Note that each niche can appear multiple times, as they can be separated by other niches ; in this case, we call them different "components" of the same niche ID.
 
     Args:
         adata: An `AnnData` object
         niche_key: Key of `adata.obs` containing the niches
+        buffer: Expansion radius applied on components. By default, `3 * mean_distance_neighbors`
 
     Returns:
         A `GeoDataFrame` with geometries for each niche component. We also compute the area/perimeter/roundness of each component.
@@ -52,6 +56,9 @@ def geometrize_niches(adata: AnnData, niche_key: str) -> gpd.GeoDataFrame:
 
     gdf = gpd.GeoDataFrame(data)
 
+    if buffer is not None and buffer != 0:
+        gdf = _clean_components(adata, gdf, niche_key, buffer)
+
     gdf[SopaKeys.GEOMETRY_LENGTH] = gdf.length
     gdf[SopaKeys.GEOMETRY_AREA] = gdf.area
     gdf[SopaKeys.GEOMETRY_ROUNDNESS] = (
@@ -61,10 +68,34 @@ def geometrize_niches(adata: AnnData, niche_key: str) -> gpd.GeoDataFrame:
     return gdf
 
 
+def _clean_components(
+    adata: AnnData, gdf: gpd.GeoDataFrame, niche_key: str, buffer: int | str
+) -> gpd.GeoDataFrame:
+    data = {"geometry": [], niche_key: []}
+
+    if buffer == "auto":
+        buffer = 3 * adata.obsp["spatial_distances"].data.mean()
+
+    for niche, group_gdf in gdf.groupby(niche_key):
+        multi_polygon = MultiPolygon(group_gdf.geometry.values).buffer(buffer)
+
+        if isinstance(multi_polygon, Polygon):
+            data["geometry"].append(multi_polygon)
+            data[niche_key].append(niche)
+            continue
+
+        for geometry in multi_polygon.geoms:
+            data["geometry"].append(geometry)
+            data[niche_key].append(niche)
+
+    return gpd.GeoDataFrame(data)
+
+
 def niches_geometry_stats(
     adata: AnnData,
     niche_key: str,
     aggregation: str | list[str] = "min",
+    buffer: str | int = "auto",
     key_added_suffix: str = "_distance_to_niche_",
 ) -> gpd.GeoDataFrame:
     """Computes statistics over niches geometries
@@ -73,15 +104,18 @@ def niches_geometry_stats(
         adata: An `AnnData` object
         niche_key: Key of `adata.obs` containing the niches
         aggregation: Aggregation mode. Either one string such as `"min"`, or a list such as `["mean", "min"]`.
+        buffer: Expansion radius applied on components. By default, `3 * mean_distance_neighbors`
         key_added_suffix: Suffix added in the DataFrame columns. Defaults to "_distance_to_niche_".
 
     Returns:
         A `DataFrame` of shape `n_niches * n_statistics`
     """
-    gdf = geometrize_niches(adata, niche_key)
+    gdf = geometrize_niches(adata, niche_key, buffer)
+    value_counts = gdf[niche_key].value_counts()
 
     assert len(gdf), f"No niche geometry found, stats can't be computed"
 
+    log.info(f"Computing pairwise distance between {len(gdf)} components")
     pairwise_distances: pd.DataFrame = gdf.geometry.apply(lambda g: gdf.distance(g))
     pairwise_distances[niche_key] = gdf[niche_key]
 
@@ -93,4 +127,6 @@ def niches_geometry_stats(
         df.columns = [f"{aggr}{key_added_suffix}{c}" for c in df.columns]
         gdf[df.columns] = df
 
-    return gdf.groupby(niche_key)[gdf.columns[2:]].mean()
+    df_stats = gdf.groupby(niche_key)[gdf.columns[2:]].mean()
+    df_stats[SopaKeys.GEOMETRY_COUNT] = value_counts
+    return df_stats
