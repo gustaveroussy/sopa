@@ -185,15 +185,15 @@ def align(
     c_coords: list[str] = None,
 ):
     assert name or hasattr(
-        "name", image
+        image, "name"
     ), f"If image.name is not existing, provide the name argument"
 
     name = name if name is not None else image.name
 
     to_pixel = Affine(
         np.genfromtxt(transformation_matrix_path, delimiter=","),
-        input_axes=("y", "x"),
-        output_axes=("y", "x"),
+        input_axes=("x", "y"),
+        output_axes=("x", "y"),
     )
 
     default_image = get_spatial_image(sdata, image_key)
