@@ -55,6 +55,8 @@ class Patches1D:
 
 
 class Patches2D:
+    """Perform patching with overlap"""
+
     def __init__(
         self,
         sdata: SpatialData,
@@ -62,6 +64,13 @@ class Patches2D:
         patch_width: float | int,
         patch_overlap: float | int = 50,
     ):
+        """
+        Args:
+            sdata: A `SpatialData` object
+            element_name: Name of the element on with patches will be made
+            patch_width: Width of the patches (in the unit of the coordinate system of the element)
+            patch_overlap: Overlap width between the patches
+        """
         self.sdata = sdata
         self.element_name = element_name
         self.element = sdata[element_name]
@@ -129,6 +138,11 @@ class Patches2D:
         return [self.polygon(i) for i in range(len(self))]
 
     def write(self, overwrite: bool = True):
+        """Save patches in `sdata.shapes["sopa_patches"]`
+
+        Args:
+            overwrite: Whether to overwrite patches if existing
+        """
         geo_df = gpd.GeoDataFrame(
             {"geometry": self.polygons, SopaKeys.BOUNDS: [self[i] for i in range(len(self))]}
         )

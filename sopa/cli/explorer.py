@@ -55,6 +55,36 @@ def write(
 
 
 @app_explorer.command()
+def update_obs(
+    adata_path: str = typer.Argument(
+        help="Path to the anndata file (`zarr` or `h5ad`) containing the new observations"
+    ),
+    output_path: str = typer.Argument(
+        help="Path to the Xenium Explorer directory (it will update `analysis.zarr.zip`)",
+    ),
+):
+    """Update the cell categories for the Xenium Explorer's (i.e. what's in `adata.obs`). This is useful when you perform analysis and update your `AnnData` object
+
+    Usage:
+        Make sure you have already run `sopa explorer write` before. This command should only be used if you updated `adata.obs`
+    """
+    from pathlib import Path
+
+    import anndata
+
+    from sopa.io.explorer import write_cell_categories
+
+    path = Path(adata_path)
+
+    if path.is_dir():
+        adata = anndata.read_zarr(path)
+    else:
+        adata = anndata.read_h5ad(path)
+
+    write_cell_categories(output_path, adata)
+
+
+@app_explorer.command()
 def add_aligned(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     image_path: str = typer.Argument(

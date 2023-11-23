@@ -88,6 +88,7 @@ $ sopa aggregate [OPTIONS] SDATA_PATH
 * `--average-intensities / --no-average-intensities`: Whether to average the channel intensities inside each cell  [default: no-average-intensities]
 * `--min-transcripts INTEGER`: Cells with less transcript than this integer will be filtered  [default: 0]
 * `--min-intensity-ratio FLOAT`: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered  [default: 0]
+* `--image-key TEXT`: Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on
 * `--help`: Show this message and exit.
 
 ### `sopa annotate`
@@ -127,7 +128,7 @@ $ sopa annotate fluorescence [OPTIONS] SDATA_PATH
 
 **Options**:
 
-* `--marker-cell-dict TEXT`: [default: {}]
+* `--marker-cell-dict TEXT`: [required]
 * `--cell-type-key TEXT`: Key added in `adata.obs` corresponding to the cell type  [default: cell_type]
 * `--help`: Show this message and exit.
 
@@ -253,6 +254,7 @@ $ sopa explorer [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `add-aligned`: After alignment on the Xenium Explorer,...
+* `update-obs`: Update the cell categories for the Xenium...
 * `write`: Convert a spatialdata object to Xenium...
 
 #### `sopa explorer add-aligned`
@@ -270,6 +272,28 @@ $ sopa explorer add-aligned [OPTIONS] SDATA_PATH IMAGE_PATH TRANSFORMATION_MATRI
 * `SDATA_PATH`: Path to the SpatialData `.zarr` directory  [required]
 * `IMAGE_PATH`: Path to the image file to be added (`.ome.tif` used in the explorer during alignment)  [required]
 * `TRANSFORMATION_MATRIX_PATH`: Path to the `matrix.csv` file returned by the Explorer after alignment  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+#### `sopa explorer update-obs`
+
+Update the cell categories for the Xenium Explorer's (i.e. what's in `adata.obs`). This is useful when you perform analysis and update your `AnnData` object
+
+!!! note "Usage"
+    Make sure you have already run `sopa explorer write` before. This command should only be used if you updated `adata.obs`
+
+**Usage**:
+
+```console
+$ sopa explorer update-obs [OPTIONS] ADATA_PATH OUTPUT_PATH
+```
+
+**Arguments**:
+
+* `ADATA_PATH`: Path to the anndata file (`zarr` or `h5ad`) containing the new observations  [required]
+* `OUTPUT_PATH`: Path to the Xenium Explorer directory (it will update `analysis.zarr.zip`)  [required]
 
 **Options**:
 

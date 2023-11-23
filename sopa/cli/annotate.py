@@ -10,7 +10,7 @@ app_annotate = typer.Typer()
 @app_annotate.command()
 def fluorescence(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    marker_cell_dict: str = typer.Option({}, callback=ast.literal_eval),
+    marker_cell_dict: str = typer.Option(callback=ast.literal_eval),
     cell_type_key: str = typer.Option(
         "cell_type", help="Key added in `adata.obs` corresponding to the cell type"
     ),

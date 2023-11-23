@@ -31,7 +31,15 @@ log = logging.getLogger(__name__)
 
 
 class Aggregator:
+    """Perform transcript count and channel averaging over a `SpatialData` object"""
+
     def __init__(self, sdata: SpatialData, overwrite: bool = True, image_key: str | None = None):
+        """
+        Args:
+            sdata: A `SpatialData` object
+            overwrite: If `True`, will overwrite `sdata.table` if already existing
+            image_key: Key of `sdata` with the image to be averaged. If only one image, this does not have to be provided.
+        """
         self.sdata = sdata
         self.overwrite = overwrite
 
@@ -121,8 +129,6 @@ class Aggregator:
                     index=self.table.obs_names,
                 )
 
-            log.info(self.table.obsm[SopaKeys.INTENSITIES_OBSM])
-
         self.table.uns["sopa_attrs"] = {
             "version": sopa.__version__,
             SopaKeys.UNS_HAS_TRANSCRIPTS: does_count,
@@ -137,7 +143,40 @@ class Aggregator:
         self.sdata.table = self.table
 
 
-def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
+def average_channels(
+    sdata: SpatialData, image_key: str = None, shapes_key: str = None
+) -> np.ndarray:
+    """Average channel intensities per cell.
+
+    Args:
+        sdata: A `SpatialData` object
+        image_key: Key of `sdata` containing the image. If only one `images` element, this does not have to be provided.
+        shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
+
+    Returns:
+        A numpy `ndarray` of shape `(n_cells, n_channels)`
+    """
+    image = get_spatial_image(sdata, image_key)
+
+    geo_df = get_element(sdata, "shapes", shapes_key)
+    geo_df = to_intrinsic(sdata, geo_df, image)
+
+    cells = list(geo_df.geometry)
+
+    log.info(f"Averaging channels intensity over {len(cells)} cells")
+    return _average_channels_aligned(image, cells)
+
+
+def _average_channels_aligned(image: SpatialImage, cells: list[Polygon]):
+    """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
+
+    Args:
+        image: A `SpatialImage` of shape `(n_channels, y, x)`
+        cells: A list of `shapely` polygons
+
+    Returns:
+        A numpy `ndarray` of shape `(n_cells, n_channels)`
+    """
     tree = shapely.STRtree(cells)
 
     intensities = np.zeros((len(cells), len(image.coords["c"])))
@@ -174,23 +213,48 @@ def _average_channels_geometries(image: SpatialImage, cells: list[Polygon]):
     return intensities / areas[:, None].clip(1)
 
 
-def average_channels(
-    sdata: SpatialData, image_key: str = None, shapes_key: str = None
-) -> np.ndarray:
-    image = get_spatial_image(sdata, image_key)
+def count_transcripts(
+    sdata: SpatialData,
+    gene_column: str,
+    shapes_key: str = None,
+    points_key: str = None,
+    geo_df: gpd.GeoDataFrame = None,
+) -> AnnData:
+    """Counts transcripts per cell.
 
-    geo_df = get_element(sdata, "shapes", shapes_key)
-    geo_df = to_intrinsic(sdata, geo_df, image)
+    Args:
+        sdata: A `SpatialData` object
+        gene_column: Column of the transcript dataframe containing the gene names
+        shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
+        points_key: Key of `sdata` containing the transcripts. If only one `points` element, this does not have to be provided.
+        geo_df: If the cell boundaries are not yet in `sdata`, a `GeoDataFrame` can be directly provided for cell boundaries
 
-    cells = list(geo_df.geometry)
+    Returns:
+        An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
+    """
+    points_key, points = get_item(sdata, "points", points_key)
 
-    log.info(f"Averaging channels intensity over {len(cells)} cells")
-    return _average_channels_geometries(image, cells)
+    if geo_df is None:
+        geo_df = get_element(sdata, "shapes", shapes_key)
+        geo_df = to_intrinsic(sdata, geo_df, points_key)
+
+    log.info(f"Aggregating transcripts over {len(geo_df)} cells")
+    return _count_transcripts_aligned(geo_df, points, gene_column)
 
 
-def _count_transcripts_geometries(
+def _count_transcripts_aligned(
     geo_df: gpd.GeoDataFrame, points: dd.DataFrame, value_key: str
 ) -> AnnData:
+    """Count transcripts per cell. The cells and points have to be aligned (i.e., in the same coordinate system)
+
+    Args:
+        geo_df: Cells geometries
+        points: Transcripts dataframe
+        value_key: Key of `points` containing the genes names
+
+    Returns:
+        An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
+    """
     points[value_key] = points[value_key].astype("category").cat.as_known()
     gene_names = points[value_key].cat.categories
 
@@ -208,23 +272,6 @@ def _count_transcripts_geometries(
 
     adata.X = adata.X.tocsr()
     return adata
-
-
-def count_transcripts(
-    sdata: SpatialData,
-    gene_column: str,
-    shapes_key: str = None,
-    points_key: str = None,
-    geo_df: gpd.GeoDataFrame = None,
-) -> AnnData:
-    points_key, points = get_item(sdata, "points", points_key)
-
-    if geo_df is None:
-        geo_df = get_element(sdata, "shapes", shapes_key)
-        geo_df = to_intrinsic(sdata, geo_df, points_key)
-
-    log.info(f"Aggregating transcripts over {len(geo_df)} cells")
-    return _count_transcripts_geometries(geo_df, points, gene_column)
 
 
 def _add_coo(
