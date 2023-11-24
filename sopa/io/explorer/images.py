@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from ..._sdata import get_intrinsic_cs, get_spatial_image
 from ...utils.image import resize_numpy, scale_dtype
+from ..imaging import _default_image_models_kwargs
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
 
@@ -183,7 +184,10 @@ def align(
     image_key: str = None,
     name: str = None,
     c_coords: list[str] = None,
+    image_models_kwargs: dict | None = None,
 ):
+    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
+
     assert name or hasattr(
         image, "name"
     ), f"If image.name is not existing, provide the name argument"
@@ -204,7 +208,7 @@ def align(
         dims=("c", "y", "x"),
         transformations={pixel_cs: to_pixel},
         c_coords=c_coords,
-        chunks=(1, 4096, 4096),
+        **image_models_kwargs,
     )
 
     log.info(f"Adding image: {image}")

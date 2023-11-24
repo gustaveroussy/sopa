@@ -39,12 +39,21 @@ def _get_channel_names_macsima(files):
     return _deduplicate_names(df_antibodies)
 
 
+def _default_image_models_kwargs(image_models_kwargs: dict | None):
+    image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
+
+    if "chunks" not in image_models_kwargs:
+        image_models_kwargs["chunks"] = (1, 4096, 4096)
+    if "scale_factors" not in image_models_kwargs:
+        image_models_kwargs["scale_factors"] = [2, 2, 2, 2]
+
+    return image_models_kwargs
+
+
 def macsima(
     path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
 ) -> SpatialData:
-    image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
-    if "chunks" not in image_models_kwargs:
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
     imread_kwargs = {} if imread_kwargs is None else imread_kwargs
 
     files = [file for file in Path(path).iterdir() if file.suffix == ".tif"]
@@ -92,9 +101,7 @@ def _get_channel_names_qptiff(page_series):
 def qptiff(
     path: Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
 ) -> SpatialData:
-    image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
-    if "chunks" not in image_models_kwargs:
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
     with tf.TiffFile(path) as tif:
         page_series = tif.series[0]
@@ -130,9 +137,7 @@ def _get_channel_names_hyperion(files: list[Path]):
 def hyperion(
     path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
 ) -> SpatialData:
-    image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
-    if "chunks" not in image_models_kwargs:
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
     imread_kwargs = {} if imread_kwargs is None else imread_kwargs
 
     files = [file for file in Path(path).iterdir() if file.suffix == ".tiff"]
@@ -167,9 +172,7 @@ def _get_channel_names_xenium_if(element, names):
     return names
 
 
-def xenium_if(path: Path, imread_kwargs: dict | None = None) -> SpatialImage:
-    imread_kwargs = {} if imread_kwargs is None else imread_kwargs
-
+def xenium_if(path: Path, **imread_kwargs: str) -> SpatialImage:
     image = imread(path, **imread_kwargs)
     image_name = Path(path).absolute().name.split(".")[0]
 

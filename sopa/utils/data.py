@@ -1,5 +1,6 @@
 import logging
 
+import dask.array as da
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
@@ -70,6 +71,7 @@ def uniform(
     if apply_blur:
         image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
     image = (image / image.max() * 255).astype(np.uint8)
+    image = da.from_array(image, chunks=(1, 4096, 4096))
 
     # Create cell boundaries
     cells = [Point(vertex).buffer(sigma).simplify(tolerance=1) for vertex in xy]
@@ -88,6 +90,8 @@ def uniform(
             "genes": np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_points),
         }
     )
+    df = dd.from_pandas(df, chunksize=2_000_000)
+
     points = {"transcripts": PointsModel.parse(df)}
     if save_vertices:
         points["vertices"] = PointsModel.parse(vertices)
