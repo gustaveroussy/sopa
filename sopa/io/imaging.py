@@ -44,8 +44,6 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None):
 
     if "chunks" not in image_models_kwargs:
         image_models_kwargs["chunks"] = (1, 4096, 4096)
-    if "scale_factors" not in image_models_kwargs:
-        image_models_kwargs["scale_factors"] = [2, 2, 2, 2]
 
     return image_models_kwargs
 
@@ -63,6 +61,7 @@ def macsima(
         [imread(file, **imread_kwargs) for file in files],
         axis=0,
     )
+    image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
     log.info(f"Found channel names {names}")
 
@@ -148,6 +147,7 @@ def hyperion(
         axis=0,
     )
     image = (image / image.max().compute() * 255).astype(np.uint8)
+    image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
     log.info(f"Found channel names {names}")
 
@@ -172,8 +172,12 @@ def _get_channel_names_xenium_if(element, names):
     return names
 
 
-def xenium_if(path: Path, **imread_kwargs: str) -> SpatialImage:
-    image = imread(path, **imread_kwargs)
+def xenium_if(path: Path, image_models_kwargs: dict | str) -> SpatialImage:
+    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
+
+    image: da.Array = imread(path)
+    image = image.rechunk(chunks=image_models_kwargs["chunks"])
+
     image_name = Path(path).absolute().name.split(".")[0]
 
     import xml.etree.ElementTree as ET
