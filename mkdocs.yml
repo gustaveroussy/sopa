@@ -14,6 +14,8 @@ nav:
     - sopa.stats: api/stats.md
     - sopa.segmentation:
       - sopa.segmentation.shapes: api/segmentation/shapes.md
+    - sopa.utils:
+      - sopa.utils.data: api/utils/data.md
   - Toy examples: toy.md
   - Cite us: cite_us.md
 plugins:

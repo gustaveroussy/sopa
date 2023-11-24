@@ -34,10 +34,13 @@ loompy = { version = "^3.0.7", optional = true }
 
 tangram-sc = { version = "^1.0.4", optional = true }
 
+snakemake = { version = "^7.32.4", optional = true }
+
 [tool.poetry.extras]
 cellpose = ["cellpose", "opencv-python", "torch"]
 baysor = ["toml", "loompy"]
 tangram = ["tangram-sc"]
+snakemake = ["snakemake"]
 dev = [
   "black",
   "isort",

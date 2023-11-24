@@ -15,10 +15,10 @@ def preprocess_fluo(adata: AnnData) -> pd.DataFrame:
     else:
         df = adata.to_df()
 
-    divider = 5 * np.quantile(adata.X, 0.2, axis=0)
-    divider[divider == 0] = adata.X.max(axis=0)[divider == 0]
+    divider = 5 * np.quantile(df, 0.2, axis=0)
+    divider[divider == 0] = df.max(axis=0)[divider == 0]
 
-    scaled = np.arcsinh(df / (5 * np.quantile(df, 0.2, axis=0)))
+    scaled = np.arcsinh(df / divider)
     return (scaled - scaled.mean(0)) / scaled.std(0)
 
 

@@ -34,9 +34,9 @@ Sopa can be installed via `PyPI` on all operating system. Make sure you have an 
 pip install sopa
 ```
 
-To install extras (for example if you want to use `cellpose`, or `tangram`), please run:
+To install extras (for example if you want to use `snakemake`/`cellpose`/`baysor`/`tangram`), please run:
 ```
-pip install 'sopa[cellpose,baysor,tangram]'
+pip install 'sopa[snakemake,cellpose,baysor,tangram]'
 ```
 
 Important: even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.

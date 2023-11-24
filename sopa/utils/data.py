@@ -34,9 +34,12 @@ def uniform(
         n_genes: Number of gene names
         c_coords: Channel names
         sigma_factor: Factor used to determine `sigma` for the gaussian blur.
+        seed: Numpy random seed
+        save_vertices: Whether to save the vertices of the cells (as points)
+        apply_blur: Whether to apply gaussian blur on the cells (without blur, cells are just one pixel)
 
     Returns:
-        A SpatialData object with a 2D image, the cells polygon boundaries, and the transcripts
+        A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `save_vertices` is `True`.
     """
     np.random.seed(seed)
 
