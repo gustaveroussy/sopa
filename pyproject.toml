@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sopa"
-version = "0.1.1"
+version = "0.1.5"
 description = "Spatial-omics pipeline and analysis"
 authors = ["Quentin Blampey <quentin.blampey@gmail.com>"]
 packages = [{ include = "sopa" }]
