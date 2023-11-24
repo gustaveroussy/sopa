@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 
 class ConfigConstants:
@@ -106,7 +107,7 @@ class Args:
             return subconfig
         return Args(self.paths, subconfig)
 
-    def where(self, keys: list[str] | None = None, contains: str | None = None):
+    def where(self, keys: Optional[list[str]] = None, contains: Optional[str] = None):
         if keys is not None:
             return Args(self.paths, {key: self.config[key] for key in keys if key in self.config})
         if contains is not None:
