@@ -151,7 +151,7 @@ class Patches2D:
         )
         self.sdata.add_shapes(SopaKeys.PATCHES, geo_df, overwrite=overwrite)
 
-        log.info(f"{len(geo_df)} patches where saved in sdata['{SopaKeys.PATCHES}']")
+        log.info(f"{len(geo_df)} patches were saved in sdata['{SopaKeys.PATCHES}']")
 
     def patchify_transcripts(
         self,
