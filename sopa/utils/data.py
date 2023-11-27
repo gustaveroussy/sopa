@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 def uniform(
     *_,
     length: int = 2_048,
-    cell_density: float = 0.01,
+    cell_density: float = 0.001,
     n_points_per_cell: int = 50,
     n_genes: int = 5,
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
