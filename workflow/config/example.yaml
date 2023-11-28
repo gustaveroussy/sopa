@@ -64,4 +64,4 @@ explorer:
   gene_column: "gene"
 
 executables:
-  baysor: ~/.julia/bin/baysor #/mnt/beegfs/merfish/bin/baysor/bin/baysor
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

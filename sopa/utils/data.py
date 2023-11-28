@@ -17,11 +17,11 @@ log = logging.getLogger(__name__)
 def uniform(
     *_,
     length: int = 2_048,
-    cell_density: float = 0.001,
+    cell_density: float = 1e-4,
     n_points_per_cell: int = 50,
     n_genes: int = 5,
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
-    sigma_factor: float = 0.4,
+    sigma_factor: float = 0.2,
     seed: int = 0,
     save_vertices: bool = False,
     apply_blur: bool = True,

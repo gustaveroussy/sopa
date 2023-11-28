@@ -2,14 +2,14 @@ read:
   technology: uniform
 
 patchify:
-  patch_width_pixel: 6000
-  patch_overlap_pixel: 150
+  patch_width_pixel: 1100
+  patch_overlap_pixel: 50
   patch_width_microns: 3000
   patch_overlap_microns: 40
 
 segmentation:
   cellpose:
-    diameter: 60
+    diameter: 40
     channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
@@ -20,6 +20,7 @@ shapes:
 
 aggregate:
   average_intensities: true
+  gene_column: genes
 
 annotation:
   method: fluorescence
