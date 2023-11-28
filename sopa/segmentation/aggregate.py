@@ -119,7 +119,7 @@ class Aggregator:
                 self.table = AnnData(
                     mean_intensities,
                     dtype=mean_intensities.dtype,
-                    var=pd.DataFrame(index=self.image.c),
+                    var=pd.DataFrame(index=self.image.coords["c"].values),
                     obs=pd.DataFrame(index=self.geo_df.index),
                 )
             else:
@@ -256,7 +256,7 @@ def _count_transcripts_aligned(
         An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
     """
     points[value_key] = points[value_key].astype("category").cat.as_known()
-    gene_names = points[value_key].cat.categories
+    gene_names = points[value_key].cat.categories.astype(str)
 
     X = coo_matrix((len(geo_df), len(gene_names)), dtype=int)
     adata = AnnData(X=X, var=pd.DataFrame(index=gene_names))
