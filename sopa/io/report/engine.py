@@ -189,17 +189,17 @@ class Image(Renderable):
         self.fig = fig
         self.width = width
         self.extension = extension
+        self.pretty_legend = pretty_legend
 
-        self.make_figure_pretty(pretty_legend)
-
-    def make_figure_pretty(self, pretty_legend: bool):
-        if pretty_legend:
+    def make_figure_pretty(self):
+        if self.pretty_legend and any(ax.get_legend() for ax in self.fig.get_axes()):
             self.fig.legend(
                 bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False
             )
         sns.despine(fig=self.fig, offset=10, trim=True)
 
     def encod(self):
+        self.make_figure_pretty()
         tmpfile = BytesIO()
         self.fig.savefig(tmpfile, format=self.extension, transparent=True, bbox_inches="tight")
         return base64.b64encode(tmpfile.getvalue()).decode("utf-8")

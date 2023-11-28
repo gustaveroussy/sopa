@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,6 +26,7 @@ from .engine import (
 )
 
 log = logging.getLogger(__name__)
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def write_report(path: str, sdata: SpatialData):
