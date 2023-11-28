@@ -50,6 +50,7 @@ def write_explorer(
     lazy: bool = True,
     ram_threshold_gb: int | None = 4,
     mode: str = None,
+    save_h5ad: bool = False,
 ) -> None:
     """
     Transform a SpatialData object into inputs for the Xenium Explorer.
@@ -67,6 +68,7 @@ def write_explorer(
         lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).
         ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
         mode: string that indicated which files should be created. "-ib" means everything except images and boundaries, while "+tocm" means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything.
+        save_h5ad: Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)
     """
     path: Path = Path(path)
     _check_explorer_directory(path)
@@ -112,6 +114,9 @@ def write_explorer(
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
         write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df))
+
+    if save_h5ad:
+        sdata.table.write_h5ad(path / FileNames.H5AD)
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")

@@ -2,6 +2,7 @@ class FileNames:
     IMAGE = "morphology.ome.tif"
     POINTS = "transcripts.zarr.zip"
     SHAPES = "cells.zarr.zip"
+    H5AD = "adata.h5ad"
     TABLE = "cell_feature_matrix.zarr.zip"
     CELL_CATEGORIES = "analysis.zarr.zip"
     METADATA = "experiment.xenium"

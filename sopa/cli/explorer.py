@@ -31,6 +31,10 @@ def write(
         None,
         help="string that indicated which files should be created. `'-ib'` means everything except images and boundaries, while `'+tocm'` means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything",
     ),
+    save_h5ad: bool = typer.Option(
+        True,
+        help="Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)",
+    ),
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs"""
     from pathlib import Path
@@ -51,6 +55,7 @@ def write(
         lazy=lazy,
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,
+        save_h5ad=save_h5ad,
     )
 
 
