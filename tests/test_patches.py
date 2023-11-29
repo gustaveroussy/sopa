@@ -13,7 +13,7 @@ from sopa.utils.data import uniform
 
 @pytest.fixture
 def sdata() -> SpatialData:
-    sdata = uniform(length=512)
+    sdata = uniform(length=512, cell_density=1e-3)
     return sdata
 
 

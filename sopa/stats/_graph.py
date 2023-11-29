@@ -62,9 +62,8 @@ class Component:
                 self.lines[line_index_i].append(i if right_j else j)
                 return
 
-            del self.lines[line_index_j]
-
             line_i, line_j = self.lines[line_index_i], self.lines[line_index_j]
+            del self.lines[line_index_j]
             self.limits[line_j[0 if right_j else -1]] = [line_index_i, right_i]
 
             if not (right_i ^ right_j):
