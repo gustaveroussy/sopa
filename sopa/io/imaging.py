@@ -22,7 +22,7 @@ def _deduplicate_names(df):
 
 
 def _parse_name_macsima(file):
-    index = file.name[:3]
+    index = file.name[2:5]
     match = re.search(r"_A-(.*?)_C-", file.name)
     if match:
         antibody = match.group(1)
