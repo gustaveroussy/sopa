@@ -26,10 +26,10 @@ def _parse_name_macsima(file):
     match = re.search(r"_A-(.*?)_C-", file.name)
     if match:
         antibody = match.group(1)
-        channel = re.search(r"_C-(.*?)\.ome\.tif", file.name).group(1)
+        channel = re.search(r"_C-(.*?)\.tif", file.name).group(1)
         uid = f"{channel}-{index}"
     else:
-        antibody = re.search(r"_A-(.*?)\.ome\.tif", file.name).group(1)
+        antibody = re.search(r"_A-(.*?)\.tif", file.name).group(1)
         uid = index
     return [antibody, uid]
 
