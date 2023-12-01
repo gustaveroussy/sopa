@@ -98,6 +98,10 @@ def add_aligned(
     transformation_matrix_path: str = typer.Argument(
         help="Path to the `matrix.csv` file returned by the Explorer after alignment"
     ),
+    original_image_key: str = typer.Option(
+        None,
+        help="Optional original-image key on which the new image will be aligned. This doesn't need to be provided if there is only one image",
+    ),
     overwrite: bool = typer.Option(False, help="Whether to overwrite the image if existing"),
 ):
     """After alignment on the Xenium Explorer, add an image to the SpatialData object"""
@@ -109,4 +113,6 @@ def add_aligned(
     sdata = spatialdata.read_zarr(sdata_path)
     image = io.imaging.xenium_if(image_path)
 
-    align(sdata, image, transformation_matrix_path, overwrite=overwrite)
+    align(
+        sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=original_image_key
+    )
