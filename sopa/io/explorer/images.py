@@ -179,20 +179,13 @@ def write_image(
 
 def align(
     sdata: SpatialData,
-    image: SpatialImage | da.Array | np.ndarray,
+    image: SpatialImage,
     transformation_matrix_path: str,
     image_key: str = None,
-    name: str = None,
     image_models_kwargs: dict | None = None,
     overwrite: bool = False,
 ):
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
-
-    assert name or hasattr(
-        image, "name"
-    ), f"If image.name is not existing, provide the name argument"
-
-    name = name if name is not None else image.name
 
     to_pixel = Affine(
         np.genfromtxt(transformation_matrix_path, delimiter=","),
@@ -207,8 +200,9 @@ def align(
         image,
         dims=("c", "y", "x"),
         transformations={pixel_cs: to_pixel},
+        c_coords=image.coords["c"].values,
         **image_models_kwargs,
     )
 
-    log.info(f"Adding image: {image}")
-    sdata.add_image(name, image, overwrite=overwrite)
+    log.info(f"Adding image {image.name}:\n{image}")
+    sdata.add_image(image.name, image, overwrite=overwrite)
