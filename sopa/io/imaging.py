@@ -172,7 +172,7 @@ def _get_channel_names_xenium_if(element, names):
     return names
 
 
-def xenium_if(path: Path, image_models_kwargs: dict | str) -> SpatialImage:
+def xenium_if(path: Path, image_models_kwargs: dict | None = None) -> SpatialImage:
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
     image: da.Array = imread(path)
