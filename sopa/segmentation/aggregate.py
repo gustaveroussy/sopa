@@ -129,13 +129,13 @@ class Aggregator:
                 self.table = AnnData(
                     mean_intensities,
                     dtype=mean_intensities.dtype,
-                    var=pd.DataFrame(index=self.image.coords["c"].values),
+                    var=pd.DataFrame(index=self.image.coords["c"].values.astype(str)),
                     obs=pd.DataFrame(index=self.geo_df.index),
                 )
             else:
                 self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
                     mean_intensities,
-                    columns=self.image.coords["c"].values,
+                    columns=self.image.coords["c"].values.astype(str),
                     index=self.table.obs_names,
                 )
 
