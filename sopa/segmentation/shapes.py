@@ -70,14 +70,28 @@ def expand_one(cell: Polygon, expand_radius: float) -> Polygon:
 
 
 def expand(cells: list[Polygon], expand_radius: float) -> list[Polygon]:
+    """Expand all cells radius
+
+    Args:
+        cells: List of cells as `shapely` polygons
+        expand_radius: Radius increase
+
+    Returns:
+        New list of polygons expanded by `expand_radius`
+    """
     return [expand_one(cell, expand_radius) for cell in cells]
 
 
-def smooth(cell: Polygon, dist: float, tolerance: float) -> Polygon:
-    return cell.buffer(-dist).buffer(-2 * dist).buffer(-dist).simplify(tolerance)
-
-
 def filter(cells: list[Polygon], min_area: float):
+    """Filter out cells that are too small
+
+    Args:
+        cells: List of `shapely` polygons
+        min_area: Minimum area to keep a cell
+
+    Returns:
+        List of filtered cells polygons
+    """
     if min_area == 0:
         return cells
     return [cell for cell in cells if cell.area >= min_area]
@@ -130,6 +144,16 @@ def _geometrize_cell(
 
 
 def geometrize(mask: np.ndarray, smooth_radius: int = 5, tolerance: float = 2) -> list[Polygon]:
+    """Convert a cells mask to multiple `shapely` geometries
+
+    Args:
+        mask: A cell mask. Non-null values correspond to cell ids
+        smooth_radius: Radius parameter used in the `buffer` operation
+        tolerance: Tolerance parameter used by `shapely` during simplification
+
+    Returns:
+        List of `shapely` polygons representing each cell ID of the mask
+    """
     cells = [
         _geometrize_cell(mask, cell_id, smooth_radius, tolerance)
         for cell_id in range(1, mask.max() + 1)

@@ -30,7 +30,7 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
     image_key, spatial_image = get_spatial_image(sdata)
     image = spatial_image.transpose("y", "x", "c")
 
-    if len(channels):
+    if channels is not None and len(channels):
         assert (
             len(channels) in VALID_N_CHANNELS
         ), f"Number of channels provided must be in: {', '.join(VALID_N_CHANNELS)}"
@@ -97,6 +97,16 @@ def polygon_selection(
     scale_factor: float = 10,
     margin_ratio: float = 0.1,
 ):
+    """Crop an image based on a user-defined polygon (interactive mode).
+
+    Args:
+        sdata: A `SpatialData` object
+        intermediate_image: Path to the intermediate image, with a `.zip` extension. Use this only if the interactive mode is not available
+        intermediate_polygon: Path to the intermediate polygon, with a `.zip` extension. Use this locally, after downloading the `intermediate_image`
+        channels: List of channel names to be displayed. Optional if there are already only 1 or 3 channels.
+        scale_factor: Resize the image by this value (high value for a lower memory usage)
+        margin_ratio: Ratio of the image margin on the display (compared to the image size)
+    """
     if intermediate_polygon is None:
         image_key, image = _prepare(sdata, channels, scale_factor)
 

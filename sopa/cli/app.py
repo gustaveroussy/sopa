@@ -108,7 +108,10 @@ def crop(
         None,
         help="Path to the intermediate polygon, with a `.zip` extension. Use this locally, after downloading the intermediate_image",
     ),
-    channels: list[str] = typer.Option(None, help="List of channel names to be displayed"),
+    channels: list[str] = typer.Option(
+        None,
+        help="List of channel names to be displayed. Optional if there are already only 1 or 3 channels",
+    ),
     scale_factor: float = typer.Option(
         10, help="Resize the image by this value (high value for a lower memory usage)"
     ),

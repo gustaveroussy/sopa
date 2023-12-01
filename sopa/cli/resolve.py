@@ -11,10 +11,10 @@ def cellpose(
     patch_dir: str = typer.Option(help="Directory containing the cellpose segmentation on patches"),
 ):
     """Resolve patches conflicts after cellpose segmentation"""
+    from sopa._constants import SopaKeys
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
-    from sopa.segmentation.cellpose.update import add_shapes
     from sopa.segmentation.stainings import StainingSegmentation
 
     sdata = read_zarr_standardized(sdata_path)
@@ -24,7 +24,7 @@ def cellpose(
     cells = StainingSegmentation.read_patches_cells(patch_dir)
     cells = shapes.solve_conflicts(cells)
 
-    add_shapes(sdata, cells, image_key)
+    StainingSegmentation.add_shapes(sdata, cells, image_key, SopaKeys.CELLPOSE_BOUNDARIES)
 
 
 @app_resolve.command()

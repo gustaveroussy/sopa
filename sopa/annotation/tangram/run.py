@@ -23,6 +23,16 @@ def tangram_annotate(
     max_obs_reference: int = 10_000,
     **kwargs,
 ):
+    """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
+
+    Args:
+        sdata: A `SpatialData` object
+        adata_sc: A scRNAseq annotated reference
+        cell_type_key: Key of `adata_sc.obs` containing the cell types. For multi-level annotation, provide other levels like such: if `cell_type_key = "ct"`, then `"ct_level1"` and `"ct_level2"` are the two next levels
+        reference_preprocessing: Preprocessing method used on the reference. Can be `"log1p"` (normalize_total + log1p) or `"normalized"` (just normalize_total). By default, consider that no processing was applied (raw counts)
+        bag_size: Size of each bag on which tangram will be run. Use smaller bags to lower the RAM usage
+        max_obs_reference: Maximum number of cells used in `adata_sc` at each level. Decrease it to lower the RAM usage.
+    """
     ad_sp = sdata.table
 
     MultiLevelAnnotation(

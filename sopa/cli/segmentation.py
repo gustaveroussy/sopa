@@ -42,10 +42,9 @@ def cellpose(
 
         - [On all patches at once] For small images, you can run cellpose sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
     """
+    from sopa._constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation import shapes
-    from sopa.segmentation.cellpose import cellpose_patch
-    from sopa.segmentation.cellpose.update import add_shapes
+    from sopa.segmentation.methods import cellpose_patch
     from sopa.segmentation.stainings import StainingSegmentation
 
     sdata = read_zarr_standardized(sdata_path)
@@ -65,4 +64,6 @@ def cellpose(
 
     cells = segmentation.run_patches(patch_width, patch_overlap)
 
-    add_shapes(sdata, cells, segmentation.image_key)
+    StainingSegmentation.add_shapes(
+        sdata, cells, segmentation.image_key, SopaKeys.CELLPOSE_BOUNDARIES
+    )

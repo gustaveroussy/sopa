@@ -101,6 +101,15 @@ class Aggregator:
         min_transcripts: int,
         min_intensity_ratio: float,
     ):
+        """Perform aggregation and update the spatialdata table
+
+        Args:
+            gene_column: Column key of the transcript dataframe containing the gene names
+            average_intensities: Whether to average the channels intensities inside cells polygons
+            expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
+            min_transcripts: Minimum amount of transcript to keep a cell
+            min_intensity_ratio: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
+        """
         does_count = (
             self.table is not None and isinstance(self.table.X, csr_matrix)
         ) or gene_column is not None

@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import pandas as pd
 import zarr
 from anndata import AnnData
 from scipy.sparse import csr_matrix
@@ -108,3 +109,15 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
             _write_categorical_column(cell_groups, i, adata.obs[name], categories)
 
         cell_groups.attrs.put(ATTRS)
+
+
+def save_column_csv(path: str, adata: AnnData, key: str):
+    """Save one column of the AnnData object as a CSV that can be open in the explorer, in the "cell" panel.
+
+    Args:
+        path: Path to the CSV that will be open in the Xenium Explorer
+        adata: An `AnnData` object
+        key: Key of `adata.obs` containing the column to convert
+    """
+    df = pd.DataFrame({"cell_id": adata.obs_names, "group": adata.obs[key].values})
+    df.to_csv(path, index=None)

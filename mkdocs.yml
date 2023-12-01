@@ -14,8 +14,18 @@ nav:
     - sopa.stats: api/stats.md
     - sopa.segmentation:
       - sopa.segmentation.shapes: api/segmentation/shapes.md
+      - sopa.segmentation.aggregate: api/segmentation/aggregate.md
+      - sopa.segmentation.stainings: api/segmentation/stainings.md
+      - sopa.segmentation.methods: api/segmentation/methods.md
+      - sopa.segmentation.baysor: api/segmentation/baysor.md
+    - sopa.annotation:
+      - sopa.annotation.tangram: api/annotation/tangram.md
+      - sopa.annotation.fluorescence: api/annotation/fluorescence.md
     - sopa.utils:
       - sopa.utils.data: api/utils/data.md
+      - sopa.utils.image: api/utils/image.md
+      - sopa.utils.polygon_crop: api/utils/polygon_crop.md
+    - sopa._sdata: api/_sdata.md
   - Toy examples: toy.md
   - Cite us: cite_us.md
 plugins:
@@ -42,3 +52,6 @@ extra_javascript:
   - js/mathjax.js
   - js/termynal.js
   - js/custom.js
+  - js/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

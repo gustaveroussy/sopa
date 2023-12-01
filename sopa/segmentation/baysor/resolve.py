@@ -100,6 +100,15 @@ def resolve(
     patches_dirs: list[str] | None = None,
     min_area: float = 0,
 ):
+    """Concatenate all the per-patch Baysor run and resolve the conflicts. Resulting cells boundaries are saved in the `SpatialData` object.
+
+    Args:
+        sdata: A `SpatialData` object
+        baysor_temp_dir: Temporary directory used to store all the baysor subdirectories (one subdirectory for one patch and for one baysor run)
+        gene_column: Column of the transcript dataframe containing the genes names
+        patches_dirs: Optional list of subdirectories inside `baysor_temp_dir` to be read. By default, read all.
+        min_area: Minimum area (in microns^2) for a cell to be kept
+    """
     patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, patches_dirs)
     geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
