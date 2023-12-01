@@ -183,7 +183,6 @@ def align(
     transformation_matrix_path: str,
     image_key: str = None,
     name: str = None,
-    c_coords: list[str] = None,
     image_models_kwargs: dict | None = None,
     overwrite: bool = False,
 ):
@@ -208,7 +207,6 @@ def align(
         image,
         dims=("c", "y", "x"),
         transformations={pixel_cs: to_pixel},
-        c_coords=c_coords,
         **image_models_kwargs,
     )
 
