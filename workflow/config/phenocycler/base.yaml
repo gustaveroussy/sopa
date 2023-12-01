@@ -7,15 +7,16 @@ patchify:
 
 segmentation:
   cellpose:
-    diameter: 15
+    diameter: 40
     channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
-    min_area: 200
-    
+    min_area: 400
+
 aggregate:
   average_intensities: true
   min_intensity_ratio: 0.1
-
+  expand_radius_ratio: 0.1
+  
 explorer:
   ram_threshold_gb: 8
