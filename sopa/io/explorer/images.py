@@ -185,6 +185,7 @@ def align(
     name: str = None,
     c_coords: list[str] = None,
     image_models_kwargs: dict | None = None,
+    overwrite: bool = False,
 ):
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
@@ -212,4 +213,4 @@ def align(
     )
 
     log.info(f"Adding image: {image}")
-    sdata.add_image(name, image)
+    sdata.add_image(name, image, overwrite=overwrite)
