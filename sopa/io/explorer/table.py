@@ -53,7 +53,7 @@ def write_gene_counts(
     indptr = np.array(indptr)
 
     cell_id = np.ones((adata.n_obs, 2))
-    cell_id[:, 0] = np.arange(1, adata.n_obs + 1)
+    cell_id[:, 0] = np.arange(adata.n_obs)
 
     with zarr.ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)

@@ -25,6 +25,7 @@ from .._sdata import (
     get_spatial_image,
     to_intrinsic,
 )
+from ..io.explorer.utils import str_cell_id
 from . import shapes
 
 log = logging.getLogger(__name__)
@@ -55,6 +56,8 @@ class Aggregator:
         self.table = sdata.table
 
     def standardize_table(self):
+        self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
+
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
         )
@@ -84,6 +87,11 @@ class Aggregator:
 
         if self.table is not None:
             self.table = self.table[~where_filter]
+
+    def save_table(self):
+        if self.sdata.table is not None and self.overwrite:
+            del self.sdata.table
+        self.sdata.table = self.table
 
     def update_table(
         self,
@@ -146,11 +154,7 @@ class Aggregator:
         }
 
         self.standardize_table()
-
-        if self.sdata.table is not None and self.overwrite:
-            del self.sdata.table
-
-        self.sdata.table = self.table
+        self.save_table()
 
 
 def average_channels(

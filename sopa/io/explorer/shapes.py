@@ -62,7 +62,7 @@ def write_polygons(
         )
 
         cell_id = np.ones((num_cells, 2))
-        cell_id[:, 0] = np.arange(1, num_cells + 1)
+        cell_id[:, 0] = np.arange(num_cells)
         g.array("cell_id", cell_id, dtype="uint32", chunks=(cells_half, 1))
 
         cell_summary = np.zeros((num_cells, 7))
@@ -84,7 +84,7 @@ def write_polygons(
 
         g.array(
             "seg_mask_value",
-            np.arange(1, num_cells + 1),
+            np.arange(num_cells),
             dtype="uint32",
             chunks=(cells_half,),
         )
