@@ -115,11 +115,9 @@ rule resolve_cellpose:
         touch(paths.smk_cellpose_boundaries),
     conda:
         "sopa"
-    params:
-        args_expand_radius = args.expand_radius,
     shell:
         """
-        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_temp_dir} --expand-radius {params.args_expand_radius}
+        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_temp_dir}
         """
 
 rule resolve_baysor:
@@ -186,7 +184,7 @@ rule image_write:
         args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb'])),
     shell:
         """
-        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode '+i'
+        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode '+i' --no-save-h5ad
         """
 
 rule report:

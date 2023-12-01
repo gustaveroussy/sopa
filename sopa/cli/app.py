@@ -156,6 +156,10 @@ def aggregate(
     average_intensities: bool = typer.Option(
         False, help="Whether to average the channel intensities inside each cell"
     ),
+    expand_radius_ratio: float = typer.Option(
+        default=0,
+        help="Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings",
+    ),
     min_transcripts: int = typer.Option(
         0, help="Cells with less transcript than this integer will be filtered"
     ),
@@ -175,7 +179,9 @@ def aggregate(
     sdata = read_zarr_standardized(sdata_path, warn=True)
 
     aggregator = Aggregator(sdata, image_key=image_key)
-    aggregator.update_table(gene_column, average_intensities, min_transcripts, min_intensity_ratio)
+    aggregator.update_table(
+        gene_column, average_intensities, expand_radius_ratio, min_transcripts, min_intensity_ratio
+    )
 
 
 @app.command()

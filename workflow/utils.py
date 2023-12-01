@@ -152,13 +152,15 @@ class Args:
         key = self.config["segmentation"]["baysor"].get("cell_key", "cell")
         return f":{key}"
 
+    def min_area(self, method):
+        params = self.config[method]
+        if "min_area" not in params:
+            return 0
+        return params["min_area"]
+
     @property
     def gene_column(self):
         return self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
-
-    @property
-    def expand_radius(self):
-        return self.config["shapes"]["expand_radius"]
 
 
 def stringify_for_cli(value) -> str:

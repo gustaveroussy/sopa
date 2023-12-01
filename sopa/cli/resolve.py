@@ -9,9 +9,6 @@ app_resolve = typer.Typer()
 def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     patch_dir: str = typer.Option(help="Directory containing the cellpose segmentation on patches"),
-    expand_radius: float = typer.Option(
-        default=0, help="Number of pixels for radius expansion of each cell boundary"
-    ),
 ):
     """Resolve patches conflicts after cellpose segmentation"""
     from sopa._sdata import get_key
@@ -26,7 +23,6 @@ def cellpose(
 
     cells = StainingSegmentation.read_patches_cells(patch_dir)
     cells = shapes.solve_conflicts(cells)
-    cells = shapes.expand(cells, expand_radius)
 
     add_shapes(sdata, cells, image_key)
 
@@ -43,9 +39,6 @@ def baysor(
     min_area: float = typer.Option(
         0, help="Cells with an area less than this value (in microns^2) will be filtered"
     ),
-    expand_radius: float = typer.Option(
-        0, help="Number of microns for radius expansion of each cell boundary"
-    ),
     patches_dirs: list[str] = typer.Option(
         None, help="List of patches directories inside `baysor_temp_dir`"
     ),
@@ -60,4 +53,4 @@ def baysor(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area, expand_radius)
+    resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area)

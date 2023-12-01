@@ -11,13 +11,12 @@ segmentation:
     channels: ["DNA1"]
     flow_threshold: 2
     cellprob_threshold: -6
-
-shapes:
-  expand_radius: 2
+    min_area: 200
 
 aggregate:
   average_intensities: true
   min_intensity_ratio: 0.1
+  expand_radius_ratio: 0.1
 
 explorer:
   ram_threshold_gb: 8

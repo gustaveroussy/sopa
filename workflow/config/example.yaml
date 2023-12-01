@@ -1,5 +1,6 @@
+# TODO: improve 
 read:
-  technology: merscope
+  technology: merscope # [Required, except if object already converted] Name of the machine, e.g. 
 
 patchify:
   patch_width_pixel: 1000 # advice: 100 * cellpose diameter
@@ -9,14 +10,16 @@ patchify:
 
 segmentation:
   cellpose:
-    diameter: 150
+    diameter: 55
     channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
+    min_area: 1000
 
   baysor:
     cell_key: cell_id
     unassigned_value: -1
+    min_area: 10
     config:
       data:
         exclude_genes: "Blank*"      # genes excluded from the Baysor segmentation
@@ -43,11 +46,9 @@ segmentation:
         new_component_weight: 0.2
         new_component_fraction: 0.3
 
-shapes:
-  expand_radius: 2
-
 aggregate:
   intensity_mean: true
+  expand_radius_ratio: 0.1
   #gene_column: ""
 
 # annotation:

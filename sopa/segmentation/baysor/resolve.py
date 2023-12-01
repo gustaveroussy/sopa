@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 def read_baysor(
-    directory: str, min_area: float = 0, expand_radius: float = 0, min_vertices: int = 4
+    directory: str, min_area: float = 0, min_vertices: int = 4
 ) -> tuple[list[Polygon], AnnData]:
     directory = Path(directory)
 
@@ -47,7 +47,6 @@ def read_baysor(
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(make_valid(cell)))
     gdf = gdf[~gdf.geometry.isna()]
-    gdf.geometry = gdf.geometry.map(lambda cell: shapes.expand_one(cell, expand_radius))
 
     return gdf.geometry.values, adata[gdf.index].copy()
 
@@ -55,7 +54,6 @@ def read_baysor(
 def read_all_baysor_patches(
     baysor_temp_dir: str,
     min_area: float = 0,
-    expand_radius: float = 0,
     patches_dirs: list[str] | None = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     if patches_dirs is None:
@@ -63,8 +61,7 @@ def read_all_baysor_patches(
         patches_dirs = list(baysor_temp_dir.iterdir())
 
     outs = [
-        read_baysor(path, min_area, expand_radius)
-        for path in tqdm(patches_dirs, desc="Reading baysor outputs")
+        read_baysor(path, min_area) for path in tqdm(patches_dirs, desc="Reading baysor outputs")
     ]
 
     patches_cells, adatas = zip(*outs)
@@ -102,11 +99,8 @@ def resolve(
     gene_column: str,
     patches_dirs: list[str] | None = None,
     min_area: float = 0,
-    expand_radius: float = 0,
 ):
-    patches_cells, adatas = read_all_baysor_patches(
-        baysor_temp_dir, min_area, expand_radius, patches_dirs
-    )
+    patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, patches_dirs)
     geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
     image_key = get_key(sdata, "images")

@@ -46,6 +46,12 @@ class Aggregator:
         self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
 
+        if sdata.table is not None and len(self.geo_df) != sdata.table.n_obs:
+            log.warn(
+                f"Table already existing with {sdata.table.n_obs} obs, but aggregating on {len(self.geo_df)} cells. Deleting table."
+            )
+            del sdata.table
+
         self.table = sdata.table
 
     def standardize_table(self):
@@ -83,6 +89,7 @@ class Aggregator:
         self,
         gene_column: str | None,
         average_intensities: bool,
+        expand_radius_ratio: float,
         min_transcripts: int,
         min_intensity_ratio: float,
     ):
@@ -105,7 +112,10 @@ class Aggregator:
 
         if average_intensities:
             mean_intensities = average_channels(
-                self.sdata, image_key=self.image_key, shapes_key=self.shapes_key
+                self.sdata,
+                image_key=self.image_key,
+                shapes_key=self.shapes_key,
+                expand_radius_ratio=expand_radius_ratio,
             )
 
             if min_intensity_ratio > 0:
@@ -144,7 +154,10 @@ class Aggregator:
 
 
 def average_channels(
-    sdata: SpatialData, image_key: str = None, shapes_key: str = None
+    sdata: SpatialData,
+    image_key: str = None,
+    shapes_key: str = None,
+    expand_radius_ratio: float = 0,
 ) -> np.ndarray:
     """Average channel intensities per cell.
 
@@ -152,6 +165,7 @@ def average_channels(
         sdata: A `SpatialData` object
         image_key: Key of `sdata` containing the image. If only one `images` element, this does not have to be provided.
         shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
+        expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
 
     Returns:
         A numpy `ndarray` of shape `(n_cells, n_channels)`
@@ -161,9 +175,12 @@ def average_channels(
     geo_df = get_element(sdata, "shapes", shapes_key)
     geo_df = to_intrinsic(sdata, geo_df, image)
 
-    cells = list(geo_df.geometry)
+    expand_radius = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
 
-    log.info(f"Averaging channels intensity over {len(cells)} cells")
+    cells = list(geo_df.geometry)
+    cells = shapes.expand(cells, expand_radius)
+
+    log.info(f"Averaging channels intensity over {len(cells)} cells with expansion {expand_radius}")
     return _average_channels_aligned(image, cells)
 
 

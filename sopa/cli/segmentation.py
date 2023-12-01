@@ -15,6 +15,9 @@ def cellpose(
     flow_threshold: float = typer.Option(help="Cellpose `flow_threshold` parameter"),
     cellprob_threshold: float = typer.Option(help="Cellpose `cellprob_threshold` parameter"),
     model_type: str = typer.Option("cyto2", help="Name of the cellpose model"),
+    min_area: int = typer.Option(
+        0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
+    ),
     patch_index: int = typer.Option(
         default=None,
         help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
@@ -29,10 +32,6 @@ def cellpose(
     patch_overlap: int = typer.Option(
         default=None,
         help="Ignore this if you already run `sopa patchify`. Patches overlaps in pixels",
-    ),
-    expand_radius: int = typer.Option(
-        default=0,
-        help="Ignore this if you already run `sopa patchify`. Cell boundaries radius expansion in pixels",
     ),
 ):
     """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch.
@@ -58,13 +57,12 @@ def cellpose(
         cellprob_threshold=cellprob_threshold,
         model_type=model_type,
     )
-    segmentation = StainingSegmentation(sdata, method, channels)
+    segmentation = StainingSegmentation(sdata, method, channels, min_area=min_area)
 
     if patch_index is not None:
         segmentation.write_patch_cells(patch_dir, patch_index)
         return
 
     cells = segmentation.run_patches(patch_width, patch_overlap)
-    cells = shapes.expand(cells, expand_radius)
 
     add_shapes(sdata, cells, segmentation.image_key)

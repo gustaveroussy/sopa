@@ -22,10 +22,12 @@ class StainingSegmentation:
         sdata: SpatialData,
         method: callable,
         channels: list[str] | str,
+        min_area: float = 0,
     ):
         self.sdata = sdata
         self.method = method
         self.channels = [channels] if isinstance(channels, str) else channels
+        self.min_area = min_area
 
         self.image_key, self.image = get_spatial_image(sdata, return_key=True)
 
@@ -50,6 +52,7 @@ class StainingSegmentation:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
 
         cells = shapes.geometrize(self.method(image))
+        cells = shapes.filter(cells, self.min_area)
 
         return [affinity.translate(cell, *bounds[:2]) for cell in cells]
 

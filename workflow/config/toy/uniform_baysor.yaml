@@ -13,6 +13,7 @@ segmentation:
     channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
+    min_area: 500
 
   baysor:
     config:
@@ -39,10 +40,6 @@ segmentation:
         cyto_genes: ""
         new_component_weight: 0.2
         new_component_fraction: 0.3
-
-shapes:
-  expand_radius: 0
-  min_area: 2
 
 aggregate:
   average_intensities: true

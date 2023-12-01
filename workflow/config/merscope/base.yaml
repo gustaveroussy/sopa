@@ -37,13 +37,8 @@ segmentation:
         new_component_weight: 0.2
         new_component_fraction: 0.3
 
-shapes:
-  expand_radius: 0
-  min_area: 20
-
 aggregate:
   average_intensities: true
-  #gene_column: ""
 
 # annotation:
 #   method: tangram
@@ -56,4 +51,4 @@ explorer:
   ram_threshold_gb: 16
 
 executables:
-  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

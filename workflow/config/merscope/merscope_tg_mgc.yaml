@@ -15,10 +15,6 @@ segmentation:
     flow_threshold: 0.4
     cellprob_threshold: 0
 
-shapes:
-  expand_radius: 0
-  min_area: 20
-
 aggregate:
   average_intensities: true
   #gene_column: ""

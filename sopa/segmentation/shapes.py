@@ -77,6 +77,12 @@ def smooth(cell: Polygon, dist: float, tolerance: float) -> Polygon:
     return cell.buffer(-dist).buffer(-2 * dist).buffer(-dist).simplify(tolerance)
 
 
+def filter(cells: list[Polygon], min_area: float):
+    if min_area == 0:
+        return cells
+    return [cell for cell in cells if cell.area >= min_area]
+
+
 def _find_contours(cell_mask: np.ndarray) -> list[Polygon]:
     import cv2
 
