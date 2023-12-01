@@ -7,11 +7,11 @@ patchify:
 
 segmentation:
   cellpose:
-    diameter: 15
+    diameter: 8
     channels: ["DNA1"]
     flow_threshold: 2
     cellprob_threshold: -6
-    min_area: 200
+    min_area: 16
 
 aggregate:
   average_intensities: true
