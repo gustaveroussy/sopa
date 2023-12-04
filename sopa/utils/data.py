@@ -24,6 +24,7 @@ def uniform(
     sigma_factor: float = 0.2,
     seed: int = 0,
     save_vertices: bool = False,
+    save_image: bool = True,
     apply_blur: bool = True,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
@@ -37,7 +38,8 @@ def uniform(
         sigma_factor: Factor used to determine `sigma` for the gaussian blur.
         seed: Numpy random seed
         save_vertices: Whether to save the vertices of the cells (as points)
-        apply_blur: Whether to apply gaussian blur on the cells (without blur, cells are just one pixel)
+        save_image: Whether to return an image
+        apply_blur: Whether to apply gaussian blur on the image (without blur, cells are just one pixel)
 
     Returns:
         A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `save_vertices` is `True`.
@@ -64,20 +66,25 @@ def uniform(
     vertices = pd.DataFrame(xy, columns=["x", "y"])
 
     # Create image
-    image = np.zeros((len(c_coords), length, length))
-    image[0, xy[:, 1], xy[:, 0]] += 1
-    if len(c_coords) > 1:
-        image[np.random.randint(1, len(c_coords), len(xy)), xy[:, 1], xy[:, 0]] += 1
-    if apply_blur:
-        image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
-    image = (image / image.max() * 255).astype(np.uint8)
-    image = da.from_array(image, chunks=(1, 4096, 4096))
+    images = None
+
+    if save_image:
+        image = np.zeros((len(c_coords), length, length))
+        image[0, xy[:, 1], xy[:, 0]] += 1
+        if len(c_coords) > 1:
+            image[np.random.randint(1, len(c_coords), len(xy)), xy[:, 1], xy[:, 0]] += 1
+        if apply_blur:
+            image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
+        image = (image / image.max() * 255).astype(np.uint8)
+        image = da.from_array(image, chunks=(1, 4096, 4096))
+        images = {"image": Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])}
 
     # Create cell boundaries
     cells = [Point(vertex).buffer(sigma).simplify(tolerance=1) for vertex in xy]
     bbox = box(0, 0, length - 1, length - 1)
     cells = [cell.intersection(bbox) for cell in cells]
     gdf = gpd.GeoDataFrame(geometry=cells)
+    shapes = {"cells": ShapesModel.parse(gdf)}
 
     # Create transcripts
     point_cell_index = np.random.randint(0, n_cells, n_points)
@@ -96,11 +103,7 @@ def uniform(
     if save_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 
-    return SpatialData(
-        images={"image": Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])},
-        points=points,
-        shapes={"cells": ShapesModel.parse(gdf)},
-    )
+    return SpatialData(images=images, points=points, shapes=shapes)
 
 
 def _to_mask(length: int, xy: list[tuple[int, int]], sigma: float):
