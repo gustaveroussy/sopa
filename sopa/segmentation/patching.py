@@ -106,10 +106,27 @@ class Patches2D:
                 self._ilocs.append((ix, iy))
 
     def pair_indices(self, i: int) -> tuple[int, int]:
+        """Index localization of one patch
+
+        Args:
+            i: The patch index
+
+        Returns:
+            A tuple `(index_x, index_y)` representing the 2D localization of the patch
+        """
         iy, ix = divmod(i, self.patch_x._count)
         return ix, iy
 
-    def iloc(self, ix: int, iy: int):
+    def iloc(self, ix: int, iy: int) -> list[int]:
+        """Coordinates of the rectangle bounding box of the patch at the given indices
+
+        Args:
+            ix: Patch index in the x-axis
+            iy: Patch indes in the y-axis
+
+        Returns:
+            A list `[xmin, ymin, xmax, ymax]` representing the bounding box of the patch
+        """
         xmin, xmax = self.patch_x[ix]
         ymin, ymax = self.patch_y[iy]
         return [xmin, ymin, xmax, ymax]
@@ -123,18 +140,33 @@ class Patches2D:
         return self.iloc(*self._ilocs[i])
 
     def __len__(self):
+        """Number of patches"""
         return len(self._ilocs)
 
     def __iter__(self):
+        """Iterate over all patches (see `__getitem__`)"""
         for i in range(len(self)):
             yield self[i]
 
     def polygon(self, i: int) -> Polygon:
+        """One patch as a shapely polygon. The polygon may not be just a square, if a ROI has been previously selected.
+
+        Args:
+            i: Patch index
+
+        Returns:
+            Polygon representing the patch
+        """
         rectangle = box(*self[i])
         return rectangle if self.roi is None else rectangle.intersection(self.roi)
 
     @property
     def polygons(self) -> list[Polygon]:
+        """All the patches as polygons
+
+        Returns:
+            List of `shapely` polygons
+        """
         return [self.polygon(i) for i in range(len(self))]
 
     def write(self, overwrite: bool = True):
@@ -160,6 +192,17 @@ class Patches2D:
         unassigned_value: int | str = None,
         use_prior: bool = False,
     ) -> list[int]:
+        """Patchification of the transcripts
+
+        Args:
+            baysor_temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
+            cell_key: Optional key of the transcript dataframe containing the cell IDs. This is useful if a prior segmentation has been run, assigning each transcript to a cell.
+            unassigned_value: If `cell_key` has been provided, this corresponds to the value given in the 'cell ID' column for transcript that are not inside any cell.
+            use_prior: Whether to use Cellpose as a prior segmentation for Baysor. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
+
+        Returns:
+            A list of patches indices. Each index correspond to the name of a subdirectory inside `baysor_temp_dir`
+        """
         return BaysorPatches(self, self.element).write(
             baysor_temp_dir, cell_key, unassigned_value, use_prior
         )

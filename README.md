@@ -57,7 +57,7 @@ Sopa comes with three different flavors, each corresponding to a different use c
 
 ### Snakemake pipeline
 
-Clone our repository, choose a config [here](TODO) (or create your own), and execute our pipeline locally or on a high-performance cluster:
+Clone our repository, choose a config [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) (or create your own), and execute our pipeline locally or on a high-performance cluster:
 ```bash
 git clone https://github.com/gustaveroussy/sopa.git
 cd sopa/workflow

@@ -9,6 +9,8 @@ from .css import BULMA_CSS
 
 
 class Renderable:
+    """Object that can be transformed to string representing HTML"""
+
     @property
     def children(self) -> list["Renderable"]:
         if hasattr(self, "_children") and self._children is not None:
@@ -29,6 +31,8 @@ class Renderable:
 
 
 class Title(Renderable):
+    """Report title"""
+
     def __init__(self, text: str, level: int, subtitle: bool = False) -> None:
         self.text = text
         self.level = level
@@ -39,6 +43,8 @@ class Title(Renderable):
 
 
 class Paragraph(Renderable):
+    """Report paragraph"""
+
     def __init__(self, text: str) -> None:
         self.text = text
 
@@ -47,6 +53,8 @@ class Paragraph(Renderable):
 
 
 class Message(Renderable):
+    """Colored message"""
+
     def __init__(self, text: str, is_light: bool = True, color: str = "primary") -> None:
         self.text = text
         self.color = color
@@ -61,6 +69,8 @@ class Message(Renderable):
 
 
 class Block(Renderable):
+    """Block, i.e. padded div"""
+
     def __init__(self, content: list[Renderable]) -> None:
         self._children = content
 
@@ -69,6 +79,8 @@ class Block(Renderable):
 
 
 class CodeBlock(Renderable):
+    """Block of code, like in the terminal"""
+
     def __init__(self, text: str) -> None:
         self.text = text
 
@@ -77,6 +89,8 @@ class CodeBlock(Renderable):
 
 
 class ProgressBar(Renderable):
+    """Progress bar"""
+
     def __init__(
         self,
         value: float,
@@ -102,6 +116,8 @@ class ProgressBar(Renderable):
 
 
 class Section(Renderable):
+    """Section of the report"""
+
     def __init__(self, name: str, content: list["Section"] = None) -> None:
         self.name = name
         self._children = content
@@ -125,6 +141,8 @@ class Section(Renderable):
 
 
 class SubSection(Section):
+    """Sub-section of the report"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -138,6 +156,8 @@ class SubSection(Section):
 
 
 class NavbarItem(Renderable):
+    """One item in the nav bar"""
+
     def __init__(self, section: Section) -> None:
         self.section = section
 
@@ -158,6 +178,8 @@ class NavbarItem(Renderable):
 
 
 class Navbar(Renderable):
+    """Left nav bar"""
+
     def __init__(self, sections: list[Section]) -> None:
         self._children = [NavbarItem(section) for section in sections]
 
@@ -170,6 +192,8 @@ class Navbar(Renderable):
 
 
 class Columns(Renderable):
+    """Flex columns containers"""
+
     def __init__(self, content: list[Renderable], is_centered: bool = True) -> None:
         self._children = content
         self.is_centered = is_centered
@@ -183,6 +207,8 @@ class Columns(Renderable):
 
 
 class Image(Renderable):
+    """Image renderer"""
+
     def __init__(
         self, fig: Figure, width: float = 50, extension: str = "png", pretty_legend: bool = True
     ):
@@ -209,6 +235,8 @@ class Image(Renderable):
 
 
 class Root(Renderable):
+    """Whole report generator"""
+
     def __init__(self, sections: list[Section], doc_title: str = "Sopa report"):
         self.doc_title = doc_title
         self._children = sections

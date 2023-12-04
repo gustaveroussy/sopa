@@ -16,7 +16,7 @@ The following illustration describes the main steps of `sopa`:
   <img src="./assets/overview.png" alt="sopa_overview" width="100%"/>
 </p>
 
-## Why using `sopa`
+## Why use `sopa`
 
 - `sopa` is designed to be memory-efficient, and it scales to large datasets
 - It's very easy to move on to another spatial-omics technology, since `sopa` is general to every imaging-based spatial-omics

@@ -14,6 +14,16 @@ log = logging.getLogger(__name__)
 
 
 def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np.ndarray:
+    """Transform the polygon to have the desired number of vertices
+
+    Args:
+        polygon: A `shapely` polygon
+        max_vertices: The desired number of vertices
+        tolerance: The step of tolerance used for simplification. At each step, we increase the tolerance of this value until the polygon is simplified enough.
+
+    Returns:
+        A 2D array representing the polygon vertices
+    """
     n_vertices = len(polygon.exterior.coords)
     assert n_vertices >= 3
 
@@ -33,6 +43,14 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np
 def write_polygons(
     path: Path, polygons: Iterable[Polygon], max_vertices: int, is_dir: bool = True
 ) -> None:
+    """Write a `cells.zarr.zip` file containing the cell polygonal boundaries
+
+    Args:
+        path: Path to the Xenium Explorer directory where the transcript file will be written
+        polygons: A list of `shapely` polygons to be written
+        max_vertices: The number of vertices per polygon (they will be transformed to have the right number of vertices)
+        is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
+    """
     path = explorer_file_path(path, FileNames.SHAPES, is_dir)
 
     log.info(f"Writing {len(polygons)} cell polygons")

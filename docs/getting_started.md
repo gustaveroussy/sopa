@@ -44,6 +44,9 @@ Choose one of the following, depending on your needs (it should take at most a f
     poetry install --all-extras
     ```
 
+!!! note "Baysor usage"
+    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it inside the [snakemake pipeline](../pipeline)
+
 ## Usage
 
 Sopa comes with three different flavors, each corresponding to a different use case:

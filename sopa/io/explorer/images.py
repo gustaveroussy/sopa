@@ -164,6 +164,18 @@ def write_image(
     ram_threshold_gb: int | None = 4,
     is_dir: bool = True,
 ):
+    """Convert an image into a `morphology.ome.tif` file that can be read by the Xenium Explorer
+
+    Args:
+        path: Path to the Xenium Explorer directory where the image will be written
+        image: Image of shape `(C, Y, X)`
+        lazy: If `False`, the image will not be read in-memory (except if the image size is below `ram_threshold_gb`). If `True`, all the images levels are always loaded in-memory.
+        tile_width: Xenium tile width (do not update).
+        n_subscales: Number of sub-scales in the pyramidal image.
+        pixelsize: Xenium pixel size (do not update).
+        ram_threshold_gb: If an image (of any level of the pyramid) is below this threshold, it will be loaded in-memory.
+        is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
+    """
     path = explorer_file_path(path, FileNames.IMAGE, is_dir)
 
     if isinstance(image, np.ndarray):
@@ -185,6 +197,16 @@ def align(
     image_models_kwargs: dict | None = None,
     overwrite: bool = False,
 ):
+    """Add an image to the `SpatialData` object after alignment with the Xenium Explorer.
+
+    Args:
+        sdata: A `SpatialData` object
+        image: A `SpatialImage` object. Note that `image.name` is used as the key for the aligned image.
+        transformation_matrix_path: Path to the `.csv` transformation matrix exported from the Xenium Explorer
+        image_key: Optional name of the image on which it has been aligned. Required if multiple images in the `SpatialData` object.
+        image_models_kwargs: Kwargs to the `Image2DModel` model.
+        overwrite: Whether to overwrite the image, if already existing.
+    """
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
     to_pixel = Affine(

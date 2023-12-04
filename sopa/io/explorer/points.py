@@ -24,6 +24,15 @@ def write_transcripts(
     max_levels: int = 15,
     is_dir: bool = True,
 ):
+    """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations
+
+    Args:
+        path: Path to the Xenium Explorer directory where the transcript file will be written
+        df: DataFrame representing the transcripts, with `"x"`, `"y"` column required, as well as the `gene` column (see the corresponding argument)
+        gene: Column of `df` containing the genes names.
+        max_levels: Maximum number of levels in the pyramid.
+        is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
+    """
     path = explorer_file_path(path, FileNames.POINTS, is_dir)
 
     # TODO: make everything using dask instead of pandas

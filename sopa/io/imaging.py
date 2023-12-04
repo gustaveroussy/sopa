@@ -1,3 +1,7 @@
+# Readers for multiplex-imaging technologies
+# In the future, we will completely rely on spatialdata-io (when all these functions exist)
+
+
 import logging
 import re
 from pathlib import Path
@@ -51,6 +55,19 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None):
 def macsima(
     path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
 ) -> SpatialData:
+    """Read MACSIMA data as a `SpatialData` object
+
+    Notes:
+        For all dulicated name, their index will be added in brackets after, for instance you will often find `DAPI (000)` to indicate the DAPI channel of index `000`
+
+    Args:
+        path: Path to the directory containing the MACSIMA `.tif` images
+        image_models_kwargs: Kwargs provided to the `Image2DModel`
+        imread_kwargs: Kwargs provided to `dask_image.imread.imread`
+
+    Returns:
+        A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
+    """
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
     imread_kwargs = {} if imread_kwargs is None else imread_kwargs
 
@@ -100,6 +117,16 @@ def _get_channel_names_qptiff(page_series):
 def qptiff(
     path: Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
 ) -> SpatialData:
+    """Read a `.qptiff` file as a `SpatialData` object
+
+    Args:
+        path: Path to a `.qptiff` file
+        channels_renaming: A dictionnary whose keys correspond to channels and values to their corresponding new name
+        image_models_kwargs: Kwargs provided to the `Image2DModel`
+
+    Returns:
+        A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
+    """
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
     with tf.TiffFile(path) as tif:
@@ -126,6 +153,15 @@ def qptiff(
 
 
 def phenocycler(path: Path, *args):
+    """Read phenocycler data as a `SpatialData` object
+
+    Args:
+        path: Path to PhenoCycler `.qptiff` file
+        args: Args provided to the `qptiff` reader function
+
+    Returns:
+        A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
+    """
     return qptiff(path, *args)
 
 
@@ -136,6 +172,16 @@ def _get_channel_names_hyperion(files: list[Path]):
 def hyperion(
     path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
 ) -> SpatialData:
+    """Read Hyperion data as a `SpatialData` object
+
+    Args:
+        path: Path to the directory containing the Hyperion `.tiff` images
+        image_models_kwargs: Kwargs provided to the `Image2DModel`
+        imread_kwargs: Kwargs provided to `dask_image.imread.imread`
+
+    Returns:
+        A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
+    """
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
     imread_kwargs = {} if imread_kwargs is None else imread_kwargs
 
@@ -172,8 +218,16 @@ def _get_channel_names_xenium_if(element, names):
     return names
 
 
-def xenium_if(path: Path, image_models_kwargs: dict | None = None) -> SpatialImage:
-    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
+def xenium_if(path: Path) -> SpatialImage:
+    """Read the IF image associated to Xenium data
+
+    Args:
+        path: Path to the `.ime.tif` IF image
+
+    Returns:
+        A `SpatialImage` representing the Xenium IF image
+    """
+    image_models_kwargs = _default_image_models_kwargs(None)
 
     image: da.Array = imread(path)
     image = image.rechunk(chunks=image_models_kwargs["chunks"])

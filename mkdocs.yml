@@ -17,7 +17,11 @@ nav:
       - sopa.segmentation.aggregate: api/segmentation/aggregate.md
       - sopa.segmentation.stainings: api/segmentation/stainings.md
       - sopa.segmentation.methods: api/segmentation/methods.md
+      - sopa.segmentation.patching: api/segmentation/patching.md
       - sopa.segmentation.baysor: api/segmentation/baysor.md
+    - sopa.io: api/io.md
+    - sopa.io.explorer: api/io.explorer.md
+    - sopa.io.report: api/io.report.md
     - sopa.annotation:
       - sopa.annotation.tangram: api/annotation/tangram.md
       - sopa.annotation.fluorescence: api/annotation/fluorescence.md

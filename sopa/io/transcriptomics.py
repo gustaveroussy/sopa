@@ -1,3 +1,7 @@
+# Readers for spatial-transcriptomics technologies
+# Updated from spatialdata-io: https://spatialdata.scverse.org/projects/io/en/latest/
+# In the future, we will completely rely on spatialdata-io (when stable enough)
+
 import json
 import re
 from collections.abc import Mapping
@@ -10,6 +14,7 @@ import dask.dataframe as dd
 import geopandas
 import numpy as np
 import pandas as pd
+import spatialdata_io
 from dask import array as da
 from dask.dataframe import read_parquet
 from dask_image.imread import imread
@@ -19,7 +24,6 @@ from spatialdata.models import Image2DModel, PointsModel, ShapesModel, TableMode
 from spatialdata.transformations import Affine, Identity
 from spatialdata.transformations.transformations import Identity, Scale
 from spatialdata_io._constants._constants import MerscopeKeys, XeniumKeys
-from spatialdata_io._docs import inject_docs
 
 
 def _get_channel_names(images_dir: Path) -> list[str]:
@@ -77,7 +81,6 @@ def _get_file_paths(
     )
 
 
-@inject_docs(ms=MerscopeKeys)
 def merscope(
     path: str | Path,
     vpt_outputs: Path | str | dict[str, Any] | None = None,
@@ -87,49 +90,14 @@ def merscope(
     imread_kwargs: Mapping[str, Any] = MappingProxyType({}),
     image_models_kwargs: Mapping[str, Any] = MappingProxyType({}),
 ) -> SpatialData:
-    """
-    Read *MERSCOPE* data from Vizgen.
+    """Read MERSCOPE data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.merscope.html).
 
-    This function reads the following files:
+    Args:
+        path: Path to the MERSCOPE directory containing all the experiment files
+        **kwargs: See link above.
 
-        - ``{ms.COUNTS_FILE!r}``: Counts file.
-        - ``{ms.TRANSCRIPTS_FILE!r}``: Transcript file.
-        - ``{ms.CELL_METADATA_FILE!r}``: Per-cell metadata file.
-        - ``{ms.BOUNDARIES_FILE!r}``: Cell polygon boundaries.
-        - `mosaic_**_z*.tif` images inside the ``{ms.IMAGES_DIR!r}`` directory.
-
-    Parameters
-    ----------
-    path
-        Path to the region/root directory containing the *Merscope* files (e.g., `detected_transcripts.csv`).
-    vpt_outputs
-        Optional arguments to indicate the output of the vizgen-postprocessing-tool (VPT), when used.
-        If a folder path is provided, it looks inside the folder for the following files:
-
-            - ``{ms.COUNTS_FILE!r}``
-            - ``{ms.CELL_METADATA_FILE!r}``
-            - ``{ms.BOUNDARIES_FILE!r}``
-
-        If a dictionnary, then the following keys should be provided with the desired path:
-
-            - ``{ms.VPT_NAME_COUNTS!r}``
-            - ``{ms.VPT_NAME_OBS!r}``
-            - ``{ms.VPT_NAME_BOUNDARIES!r}``
-    z_layers
-        Indices of the z-layers to consider. Either one `int` index, or a list of `int` indices. If `None`, then no image is loaded.
-        By default, only the middle layer is considered (that is, layer 3).
-    region_name
-        Name of the region of interest, e.g., `'region_0'`. If `None` then the name of the `path` directory is used.
-    slide_name
-        Name of the slide/run. If `None` then the name of the parent directory of `path` is used (whose name starts with a date).
-    imread_kwargs
-        Keyword arguments to pass to the image reader.
-    image_models_kwargs
-        Keyword arguments to pass to the image models.
-
-    Returns
-    -------
-    :class:`spatialdata.SpatialData`
+    Returns:
+        A `SpatialData` object representing the MERSCOPE experiment
     """
     if "chunks" not in image_models_kwargs:
         if isinstance(image_models_kwargs, MappingProxyType):
@@ -266,54 +234,20 @@ def _get_table(
     return table
 
 
-@inject_docs(xx=XeniumKeys)
 def xenium(
     path: str | Path,
     imread_kwargs=MappingProxyType({}),
     image_models_kwargs=MappingProxyType({}),
 ) -> SpatialData:
-    """
-    Read a *10X Genomics Xenium* dataset into a SpatialData object.
+    """Read Xenium data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.xenium.html).
 
-    This function reads the following files:
+    Args:
+        path: Path to the Xenium directory containing all the experiment files
+        imread_kwargs: See link above.
+        image_models_kwargs:See link above.
 
-        - ``{xx.XENIUM_SPECS!r}``: File containing specifications.
-        - ``{xx.NUCLEUS_BOUNDARIES_FILE!r}``: Polygons of nucleus boundaries.
-        - ``{xx.CELL_BOUNDARIES_FILE!r}``: Polygons of cell boundaries.
-        - ``{xx.TRANSCRIPTS_FILE!r}``: File containing transcripts.
-        - ``{xx.CELL_FEATURE_MATRIX_FILE!r}``: File containing cell feature matrix.
-        - ``{xx.CELL_METADATA_FILE!r}``: File containing cell metadata.
-        - ``{xx.MORPHOLOGY_MIP_FILE!r}``: File containing morphology mip.
-        - ``{xx.MORPHOLOGY_FOCUS_FILE!r}``: File containing morphology focus.
-
-    .. seealso::
-
-        - `10X Genomics Xenium file format  <https://cf.10xgenomics.com/supp/xenium/xenium_documentation.html>`_.
-
-    Parameters
-    ----------
-    path
-        Path to the dataset.
-    n_jobs
-        Number of jobs to use for parallel processing.
-    cells_as_shapes
-        Whether to read cells also as shapes. Useful for visualization.
-    nucleus_boundaries
-        Whether to read nucleus boundaries.
-    transcripts
-        Whether to read transcripts.
-    morphology_mip
-        Whether to read morphology mip.
-    morphology_focus
-        Whether to read morphology focus.
-    imread_kwargs
-        Keyword arguments to pass to the image reader.
-    image_models_kwargs
-        Keyword arguments to pass to the image models.
-
-    Returns
-    -------
-    :class:`spatialdata.SpatialData`
+    Returns:
+        A `SpatialData` object representing the Xenium experiment
     """
     if "chunks" not in image_models_kwargs:
         if isinstance(image_models_kwargs, MappingProxyType):
@@ -380,3 +314,16 @@ def _get_images_xenium(
         c_coords=list(map(str, range(len(image)))),
         **image_models_kwargs,
     )
+
+
+def cosmx(path: str, **kwargs: int) -> SpatialData:
+    """Alias to the [spatialdata-io reader](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.cosmx.html).
+
+    Args:
+        path: Path to the CosMX data directory
+        **kwargs: See link above.
+
+    Returns:
+        A `SpatialData` object representing the CosMX experiment
+    """
+    return spatialdata_io.cosmx(path, **kwargs)

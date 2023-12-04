@@ -15,6 +15,14 @@ log = logging.getLogger(__name__)
 def write_gene_counts(
     path: str, adata: AnnData, layer: str | None = None, is_dir: bool = True
 ) -> None:
+    """Write a `cell_feature_matrix.zarr.zip` file containing the cell-by-gene transcript counts (i.e., from `adata.X`)
+
+    Args:
+        path: Path to the Xenium Explorer directory where the cell-by-gene file will be written
+        adata: An `AnnData` object. Note that `adata.X` has to be a sparse matrix (and contain the raw counts), else use the `layer` argument.
+        layer: If not `None`, `adata.layers[layer]` should be sparse (and contain the raw counts).
+        is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
+    """
     path = explorer_file_path(path, FileNames.TABLE, is_dir)
 
     log.info(f"Writing table with {adata.n_vars} columns")
@@ -82,6 +90,13 @@ def _write_categorical_column(
 
 
 def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> None:
+    """Write a `analysis.zarr.zip` file containing the cell categories/clusters (i.e., from `adata.obs`)
+
+    Args:
+        path: Path to the Xenium Explorer directory where the cell-categories file will be written
+        adata: An `AnnData` object
+        is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
+    """
     path = explorer_file_path(path, FileNames.CELL_CATEGORIES, is_dir)
 
     adata.strings_to_categoricals()
@@ -112,10 +127,10 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
 
 
 def save_column_csv(path: str, adata: AnnData, key: str):
-    """Save one column of the AnnData object as a CSV that can be open in the explorer, in the "cell" panel.
+    """Save one column of the AnnData object as a CSV that can be open interactively in the explorer, under the "cell" panel.
 
     Args:
-        path: Path to the CSV that will be open in the Xenium Explorer
+        path: Path where to write the CSV that will be open in the Xenium Explorer
         adata: An `AnnData` object
         key: Key of `adata.obs` containing the column to convert
     """

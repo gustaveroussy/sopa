@@ -30,6 +30,15 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def write_report(path: str, sdata: SpatialData):
+    """Create a HTML report (or web report) after running Sopa.
+
+    Note:
+        This report is automatically generated based on a custom python-to-html engine
+
+    Args:
+        path: Path to the `.html` report that has to be created
+        sdata: A `SpatialData` object, after running Sopa
+    """
     sections = SectionBuilder(sdata).compute_sections()
 
     log.info(f"Writing report to {path}")
