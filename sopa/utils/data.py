@@ -66,7 +66,7 @@ def uniform(
     vertices = pd.DataFrame(xy, columns=["x", "y"])
 
     # Create image
-    images = None
+    images = {}
 
     if save_image:
         image = np.zeros((len(c_coords), length, length))
@@ -77,7 +77,7 @@ def uniform(
             image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
         image = (image / image.max() * 255).astype(np.uint8)
         image = da.from_array(image, chunks=(1, 4096, 4096))
-        images = {"image": Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])}
+        images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
 
     # Create cell boundaries
     cells = [Point(vertex).buffer(sigma).simplify(tolerance=1) for vertex in xy]
