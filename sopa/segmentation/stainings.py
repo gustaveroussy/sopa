@@ -168,7 +168,7 @@ class StainingSegmentation:
         return cells
 
     @classmethod
-    def add_shapes(sdata: SpatialData, cells: list[Polygon], image_key: str, shapes_key: str):
+    def add_shapes(cls, sdata: SpatialData, cells: list[Polygon], image_key: str, shapes_key: str):
         """Adding `shapely` polygon to the `SpatialData` object
 
         Args:
