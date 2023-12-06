@@ -57,8 +57,7 @@ def read_all_baysor_patches(
     patches_dirs: list[str] | None = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     if patches_dirs is None:
-        baysor_temp_dir = Path(baysor_temp_dir)
-        patches_dirs = list(baysor_temp_dir.iterdir())
+        patches_dirs = [subdir for subdir in Path(baysor_temp_dir).iterdir() if subdir.is_dir()]
 
     outs = [
         read_baysor(path, min_area) for path in tqdm(patches_dirs, desc="Reading baysor outputs")
