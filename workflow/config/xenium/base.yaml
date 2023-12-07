@@ -49,4 +49,4 @@ explorer:
   ram_threshold_gb: 16
 
 executables:
-  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable
