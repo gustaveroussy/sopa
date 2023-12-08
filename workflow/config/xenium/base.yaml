@@ -1,3 +1,4 @@
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
   technology: xenium
 
@@ -42,7 +43,15 @@ segmentation:
         new_component_fraction: 0.3
 
 aggregate:
+  average_intensities: true
+  
+# Comment this out if you want to use tangram -->
 
+# annotation:
+#   method: tangram
+#   args:
+#     sc_reference_path: "..."
+#     cell_type_key: ct
 
 explorer:
   gene_column: "feature_name"

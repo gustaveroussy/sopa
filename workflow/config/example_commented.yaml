@@ -1,40 +1,57 @@
-# TODO: improve 
+### This file details all existing Sopa parameters
+###
+### Most of these parameters are optional: don't hesitate to delete those that doesn't interest you
+### 
+### Before creating your own config, you should check if there is not already an existing
+### config that works for you, see https://github.com/gustaveroussy/sopa/tree/master/workflow/config
+
 read:
-  technology: merscope # [Required, except if object already converted] Name of the machine, e.g. 
+  technology: merscope # Name of the machine, e.g. xenium/merscope/cosmx/phenocycler/macsima/hyperion
+
 
 patchify:
+  # [only if running cellpose]
   patch_width_pixel: 1000 # advice: 100 * cellpose diameter
   patch_overlap_pixel: 40 # advice: 2 * cellpose diameter
+
+  # [only if running baysor]
   patch_width_microns: 4000
   patch_overlap_microns: 30
 
-segmentation:
-  cellpose:
-    diameter: 55
-    channels: ["DAPI"]
-    flow_threshold: 2
-    cellprob_threshold: -6
-    min_area: 1000
 
+segmentation:
+  # [only if running cellpose]
+  cellpose:
+    diameter: 55 # typical size of a cell, in pixels. This depends on the technology resolution
+    channels: ["DAPI"] # list of one or two channel(s) used for segmentation. If two channels, provide a nuclear staining, and then a cytoplasm staining
+    flow_threshold: 2 # see cellpose parameters
+    cellprob_threshold: -6 # see cellpose parameters
+    min_area: 1000 # [optional] minimum area (in pixels^2) for a cell to not be filtered
+
+  # [only if running baysor]
   baysor:
-    cell_key: cell_id
-    unassigned_value: -1
-    min_area: 10
+    cell_key: cell_id # [optional] if prior segmentation has been performed, this is the column in the transcript dataframe that indicated the cell that contains the transcript. This doesn't need to be provided if you run cellpose with Sopa.
+    unassigned_value: -1 # [optional] if prior segmentation has been performed and if 'cell_key' above is provided, this is the value given to transcript that is not contained inside any cell
+    min_area: 10 # [optional] minimum area (in microns^2) for a cell to not be filtered
+
+    # [required if running baysor: see baysor config https://github.com/kharchenkolab/Baysor]
     config:
       data:
         exclude_genes: "Blank*"      # genes excluded from the Baysor segmentation
         force_2d: true               # if false, uses 3D mode
         min_molecules_per_cell: 30   # min number of transcripts per cell
-        x: "x"
-        y: "y"
-        z: "z"
-        gene: "gene"
+        gene: "gene"                 # name of the column of the transcript dataframe indicating the genes names
         min_molecules_per_gene: 0
         min_molecules_per_segment: 8
         confidence_nn_id: 16
 
+        # Important: do not update x/y/z below, since these names are standardized with SpatialData
+        x: "x"
+        y: "y"
+        z: "z"
+
       segmentation:
-        scale: 100                        # typical cell radius
+        scale: 6.25                        # typical cell radius in microns
         scale_std: "25%"                   # cell radius standard deviation
         prior_segmentation_confidence: 0.5 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false
@@ -46,23 +63,43 @@ segmentation:
         new_component_weight: 0.2
         new_component_fraction: 0.3
 
+
 aggregate:
-  intensity_mean: true
-  expand_radius_ratio: 0.1
-  #gene_column: ""
+  intensity_mean: true # [optional] Whether to compute, for each cell, the mean intensity per staining/channel
+  min_intensity_ratio: 0.1 # [optional] cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
+  expand_radius_ratio: 0.1 # [optional] cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
 
-# annotation:
-#   fluorescence:
-#     marker_cell_dict:
-#       CK: Tumoral cell
-#       CD3: T cell
-#       CD31: Endothelial
-#       FAP: Fibroblast
-#       CD68: Macrophage
-#       CD20: B cell
+  gene_column: "gene" # [optional, not-needed if not using baysor] name of the column of the transcript dataframe indicating the genes names. Used to count transcripts inside cells.
+  min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
-explorer:
-  gene_column: "gene"
+
+# [optional] if annotation is desired, choose either 'tangram' or 'fluorescence'. If 'fluorescence' is used, make sure 'intensity_mean' is true (see parameter above)
+annotation:
+  # if you choose transcript-based annotation with Tangram
+
+  method: tangram
+  args:
+    sc_reference_path: /path/to/reference_annotated.h5ad # path to the annotated scRNAseq reference used by Tangram
+    cell_type_key: ct # key of adata_ref.obs containing the cell-type annotation
+    reference_preprocessing: log1p # preprocessing method applied to the reference scRNAseq. Either `normalized` (sc.pp.normalize_total), or `log1p` (sc.pp.normalize_total and sc.pp.log1p), or remove this parameter (raw counts)
+
+  # if you choose the simple staining-based annotation. In the example below, cells with high CD3 staining will be annotated as T cells.
+
+  # method: fluorescence
+  # args:
+  #   marker_cell_dict:
+  #     CK: Tumoral cell
+  #     CD3: T cell
+  #     CD31: Endothelial
+  #     FAP: Fibroblast
+  #     CD68: Macrophage
+  #     CD20: B cell
+
+
+explorer: # parameters related to the conversion to the Xenium Explorer (Sopa's visualizer)
+  gene_column: "gene" # [optional] name of the column of the transcript dataframe indicating the genes names. Provide this if you want to see transcripts on the explorer
+  ram_threshold_gb: 16 # [optional] images below this RAM threshold will be loaded in memory during conversion. It can accelerate image writing
+
 
 executables:
-  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable
+  baysor: ~/.julia/bin/baysor # [optional] if you run baysor, put here the path to the 'baysor' executable

@@ -8,7 +8,7 @@ If you don't want to dig into the CLI/API, you can directly use our existing [Sn
 - Make sure you have a `conda` environment called `sopa` (see [getting started](../getting_started)), on which you installed `sopa` with the `snakemake` extra.
 
 !!! Note
-    You can also use a separate environment for `snakemake`. In this case, you don't need to install the snakemake extra when installing `sopa`
+    You can also use a separate environment for `snakemake`. In this case, you don't need to install the `'snakemake'` extra when installing `sopa`. But you may still need to install other extras, for instance `'cellpose'` if you plan to run Cellpose.
 
 ## Choose a config
 
@@ -61,6 +61,6 @@ cd sopa/workflow       # your own personal path to the workflow directory
 
 For more customization, see the [snakemake CLI documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html).
 
-## Configure your own config
+## Create your own config
 
-If the existing config are not suited for your project, you can update an existing one, or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, just remove the section or the argument, and sopa will not run it.
+If the existing `config` files are not suited for your project, you can update an existing one, or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, just remove the section or the argument, and sopa will not run it.

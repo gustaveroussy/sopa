@@ -1,3 +1,4 @@
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
   technology: merscope
 
@@ -9,7 +10,7 @@ patchify:
 
 segmentation:
   baysor:
-    cell_key: cell_id
+    cell_key: cell_id # this allows to use the prior segmentation performed by Vizgen
     unassigned_value: -1
     config:
       data:
@@ -39,6 +40,8 @@ segmentation:
 
 aggregate:
   average_intensities: true
+
+# Comment this out if you want to use tangram -->
 
 # annotation:
 #   method: tangram
