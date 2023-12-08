@@ -1,5 +1,5 @@
 from .imaging import qptiff, macsima, phenocycler, hyperion
-from .explorer import write_explorer
+from .explorer import write
 from .standardize import write_standardized
 from .transcriptomics import merscope, xenium, cosmx
 

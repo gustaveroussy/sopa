@@ -39,7 +39,7 @@ def write(
     """Convert a spatialdata object to Xenium Explorer's inputs"""
     from pathlib import Path
 
-    from sopa.io.explorer import write_explorer
+    from sopa.io.explorer import write
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
@@ -47,7 +47,7 @@ def write(
     if output_path is None:
         output_path = Path(sdata_path).with_suffix(".explorer")
 
-    write_explorer(
+    write(
         output_path,
         sdata,
         shapes_key=shapes_key,

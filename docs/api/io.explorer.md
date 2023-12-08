@@ -1,4 +1,4 @@
-::: sopa.io.explorer.write_explorer
+::: sopa.io.explorer.write
     options:
       show_root_heading: true
 

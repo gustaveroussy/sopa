@@ -38,7 +38,7 @@ def _should_save(mode: str | None, character: str):
     return character in mode if mode[0] == "+" else character not in mode
 
 
-def write_explorer(
+def write(
     path: str,
     sdata: SpatialData,
     image_key: str | None = None,
@@ -154,7 +154,7 @@ def write_metadata(
     """Create an `experiment.xenium` file that can be open by the Xenium Explorer.
 
     Note:
-        This function alone is not enough to actually open an experiment. You will need at least to wrun `write_image`, or create all the outputs with `write_explorer`.
+        This function alone is not enough to actually open an experiment. You will need at least to wrun `write_image`, or create all the outputs with `write`.
 
     Args:
         path: Path to the Xenium Explorer directory where the metadata file will be written
