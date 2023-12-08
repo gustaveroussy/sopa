@@ -4,7 +4,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/sopa.svg)](https://pypi.org/project/sopa)
 [![Downloads](https://static.pepy.tech/badge/sopa)](https://pepy.tech/project/sopa)
-[![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](TODO)
+[![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://gustaveroussy.github.io/sopa)
 ![Build](https://github.com/MICS-Lab/sopa/workflows/ci/badge.svg)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![License](https://img.shields.io/pypi/l/sopa.svg)](https://github.com/gustaveroussy/sopa/blob/master/LICENSE)
@@ -16,7 +16,7 @@ The pipeline outputs contain: (i) Xenium Explorer files for interactive visualiz
 
 # Documentation
 
-The easiest way to getting started with `sopa` is to check [our documentation](TODO). It contains installation explainations, CLI/API details, and usages examples.
+The easiest way to getting started with `sopa` is to check [our documentation](https://gustaveroussy.github.io/sopa). It contains installation explainations, CLI/API details, and usages examples.
 
 # Overview
 
@@ -64,7 +64,7 @@ cd sopa/workflow
 snakemake --configfile=/path/to/yaml_config --config data_path=/path/to/data_directory --cores 1
 ```
 
-For more details on `snakemake` configuration and how to properly setup your environments, please refer to the [documentation](TODO).
+For more details on `snakemake` configuration and how to properly setup your environments, please refer to the [documentation](https://gustaveroussy.github.io/sopa/pipeline).
 
 ### CLI
 
@@ -80,7 +80,7 @@ Below are example of commands that can be run with the `sopa` CLI:
 > sopa explorer write merscope_directory.zarr # convert for interactive viz
 ```
 
-For a full description of the CLI, please refer to the [documentation](TODO).
+For a full description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).
 
 ### API
 
@@ -90,7 +90,7 @@ import sopa
 # use the 'sopa' python package
 ```
 
-For a full description of the API, please refer to the [documentation](TODO).
+For a full description of the API, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
 
 # Cite us
 Our article is not published yet. In the meantime, you can cite our **preprint**: TODO
