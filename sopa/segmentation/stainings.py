@@ -5,6 +5,7 @@ from typing import Callable
 import geopandas as gpd
 import numpy as np
 import zarr
+from scipy.ndimage import gaussian_filter
 from shapely import affinity
 from shapely.geometry import Polygon, box
 from skimage import exposure
@@ -77,15 +78,14 @@ class StainingSegmentation:
         ).all(), f"Channel names must be a subset of: {', '.join(image_channels)}"
 
     def _run_patch(
-        self,
-        patch: Polygon,
-        clip_limit: float = 0.2,
+        self, patch: Polygon, clip_limit: float = 0.2, sigma: float = 1
     ) -> list[Polygon]:
         """Run segmentation on one patch
 
         Args:
             patch: Patch, represented as a `shapely` polygon
             clip_limit: parameter for skimage.exposure.equalize_adapthist
+            sigma: parameter for scipy gaussian_filter
 
         Returns:
             A list of cells, represented as polygons
@@ -98,6 +98,7 @@ class StainingSegmentation:
             y=slice(bounds[1], bounds[3]),
         ).values
 
+        image = gaussian_filter(image, sigma=sigma)
         image = exposure.equalize_adapthist(image, clip_limit=clip_limit)
 
         if patch.area < box(*bounds).area:
