@@ -7,6 +7,7 @@ import numpy as np
 import zarr
 from shapely import affinity
 from shapely.geometry import Polygon, box
+from skimage import exposure
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
@@ -78,11 +79,13 @@ class StainingSegmentation:
     def _run_patch(
         self,
         patch: Polygon,
+        clip_limit: float = 0.2,
     ) -> list[Polygon]:
         """Run segmentation on one patch
 
         Args:
             patch: Patch, represented as a `shapely` polygon
+            clip_limit: parameter for skimage.exposure.equalize_adapthist
 
         Returns:
             A list of cells, represented as polygons
@@ -94,6 +97,8 @@ class StainingSegmentation:
             x=slice(bounds[0], bounds[2]),
             y=slice(bounds[1], bounds[3]),
         ).values
+
+        image = exposure.equalize_adapthist(image, clip_limit=clip_limit)
 
         if patch.area < box(*bounds).area:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
