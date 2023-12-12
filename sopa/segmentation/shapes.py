@@ -97,11 +97,13 @@ def filter(cells: list[Polygon], min_area: float):
     return [cell for cell in cells if cell.area >= min_area]
 
 
-def _find_contours(cell_mask: np.ndarray) -> list[Polygon]:
+def _find_contours(cell_mask: np.ndarray) -> MultiPolygon:
     import cv2
 
     contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    return [Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4]
+    return MultiPolygon(
+        [Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4]
+    )
 
 
 def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
@@ -118,13 +120,10 @@ def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
     return None
 
 
-def _geometrize_cell(
-    mask: np.ndarray, cell_id: int, smooth_radius: int, tolerance: float
-) -> Polygon | None:
-    """Transform one cell id to a polygon based on a mask array. Inspired from https://github.com/Vizgen/vizgen-postprocessing
+def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -> Polygon | None:
+    """Smoothen a cell polygon
 
     Args:
-        mask: Numpy array with values == cell_id where the cell is
         cell_id: ID of the cell to geometrize
         smooth_radius: radius used to smooth the cell polygon
         tolerance: tolerance used to simplify the cell polygon
@@ -132,32 +131,32 @@ def _geometrize_cell(
     Returns:
         Shapely polygon representing the cell, or `None` if the cell was empty after smoothing
     """
-    polygons = _find_contours((mask == cell_id).astype("uint8"))
-    polygons = [polygon for polygon in polygons if not polygon.buffer(-smooth_radius).is_empty]
-    cell = MultiPolygon(polygons)
+    cell = MultiPolygon([geom for geom in cell.geoms if not geom.buffer(-smooth_radius).is_empty])
     cell = cell.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
 
-    if cell.is_empty:
-        return None
-
-    return _ensure_polygon(cell)
+    return None if cell.is_empty else _ensure_polygon(cell)
 
 
-def geometrize(mask: np.ndarray, smooth_radius: int = 5, tolerance: float = 2) -> list[Polygon]:
-    """Convert a cells mask to multiple `shapely` geometries
+def geometrize(
+    mask: np.ndarray, tolerance: float = 2, smooth_radius_ratio: float = 0.1
+) -> list[Polygon]:
+    """Convert a cells mask to multiple `shapely` geometries. Inspired from https://github.com/Vizgen/vizgen-postprocessing
 
     Args:
         mask: A cell mask. Non-null values correspond to cell ids
-        smooth_radius: Radius parameter used in the `buffer` operation
         tolerance: Tolerance parameter used by `shapely` during simplification
 
     Returns:
         List of `shapely` polygons representing each cell ID of the mask
     """
     cells = [
-        _geometrize_cell(mask, cell_id, smooth_radius, tolerance)
-        for cell_id in range(1, mask.max() + 1)
+        _find_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, mask.max() + 1)
     ]
+
+    mean_radius = np.sqrt(np.array([cell.area for cell in cells]) / np.pi).mean()
+    smooth_radius = mean_radius * smooth_radius_ratio
+
+    cells = [_smoothen_cell(cell, smooth_radius, tolerance) for cell in cells]
     return [cell for cell in cells if cell is not None]
 
 
