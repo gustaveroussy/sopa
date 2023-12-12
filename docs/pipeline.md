@@ -41,7 +41,7 @@ cd sopa/workflow       # your own personal path to the workflow directory
     # replace the configfile with yours
     # replace data_path with the path to your data directory
 
-    snakemake --config data_path=/path/to/directory --configfile=config/merscope/base.yaml --cores 1
+    snakemake --config data_path=/path/to/directory --configfile=config/merscope/base.yaml --cores 1 --use-conda
     ```
 
 === "High-performance-cluster (e.g., Slurm cluster)"
