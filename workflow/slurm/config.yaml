@@ -5,7 +5,7 @@ cluster:
     --mem={resources.mem_mb}
     --job-name=smk-{rule}
     --gres=gpu:{resources.gpu}
-    --output=logs/%j" # choose where the logs will be saved (absolute path, or relative to /.../sopa/workflow)
+    --output=.snakemake/out/%j" # you can update where the logs will be saved (absolute path, or relative to /.../sopa/workflow)
 default-resources:
   - partition=shortq
   - mem_mb=32000
