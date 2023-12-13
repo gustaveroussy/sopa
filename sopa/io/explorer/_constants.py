@@ -14,7 +14,7 @@ class ExplorerConstants:
     MICRONS_TO_PIXELS = 4.705882
 
     COLORS = [400, 500, 550, 600, 650, 700]
-    KNOWN_CHANNELS = {"DAPI": 400}
+    KNOWN_CHANNELS = {"DAPI": 400, "DNA1": 400, "DAPI (000)": 400}
 
 
 class Versions:

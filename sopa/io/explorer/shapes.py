@@ -12,8 +12,12 @@ from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
+TOLERANCE_STEP = 0.5
 
-def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np.ndarray:
+
+def pad_polygon(
+    polygon: Polygon, max_vertices: int, tolerance: float = TOLERANCE_STEP
+) -> np.ndarray:
     """Transform the polygon to have the desired number of vertices
 
     Args:
@@ -37,7 +41,7 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = 1) -> np
 
     # TODO: improve it: how to choose the right tolerance?
     polygon = polygon.simplify(tolerance=tolerance)
-    return pad_polygon(polygon, max_vertices, tolerance + 1)
+    return pad_polygon(polygon, max_vertices, tolerance + TOLERANCE_STEP)
 
 
 def write_polygons(
