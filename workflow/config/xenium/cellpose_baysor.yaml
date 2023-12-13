@@ -3,10 +3,19 @@ read:
   technology: xenium
 
 patchify:
+  patch_width_pixel: 6000
+  patch_overlap_pixel: 150
   patch_width_microns: 1000
   patch_overlap_microns: 20
 
 segmentation:
+  cellpose:
+    diameter: 30
+    channels: [0]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 400
+
   baysor:
     config:
       data:
