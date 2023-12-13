@@ -146,6 +146,7 @@ rule aggregate:
         "sopa"
     params:
         args_aggregate = str(args["aggregate"] or ""),
+    resources:
         mem_mb=64_000,
     shell:
         """
