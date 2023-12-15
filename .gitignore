@@ -1,11 +1,13 @@
 # Misc
 workflow/.snakemake
-workflow/logs
+workflow/logs/*
+!workflow/logs/.gitkeep
 *ignore*
 archive/
 explore
 sandbox
 *.html
+.env
 
 # OS related
 .DS_Store
@@ -41,12 +43,6 @@ exploration/*
 !.vscode/extensions.json
 *.code-workspace
 **/.vscode
-
-# Lightning-Hydra-Template
-logs/
-wandb/
-.env
-.autoenv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
