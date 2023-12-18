@@ -156,7 +156,7 @@ class Aggregator:
                     index=self.table.obs_names,
                 )
 
-        self.table.uns["sopa_attrs"] = {
+        self.table.uns[SopaKeys.UNS_KEY] = {
             "version": sopa.__version__,
             SopaKeys.UNS_HAS_TRANSCRIPTS: does_count,
             SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
