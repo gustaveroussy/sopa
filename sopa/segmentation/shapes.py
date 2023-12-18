@@ -104,14 +104,22 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
     return None if cell.is_empty else _ensure_polygon(cell)
 
 
+def _default_tolerance(mean_radius: float) -> float:
+    if mean_radius < 10:
+        return 0.5
+    if mean_radius < 20:
+        return 1
+    return 2
+
+
 def geometrize(
-    mask: np.ndarray, tolerance: float = 2, smooth_radius_ratio: float = 0.1
+    mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1
 ) -> list[Polygon]:
     """Convert a cells mask to multiple `shapely` geometries. Inspired from https://github.com/Vizgen/vizgen-postprocessing
 
     Args:
         mask: A cell mask. Non-null values correspond to cell ids
-        tolerance: Tolerance parameter used by `shapely` during simplification
+        tolerance: Tolerance parameter used by `shapely` during simplification. By default, define the tolerance automatically.
 
     Returns:
         List of `shapely` polygons representing each cell ID of the mask
@@ -122,6 +130,9 @@ def geometrize(
 
     mean_radius = np.sqrt(np.array([cell.area for cell in cells]) / np.pi).mean()
     smooth_radius = mean_radius * smooth_radius_ratio
+
+    if tolerance is None:
+        tolerance = _default_tolerance(mean_radius)
 
     cells = [_smoothen_cell(cell, smooth_radius, tolerance) for cell in cells]
     return [cell for cell in cells if cell is not None]
