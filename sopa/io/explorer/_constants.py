@@ -13,8 +13,9 @@ class ExplorerConstants:
     QUALITY_SCORE = 40
     MICRONS_TO_PIXELS = 4.705882
 
-    COLORS = [400, 500, 550, 600, 650, 700]
-    KNOWN_CHANNELS = {"DAPI": 400}
+    COLORS = ["white", 400, 500, 600, 700]
+    NUCLEUS_COLOR = "white"
+    KNOWN_CHANNELS = {"DAPI": "white", "DNA1": "white", "DNA2": "white", "DAPI (000)": "white"}
 
 
 class Versions:

@@ -2,7 +2,6 @@ import logging
 import re
 from math import ceil
 
-import dask.array as da
 import numpy as np
 import tifffile as tf
 import xarray as xr
@@ -125,32 +124,34 @@ class MultiscaleImageWriter:
                 self._write_image_level(tif, i, subfiletype=1)
 
 
-def _is_color_valid(channel_name: str) -> bool:
-    """The color is valid if it contains a wavelength (e.g., `550`) or is known by the Xenium Explorer"""
-    known_colors = set(ExplorerConstants.KNOWN_CHANNELS.keys())
-    contains_wavelength = bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", channel_name))
-    return contains_wavelength or channel_name in known_colors
+def _to_color(channel_name: str, is_wavelength: bool, colors_iterator: list):
+    if is_wavelength:
+        return channel_name
+    if channel_name in ExplorerConstants.KNOWN_CHANNELS:
+        return f"{channel_name} (color={ExplorerConstants.KNOWN_CHANNELS[channel_name]})"
+    return f"{channel_name} (color={colors_iterator.pop()})"
 
 
 def _set_colors(channel_names: list[str]) -> list[str]:
     """
     Trick to provide a color to all channels on the Xenium Explorer.
 
-    Some colors are automatically colored by the Xenium explorer (e.g., DAPI is colored in blue).
     But some channels colors are set to white by default. This functions allows to color these
     channels with an available wavelength color (e.g., `550`).
     """
-    colors_valid = [_is_color_valid(name) for name in channel_names]
-
-    already_assigned_colors = {ExplorerConstants.KNOWN_CHANNELS.get(name) for name in channel_names}
-    available_colors = sorted(list(set(ExplorerConstants.COLORS) - already_assigned_colors))
-
-    n_invalid = len(colors_valid) - sum(colors_valid)
-    color_indices = list(np.linspace(0, len(available_colors) - 1, n_invalid).round().astype(int))
+    existing_wavelength = [
+        bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", c)) for c in channel_names
+    ]
+    valid_colors = [c for c in ExplorerConstants.COLORS if c != ExplorerConstants.NUCLEUS_COLOR]
+    n_missing = sum(
+        not is_wavelength and not c in ExplorerConstants.KNOWN_CHANNELS
+        for c, is_wavelength in zip(channel_names, existing_wavelength)
+    )
+    colors_iterator: list = np.repeat(valid_colors, ceil(n_missing / len(valid_colors))).tolist()
 
     return [
-        name if is_valid else f"{name} (color={available_colors[color_indices.pop()]})"
-        for name, is_valid in zip(channel_names, colors_valid)
+        _to_color(c, is_wavelength, colors_iterator)
+        for c, is_wavelength in zip(channel_names, existing_wavelength)
     ]
 
 
