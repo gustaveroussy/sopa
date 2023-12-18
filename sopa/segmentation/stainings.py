@@ -105,7 +105,9 @@ class StainingSegmentation:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
 
         cells = shapes.geometrize(self.method(image))
-        cells = shapes.filter(cells, self.min_area)
+
+        if self.min_area > 0:
+            cells = [cell for cell in cells if cell.area >= self.min_area]
 
         return [affinity.translate(cell, *bounds[:2]) for cell in cells]
 

@@ -27,6 +27,7 @@ def solve_conflicts(
     Returns:
         Array of resolved cells polygons
     """
+    cells = list(cells)
     n_cells = len(cells)
     resolved_indices = np.arange(n_cells)
 
@@ -61,40 +62,6 @@ def solve_conflicts(
         return unique_cells, np.where(unique_indices < n_cells, unique_indices, -1)
 
     return unique_cells
-
-
-def expand_one(cell: Polygon, expand_radius: float) -> Polygon:
-    if expand_radius == 0:
-        return cell
-    return cell.buffer(expand_radius)
-
-
-def expand(cells: list[Polygon], expand_radius: float) -> list[Polygon]:
-    """Expand all cells radius
-
-    Args:
-        cells: List of cells as `shapely` polygons
-        expand_radius: Radius increase
-
-    Returns:
-        New list of polygons expanded by `expand_radius`
-    """
-    return [expand_one(cell, expand_radius) for cell in cells]
-
-
-def filter(cells: list[Polygon], min_area: float):
-    """Filter out cells that are too small
-
-    Args:
-        cells: List of `shapely` polygons
-        min_area: Minimum area to keep a cell
-
-    Returns:
-        List of filtered cells polygons
-    """
-    if min_area == 0:
-        return cells
-    return [cell for cell in cells if cell.area >= min_area]
 
 
 def _find_contours(cell_mask: np.ndarray) -> MultiPolygon:

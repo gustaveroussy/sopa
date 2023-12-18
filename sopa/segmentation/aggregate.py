@@ -190,23 +190,26 @@ def average_channels(
 
     expand_radius = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
 
-    cells = list(geo_df.geometry)
-    cells = shapes.expand(cells, expand_radius)
+    if expand_radius > 0:
+        geo_df = geo_df.buffer(expand_radius)
 
-    log.info(f"Averaging channels intensity over {len(cells)} cells with expansion {expand_radius}")
-    return _average_channels_aligned(image, cells)
+    log.info(
+        f"Averaging channels intensity over {len(geo_df)} cells with expansion {expand_radius}"
+    )
+    return _average_channels_aligned(image, geo_df)
 
 
-def _average_channels_aligned(image: SpatialImage, cells: list[Polygon]):
+def _average_channels_aligned(image: SpatialImage, geo_df: gpd.GeoDataFrame | list[Polygon]):
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
         image: A `SpatialImage` of shape `(n_channels, y, x)`
-        cells: A list of `shapely` polygons
+        geo_df: A `GeoDataFrame` whose geometries are cell boundaries (polygons)
 
     Returns:
         A numpy `ndarray` of shape `(n_cells, n_channels)`
     """
+    cells = geo_df if isinstance(geo_df, list) else list(geo_df.geometry)
     tree = shapely.STRtree(cells)
 
     intensities = np.zeros((len(cells), len(image.coords["c"])))
