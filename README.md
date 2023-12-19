@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/sopa.png" alt="sopa_logo" width="400"/>
+  <img src="docs/assets/sopa.png" alt="sopa_logo" width="250"/>
 </p>
 
 [![PyPI](https://img.shields.io/pypi/v/sopa.svg)](https://pypi.org/project/sopa)
@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/pypi/l/sopa.svg)](https://github.com/gustaveroussy/sopa/blob/master/LICENSE)
 [![Imports: isort](https://img.shields.io/badge/imports-isort-blueviolet)](https://pycqa.github.io/isort/)
 
-**S**patial-**o**mics **p**ipeline and **a**nalysis in Python. Built on top of [SpatialData](https://github.com/scverse/spatialdata), it enables processing and analyses of **any** image-based spatial-omics using a standard data structure and output. Sopa was designed for generability and low-memory consumption on large images (scales to `1TB+` images).
+**S**patial-**o**mics **p**ipeline and **a**nalysis in Python. Built on top of [SpatialData](https://github.com/scverse/spatialdata), it enables processing and analyses of image-based spatial-omics using a standard data structure and output. We currently support the following technologies: Xenium, MERSCOPE, CosMX, PhenoCycler, MACSIMA, Hyperion. Sopa was designed for generability and low-memory consumption on large images (scales to `1TB+` images).
 
 The pipeline outputs contain: (i) Xenium Explorer files for interactive visualization, (ii) a HTML report for quick quality controls, and (iii) a SpatialData `.zarr` directory for further analyses.
 
@@ -93,4 +93,4 @@ import sopa
 For a full description of the API, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
 
 # Cite us
-Our article is not published yet. In the meantime, you can cite our **preprint**: TODO
+Our article is not published yet. In the meantime, you can cite our **preprint**: [TODO - coming soon]
