@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/assets/sopa.png" alt="sopa_logo" width="250"/>
+  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/sopa.png" alt="sopa_logo" width="250"/>
 </p>
 
 # Spatial-omics pipeline and analysis
 [![PyPI](https://img.shields.io/pypi/v/sopa.svg)](https://pypi.org/project/sopa)
 [![Downloads](https://static.pepy.tech/badge/sopa)](https://pepy.tech/project/sopa)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://gustaveroussy.github.io/sopa)
-![Build](https://github.com/MICS-Lab/sopa/workflows/ci/badge.svg)
+![Build](https://github.com/gustaveroussy/sopa/workflows/ci/badge.svg)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 [![License](https://img.shields.io/pypi/l/sopa.svg)](https://github.com/gustaveroussy/sopa/blob/master/LICENSE)
 [![Imports: isort](https://img.shields.io/badge/imports-isort-blueviolet)](https://pycqa.github.io/isort/)
@@ -24,7 +24,7 @@ The easiest way to getting started with `sopa` is to check [our documentation](h
 The following illustration describes the main steps of `sopa`:
 
 <p align="center">
-  <img src="docs/assets/overview.png" alt="sopa_overview" width="100%"/>
+  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/overview.png" alt="sopa_overview" width="100%"/>
 </p>
 
 # Installation
