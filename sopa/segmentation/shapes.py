@@ -78,9 +78,6 @@ def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
         return cell
 
     if isinstance(cell, MultiPolygon):
-        log.warn(
-            f"""Geometry is composed of {len(cell.geoms)} polygons of areas: {[p.area for p in cell.geoms]}. Only the polygon corresponding to the largest area will be kept"""
-        )
         return max(cell.geoms, key=lambda polygon: polygon.area)
 
     log.warn(f"Invalid Polygon type: {type(cell)}. It will not be kept")

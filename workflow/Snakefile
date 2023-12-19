@@ -13,8 +13,10 @@ rule all:
         paths.report,
     shell:
         """
-        echo SpatialData output directory: {paths.sdata_path}
-        echo Explorer output directory: {paths.explorer_directory}
+        echo 🎉 Successfully run sopa
+        echo → SpatialData output directory: {paths.sdata_path}
+        echo → Explorer output directory: {paths.explorer_directory}
+        echo → Open the result in the explorer: 'open {paths.explorer_experiment}'
         """
 
 rule to_spatialdata:

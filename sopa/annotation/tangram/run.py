@@ -4,10 +4,16 @@ import math
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import tangram as tg
 import torch
 from anndata import AnnData
 from spatialdata import SpatialData
+
+try:
+    import tangram as tg
+except ImportError:
+    raise ImportError(
+        "To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'`"
+    )
 
 from sopa._constants import SopaKeys
 

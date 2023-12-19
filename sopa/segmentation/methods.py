@@ -17,7 +17,12 @@ def cellpose_patch(
     Returns:
         A `callable` whose input is an image of shape `(C, Y, X)` and output is a cell mask of shape `(Y, X)`. Each mask value `>0` represent a unique cell ID
     """
-    from cellpose import models
+    try:
+        from cellpose import models
+    except ImportError:
+        raise ImportError(
+            "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'`"
+        )
 
     model = models.Cellpose(model_type=model_type)
 

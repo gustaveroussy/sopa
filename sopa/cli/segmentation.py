@@ -18,6 +18,13 @@ def cellpose(
     min_area: int = typer.Option(
         0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
     ),
+    clip_limit: float = typer.Option(
+        0.01,
+        help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
+    ),
+    gaussian_sigma: float = typer.Option(
+        1, help="Parameter for scipy gaussian_filter (applied before running cellpose)"
+    ),
     patch_index: int = typer.Option(
         default=None,
         help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
@@ -56,7 +63,14 @@ def cellpose(
         cellprob_threshold=cellprob_threshold,
         model_type=model_type,
     )
-    segmentation = StainingSegmentation(sdata, method, channels, min_area=min_area)
+    segmentation = StainingSegmentation(
+        sdata,
+        method,
+        channels,
+        min_area=min_area,
+        clip_limit=clip_limit,
+        gaussian_sigma=gaussian_sigma,
+    )
 
     if patch_index is not None:
         segmentation.write_patch_cells(patch_dir, patch_index)

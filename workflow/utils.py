@@ -2,12 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 
-class ConfigConstants:
-    CT_KEY = "cell_type"
-
-    ANNOTATION = "annotation"
-
-
 def _sanity_check_config(config: dict):
     assert (
         "data_path" in config or "sdata_path" in config
@@ -56,14 +50,8 @@ class WorkflowPaths:
 
         self.annotations = []
         if "annotation" in self.config:
-            self.annotations = (
-                self.table_dir
-                / "table"
-                / "obs"
-                / self.config["annotation"]
-                .get("args", {})
-                .get("cell_type_key", ConfigConstants.CT_KEY)
-            )
+            key = self.config["annotation"].get("args", {}).get("cell_type_key", "cell_type")
+            self.annotations = self.table_dir / "table" / "obs" / key
 
         self.temp_dir = self.sdata_path.parent / f".smk_intermediate_{self.sdata_path.name}"
         self.cellpose_temp_dir = self.temp_dir / "cellpose"
@@ -99,7 +87,15 @@ class Args:
         self.segmentation = "segmentation" in self.config
         self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
         self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
-        self.annotate = ConfigConstants.ANNOTATION in self.config
+        self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
+
+        if self.baysor:
+            assert (
+                "executables" in config and "baysor" in config["executables"]
+            ), """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"]"""
+            baysor_path = Path(config["executables"]["baysor"]).expanduser()
+            assert baysor_path.exists(), f"""Baysor executable {baysor_path} does not exist.\
+                \nCheck that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor), or update config["executables"]["baysor"] to use the right executable location"""
 
     def __getitem__(self, name):
         subconfig = self.config.get(name, {})
@@ -149,8 +145,15 @@ class Args:
     def baysor_prior_seg(self):
         if not self.baysor:
             return ""
-        key = self.config["segmentation"]["baysor"].get("cell_key", "cell")
-        return f":{key}"
+
+        key = self.config["segmentation"]["baysor"].get("cell_key")
+        if key is not None:
+            return f":{key}"
+
+        if "cellpose" in self.config["segmentation"]:
+            return ":cell"
+
+        return ""
 
     def min_area(self, method):
         params = self.config[method]
