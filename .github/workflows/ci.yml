@@ -4,7 +4,7 @@ on:
     tags:
       - v*
 jobs:
-  deploy:
+  deploy-doc:
     runs-on: ubuntu-latest
     steps:
       #----------------------------------------------
@@ -44,3 +44,13 @@ jobs:
         run: poetry run pytest
       - name: Deploy doc
         run: poetry run mkdocs gh-deploy --force
+  publish:
+    needs: [deploy-doc]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and publish to pypi
+        uses: JRubics/poetry-publish@v1.17
+        with:
+          python_version: "3.10"
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
