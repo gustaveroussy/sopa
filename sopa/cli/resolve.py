@@ -12,6 +12,23 @@ def cellpose(
 ):
     """Resolve patches conflicts after cellpose segmentation"""
     from sopa._constants import SopaKeys
+
+    _resolve_generic(sdata_path, patch_dir, SopaKeys.CELLPOSE_BOUNDARIES)
+
+
+@app_resolve.command()
+def generic(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    method_name: str = typer.Option(
+        help="Name of the method used during segmentation. This is also the key correspnding to the boundaries in `sdata.shapes`"
+    ),
+    patch_dir: str = typer.Option(help="Directory containing the generic segmentation on patches"),
+):
+    """Resolve patches conflicts after generic segmentation"""
+    _resolve_generic(sdata_path, patch_dir, method_name)
+
+
+def _resolve_generic(sdata_path: str, patch_dir: str, shapes_key: str):
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
@@ -24,7 +41,7 @@ def cellpose(
     cells = StainingSegmentation.read_patches_cells(patch_dir)
     cells = shapes.solve_conflicts(cells)
 
-    StainingSegmentation.add_shapes(sdata, cells, image_key, SopaKeys.CELLPOSE_BOUNDARIES)
+    StainingSegmentation.add_shapes(sdata, cells, image_key, shapes_key)
 
 
 @app_resolve.command()

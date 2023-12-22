@@ -1,5 +1,6 @@
 site_name: Sopa
-repo_name: sopa
+repo_name: gustaveroussy/sopa
+repo_url: https://github.com/gustaveroussy/sopa
 copyright: Copyright &copy; 2023 - 2024 Quentin Blampey
 theme:
   name: material
@@ -31,6 +32,7 @@ nav:
       - sopa.utils.polygon_crop: api/utils/polygon_crop.md
     - sopa._sdata: api/_sdata.md
   - Toy examples: toy.md
+  - Frequently asked questions: faq.md
   - Cite us: cite_us.md
 plugins:
   - search

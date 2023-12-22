@@ -17,7 +17,7 @@ def write(
     ),
     shapes_key: str = typer.Option(
         None,
-        help="Key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries",
+        help="Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries",
     ),
     lazy: bool = typer.Option(
         True,
@@ -29,7 +29,7 @@ def write(
     ),
     mode: str = typer.Option(
         None,
-        help="string that indicated which files should be created. `'-ib'` means everything except images and boundaries, while `'+tocm'` means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything",
+        help="String that indicated which files should be created. `'-ib'` means everything except images and boundaries, while `'+tocm'` means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything",
     ),
     save_h5ad: bool = typer.Option(
         True,
@@ -100,7 +100,7 @@ def add_aligned(
     ),
     original_image_key: str = typer.Option(
         None,
-        help="Optional original-image key on which the new image will be aligned. This doesn't need to be provided if there is only one image",
+        help="Optional original-image key (of sdata.images) on which the new image will be aligned. This doesn't need to be provided if there is only one image",
     ),
     overwrite: bool = typer.Option(False, help="Whether to overwrite the image if existing"),
 ):
