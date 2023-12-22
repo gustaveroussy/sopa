@@ -12,7 +12,7 @@ segmentation:
     channels: ["DAPI (000)"]
     flow_threshold: 2
     cellprob_threshold: -6
-    min_area: 500
+    min_area: 400
 
 aggregate:
   average_intensities: true
