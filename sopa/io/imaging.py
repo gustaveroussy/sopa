@@ -192,7 +192,7 @@ def hyperion(
         [imread(file, **imread_kwargs) for file in files],
         axis=0,
     )
-    image = (image / image.max().compute() * 255).astype(np.uint8)
+    image = (image / image.max(axis=(1, 2)).compute()[:, None, None] * 255).astype(np.uint8)
     image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
     log.info(f"Found channel names {names}")
