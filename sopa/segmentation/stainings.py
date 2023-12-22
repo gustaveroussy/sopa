@@ -29,7 +29,7 @@ class StainingSegmentation:
         method: Callable,
         channels: list[str] | str,
         min_area: float = 0,
-        clip_limit: float = 0.01,
+        clip_limit: float = 0.2,
         gaussian_sigma: float = 1,
     ):
         """Generalized staining-based segmentation

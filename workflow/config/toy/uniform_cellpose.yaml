@@ -15,6 +15,7 @@ segmentation:
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 500
+    clip_limit: 0.01
 
 aggregate:
   average_intensities: true
