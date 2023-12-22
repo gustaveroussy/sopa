@@ -96,7 +96,7 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
         Shapely polygon representing the cell, or `None` if the cell was empty after smoothing
     """
     cell = MultiPolygon([geom for geom in cell.geoms if not geom.buffer(-smooth_radius).is_empty])
-    cell = cell.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance)
+    cell = cell.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance).buffer(0)
 
     return None if cell.is_empty else _ensure_polygon(cell)
 
