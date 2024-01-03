@@ -24,7 +24,7 @@ The easiest way to getting started with `sopa` is to check [our documentation](h
 The following illustration describes the main steps of `sopa`:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/overview_nonum.pdf" alt="sopa_overview" width="100%"/>
+  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/overview_white.png" alt="sopa_overview" width="100%"/>
 </p>
 
 # Installation
