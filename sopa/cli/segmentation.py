@@ -14,8 +14,8 @@ def cellpose(
     channels: list[str] = typer.Option(
         help="Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel"
     ),
-    flow_threshold: float = typer.Option(help="Cellpose `flow_threshold` parameter"),
-    cellprob_threshold: float = typer.Option(help="Cellpose `cellprob_threshold` parameter"),
+    flow_threshold: float = typer.Option(2, help="Cellpose `flow_threshold` parameter"),
+    cellprob_threshold: float = typer.Option(-6, help="Cellpose `cellprob_threshold` parameter"),
     model_type: str = typer.Option("cyto2", help="Name of the cellpose model"),
     min_area: int = typer.Option(
         0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
