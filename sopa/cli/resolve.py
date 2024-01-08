@@ -8,7 +8,9 @@ app_resolve = typer.Typer()
 @app_resolve.command()
 def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    patch_dir: str = typer.Option(help="Directory containing the cellpose segmentation on patches"),
+    patch_dir: list[str] = typer.Option(
+        help="Directory containing the cellpose segmentation on patches (or multiple directories if using multi-step segmentation)"
+    ),
 ):
     """Resolve patches conflicts after cellpose segmentation"""
     from sopa._constants import SopaKeys
@@ -22,13 +24,15 @@ def generic(
     method_name: str = typer.Option(
         help="Name of the method used during segmentation. This is also the key correspnding to the boundaries in `sdata.shapes`"
     ),
-    patch_dir: str = typer.Option(help="Directory containing the generic segmentation on patches"),
+    patch_dir: list[str] = typer.Option(
+        help="Directory containing the generic segmentation on patches (or multiple directories if using multi-step segmentation)"
+    ),
 ):
     """Resolve patches conflicts after generic segmentation"""
     _resolve_generic(sdata_path, patch_dir, method_name)
 
 
-def _resolve_generic(sdata_path: str, patch_dir: str, shapes_key: str):
+def _resolve_generic(sdata_path: str, patch_dirs: list[str], shapes_key: str):
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
@@ -38,7 +42,9 @@ def _resolve_generic(sdata_path: str, patch_dir: str, shapes_key: str):
 
     image_key = get_key(sdata, "images")
 
-    cells = StainingSegmentation.read_patches_cells(patch_dir)
+    cells = []
+    for patch_dir in patch_dirs:
+        cells += StainingSegmentation.read_patches_cells(patch_dir)
     cells = shapes.solve_conflicts(cells)
 
     StainingSegmentation.add_shapes(sdata, cells, image_key, shapes_key)

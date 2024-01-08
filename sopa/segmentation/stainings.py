@@ -126,7 +126,10 @@ class StainingSegmentation:
         cells = self._run_patch(patch)
         gdf = gpd.GeoDataFrame(geometry=cells)
 
-        patch_file = Path(patch_dir) / f"{patch_index}.parquet"
+        patch_dir: Path = Path(patch_dir)
+        patch_dir.mkdir(exist_ok=True)
+        patch_file = patch_dir / f"{patch_index}.parquet"
+
         gdf.to_parquet(patch_file)
 
     def run_patches(

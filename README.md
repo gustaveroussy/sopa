@@ -74,11 +74,11 @@ Below are example of commands that can be run with the `sopa` CLI:
 ```bash
 > sopa --help # show command names and arguments
 > sopa read merscope_directory --technology merscope # read some data
-> sopa patchify cellpose merscope_directory.zarr # make patches for low-memory segmentation
+> sopa patchify image merscope_directory.zarr # make patches for low-memory segmentation
 > sopa segmentation cellpose merscope_directory.zarr --diameter 60 --channels DAPI # segmentation
 > sopa resolve cellpose merscope_directory.zarr # resolve segmentation conflicts at boundaries
 > sopa aggregate merscope_directory.zarr --average-intensities # transcripts/channels aggregation
-> sopa explorer write merscope_directory.zarr # convert for interactive viz
+> sopa explorer write merscope_directory.zarr # convert for interactive vizualisation
 ```
 
 For a full description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).

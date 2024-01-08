@@ -39,7 +39,7 @@ checkpoint patchify_cellpose:
     input:
         paths.sdata_zgroup,
     output:
-        patches_file = paths.smk_patches_file_cellpose,
+        patches_file = paths.smk_patches_file_image,
         patches = touch(paths.smk_patches),
     params:
         args_patchify = str(args["patchify"].where(contains="pixel")),
@@ -47,7 +47,7 @@ checkpoint patchify_cellpose:
         "sopa"
     shell:
         """
-        sopa patchify cellpose {paths.sdata_path} {params.args_patchify}
+        sopa patchify image {paths.sdata_path} {params.args_patchify}
         """
 
 checkpoint patchify_baysor:
@@ -70,10 +70,10 @@ checkpoint patchify_baysor:
 
 rule patch_segmentation_cellpose:
     input:
-        paths.smk_patches_file_cellpose,
+        paths.smk_patches_file_image,
         paths.smk_patches,
     output:
-        f"{paths.cellpose_temp_dir}/{{index}}.zarr.zip",
+        f"{paths.cellpose_temp_dir}/{{index}}.parquet",
     conda:
         "sopa"
     params:

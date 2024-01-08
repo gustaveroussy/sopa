@@ -38,3 +38,15 @@ def cellpose_patch(
         return mask
 
     return _
+
+
+def dummy_method(image: np.ndarray) -> np.ndarray:
+    """A dummy example of a custom segmentation method.
+
+    Args:
+        image: An image of shape `(C, Y, X)`
+
+    Returns:
+        A mask of shape `(Y, X)` containing cell indices (0 means 'no cell')
+    """
+    return np.zeros(image.shape[1:], dtype=int)

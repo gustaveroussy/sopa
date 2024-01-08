@@ -39,14 +39,14 @@ class WorkflowPaths:
         self.cellpose_boundaries = self.shapes_dir / "cellpose_boundaries"
         self.patches = self.shapes_dir / "sopa_patches"
 
-        self.smk_files = self.sdata_path / ".smk_files"
-        self.smk_table = self.smk_files / "table"
-        self.smk_patches = self.smk_files / "patches"
-        self.smk_patches_file_cellpose = self.smk_files / "patches_file_cellpose"
-        self.smk_patches_file_baysor = self.smk_files / "patches_file_baysor"
-        self.smk_cellpose_boundaries = self.smk_files / "cellpose_boundaries"
-        self.smk_baysor_boundaries = self.smk_files / "baysor_boundaries"
-        self.smk_aggregation = self.smk_files / "aggregation"
+        self.sopa_cache = self.sdata_path / ".sopa_cache"
+        self.smk_table = self.sopa_cache / "table"
+        self.smk_patches = self.sopa_cache / "patches"
+        self.smk_patches_file_image = self.sopa_cache / "patches_file_image"
+        self.smk_patches_file_baysor = self.sopa_cache / "patches_file_baysor"
+        self.smk_cellpose_boundaries = self.sopa_cache / "cellpose_boundaries"
+        self.smk_baysor_boundaries = self.sopa_cache / "baysor_boundaries"
+        self.smk_aggregation = self.sopa_cache / "aggregation"
 
         self.annotations = []
         if "annotation" in self.config:
@@ -67,7 +67,7 @@ class WorkflowPaths:
 
     def cells_paths(self, file_content: str, name, dirs: bool = False):
         if name == "cellpose":
-            return [str(self.cellpose_temp_dir / f"{i}.zarr.zip") for i in range(int(file_content))]
+            return [str(self.cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))]
         if name == "baysor":
             indices = map(int, file_content.split())
             BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]

@@ -8,17 +8,17 @@ app_patchify = typer.Typer()
 
 
 @app_patchify.command()
-def cellpose(
+def image(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     patch_width_pixel: float = typer.Option(
-        None, help="Width (and height) of each patch in pixels"
+        5000, help="Width (and height) of each patch in pixels"
     ),
     patch_overlap_pixel: float = typer.Option(
-        None,
+        100,
         help="Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell",
     ),
 ):
-    """Prepare patches for Cellpose segmentation"""
+    """Prepare patches for staining-based segmentation (including Cellpose)"""
     from pathlib import Path
 
     from sopa._constants import SopaFiles
@@ -34,8 +34,7 @@ def cellpose(
     patches = Patches2D(sdata, image_key, patch_width_pixel, patch_overlap_pixel)
     patches.write()
 
-    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.PATCHES_FILE_CELLPOSE, "w") as f:
-        f.write(str(len(patches)))
+    _save_cache(sdata_path, SopaFiles.PATCHES_FILE_IMAGE, str(len(patches)))
 
 
 @app_patchify.command()
@@ -89,5 +88,16 @@ def baysor(
         path = Path(baysor_temp_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
         to_toml(path, config)
 
-    with open(Path(sdata_path) / SopaFiles.SMK_DIR / SopaFiles.PATCHES_DIRS_BAYSOR, "w") as f:
-        f.write("\n".join(map(str, valid_indices)))
+    _save_cache(sdata_path, SopaFiles.PATCHES_DIRS_BAYSOR, "\n".join(map(str, valid_indices)))
+
+
+def _save_cache(sdata_path: str, filename: str, content: str):
+    from pathlib import Path
+
+    from sopa._constants import SopaFiles
+
+    cache_file = Path(sdata_path) / SopaFiles.SOPA_CACHE_DIR / filename
+    cache_file.parent.mkdir(exist_ok=True)
+
+    with open(cache_file, "w") as f:
+        f.write(content)
