@@ -152,7 +152,7 @@ def qptiff(
         return SpatialData(images={image_name: image})
 
 
-def phenocycler(path: Path, *args):
+def phenocycler(path: Path, *args) -> SpatialData:
     """Read phenocycler data as a `SpatialData` object
 
     Args:

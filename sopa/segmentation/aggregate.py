@@ -199,7 +199,9 @@ def average_channels(
     return _average_channels_aligned(image, geo_df)
 
 
-def _average_channels_aligned(image: SpatialImage, geo_df: gpd.GeoDataFrame | list[Polygon]):
+def _average_channels_aligned(
+    image: SpatialImage, geo_df: gpd.GeoDataFrame | list[Polygon]
+) -> np.ndarray:
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:

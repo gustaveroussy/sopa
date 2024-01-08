@@ -79,7 +79,7 @@ def get_intrinsic_cs(
 
 def to_intrinsic(
     sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str
-):
+) -> SpatialElement:
     """Transforms a `SpatialElement` into the intrinsic coordinate system of another `SpatialElement`
 
     Args:
