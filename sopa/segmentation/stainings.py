@@ -64,7 +64,7 @@ class StainingSegmentation:
         Args:
             sdata: A `SpatialData` object
             method: A segmentation `callable` whose input is an image of shape `(C, Y, X)` and output is a cell mask of shape `(Y, X)`. Each mask value `>0` represent a unique cell ID. Such callables can be found in `sopa.segmentation.methods`.
-            channels: One or a list of channel names used for segmentation
+            channels: One or a list of channel names used for segmentation. If only one channel is provided, the image given to the `method` will be of shape `(1, Y, X)`.
             min_area: Minimum area (in pixels^2) for a cell to be kept
             clip_limit: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
             gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
@@ -122,16 +122,12 @@ class StainingSegmentation:
             patch_index: Index of the patch on which to run segmentation. NB: the number of patches is `len(sdata['sopa_patches'])`
         """
         patch = self.sdata[SopaKeys.PATCHES].geometry[patch_index]
+
         cells = self._run_patch(patch)
+        gdf = gpd.GeoDataFrame(geometry=cells)
 
-        patch_file = Path(patch_dir) / f"{patch_index}.zarr.zip"
-
-        with zarr.ZipStore(patch_file, mode="w") as store:
-            g = zarr.group(store=store)
-
-            for i, cell in enumerate(cells):
-                coords = np.array(cell.exterior.coords)
-                g.array(f"cell_{i}", coords, dtype=coords.dtype, chunks=coords.shape)
+        patch_file = Path(patch_dir) / f"{patch_index}.parquet"
+        gdf.to_parquet(patch_file)
 
     def run_patches(
         self,
@@ -158,22 +154,20 @@ class StainingSegmentation:
         return cells
 
     @classmethod
-    def read_patches_cells(cls, patch_dir: str) -> list[Polygon]:
+    def read_patches_cells(cls, patch_dir: str | list[str]) -> list[Polygon]:
         """Read all patch segmentation results after running `write_patch_cells` on all patches
 
         Args:
-            patch_dir: Directory provided when running `write_patch_cells`
+            patch_dir: Directory provided when running `write_patch_cells` containing the `.parquet` files. For multi-step segmentation, provide a list of directories (one per step).
 
         Returns:
             A list of cells represented as `shapely` polygons
         """
         cells = []
 
-        files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".zip"]
+        files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".parquet"]
         for file in tqdm(files, desc="Reading patches"):
-            z = zarr.open(file, mode="r")
-            for _, coords_zarr in z.arrays():
-                cells.append(Polygon(coords_zarr[:]))
+            cells += list(gpd.read_parquet(file).geometry)
 
         log.info(f"Found {len(cells)} total cells")
         return cells
