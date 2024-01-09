@@ -27,7 +27,7 @@ VALID_N_CHANNELS = [1, 3]
 
 
 def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
-    image_key, spatial_image = get_spatial_image(sdata)
+    image_key, spatial_image = get_spatial_image(sdata, return_key=True)
     image = spatial_image.transpose("y", "x", "c")
 
     if channels is not None and len(channels):
@@ -123,11 +123,15 @@ def polygon_selection(
         log.info(f"Reading polygon at path {intermediate_polygon}")
         z = zarr.open(intermediate_polygon, mode="r")
         polygon = Polygon(z[ROI.POLYGON_ARRAY_KEY][:])
+        image_key = z.attrs[ROI.IMAGE_KEY]
 
-        image = get_spatial_image(sdata, z.attrs[ROI.IMAGE_KEY])
+        image = get_spatial_image(sdata, image_key)
 
-    geo_df = gpd.GeoDataFrame({"geometry": [polygon]})
-    geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True))
+    geo_df = gpd.GeoDataFrame(geometry=[polygon])
+
+    geo_df = ShapesModel.parse(
+        geo_df, transformations=get_transformation(sdata[image_key], get_all=True)
+    )
     sdata.add_shapes(ROI.KEY, geo_df)
 
     log.info(f"Polygon saved in sdata['{ROI.KEY}']")

@@ -45,12 +45,12 @@ Choose one of the following, depending on your needs (it should take at most a f
     ```
 
 !!! note "Baysor usage"
-    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it inside the [snakemake pipeline](../pipeline)
+    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it inside the [snakemake pipeline](../tutorials/snakemake)
 
 ## Usage
 
 Sopa comes with three different flavors, each corresponding to a different use case:
 
-- `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes. See our [snakemake guide](../pipeline).
-- `CLI`: use our [command-line-interface](../cli) to prototype quickly your own pipeline
-- `API`: use directly `sopa` as a python package for full flexibility and customization (see the API documentation on the sidebar)
+- `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes. See our [snakemake guide](../tutorials/snakemake).
+- `CLI`: use our [command-line-interface](../tutorials/cli_usage) to prototype quickly your own pipeline
+- `API`: use directly `sopa` as a python package for full flexibility and customization (see a tutorial [here](../tutorials/api_usage))

@@ -1,6 +1,6 @@
 # Snakemake pipeline
 
-If you don't want to dig into the CLI/API, you can directly use our existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) pipeline. It will not involve any coding, but requires some setup for `snakemake`.
+Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) pipeline to get started quickly. This will not involve any coding, but requires some setup specific to `snakemake`.
 
 ## Setup
 
@@ -60,6 +60,37 @@ cd sopa/workflow       # your own personal path to the workflow directory
         You may need to update the params under `resources` inside the `sopa/workflow/Snakefile` file, according to the partition names of your cluster.
 
 For more customization, see the [snakemake CLI documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html).
+
+## Toy example
+
+In the example below, we run the pipeline on a generated toy dataset. Running it locally can help testing a new pipeline or a new config.
+
+Make sure you have setup everything as detailed in this tutorial, and then run the following command lines:
+
+=== "Cellpose usage"
+    Make sure you have installed sopa with the Cellpose extra
+    ```sh
+    conda activate sopa    # or an environment that has `snakemake`
+    cd sopa/workflow       # your own personal path to the workflow directory
+
+    # replace tuto.zarr by the path where you want the data to be saved
+    snakemake --config data_path=. sdata_path=tuto.zarr --configfile=config/toy/uniform_cellpose.yaml --cores 1 --use-conda
+    ```
+
+=== "Baysor usage"
+    Make sure you have installed sopa with the Baysor extra, and that you have installed the `baysor` command
+    ```sh
+    conda activate sopa    # or an environment that has `snakemake`
+    cd sopa/workflow       # your own personal path to the workflow directory
+
+    # replace tuto.zarr by the path where you want the data to be saved
+    snakemake --config data_path=. sdata_path=tuto.zarr --configfile=config/toy/uniform_baysor.yaml --cores 1 --use-conda
+    ```
+
+!!! notes
+    On the above example, it executes snakemake sequentially (one core), which is enough for debugging purposes
+
+You can then check `toy.explorer` for output files. Notably, if you have installed the [Xenium Explorer](https://www.10xgenomics.com/support/software/xenium-explorer), double-click on `experiment.xenium` to visualize the results.
 
 ## Create your own config
 

@@ -8,6 +8,7 @@ explore
 sandbox
 *.html
 .env
+tuto.*
 
 # OS related
 .DS_Store
