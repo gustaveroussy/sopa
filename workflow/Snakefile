@@ -137,6 +137,8 @@ rule resolve_baysor:
     shell:
         """
         sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs} {params.args_shapes}
+
+        rm -r {paths.baysor_temp_dir}    # cleanup large baysor files
         """
 
 rule aggregate:

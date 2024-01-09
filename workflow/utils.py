@@ -53,9 +53,8 @@ class WorkflowPaths:
             key = self.config["annotation"].get("args", {}).get("cell_type_key", "cell_type")
             self.annotations = self.table_dir / "table" / "obs" / key
 
-        self.temp_dir = self.sdata_path.parent / f".smk_intermediate_{self.sdata_path.name}"
-        self.cellpose_temp_dir = self.temp_dir / "cellpose"
-        self.baysor_temp_dir = self.temp_dir / "baysor"
+        self.cellpose_temp_dir = self.sopa_cache / "cellpose"
+        self.baysor_temp_dir = self.sopa_cache / "baysor"
 
         self.explorer_directory = self.sdata_path.with_suffix(".explorer")
         self.explorer_directory.mkdir(parents=True, exist_ok=True)
