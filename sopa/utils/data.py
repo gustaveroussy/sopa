@@ -19,8 +19,8 @@ def uniform(
     length: int = 2_048,
     cell_density: float = 1e-4,
     n_points_per_cell: int = 50,
-    genes: int | list[str] = ["EPCAM", "CD3E", "CD20"],
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
+    genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
     sigma_factor: float = 0.1,
     seed: int = 0,
     include_vertices: bool = False,
@@ -33,8 +33,8 @@ def uniform(
         length: Size of the square, in pixels
         cell_density: Density of cells per pixel^2
         n_points_per_cell: Mean number of transcripts per cell
-        genes: Number of different genes, or list of gene names
         c_coords: Channel names
+        genes: Number of different genes, or list of gene names
         sigma_factor: Factor used to determine `sigma` for the gaussian blur.
         seed: Numpy random seed
         include_vertices: Whether to include the vertices of the cells (as points) in the spatialdata object
@@ -50,7 +50,7 @@ def uniform(
     dx = length / grid_width
     sigma = dx * sigma_factor
     n_cells = grid_width**2
-    radius = int(dx) // 3
+    radius = int(dx) // 4
     cell_types_index = np.random.randint(0, max(1, len(c_coords) - 1), n_cells)
 
     log.info(
@@ -100,7 +100,7 @@ def uniform(
 
     if isinstance(genes, int):
         gene_names = np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_genes)
-    elif len(genes) and len(genes) == len(c_coords) - 1:
+    elif len(genes) and len(genes) >= len(c_coords) - 1:
         gene_names = np.full(n_genes, "", dtype="<U5")
         for i in range(len(genes)):
             where_cell_type = np.where(cell_types_index[point_cell_index] == i)[0]
