@@ -19,12 +19,12 @@ def uniform(
     length: int = 2_048,
     cell_density: float = 1e-4,
     n_points_per_cell: int = 50,
-    n_genes: int = 5,
+    genes: int | list[str] = ["EPCAM", "CD3E", "CD20"],
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
-    sigma_factor: float = 0.2,
+    sigma_factor: float = 0.1,
     seed: int = 0,
-    save_vertices: bool = False,
-    save_image: bool = True,
+    include_vertices: bool = False,
+    include_image: bool = True,
     apply_blur: bool = True,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
@@ -33,16 +33,16 @@ def uniform(
         length: Size of the square, in pixels
         cell_density: Density of cells per pixel^2
         n_points_per_cell: Mean number of transcripts per cell
-        n_genes: Number of gene names
+        genes: Number of different genes, or list of gene names
         c_coords: Channel names
         sigma_factor: Factor used to determine `sigma` for the gaussian blur.
         seed: Numpy random seed
-        save_vertices: Whether to save the vertices of the cells (as points)
-        save_image: Whether to return an image
+        include_vertices: Whether to include the vertices of the cells (as points) in the spatialdata object
+        include_image: Whether to include the image in the spatialdata object
         apply_blur: Whether to apply gaussian blur on the image (without blur, cells are just one pixel)
 
     Returns:
-        A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `save_vertices` is `True`.
+        A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `include_vertices` is `True`.
     """
     np.random.seed(seed)
 
@@ -50,7 +50,8 @@ def uniform(
     dx = length / grid_width
     sigma = dx * sigma_factor
     n_cells = grid_width**2
-    n_points = n_points_per_cell * n_cells
+    radius = int(dx) // 3
+    cell_types_index = np.random.randint(0, max(1, len(c_coords) - 1), n_cells)
 
     log.info(
         f"Image of size ({len(c_coords), length, length}) with {n_cells} cells and {n_points_per_cell} transcripts per cell"
@@ -68,11 +69,16 @@ def uniform(
     # Create image
     images = {}
 
-    if save_image:
+    if include_image:
+        x_circle, y_circle = circle_coords(radius)
+
         image = np.zeros((len(c_coords), length, length))
-        image[0, xy[:, 1], xy[:, 0]] += 1
-        if len(c_coords) > 1:
-            image[np.random.randint(1, len(c_coords), len(xy)), xy[:, 1], xy[:, 0]] += 1
+        for i, (x, y) in enumerate(xy):
+            y_coords = (y + y_circle).clip(0, image.shape[1] - 1)
+            x_coords = (x + x_circle).clip(0, image.shape[2] - 1)
+            image[0, y_coords, x_coords] = 1
+            if len(c_coords) > 1:
+                image[cell_types_index[i] + 1, y_coords, x_coords] = 1
         if apply_blur:
             image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
         image = (image / image.max() * 255).astype(np.uint8)
@@ -80,55 +86,65 @@ def uniform(
         images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
 
     # Create cell boundaries
-    cells = [Point(vertex).buffer(sigma).simplify(tolerance=1) for vertex in xy]
+    cells = [Point(vertex).buffer(radius).simplify(tolerance=1) for vertex in xy]
     bbox = box(0, 0, length - 1, length - 1)
     cells = [cell.intersection(bbox) for cell in cells]
     gdf = gpd.GeoDataFrame(geometry=cells)
     shapes = {"cells": ShapesModel.parse(gdf)}
 
     # Create transcripts
-    point_cell_index = np.random.randint(0, n_cells, n_points)
-    points_coords = sigma / 2 * np.random.randn(n_points, 2) + xy[point_cell_index]
+    n_genes = n_cells * n_points_per_cell
+    point_cell_index = np.arange(n_cells).repeat(n_points_per_cell)
+    points_coords = radius / 2 * np.random.randn(n_genes, 2) + xy[point_cell_index]
     points_coords = points_coords.clip(0, length - 1)
+
+    if isinstance(genes, int):
+        gene_names = np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_genes)
+    elif len(genes) and len(genes) == len(c_coords) - 1:
+        gene_names = np.full(n_genes, "", dtype="<U5")
+        for i in range(len(genes)):
+            where_cell_type = np.where(cell_types_index[point_cell_index] == i)[0]
+            probabilities = np.full(len(genes), 0.2 / (len(genes) - 1))
+            probabilities[i] = 0.8
+            gene_names[where_cell_type] = np.random.choice(
+                genes, len(where_cell_type), p=probabilities
+            )
+    else:
+        gene_names = np.random.choice(genes, size=n_genes)
+
     df = pd.DataFrame(
         {
             "x": points_coords[:, 0],
             "y": points_coords[:, 1],
-            "genes": np.random.choice([chr(97 + i) for i in range(n_genes)], size=n_points),
+            "genes": gene_names,
         }
     )
     df = dd.from_pandas(df, chunksize=2_000_000)
 
     points = {"transcripts": PointsModel.parse(df)}
-    if save_vertices:
+    if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 
     return SpatialData(images=images, points=points, shapes=shapes)
 
 
-def _to_mask(length: int, xy: list[tuple[int, int]], sigma: float):
-    radius = int(sigma)
-    circle_size = 2 * radius + 1
-    circle = np.zeros((circle_size, circle_size), dtype=np.uint8)
+def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
+    """Compute the coordinates of a circle
 
-    circle_y, circle_y = np.meshgrid(np.arange(circle_size), np.arange(circle_size))
-    distance = np.sqrt((circle_y - radius) ** 2 + (circle_y - radius) ** 2)
-    circle[distance <= radius] = 1
+    Args:
+        radius: Radius of the circle
 
-    mask = np.zeros((length, length))
-    where = np.stack(np.where(circle), axis=1) - radius
+    Returns:
+        The x, y coordinates (two 1D ndarrays)
+    """
+    diameter = 2 * radius + 1
+    mask = np.zeros((diameter, diameter), dtype=np.uint8)
 
-    for i, (x, y) in enumerate(xy):
-        where_i = where + np.array([y, x])
-        where_i = where_i[
-            (where_i[:, 0] >= 0)
-            & (where_i[:, 1] >= 0)
-            & (where_i[:, 0] < length)
-            & (where_i[:, 1] < length)
-        ].astype(int)
-        mask[where_i[:, 0], where_i[:, 1]] = i + 1
+    y, x = np.ogrid[: mask.shape[0], : mask.shape[1]]
+    mask[((x - radius) ** 2 + (y - radius) ** 2) <= radius**2] = 1
 
-    return mask
+    x_circle, y_circle = np.where(mask)
+    return x_circle - radius, y_circle - radius
 
 
 def blobs(
