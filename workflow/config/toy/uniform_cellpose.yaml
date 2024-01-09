@@ -3,19 +3,18 @@ read:
   technology: uniform
 
 patchify:
-  patch_width_pixel: 1100
+  patch_width_pixel: 1200
   patch_overlap_pixel: 50
   patch_width_microns: 3000
   patch_overlap_microns: 40
 
 segmentation:
   cellpose:
-    diameter: 40
+    diameter: 35
     channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
-    min_area: 1000
-    clip_limit: 0.01
+    min_area: 2500
 
 aggregate:
   average_intensities: true
@@ -28,7 +27,7 @@ annotation:
       CK: Tumoral cell
       CD3: T cell
       CD20: B cell
-      
+
 explorer:
   gene_column: "genes"
   ram_threshold_gb: 16

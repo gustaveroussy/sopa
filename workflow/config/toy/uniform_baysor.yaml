@@ -3,7 +3,7 @@ read:
   technology: uniform
 
 patchify:
-  patch_width_pixel: 1100
+  patch_width_pixel: 1200
   patch_overlap_pixel: 50
   patch_width_microns: 3000
   patch_overlap_microns: 40
@@ -23,7 +23,7 @@ segmentation:
         confidence_nn_id: 6
 
       segmentation:
-        scale: 20 # typical cell radius
+        scale: 30 # typical cell radius
         scale_std: "25%" # cell radius standard deviation
         prior_segmentation_confidence: 0
         estimate_scale_from_centers: false
