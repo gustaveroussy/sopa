@@ -91,7 +91,7 @@ $ sopa aggregate [OPTIONS] SDATA_PATH
 * `--min-transcripts INTEGER`: Cells with less transcript than this integer will be filtered  [default: 0]
 * `--min-intensity-ratio FLOAT`: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered  [default: 0]
 * `--image-key TEXT`: Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on
-* `--method-name TEXT`: If segmentation was performed with a generic method, this is the name of the method used.  [required]
+* `--method-name TEXT`: If segmentation was performed with a generic method, this is the name of the method used.
 * `--help`: Show this message and exit.
 
 ### `sopa annotate`

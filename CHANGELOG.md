@@ -2,8 +2,14 @@
 
 ### Added
 
+- Tutorial on CLI usage
+- Tutorial on image alignment with the Xenium Explorer
 - Multi-step segmentation ([#8](https://github.com/gustaveroussy/sopa/issues/8))
 - Tutorial for multi-step segmentation and custom segmentation
+- Improved installation guide
+
+### Fix
+- CLI issue (missing file) when used without Snakemake
 
 ### Change
 

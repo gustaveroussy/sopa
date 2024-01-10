@@ -68,7 +68,7 @@ conda activate sopa
 pip install -e ".[snakemake,cellpose,baysor,tangram]"
 ```
 
-Now, follow our [snakemake tutorial](../tutorials/snakemake) to get started.
+Now, follow our [snakemake tutorial](../tutorials/snakemake) to run your first pipeline.
 
 !!! Note
     You can also use a separate environment for `snakemake`. In this case, you don't need to install the `'snakemake'` extra when installing `sopa`. But you may still need to install other extras, for instance `'cellpose'` if you plan to run Cellpose.
