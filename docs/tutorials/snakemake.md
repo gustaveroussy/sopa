@@ -7,7 +7,7 @@ Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stab
 Follow the ["Snakemake setup" instructions](../../getting_started/#snakemake-setup) of our installation page.
 
 !!! warning "Baysor usage"
-    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
+    Even though `pip install -e '.[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
 
     If your path to the baysor executable is not the default one (i.e. `~/.julia/bin/baysor`), update the config described below to provide the right path to the executable
 
