@@ -174,6 +174,9 @@ def aggregate(
         None,
         help="Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on",
     ),
+    method_name: str = typer.Option(
+        help="If segmentation was performed with a generic method, this is the name of the method used."
+    ),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
     from sopa.io.standardize import read_zarr_standardized
@@ -181,7 +184,7 @@ def aggregate(
 
     sdata = read_zarr_standardized(sdata_path, warn=True)
 
-    aggregator = Aggregator(sdata, image_key=image_key)
+    aggregator = Aggregator(sdata, image_key=image_key, shapes_key=method_name)
     aggregator.update_table(
         gene_column, average_intensities, expand_radius_ratio, min_transcripts, min_intensity_ratio
     )
