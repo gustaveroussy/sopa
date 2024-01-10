@@ -1,5 +1,9 @@
 ## [1.0.x] - tbd
 
+...
+
+## [1.0.1] - 2024-01-10
+
 ### Added
 
 - Tutorial on CLI usage
