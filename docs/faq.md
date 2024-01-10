@@ -4,9 +4,9 @@ You need the raw inputs of your machine, that is:
 
 - One or multiple image(s), usually corresponding to one or multiple `.tiff` file(s)
 
-- Optionally a file of transcript location, usually a `.csv` or `.parquet` file
+- Optionally, a file of transcript location, usually a `.csv` or `.parquet` file
 
-In our tutorials, we use `data_path` to denote the path to your raw data. Select the right tab below to understand what is the right path to your raw data:
+Our tutorials use `data_path` to denote the path to your raw data. Select the correct tab below to understand what is the right path to your raw data:
 
 === "Xenium"
     `data_path` is the directory containing the following files: `morphology.ome.tif` and `transcripts.parquet`
@@ -21,7 +21,7 @@ In our tutorials, we use `data_path` to denote the path to your raw data. Select
 === "Hyperion"
     `data_path` is the directory containing multiple `.ome.tiff` files (one file per channel)
 
-## Cellpose is not segmenting enough cells, what should I do?
+## Cellpose is not segmenting enough cells; what should I do?
 
 - Maybe `min_area` is too high, and all the cells are filtered because they are smaller than this area. Remind that, when using Cellpose, the areas correspond to pixels^2.
 - This can be due to a low image quality. If the image is too pixelated, consider increasing `gaussian_sigma` (e.g., `2`) under the cellpose parameters of our config. If the image has a low contrast, consider increasing `clip_limit` (e.g., `0.3`). These parameters are detailed in [this example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml).
@@ -29,8 +29,8 @@ In our tutorials, we use `data_path` to denote the path to your raw data. Select
 
 ## Can I use Nextflow instead of Snakemake?
 
-Nextflow is not supported yet, but we are working on it. If you want, you can also help re-writing our Snakemake pipeline for Nextflow.
+Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow.
 
-## I have another issue, how to fix it?
+## I have another issue; how do I fix it?
 
-Don't hesitate to open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible, in order for the maintainers to be able to reproduce it.
+Don't hesitate to open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible for the maintainers to be able to reproduce it.

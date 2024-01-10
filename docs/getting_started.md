@@ -49,7 +49,7 @@ Choose one of the following, depending on your needs (it should take at most a f
 
 ## Snakemake setup
 
-To use the Snakemake pipeline, the installation process is slightly different, because you'll need the full repository.
+To use the Snakemake pipeline, the installation process is slightly different because you'll need the whole repository.
 
 1. Clone the `sopa` repository, and move to the root of the project:
 ```sh
@@ -71,12 +71,12 @@ pip install -e ".[snakemake,cellpose,baysor,tangram]"
 Now, follow our [snakemake tutorial](../tutorials/snakemake) to run your first pipeline.
 
 !!! Note
-    You can also use a separate environment for `snakemake`. In this case, you don't need to install the `'snakemake'` extra when installing `sopa`. But you may still need to install other extras, for instance `'cellpose'` if you plan to run Cellpose.
+    You can also use a separate environment for `snakemake`. In this case, you don't need to install the `'snakemake'` extra when installing `sopa`. But you may still need to install other extras, for instance, `'cellpose'` if you plan to run Cellpose.
 
 ## Usage
 
-Sopa comes with three different flavors, each corresponding to a different use case:
+Sopa comes in three different flavours, each corresponding to a different use case:
 
-- `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes. See our [snakemake tutorial](../tutorials/snakemake).
+- `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a few minutes. See our [snakemake tutorial](../tutorials/snakemake).
 - `CLI`: use our [command-line-interface](../tutorials/cli_usage) to prototype quickly your own pipeline
-- `API`: use directly `sopa` as a python package for full flexibility and customization (see a tutorial [here](../tutorials/api_usage))
+- `API`: use directly `sopa` as a Python package for full flexibility and customization (see a tutorial [here](../tutorials/api_usage))

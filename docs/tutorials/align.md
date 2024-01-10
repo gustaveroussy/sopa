@@ -1,9 +1,9 @@
-If you have an H&E image or immunofluorescence data that you want to align on the main image, this can by done with the Xenium Explorer, even if you don't work on Xenium data.
+If you have an H&E image or immunofluorescence data that you want to align on the main image, this can be done with the Xenium Explorer, even if you don't work on Xenium data.
 
 ## Image conversion
 Convert your image with QuPath as written in this [10x genomics webpage](https://www.10xgenomics.com/support/software/xenium-explorer/tutorials/xe-image-file-conversion).
 
-If not familiar with QuPath, you can also use our API to write the image:
+If you are not familiar with QuPath, you can also use our API to write the image:
 ```python
 from sopa import io
 from sopa.io.explorer import write_image
@@ -13,36 +13,36 @@ write_image("where/to/save/image.ome.tif", image, is_dir=False)
 ```
 
 !!! note "Xenium users"
-    If using the Xenium machine, then you don't need conversion, the images provided by the Xenium machine already have the right format
+    If using the Xenium machine, then you don't need conversion; the images provided by the Xenium machine already have the correct format.
 
 ## Open your data in the Xenium Explorer
 
 If not done yet, convert your `SpatialData` object to the Xenium Explorer's inputs. This can be done as detailed in [this tutorial](../cli_usage/#visualization-xenium-explorer).
 
-Double-click on the file called `experiment.xenium`, or select it from the Xenium Explorer interface. It will display the data in the explorer.
+Double-click on the `experiment.xenium` file, or select it from the Xenium Explorer interface. It will display the data in the explorer.
 
 ## Keypoint placement
 
 !!! warning
     Make sure your Xenium Explorer version is at least `1.3.0`
 
-On the Xenium Explorer, under the "Images" panel, click on "Add image", and follow the instructions displayed on the screen.
+On the Xenium Explorer, under the "Images" panel, click "Add image" and follow the instructions on the screen.
 
 <p align="center">
   <img src="../../assets/explorer/add_image.png" alt="add_image" width="300px"/>
 </p>
 
-Afterwards, the explorer will automatically align the images based on the keypoints you selected on both images.
+Afterwards, the explorer will automatically align the images based on the key points you selected on both images.
 
 ## (Optional) Update the `SpatialData` object
 
-After alignment, you can export the transformation matrix as a `csv` file. Fot that, select your aligned image under the "Images" panel, and click on "Download Alignment File":
+After alignment, export the transformation matrix as a `.csv` file. For that, select your aligned image under the "Images" panel and click on "Download Alignment File":
 
 <p align="center">
   <img src="../../assets/explorer/download_alignment.png" alt="add_image" width="300px"/>
 </p>
 
-Then, select only the transformation matrix, and download it:
+Then, select only the "Transformation Matrix" box and download it:
 
 <p align="center">
   <img src="../../assets/explorer/download_transformation_file.png" alt="add_image" width="400px"/>

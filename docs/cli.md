@@ -2,10 +2,10 @@
 
 ## Usage
 
-When installing `sopa` are written in our [getting-started guidelines](../getting_started), a new command named `sopa` becomes available.
+When installing `sopa` as written in our [getting-started guidelines](../getting_started), a new command named `sopa` becomes available.
 
 !!! note "CLI helper"
-    Run `sopa --help` to get details about all the command line purpose. You can also use this helper on any subcommand, for instance `sopa read --help`.
+    Run `sopa --help` to get details about all the command line purposes. You can also use this helper on any subcommand, for instance, `sopa read --help`.
 
 <div class="termy">
 ```console
@@ -17,7 +17,7 @@ $ sopa --help
 │ annotate      Perform cell-type annotation                     │
 │ check         Run some sanity checks                           │
 │ crop          Crop an image based on a user-defined polygon    │
-│ explorer      Convertion to the Xenium Explorer's inputs       │
+│ explorer      Conversion to the Xenium Explorer's inputs       │
 │ patchify      Create patches with overlaps                     │
 │ read          Read any technology + write a SpatialData object │
 │ report        Create a web-report with figures/QCs             │
@@ -34,7 +34,7 @@ $ sopa segmentation cellpose sdata.zarr
 
 If you don't know in which order to run these commands, refer to the image in the [homepage](..), or see our [CLI usage tutorial](../tutorials/cli_usage).
 
-When running the `sopa` CLI, some arguments are required while some are optional. For instance, for the `sopa read` command, `sdata_path` is an argument and a path has to be given directly, while `technology` is an option, and in this case the `--technology` prefix has to be used. For instance, if you read MERSCOPE data, it will be:
+When running the `sopa` CLI, some arguments are required, while some are optional. For instance, for the `sopa read` command, `sdata_path` is an argument, and a path has to be given directly, while `technology` is an option (in this case, the `--technology` prefix has to be used). For instance, if you read MERSCOPE data, it will be:
 
 ```
 sopa read /path/to/merscope/directory --technology merscope

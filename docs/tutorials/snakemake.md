@@ -1,6 +1,6 @@
 # Snakemake pipeline
 
-Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) pipeline to get started quickly. This will not involve any coding, but requires some setup specific to `snakemake`.
+Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) pipeline to get started quickly. This will not involve any coding but requires some setup specific to `snakemake`.
 
 ## Install `sopa`
 
@@ -9,19 +9,19 @@ Follow the ["Snakemake setup" instructions](../../getting_started/#snakemake-set
 !!! warning "Baysor usage"
     Even though `pip install -e '.[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
 
-    If your path to the baysor executable is not the default one (i.e. `~/.julia/bin/baysor`), update the config described below to provide the right path to the executable
+    If your path to the baysor executable is not the default one (i.e. `~/.julia/bin/baysor`), update the config described below to provide the right path to the executable.
 
 ## Choose a config
 
-Our pipeline config is a YAML file that described all the steps desired for the pipeline. It is flexible, for instance if you remove the `baysor` arguments from the config, then it will not run baysor. Similarly, if you remove the `"annotation"` section, it will not run annotation.
+Our pipeline config is a YAML file that describes all the steps desired for the pipeline. It is flexible; for instance, if you remove the `baysor` arguments from the config, then it will not run baysor. Similarly, if you remove the `"annotation"` section, it will not run annotation.
 
-You can choose a config among the existing one [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config), or [create your own](./#create-your-own-config).
+You can choose a config among the existing ones [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) or [create your own](./#create-your-own-config).
 
 Note the relative path of your config since you'll need it later, e.g. `config/merscope/base.yaml`.
 
 ## Run the pipeline
 
-1. First, locate the path to the raw experiment file(s) of one sample. Most of the time, this is a directory containing one or many image(s) and eventually a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa).
+1. First, locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa).
 
 2. Then, activate your environment that has the snakemake command, and go to the `workflow` directory inside the `sopa` directory that you cloned earlier:
 ```sh
@@ -29,7 +29,7 @@ conda activate sopa    # or an environment that has `snakemake`
 cd workflow            # run this at the root of the 'sopa' directory
 ```
 
-1. You can either execute the pipeline locally, or on a high-performance-cluster (choose the right option below)
+1. You can either execute the pipeline locally or on a high-performance-cluster (choose the right option below)
 
 === "Local execution (e.g., personal laptop)"
 
@@ -61,9 +61,9 @@ For more customization, see the [snakemake CLI documentation](https://snakemake.
 
 ## Toy example
 
-In the example below, we run the pipeline on a generated toy dataset. Running it locally can help testing a new pipeline or a new config.
+In the example below, we run the pipeline on a generated toy dataset. Running it locally can help test a new pipeline or config.
 
-Make sure you have setup everything as detailed in this tutorial, and then run the following command lines:
+Make sure you have installed everything as detailed in this tutorial, and then run the following command lines:
 
 === "Cellpose usage"
     Make sure you have installed sopa with the Cellpose extra
@@ -86,12 +86,12 @@ Make sure you have setup everything as detailed in this tutorial, and then run t
     ```
 
 !!! notes
-    On the above example, it executes snakemake sequentially (one core), which is enough for debugging purposes
+    On the above example, it executes snakemake sequentially (one core), which is enough for debugging purposes.
 
 You can then check `tuto.explorer` for output files. Notably, if you have installed the [Xenium Explorer](https://www.10xgenomics.com/support/software/xenium-explorer), double-click on `experiment.xenium` to visualize the results.
 
 ## Create your own config
 
-If the existing `config` files are not suited for your project, you can update an existing one, or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, just remove the section or the argument, and sopa will not run it.
+If the existing `config` files are not suited for your project, you can update an existing one or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, remove the section or the argument, and Sopa will not run it.
 
 When running snakemake, you will then need to provide the relative or absolute path to your `.yaml` config, for instance `--configfile=/path/to/your/config.yaml`.
