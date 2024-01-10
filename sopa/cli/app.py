@@ -175,7 +175,8 @@ def aggregate(
         help="Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on",
     ),
     method_name: str = typer.Option(
-        help="If segmentation was performed with a generic method, this is the name of the method used."
+        None,
+        help="If segmentation was performed with a generic method, this is the name of the method used.",
     ),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""

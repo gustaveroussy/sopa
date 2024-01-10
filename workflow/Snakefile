@@ -56,7 +56,7 @@ checkpoint patchify_baysor:
         paths.smk_cellpose_boundaries if args.cellpose else [],
     output:
         patches_file = paths.smk_patches_file_baysor,
-        baysor_temp_dir = directory(paths.baysor_temp_dir),
+        smk_baysor_temp_dir = directory(paths.smk_baysor_temp_dir),
     params:
         args_patchify = str(args["patchify"].where(contains="micron")),
         args_baysor = args.dump_baysor_patchify() if args.baysor else "",
@@ -73,23 +73,23 @@ rule patch_segmentation_cellpose:
         paths.smk_patches_file_image,
         paths.smk_patches,
     output:
-        f"{paths.cellpose_temp_dir}/{{index}}.parquet",
+        f"{paths.smk_cellpose_temp_dir}/{{index}}.parquet",
     conda:
         "sopa"
     params:
         args_cellpose = str(args["segmentation"]["cellpose"]),
     shell:
         """
-        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
+        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
         """
 
 rule patch_segmentation_baysor:
     input:
         patches_file = paths.smk_patches_file_baysor,
-        baysor_patch = f"{paths.baysor_temp_dir}/{{index}}",
+        baysor_patch = f"{paths.smk_baysor_temp_dir}/{{index}}",
     output:
-        f"{paths.baysor_temp_dir}/{{index}}/segmentation_polygons.json",
-        f"{paths.baysor_temp_dir}/{{index}}/segmentation_counts.loom",
+        f"{paths.smk_baysor_temp_dir}/{{index}}/segmentation_polygons.json",
+        f"{paths.smk_baysor_temp_dir}/{{index}}/segmentation_counts.loom",
     params:
         args_baysor_prior_seg = args.baysor_prior_seg,
     resources:
@@ -119,7 +119,7 @@ rule resolve_cellpose:
         "sopa"
     shell:
         """
-        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.cellpose_temp_dir}
+        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir}
         """
 
 rule resolve_baysor:
@@ -138,7 +138,7 @@ rule resolve_baysor:
         """
         sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs} {params.args_shapes}
 
-        rm -r {paths.baysor_temp_dir}    # cleanup large baysor files
+        rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
         """
 
 rule aggregate:
