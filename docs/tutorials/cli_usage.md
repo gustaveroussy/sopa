@@ -230,7 +230,7 @@ sopa report tuto.zarr report.html
 ```
 
 ## Visualization (Xenium Explorer)
-The Xenium Explorer is a software developed by 10X Genomics for visualizing spatial data, and it can be downloaded freely [here](https://www.10xgenomics.com/support/software/xenium-explorer/latest). Sopa allows the conversion to the Xenium Explorer, whatever the type of spatial data you worked on.
+The Xenium Explorer is a software developed by 10X Genomics for visualizing spatial data, and it can be downloaded freely [here](https://www.10xgenomics.com/support/software/xenium-explorer/latest). Sopa allows the conversion to the Xenium Explorer, whatever the type of spatial data you worked on. It will create some files under a new `tuto.explorer` directory:
 
 ```sh
 sopa explorer write tuto.zarr --gene-column genes

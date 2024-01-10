@@ -90,6 +90,34 @@ Make sure you have installed everything as detailed in this tutorial, and then r
 
 You can then check `tuto.explorer` for output files. Notably, if you have installed the [Xenium Explorer](https://www.10xgenomics.com/support/software/xenium-explorer), double-click on `experiment.xenium` to visualize the results.
 
+## Pipeline outputs
+
+The pipeline outputs consists in two directories located next to your raw data directory. They have the same name as your raw directory, but with extension `.zarr` and `.explorer` respectively (see below for more details).
+
+!!! info
+    You can also change the path to the `.zarr` output, by providing `sdata_path=/your/path.zarr` just after `--config` on the snakemake execution line. This will also move the `.explorer` directory, that will be saved at `/your/path.explorer`
+
+#### `SpatialData` directory
+
+If you are familiar with the [`spatialdata` library](https://github.com/scverse/spatialdata), you can use the `.zarr` directory, corresponding to a `SpatialData` object:
+```python
+import spatialdata
+
+sdata = spatialdata.read_zarr("/path/to/data.zarr")
+```
+
+#### Explorer directory
+
+The `.explorer` directory contains the following files:
+
+- `report.html` a short quality control of you data, as an HTML report
+
+- `adata.h5ad` the AnnData object with spatial locations of the cells (see `adata.obsm['spatial']`), and also cell-by-gene table and/or the cell-by-channel table.
+
+- `experiment.xenium` the Xenium Explorer file: double-click on it to open it on the Xenium Explorer ([download the software here](https://www.10xgenomics.com/support/software/xenium-explorer/downloads))
+
+- The other files are data files related and required by the Xenium Explorer
+
 ## Create your own config
 
 If the existing `config` files are not suited for your project, you can update an existing one or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, remove the section or the argument, and Sopa will not run it.
