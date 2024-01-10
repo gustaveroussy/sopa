@@ -7,6 +7,11 @@ except ImportError:
     )
 
 
-def to_toml(path: str, config: dict):
-    with open(path, "w") as f:
-        toml.dump(config, f)
+def copy_toml_config(path: str, config: dict, config_path: str | None):
+    if config_path is not None:
+        import shutil
+
+        shutil.copy(config_path, path)
+    else:
+        with open(path, "w") as f:
+            toml.dump(config, f)

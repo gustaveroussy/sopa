@@ -32,7 +32,7 @@ $ sopa segmentation cellpose sdata.zarr
 
 ### Notes
 
-If you don't know in which order to run these commands, refer to the image in the [homepage](..), or see our [Snakemake pipeline](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile).
+If you don't know in which order to run these commands, refer to the image in the [homepage](..), or see our [CLI usage tutorial](../tutorials/cli_usage).
 
 When running the `sopa` CLI, some arguments are required while some are optional. For instance, for the `sopa read` command, `sdata_path` is an argument and a path has to be given directly, while `technology` is an option, and in this case the `--technology` prefix has to be used. For instance, if you read MERSCOPE data, it will be:
 
@@ -91,6 +91,7 @@ $ sopa aggregate [OPTIONS] SDATA_PATH
 * `--min-transcripts INTEGER`: Cells with less transcript than this integer will be filtered  [default: 0]
 * `--min-intensity-ratio FLOAT`: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered  [default: 0]
 * `--image-key TEXT`: Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on
+* `--method-name TEXT`: If segmentation was performed with a generic method, this is the name of the method used.  [required]
 * `--help`: Show this message and exit.
 
 ### `sopa annotate`
@@ -345,7 +346,7 @@ $ sopa patchify [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `baysor`: Prepare the patches for Baysor segmentation
-* `cellpose`: Prepare patches for Cellpose segmentation
+* `image`: Prepare patches for staining-based...
 
 #### `sopa patchify baysor`
 
@@ -365,21 +366,22 @@ $ sopa patchify baysor [OPTIONS] SDATA_PATH
 
 * `--patch-width-microns FLOAT`: Width (and height) of each patch in microns  [required]
 * `--patch-overlap-microns FLOAT`: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell  [required]
-* `--baysor-temp-dir TEXT`: Temporary directory where baysor inputs and outputs will be saved  [required]
-* `--config TEXT`: Path to the snakemake config containing the baysor arguments  [default: {}]
-* `--cell-key TEXT`: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is
+* `--baysor-temp-dir TEXT`: Temporary directory where baysor inputs and outputs will be saved. By default, uses `.sopa_cache/baysor_boundaries`
+* `--config-path TEXT`: Path to the baysor config (you can also directly provide the argument via the `config` option)
+* `--config TEXT`: Dictionnary of baysor parameters  [default: {}]
+* `--cell-key TEXT`: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation
 * `--unassigned-value INTEGER`: If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)
-* `--use-prior / --no-use-prior`: Whether to use cellpose segmentation as a prior for baysor  [default: no-use-prior]
+* `--use-prior / --no-use-prior`: Whether to use cellpose segmentation as a prior for baysor (if True, make sure to first run Cellpose)  [default: no-use-prior]
 * `--help`: Show this message and exit.
 
-#### `sopa patchify cellpose`
+#### `sopa patchify image`
 
-Prepare patches for Cellpose segmentation
+Prepare patches for staining-based segmentation (including Cellpose)
 
 **Usage**:
 
 ```console
-$ sopa patchify cellpose [OPTIONS] SDATA_PATH
+$ sopa patchify image [OPTIONS] SDATA_PATH
 ```
 
 **Arguments**:
@@ -388,8 +390,8 @@ $ sopa patchify cellpose [OPTIONS] SDATA_PATH
 
 **Options**:
 
-* `--patch-width-pixel FLOAT`: Width (and height) of each patch in pixels
-* `--patch-overlap-pixel FLOAT`: Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell
+* `--patch-width-pixel FLOAT`: Width (and height) of each patch in pixels  [default: 5000]
+* `--patch-overlap-pixel FLOAT`: Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell  [default: 100]
 * `--help`: Show this message and exit.
 
 ### `sopa read`
@@ -472,7 +474,7 @@ $ sopa resolve baysor [OPTIONS] SDATA_PATH
 **Options**:
 
 * `--gene-column TEXT`: Column of the transcripts dataframe containing the genes names  [required]
-* `--baysor-temp-dir TEXT`: Path to the directory containing all the baysor patches (see `sopa patchify`)
+* `--baysor-temp-dir TEXT`: Path to the directory containing all the baysor patches (see `sopa patchify`). By default, uses the `.sopa_cache/baysor_boundaries` directory
 * `--min-area FLOAT`: Cells with an area less than this value (in microns^2) will be filtered  [default: 0]
 * `--patches-dirs TEXT`: List of patches directories inside `baysor_temp_dir`
 * `--help`: Show this message and exit.
@@ -493,7 +495,7 @@ $ sopa resolve cellpose [OPTIONS] SDATA_PATH
 
 **Options**:
 
-* `--patch-dir TEXT`: Directory containing the cellpose segmentation on patches  [required]
+* `--patch-dir TEXT`: Directory containing the cellpose segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `.sopa_cache/cellpose_boundaries` directory
 * `--help`: Show this message and exit.
 
 #### `sopa resolve generic`
@@ -513,7 +515,7 @@ $ sopa resolve generic [OPTIONS] SDATA_PATH
 **Options**:
 
 * `--method-name TEXT`: Name of the method used during segmentation. This is also the key correspnding to the boundaries in `sdata.shapes`  [required]
-* `--patch-dir TEXT`: Directory containing the generic segmentation on patches  [required]
+* `--patch-dir TEXT`: Directory containing the generic segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `.sopa_cache/<method_name>` directory
 * `--help`: Show this message and exit.
 
 ### `sopa segmentation`
@@ -559,14 +561,14 @@ $ sopa segmentation cellpose [OPTIONS] SDATA_PATH
 
 * `--diameter FLOAT`: Cellpose diameter parameter  [required]
 * `--channels TEXT`: Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel  [required]
-* `--flow-threshold FLOAT`: Cellpose `flow_threshold` parameter  [required]
-* `--cellprob-threshold FLOAT`: Cellpose `cellprob_threshold` parameter  [required]
+* `--flow-threshold FLOAT`: Cellpose `flow_threshold` parameter  [default: 2]
+* `--cellprob-threshold FLOAT`: Cellpose `cellprob_threshold` parameter  [default: -6]
 * `--model-type TEXT`: Name of the cellpose model  [default: cyto2]
 * `--min-area INTEGER`: Minimum area (in pixels^2) for a cell to be considered as valid  [default: 0]
 * `--clip-limit FLOAT`: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)  [default: 0.2]
 * `--gaussian-sigma FLOAT`: Parameter for scipy gaussian_filter (applied before running cellpose)  [default: 1]
 * `--patch-index INTEGER`: Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`
-* `--patch-dir TEXT`: Path to the temporary cellpose directory inside which we will store each individual patch segmentation
+* `--patch-dir TEXT`: Path to the temporary cellpose directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/cellpose_boundaries` directory
 * `--patch-width INTEGER`: Ignore this if you already run `sopa patchify`. Patch width in pixels
 * `--patch-overlap INTEGER`: Ignore this if you already run `sopa patchify`. Patches overlaps in pixels
 * `--help`: Show this message and exit.
@@ -596,14 +598,14 @@ $ sopa segmentation generic-staining [OPTIONS] SDATA_PATH
 
 **Options**:
 
-* `--method-name TEXT`: Name of the segmentation method to use. The corresponding function (`sopa.segmentation.methods.<method_name>`) will be used, and the kwargs below will be used to instantiate the method.  [required]
+* `--method-name TEXT`: Name of the segmentation method builder to use. The corresponding function (`sopa.segmentation.methods.<method_name>`) will be used, and the kwargs below will be used to instantiate the method.  [required]
 * `--method-kwargs TEXT`: Kwargs for the method. This should be a dictionnary, in inline string format.  [default: {}]
 * `--channels TEXT`: Names of the channels used for segmentation.  [required]
 * `--min-area INTEGER`: Minimum area (in pixels^2) for a cell to be considered as valid  [default: 0]
 * `--clip-limit FLOAT`: Parameter for skimage.exposure.equalize_adapthist (applied before running the segmentation method)  [default: 0.2]
 * `--gaussian-sigma FLOAT`: Parameter for scipy gaussian_filter (applied before running the segmentation method)  [default: 1]
 * `--patch-index INTEGER`: Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['sopa_patches'])`
-* `--patch-dir TEXT`: Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation
+* `--patch-dir TEXT`: Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory
 * `--patch-width INTEGER`: Ignore this if you already run `sopa patchify`. Patch width in pixels
 * `--patch-overlap INTEGER`: Ignore this if you already run `sopa patchify`. Patches overlaps in pixels
 * `--help`: Show this message and exit.

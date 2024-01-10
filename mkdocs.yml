@@ -6,6 +6,8 @@ theme:
   name: material
   logo: assets/sopa_small_white.png
   favicon: assets/sopa_favicon.png
+  features:
+    - content.code.annotate
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
@@ -14,6 +16,7 @@ nav:
     - CLI usage: tutorials/cli_usage.md
     - API usage: tutorials/api_usage.md
     - Spatial statistics: tutorials/stats.md
+    - Align images (e.g. H&E): tutorials/align.md
     - Advanced segmentation: tutorials/advanced_segmentation.md
   - CLI: cli.md
   - API:

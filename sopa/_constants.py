@@ -43,5 +43,3 @@ class SopaFiles:
     PATCHES_DIRS_BAYSOR = "patches_file_baysor"
     BAYSOR_TRANSCRIPTS = "transcripts.csv"
     BAYSOR_CONFIG = "config.toml"
-    CELLPOSE_NAME = "cellpose"
-    BAYSOR_NAME = "baysor"

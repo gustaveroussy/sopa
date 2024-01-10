@@ -33,7 +33,7 @@ def cellpose(
     ),
     patch_dir: str = typer.Option(
         default=None,
-        help="Path to the temporary cellpose directory inside which we will store each individual patch segmentation",
+        help="Path to the temporary cellpose directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/cellpose_boundaries` directory",
     ),
     patch_width: int = typer.Option(
         default=None, help="Ignore this if you already run `sopa patchify`. Patch width in pixels"
@@ -81,7 +81,7 @@ def cellpose(
 def generic_staining(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     method_name: str = typer.Option(
-        help="Name of the segmentation method to use. The corresponding function (`sopa.segmentation.methods.<method_name>`) will be used, and the kwargs below will be used to instantiate the method."
+        help="Name of the segmentation method builder to use. The corresponding function (`sopa.segmentation.methods.<method_name>`) will be used, and the kwargs below will be used to instantiate the method."
     ),
     method_kwargs: str = typer.Option(
         {},
@@ -106,7 +106,7 @@ def generic_staining(
     ),
     patch_dir: str = typer.Option(
         default=None,
-        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation",
+        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory",
     ),
     patch_width: int = typer.Option(
         default=None, help="Ignore this if you already run `sopa patchify`. Patch width in pixels"
@@ -128,8 +128,6 @@ def generic_staining(
         - [On all patches at once] For small images, you can run the segmentation method sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
     """
     from sopa.segmentation import methods
-
-    print(method_name, method_kwargs)
 
     assert hasattr(
         methods, method_name
@@ -168,6 +166,8 @@ def _run_staining_segmentation(
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.stainings import StainingSegmentation
 
+    from .utils import _default_boundary_dir
+
     sdata = read_zarr_standardized(sdata_path)
 
     segmentation = StainingSegmentation(
@@ -180,6 +180,9 @@ def _run_staining_segmentation(
     )
 
     if patch_index is not None:
+        if patch_dir is None:
+            patch_dir = _default_boundary_dir(sdata_path, shapes_key)
+
         segmentation.write_patch_cells(patch_dir, patch_index)
         return
 

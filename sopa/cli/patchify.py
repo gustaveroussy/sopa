@@ -19,8 +19,6 @@ def image(
     ),
 ):
     """Prepare patches for staining-based segmentation (including Cellpose)"""
-    from pathlib import Path
-
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
@@ -45,38 +43,51 @@ def baysor(
         help="Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell"
     ),
     baysor_temp_dir: str = typer.Option(
-        help="Temporary directory where baysor inputs and outputs will be saved"
+        None,
+        help="Temporary directory where baysor inputs and outputs will be saved. By default, uses `.sopa_cache/baysor_boundaries`",
+    ),
+    config_path: str = typer.Option(
+        None,
+        help="Path to the baysor config (you can also directly provide the argument via the `config` option)",
     ),
     config: str = typer.Option(
         default={},
         callback=ast.literal_eval,
-        help="Path to the snakemake config containing the baysor arguments",
+        help="Dictionnary of baysor parameters",
     ),
     cell_key: str = typer.Option(
         None,
-        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is",
+        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation",
     ),
     unassigned_value: int = typer.Option(
         None,
         help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
     ),
     use_prior: bool = typer.Option(
-        False, help="Whether to use cellpose segmentation as a prior for baysor"
+        False,
+        help="Whether to use cellpose segmentation as a prior for baysor (if True, make sure to first run Cellpose)",
     ),
 ):
     """Prepare the patches for Baysor segmentation"""
     from pathlib import Path
 
-    from sopa._constants import SopaFiles
+    from sopa._constants import SopaFiles, SopaKeys
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
-    from sopa.segmentation.baysor.prepare import to_toml
+    from sopa.segmentation.baysor.prepare import copy_toml_config
     from sopa.segmentation.patching import Patches2D
+
+    from .utils import _default_boundary_dir
 
     sdata = read_zarr_standardized(sdata_path)
     sanity_check(sdata)
 
-    assert config is not None
+    assert (
+        config or config_path is not None
+    ), "Provide '--config-path', the path to a Baysor config file (toml)"
+
+    if baysor_temp_dir is None:
+        baysor_temp_dir = _default_boundary_dir(sdata_path, SopaKeys.BAYSOR_BOUNDARIES)
 
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
@@ -86,7 +97,7 @@ def baysor(
 
     for i in range(len(patches)):
         path = Path(baysor_temp_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
-        to_toml(path, config)
+        copy_toml_config(path, config, config_path)
 
     _save_cache(sdata_path, SopaFiles.PATCHES_DIRS_BAYSOR, "\n".join(map(str, valid_indices)))
 

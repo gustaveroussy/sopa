@@ -54,9 +54,9 @@ def read_baysor(
 def read_all_baysor_patches(
     baysor_temp_dir: str,
     min_area: float = 0,
-    patches_dirs: list[str] | None = None,
+    patches_dirs: list[str] = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
-    if patches_dirs is None:
+    if patches_dirs is None or not len(patches_dirs):
         patches_dirs = [subdir for subdir in Path(baysor_temp_dir).iterdir() if subdir.is_dir()]
 
     outs = [
@@ -96,7 +96,7 @@ def resolve(
     sdata: SpatialData,
     baysor_temp_dir: str,
     gene_column: str,
-    patches_dirs: list[str] | None = None,
+    patches_dirs: list[str],
     min_area: float = 0,
 ):
     """Concatenate all the per-patch Baysor run and resolve the conflicts. Resulting cells boundaries are saved in the `SpatialData` object.

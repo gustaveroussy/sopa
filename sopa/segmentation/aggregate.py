@@ -34,18 +34,30 @@ log = logging.getLogger(__name__)
 class Aggregator:
     """Perform transcript count and channel averaging over a `SpatialData` object"""
 
-    def __init__(self, sdata: SpatialData, overwrite: bool = True, image_key: str | None = None):
+    def __init__(
+        self,
+        sdata: SpatialData,
+        overwrite: bool = True,
+        image_key: str | None = None,
+        shapes_key: str | None = None,
+    ):
         """
         Args:
             sdata: A `SpatialData` object
             overwrite: If `True`, will overwrite `sdata.table` if already existing
             image_key: Key of `sdata` with the image to be averaged. If only one image, this does not have to be provided.
+            shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries
         """
         self.sdata = sdata
         self.overwrite = overwrite
 
         self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
-        self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
+
+        if shapes_key is None:
+            self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
+        else:
+            self.shapes_key = shapes_key
+            self.geo_df = self.sdata[shapes_key]
 
         if sdata.table is not None and len(self.geo_df) != sdata.table.n_obs:
             log.warn(
@@ -120,7 +132,7 @@ class Aggregator:
 
         if gene_column is not None:
             if self.table is not None:
-                log.warn("sdata.table is already existing. Transcripts are not count.")
+                log.warn("sdata.table is already existing. Transcripts are not count again.")
             else:
                 self.table = count_transcripts(self.sdata, gene_column, shapes_key=self.shapes_key)
 
