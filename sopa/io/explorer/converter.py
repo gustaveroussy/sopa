@@ -115,6 +115,10 @@ def write(
 
     if _should_save(mode, "b") and geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image_key)
+
+        if sdata.table is not None:
+            geo_df = geo_df.loc[adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]]]
+
         write_polygons(path, geo_df.geometry, polygon_max_vertices)
 
     ### Saving transcripts
