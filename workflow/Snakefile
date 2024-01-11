@@ -133,12 +133,12 @@ rule resolve_baysor:
         "sopa"
     params:
         args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
-        args_shapes = str(args["shapes"]),
+        args_min_area = args.min_area("baysor")
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_patches_dirs} {params.args_shapes}
+        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
 
-        rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
+        #rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
         """
 
 rule aggregate:

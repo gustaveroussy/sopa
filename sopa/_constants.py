@@ -15,6 +15,7 @@ class SopaKeys:
     SLIDE_KEY = "slide"
     INSTANCE_KEY = "cell_id"
     BAYSOR_DEFAULT_CELL_KEY = "cell"
+    BAYSOR_AREA_OBS = "baysor_area"
 
     Z_SCORES = "z_scores"
 

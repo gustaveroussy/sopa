@@ -32,9 +32,9 @@ segmentation:
 
   # [only if running baysor]
   baysor:
+    min_area: 10 # [optional] minimum area (in microns^2) for a cell to not be filtered
     cell_key: cell_id # [optional] if prior segmentation has been performed, this is the column in the transcript dataframe that indicated the cell that contains the transcript. This doesn't need to be provided if you run cellpose with Sopa.
     unassigned_value: -1 # [optional] if prior segmentation has been performed and if 'cell_key' above is provided, this is the value given to transcript that is not contained inside any cell
-    min_area: 10 # [optional] minimum area (in microns^2) for a cell to not be filtered
 
     # [required if running baysor: see baysor config https://github.com/kharchenkolab/Baysor]
     config:

@@ -1,6 +1,11 @@
 ## [1.0.x] - tbd
 
-...
+### Fix
+- When geometries are `GeometryCollection`, convert them back to Polygons (#11)
+- Snakemake pipeline fixed when providing `min_area` parameter to Baysor
+
+### Added
+- Docstrings for the snakemake pipeline utils
 
 ## [1.0.1] - 2024-01-10
 

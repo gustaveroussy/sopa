@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 
-def _sanity_check_config(config: dict):
+def sanity_check_config(config: dict):
     assert (
         "data_path" in config or "sdata_path" in config
     ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
@@ -23,8 +23,13 @@ def _sanity_check_config(config: dict):
 
 
 class WorkflowPaths:
+    """
+    A class listing the paths to different files that are needed
+    or will be created by Snakemake (input and output)
+    """
+
     def __init__(self, config: dict) -> None:
-        self.config = _sanity_check_config(config)
+        self.config = sanity_check_config(config)
 
         # spatialdata object files
         self.sdata_path = Path(self.config["sdata_path"])
@@ -68,6 +73,16 @@ class WorkflowPaths:
         self.report = self.explorer_directory / "analysis_summary.html"
 
     def cells_paths(self, file_content: str, name, dirs: bool = False):
+        """Compute the paths to the temporary boundary files
+
+        Args:
+            file_content: Content of the file listing the number of patches or the patches indices
+            name: Name of the method (cellpose or baysor)
+            dirs: Whether to return baysor directories
+
+        Returns:
+            A list of temporary boundary directories or files
+        """
         if name == "cellpose":
             return [
                 str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))
@@ -86,22 +101,54 @@ class WorkflowPaths:
 
 
 class Args:
+    """
+    A convenient class to provide the YAML config arguments to Snakemake
+    """
+
     def __init__(self, paths: WorkflowPaths, config: dict):
         self.paths = paths
         self.config = config
 
+        # whether to run segmentation
         self.segmentation = "segmentation" in self.config
+
+        # which segmentation method(s) is/are used
         self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
         self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
+
+        # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
 
         if self.baysor:
-            assert (
-                "executables" in config and "baysor" in config["executables"]
-            ), """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"]"""
-            baysor_path = Path(config["executables"]["baysor"]).expanduser()
-            assert baysor_path.exists(), f"""Baysor executable {baysor_path} does not exist.\
-                \nCheck that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor), or update config["executables"]["baysor"] to use the right executable location"""
+            check_baysor_executable_path(config)
+
+    def __str__(self) -> str:
+        """Convert an Args object into a string for the Sopa CLI"""
+        return self.dump()
+
+    def dump(self, prefix=""):
+        return " ".join(
+            (res for item in self.config.items() for res in self.dump_arg(*item, prefix))
+        )
+
+    @classmethod
+    def dump_arg(cls, key: str, value, prefix: str = ""):
+        """
+        Convert a key-value pair of the config into a string that
+        can be used by the Sopa CLI
+        """
+        option = f"--{prefix}{key.replace('_', '-')}"
+        if isinstance(value, list):
+            for v in value:
+                yield from (option, stringify_for_cli(v))
+        elif isinstance(value, dict):
+            yield from (option, '"' + stringify_for_cli(value) + '"')
+        elif value is True:
+            yield option
+        elif value is False:
+            yield f"--no-{prefix}{key.replace('_', '-')}"
+        else:
+            yield from (option, stringify_for_cli(value))
 
     def __getitem__(self, name):
         subconfig = self.config.get(name, {})
@@ -119,34 +166,13 @@ class Args:
             )
         return self
 
+    def min_area(self, method):
+        return f'--min-area {self.config["segmentation"][method].get("min_area", 0)}'
+
+    ### Baysor related methods
+
     def dump_baysor_patchify(self):
-        return (
-            str(self["segmentation"]["baysor"])
-            + f" --baysor-temp-dir {self.paths.smk_baysor_temp_dir}"
-        )
-
-    @classmethod
-    def _dump_arg(cls, key: str, value, prefix: str = ""):
-        option = f"--{prefix}{key.replace('_', '-')}"
-        if isinstance(value, list):
-            for v in value:
-                yield from (option, stringify_for_cli(v))
-        elif isinstance(value, dict):
-            yield from (option, '"' + stringify_for_cli(value) + '"')
-        elif value is True:
-            yield option
-        elif value is False:
-            yield f"--no-{prefix}{key.replace('_', '-')}"
-        else:
-            yield from (option, stringify_for_cli(value))
-
-    def _dump(self, prefix=""):
-        return " ".join(
-            (res for item in self.config.items() for res in self._dump_arg(*item, prefix))
-        )
-
-    def __str__(self) -> str:
-        return self._dump()
+        return f'--baysor-temp-dir {self.paths.smk_baysor_temp_dir} {self["segmentation"]["baysor"].where(keys=["cell_key", "unassigned_value", "config"])}'
 
     @property
     def baysor_prior_seg(self):
@@ -162,12 +188,6 @@ class Args:
 
         return ""
 
-    def min_area(self, method):
-        params = self.config[method]
-        if "min_area" not in params:
-            return 0
-        return params["min_area"]
-
     @property
     def gene_column(self):
         return self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
@@ -177,3 +197,16 @@ def stringify_for_cli(value) -> str:
     if isinstance(value, str):
         return f"'{value}'"
     return str(value)
+
+
+def check_baysor_executable_path(config: dict):
+    assert (
+        "executables" in config and "baysor" in config["executables"]
+    ), """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"]"""
+
+    baysor_path = Path(config["executables"]["baysor"]).expanduser()
+
+    assert baysor_path.exists(), f"""Baysor executable {baysor_path} does not exist.\
+        \nCheck that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor), or update config["executables"]["baysor"] to use the right executable location"""
+
+    return baysor_path

@@ -29,9 +29,10 @@ def read_baysor(
     adata = anndata.read_loom(
         directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
     )
-    adata = adata[adata.obs.area > min_area]
+    adata.obs.rename(columns={"area": SopaKeys.BAYSOR_AREA_OBS}, inplace=True)
+    adata = adata[adata.obs[SopaKeys.BAYSOR_AREA_OBS] > min_area]
 
-    cells_num = pd.Series(adata.obs_names.str.split("-").str[-1].astype(int), index=adata.obs_names)
+    cells_num = pd.Series(adata.obs.CellID.astype(int), index=adata.obs_names)
 
     with open(directory / "segmentation_polygons.json") as f:
         polygons_dict = json.load(f)
@@ -108,6 +109,9 @@ def resolve(
         patches_dirs: Optional list of subdirectories inside `baysor_temp_dir` to be read. By default, read all.
         min_area: Minimum area (in microns^2) for a cell to be kept
     """
+    if min_area > 0:
+        log.info(f"Cells whose area is less than {min_area} microns^2 will be removed")
+
     patches_cells, adatas = read_all_baysor_patches(baysor_temp_dir, min_area, patches_dirs)
     geo_df, cells_indices, new_ids = resolve_patches(patches_cells, adatas)
 
