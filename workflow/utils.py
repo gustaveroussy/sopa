@@ -167,7 +167,8 @@ class Args:
         return self
 
     def min_area(self, method):
-        return f'--min-area {self.config["segmentation"][method].get("min_area", 0)}'
+        min_area = self.config["segmentation"].get(method, {}).get("min_area", 0)
+        return f"--min-area {min_area}"
 
     ### Baysor related methods
 
