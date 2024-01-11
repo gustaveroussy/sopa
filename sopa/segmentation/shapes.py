@@ -4,7 +4,7 @@ from math import ceil, floor
 import numpy as np
 import shapely
 import shapely.affinity
-from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
@@ -48,11 +48,9 @@ def solve_conflicts(
 
         intersection = cell1.intersection(cell2).area
         if intersection >= threshold * min(cell1.area, cell2.area):
-            resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
-            cell: Polygon = cell1.union(cell2).buffer(0)
-            if cell.interiors:
-                cell = Polygon(list(cell.exterior.coords))
+            cell = _ensure_polygon(cell1.union(cell2))
 
+            resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
             cells.append(cell)
 
     unique_indices = np.unique(resolved_indices)
@@ -64,7 +62,15 @@ def solve_conflicts(
     return unique_cells
 
 
-def _find_contours(cell_mask: np.ndarray) -> MultiPolygon:
+def _contours(cell_mask: np.ndarray) -> MultiPolygon:
+    """Extract the contours of all cells from a binary mask
+
+    Args:
+        cell_mask: An array representing a cell: 1 where the cell is, 0 elsewhere
+
+    Returns:
+        A shapely MultiPolygon
+    """
     import cv2
 
     contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -73,14 +79,35 @@ def _find_contours(cell_mask: np.ndarray) -> MultiPolygon:
     )
 
 
-def _ensure_polygon(cell: Polygon | MultiPolygon) -> Polygon:
+def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygon:
+    """Ensures that the provided cell becomes a Polygon
+
+    Args:
+        cell: A shapely Polygon or MultiPolygon or GeometryCollection
+
+    Returns:
+        The shape as a Polygon
+    """
+    cell = shapely.make_valid(cell)
+
     if isinstance(cell, Polygon):
+        if cell.interiors:
+            cell = Polygon(list(cell.exterior.coords))
         return cell
 
     if isinstance(cell, MultiPolygon):
         return max(cell.geoms, key=lambda polygon: polygon.area)
 
-    log.warn(f"Invalid Polygon type: {type(cell)}. It will not be kept")
+    if isinstance(cell, GeometryCollection):
+        geoms = [geom for geom in cell.geoms if isinstance(geom, Polygon)]
+
+        if not geoms:
+            log.warn(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
+            return None
+
+        return max(geoms, key=lambda polygon: polygon.area)
+
+    log.warn(f"Removing cell of unknown type {type(cell)}")
     return None
 
 
@@ -95,15 +122,15 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
     Returns:
         Shapely polygon representing the cell, or `None` if the cell was empty after smoothing
     """
-    cell = MultiPolygon([geom for geom in cell.geoms if not geom.buffer(-smooth_radius).is_empty])
-    cell = cell.buffer(smooth_radius).buffer(-smooth_radius).simplify(tolerance).buffer(0)
+    cell = cell.buffer(-smooth_radius).buffer(2 * smooth_radius).buffer(-smooth_radius)
+    cell = cell.simplify(tolerance)
 
     return None if cell.is_empty else _ensure_polygon(cell)
 
 
 def _default_tolerance(mean_radius: float) -> float:
     if mean_radius < 10:
-        return 0.5
+        return 0.4
     if mean_radius < 20:
         return 1
     return 2
@@ -121,9 +148,9 @@ def geometrize(
     Returns:
         List of `shapely` polygons representing each cell ID of the mask
     """
-    cells = [
-        _find_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, mask.max() + 1)
-    ]
+    max_cells = mask.max()
+
+    cells = [_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
 
     mean_radius = np.sqrt(np.array([cell.area for cell in cells]) / np.pi).mean()
     smooth_radius = mean_radius * smooth_radius_ratio
@@ -132,7 +159,11 @@ def geometrize(
         tolerance = _default_tolerance(mean_radius)
 
     cells = [_smoothen_cell(cell, smooth_radius, tolerance) for cell in cells]
-    return [cell for cell in cells if cell is not None]
+    cells = [cell for cell in cells if cell is not None]
+
+    log.info(f"Percentage of non-geometrized cells: {(max_cells - len(cells) / max_cells):.2%}")
+
+    return cells
 
 
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
