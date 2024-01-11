@@ -161,7 +161,7 @@ def geometrize(
     cells = [_smoothen_cell(cell, smooth_radius, tolerance) for cell in cells]
     cells = [cell for cell in cells if cell is not None]
 
-    log.info(f"Percentage of non-geometrized cells: {(max_cells - len(cells) / max_cells):.2%}")
+    log.info(f"Percentage of non-geometrized cells: {(max_cells - len(cells)) / max_cells:.2%}")
 
     return cells
 
