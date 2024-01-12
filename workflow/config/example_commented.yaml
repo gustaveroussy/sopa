@@ -101,7 +101,7 @@ annotation:
 explorer: # parameters related to the conversion to the Xenium Explorer (Sopa's visualizer)
   gene_column: "gene" # [optional] name of the column of the transcript dataframe indicating the genes names. Provide this if you want to see transcripts on the explorer
   ram_threshold_gb: 16 # [optional] images below this RAM threshold will be loaded in memory during conversion. It can accelerate image writing
-
+  pixelsize: 0.2125 # [optional] this is the number of microns in a pixel for the technology used (see the config of your technology of interest)
 
 executables:
   baysor: ~/.julia/bin/baysor # [optional] if you run baysor, put here the path to the 'baysor' executable

@@ -54,6 +54,7 @@ annotation:
 explorer:
   gene_column: "gene"
   ram_threshold_gb: 16
+  pixelsize: 0.108
 
 executables:
   baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor

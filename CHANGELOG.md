@@ -2,10 +2,11 @@
 
 ### Fix
 - When geometries are `GeometryCollection`, convert them back to Polygons (#11)
-- Snakemake pipeline fixed when providing `min_area` parameter to Baysor
+- Give `min_area` parameter to the right Baysor function in snakemake
 
 ### Added
 - Docstrings for the snakemake pipeline utils
+- Show right micron scale in the Xenium Explorer
 
 ## [1.0.1] - 2024-01-10
 
