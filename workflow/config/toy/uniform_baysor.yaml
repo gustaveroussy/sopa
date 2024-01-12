@@ -10,6 +10,8 @@ patchify:
 
 segmentation:
   baysor:
+    min_area: 500
+    
     config:
       data:
         force_2d: true

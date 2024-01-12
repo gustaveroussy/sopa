@@ -162,7 +162,7 @@ def geometrize(
     cells = [cell for cell in cells if cell is not None]
 
     log.info(
-        f"Percentage of non-geometrized cells: {(max_cells - len(cells)) / max_cells:.2%} (this can be due to cellpose artefacts)"
+        f"Percentage of non-geometrized cells: {(max_cells - len(cells)) / max_cells:.2%} (usually due to segmentation artefacts)"
     )
 
     return cells

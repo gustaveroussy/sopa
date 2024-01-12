@@ -4,6 +4,13 @@ from typing import Optional
 
 def sanity_check_config(config: dict):
     assert (
+        "read" in config and "technology" in config["read"]
+    ), "The `config['read']['technology'] parameter is mandatory"
+
+    if config["read"]["technology"] == "uniform":
+        config["data_path"] = "."
+
+    assert (
         "data_path" in config or "sdata_path" in config
     ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
 
