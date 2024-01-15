@@ -21,7 +21,7 @@ rule all:
 
 rule to_spatialdata:
     input:
-        paths.data_path,
+        paths.data_path if config["read"]["technology"] != "uniform" else [],
     output:
         paths.sdata_zgroup if paths.data_path else [],
     conda:
@@ -138,7 +138,7 @@ rule resolve_baysor:
         """
         sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
 
-        #rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
+        rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
         """
 
 rule aggregate:
@@ -186,7 +186,7 @@ rule image_write:
         mem_mb=64_000,
         partition="longq"
     params:
-        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb'])),
+        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixelsize'])),
     shell:
         """
         sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode '+i' --no-save-h5ad

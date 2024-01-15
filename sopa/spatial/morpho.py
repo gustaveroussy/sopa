@@ -112,7 +112,7 @@ def _clean_components(
 def niches_geometry_stats(
     adata: AnnData | SpatialData,
     niche_key: str,
-    aggregation: str | list[str] = "mean",
+    aggregation: str | list[str] = "min",
     key_added_suffix: str = "_distance_to_niche_",
     **geometrize_niches_kwargs: str,
 ) -> gpd.GeoDataFrame:
@@ -130,7 +130,7 @@ def niches_geometry_stats(
         niche_key: Key of `adata.obs` containing the niches
         aggregation: Aggregation mode. Either one string such as `"min"`, or a list such as `["mean", "min"]`.
         key_added_suffix: Suffix added in the DataFrame columns. Defaults to "_distance_to_niche_".
-        geometrize_niches_kwargs: Kwargs to the `sopa.stats.geometrize_niches` function
+        geometrize_niches_kwargs: Kwargs to the `sopa.spatial.geometrize_niches` function
 
     Returns:
         A `DataFrame` of shape `n_niches * n_statistics`

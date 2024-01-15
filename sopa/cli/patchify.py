@@ -74,7 +74,6 @@ def baysor(
     from sopa._constants import SopaFiles, SopaKeys
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
-    from sopa.segmentation.baysor.prepare import copy_toml_config
     from sopa.segmentation.patching import Patches2D
 
     from .utils import _default_boundary_dir
@@ -92,12 +91,8 @@ def baysor(
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
     valid_indices = patches.patchify_transcripts(
-        baysor_temp_dir, cell_key, unassigned_value, use_prior
+        baysor_temp_dir, cell_key, unassigned_value, use_prior, config, config_path
     )
-
-    for i in range(len(patches)):
-        path = Path(baysor_temp_dir) / str(i) / SopaFiles.BAYSOR_CONFIG
-        copy_toml_config(path, config, config_path)
 
     _save_cache(sdata_path, SopaFiles.PATCHES_DIRS_BAYSOR, "\n".join(map(str, valid_indices)))
 
@@ -108,7 +103,7 @@ def _save_cache(sdata_path: str, filename: str, content: str):
     from sopa._constants import SopaFiles
 
     cache_file = Path(sdata_path) / SopaFiles.SOPA_CACHE_DIR / filename
-    cache_file.parent.mkdir(exist_ok=True)
+    cache_file.parent.mkdir(parents=True, exist_ok=True)
 
     with open(cache_file, "w") as f:
         f.write(content)

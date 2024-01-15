@@ -150,6 +150,10 @@ def geometrize(
     """
     max_cells = mask.max()
 
+    if max_cells == 0:
+        log.warn("No cell was returned by the segmentation")
+        return []
+
     cells = [_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
 
     mean_radius = np.sqrt(np.array([cell.area for cell in cells]) / np.pi).mean()
@@ -162,7 +166,7 @@ def geometrize(
     cells = [cell for cell in cells if cell is not None]
 
     log.info(
-        f"Percentage of non-geometrized cells: {(max_cells - len(cells)) / max_cells:.2%} (this can be due to cellpose artefacts)"
+        f"Percentage of non-geometrized cells: {(max_cells - len(cells)) / max_cells:.2%} (usually due to segmentation artefacts)"
     )
 
     return cells

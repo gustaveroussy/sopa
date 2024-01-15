@@ -14,13 +14,13 @@ nav:
   - Tutorials:
     - Snakemake pipeline: tutorials/snakemake.md
     - CLI usage: tutorials/cli_usage.md
-    - API usage: tutorials/api_usage.md
-    - Spatial statistics: tutorials/stats.md
+    - API usage: tutorials/api_usage.ipynb
+    - Spatial statistics: tutorials/spatial.ipynb
     - Align images (e.g. H&E): tutorials/align.md
     - Advanced segmentation: tutorials/advanced_segmentation.md
   - CLI: cli.md
   - API:
-    - sopa.stats: api/stats.md
+    - sopa.spatial: api/spatial.md
     - sopa.segmentation:
       - sopa.segmentation.shapes: api/segmentation/shapes.md
       - sopa.segmentation.aggregate: api/segmentation/aggregate.md
@@ -44,6 +44,8 @@ nav:
 plugins:
   - search
   - mkdocstrings
+  - mkdocs-jupyter:
+      include_source: True
 markdown_extensions:
   - admonition
   - attr_list

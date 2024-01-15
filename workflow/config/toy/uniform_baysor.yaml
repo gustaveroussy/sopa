@@ -10,6 +10,8 @@ patchify:
 
 segmentation:
   baysor:
+    min_area: 500
+
     config:
       data:
         force_2d: true
@@ -49,6 +51,7 @@ annotation:
 explorer:
   gene_column: "genes"
   ram_threshold_gb: 16
+  pixelsize: 1
 
 executables:
   baysor: ~/.julia/bin/baysor

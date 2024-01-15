@@ -4,7 +4,7 @@ import pytest
 from anndata import AnnData
 
 from sopa._constants import SopaKeys
-from sopa.stats import (
+from sopa.spatial import (
     cells_to_groups,
     geometrize_niches,
     mean_distance,

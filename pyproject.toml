@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sopa"
-version = "1.0.1"
+version = "1.0.2"
 description = "Spatial-omics pipeline and analysis"
 documentation = "https://gustaveroussy.github.io/sopa"
 homepage = "https://gustaveroussy.github.io/sopa"
@@ -34,6 +34,7 @@ isort = { version = "^5.10.1", optional = true }
 pytest = { version = "^7.1.3", optional = true }
 ipykernel = { version = "^6.25.2", optional = true }
 mkdocs-material = { version = "^9.3.2", optional = true }
+mkdocs-jupyter = { version = "^0.24.6", optional = true }
 mkdocstrings = { version = "^0.23.0", optional = true }
 mkdocstrings-python = { version = "^1.7.3", optional = true }
 
@@ -46,13 +47,14 @@ loompy = { version = "^3.0.7", optional = true }
 
 tangram-sc = { version = "^1.0.4", optional = true }
 
-snakemake = { version = "^7.32.4", optional = true }
+snakemake = { version = "^7.32.4,<8.1.3", optional = true }
+pulp = { version = ">=2.3.1,<2.8", optional = true }
 
 [tool.poetry.extras]
 cellpose = ["cellpose", "opencv-python", "torch"]
 baysor = ["toml", "loompy"]
 tangram = ["tangram-sc"]
-snakemake = ["snakemake"]
+snakemake = ["snakemake", "pulp"]
 dev = [
   "black",
   "isort",
@@ -61,6 +63,7 @@ dev = [
   "mkdocs-material",
   "mkdocstrings",
   "mkdocstrings-python",
+  "mkdocs-jupyter",
 ]
 
 [build-system]

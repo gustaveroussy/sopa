@@ -30,7 +30,6 @@ def read_baysor(
         directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
     )
     adata.obs.rename(columns={"area": SopaKeys.BAYSOR_AREA_OBS}, inplace=True)
-    adata = adata[adata.obs[SopaKeys.BAYSOR_AREA_OBS] > min_area]
 
     cells_num = pd.Series(adata.obs.CellID.astype(int), index=adata.obs_names)
 
@@ -48,6 +47,7 @@ def read_baysor(
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(make_valid(cell)))
     gdf = gdf[~gdf.geometry.isna()]
+    gdf = gdf[gdf.area > min_area]
 
     return gdf.geometry.values, adata[gdf.index].copy()
 
@@ -55,7 +55,7 @@ def read_baysor(
 def read_all_baysor_patches(
     baysor_temp_dir: str,
     min_area: float = 0,
-    patches_dirs: list[str] = None,
+    patches_dirs: list[str] | None = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     if patches_dirs is None or not len(patches_dirs):
         patches_dirs = [subdir for subdir in Path(baysor_temp_dir).iterdir() if subdir.is_dir()]
@@ -97,7 +97,7 @@ def resolve(
     sdata: SpatialData,
     baysor_temp_dir: str,
     gene_column: str,
-    patches_dirs: list[str],
+    patches_dirs: list[str] | None = None,
     min_area: float = 0,
 ):
     """Concatenate all the per-patch Baysor run and resolve the conflicts. Resulting cells boundaries are saved in the `SpatialData` object.

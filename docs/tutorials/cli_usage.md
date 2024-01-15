@@ -254,9 +254,9 @@ If you have downloaded the Xenium Explorer, you can now open the results in the 
 
 ## Geometric and spatial statistics
 
-All functions to compute geometric and spatial statistics are detailed in the `sopa.stats` [API](../../api/stats). You can also read [this tutorial](../stats).
+All functions to compute geometric and spatial statistics are detailed in the `sopa.spatial` [API](../../api/spatial). You can also read [this tutorial](../spatial).
 
-## Further analysis
+## Further analyses
 
 - If you are familiar with the [`spatialdata` library](https://github.com/scverse/spatialdata), you can directly use the `tuto.zarr` directory, corresponding to a `SpatialData` object:
 ```python
@@ -264,5 +264,5 @@ import spatialdata
 
 sdata = spatialdata.read_zarr("tuto.zarr")
 ```
-- You can use [Squidpy](https://squidpy.readthedocs.io/en/latest/index.html) which operates on both the `SpatialData` object or the `AnnData` object, or use other tools of the `scverse` ecosystem such as [`scanpy`](https://scanpy.readthedocs.io/en/stable/index.html).
+- You can use [Squidpy](https://squidpy.readthedocs.io/en/latest/index.html) which operates on both the `SpatialData` object or the `AnnData` object, or use other tools of the `scverse` ecosystem such as [`Scanpy`](https://scanpy.readthedocs.io/en/stable/index.html).
 - You can also use the file `tuto.explorer/adata.h5ad` if you prefer the `AnnData` object instead of the full `SpatialData` object.

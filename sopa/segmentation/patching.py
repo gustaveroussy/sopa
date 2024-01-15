@@ -191,6 +191,8 @@ class Patches2D:
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
+        config: dict = {},
+        config_path: str | None = None,
     ) -> list[int]:
         """Patchification of the transcripts
 
@@ -199,12 +201,14 @@ class Patches2D:
             cell_key: Optional key of the transcript dataframe containing the cell IDs. This is useful if a prior segmentation has been run, assigning each transcript to a cell.
             unassigned_value: If `cell_key` has been provided, this corresponds to the value given in the 'cell ID' column for transcript that are not inside any cell.
             use_prior: Whether to use Cellpose as a prior segmentation for Baysor. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
+            config: Dictionnary of baysor parameters
+            config_path: Path to the baysor config (you can also directly provide the argument via the `config` option)
 
         Returns:
             A list of patches indices. Each index correspond to the name of a subdirectory inside `baysor_temp_dir`
         """
         return BaysorPatches(self, self.element).write(
-            baysor_temp_dir, cell_key, unassigned_value, use_prior
+            baysor_temp_dir, cell_key, unassigned_value, use_prior, config, config_path
         )
 
 
@@ -220,8 +224,13 @@ class BaysorPatches:
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
+        config: dict = {},
+        config_path: str | None = None,
     ):
+        from sopa.segmentation.baysor.prepare import copy_toml_config
+
         log.info("Writing sub-CSV for baysor")
+
         self.baysor_temp_dir = Path(baysor_temp_dir)
 
         if cell_key is None:
@@ -239,6 +248,10 @@ class BaysorPatches:
         gdf = gpd.GeoDataFrame(geometry=self.patches_2d.polygons)
         with ProgressBar():
             self.df.map_partitions(partial(self._query_points_partition, gdf), meta=()).compute()
+
+        for i in range(len(self.patches_2d)):
+            path = self.baysor_temp_dir / str(i) / SopaFiles.BAYSOR_CONFIG
+            copy_toml_config(path, config, config_path)
 
         log.info(f"Patches saved in directory {baysor_temp_dir}")
         return list(self.valid_indices())

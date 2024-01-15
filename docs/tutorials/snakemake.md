@@ -72,7 +72,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     cd workflow            # run this at the root of the 'sopa' directory
 
     # you can replace tuto.zarr by another path where the data will be saved
-    snakemake --config data_path=. sdata_path=tuto.zarr --configfile=config/toy/uniform_cellpose.yaml --cores 1 --use-conda
+    snakemake --config sdata_path=tuto.zarr --configfile=config/toy/uniform_cellpose.yaml --cores 1 --use-conda
     ```
 
 === "Baysor usage"
@@ -82,7 +82,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     cd workflow            # run this at the root of the 'sopa' directory
 
     # replace tuto.zarr by the path where you want the data to be saved
-    snakemake --config data_path=. sdata_path=tuto.zarr --configfile=config/toy/uniform_baysor.yaml --cores 1 --use-conda
+    snakemake --config sdata_path=tuto.zarr --configfile=config/toy/uniform_baysor.yaml --cores 1 --use-conda
     ```
 
 !!! notes

@@ -12,6 +12,7 @@ class ExplorerConstants:
     GRID_SIZE = 250
     QUALITY_SCORE = 40
     MICRONS_TO_PIXELS = 4.705882
+    PIXELS_TO_MICRONS = 0.2125
 
     COLORS = ["white", 400, 500, 600, 700]
     NUCLEUS_COLOR = "white"
@@ -72,7 +73,7 @@ def group_attrs() -> dict:
     }
 
 
-def experiment_dict(run_name: str, region_name: str, num_cells: int) -> dict:
+def experiment_dict(run_name: str, region_name: str, num_cells: int, pixelsize: float) -> dict:
     return {
         "major_version": Versions.EXPERIMENT[0],
         "minor_version": Versions.EXPERIMENT[1],
@@ -92,7 +93,7 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int) -> dict:
         "panel_organism": "Human",
         "panel_num_targets_predesigned": 0,
         "panel_num_targets_custom": 0,
-        "pixel_size": 0.2125,
+        "pixel_size": pixelsize,
         "instrument_sn": "N/A",
         "instrument_sw_version": "N/A",
         "analysis_sw_version": "xenium-1.3.0.5",

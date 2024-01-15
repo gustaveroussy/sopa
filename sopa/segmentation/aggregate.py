@@ -107,11 +107,11 @@ class Aggregator:
 
     def update_table(
         self,
-        gene_column: str | None,
-        average_intensities: bool,
-        expand_radius_ratio: float,
-        min_transcripts: int,
-        min_intensity_ratio: float,
+        gene_column: str | None = None,
+        average_intensities: bool = True,
+        expand_radius_ratio: float = 0,
+        min_transcripts: int = 0,
+        min_intensity_ratio: float = 0,
     ):
         """Perform aggregation and update the spatialdata table
 

@@ -23,6 +23,7 @@ def write_transcripts(
     gene: str = "gene",
     max_levels: int = 15,
     is_dir: bool = True,
+    pixelsize: float = 0.2125,
 ):
     """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations
 
@@ -32,6 +33,7 @@ def write_transcripts(
         gene: Column of `df` containing the genes names.
         max_levels: Maximum number of levels in the pyramid.
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
+        pixelsize: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
     path = explorer_file_path(path, FileNames.POINTS, is_dir)
 
@@ -39,10 +41,11 @@ def write_transcripts(
     df = df.compute()
 
     num_transcripts = len(df)
+    grid_size = ExplorerConstants.GRID_SIZE / ExplorerConstants.PIXELS_TO_MICRONS * pixelsize
     df[gene] = df[gene].astype("category")
 
     location = df[["x", "y"]]
-    location /= ExplorerConstants.MICRONS_TO_PIXELS
+    location *= pixelsize
     location = np.concatenate([location, np.zeros((num_transcripts, 1))], axis=1)
 
     if location.min() < 0:
@@ -84,7 +87,7 @@ def write_transcripts(
     GRIDS_ATTRS = {
         "grid_key_names": ["grid_x_loc", "grid_y_loc"],
         "grid_zip": False,
-        "grid_size": [ExplorerConstants.GRID_SIZE],
+        "grid_size": [grid_size],
         "grid_array_shapes": [],
         "grid_number_objects": [],
         "grid_keys": [],
@@ -100,7 +103,7 @@ def write_transcripts(
             log.info(f"   > Level {level}: {len(location)} transcripts")
             level_group = grids.create_group(level)
 
-            tile_size = ExplorerConstants.GRID_SIZE * 2**level
+            tile_size = grid_size * 2**level
 
             indices = np.floor(location[:, :2] / tile_size).clip(0).astype(int)
             tiles_str_indices = np.array([f"{tx},{ty}" for (tx, ty) in indices])
