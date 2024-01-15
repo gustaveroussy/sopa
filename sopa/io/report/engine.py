@@ -2,6 +2,7 @@ import base64
 from io import BytesIO
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.figure import Figure
 
@@ -228,6 +229,7 @@ class Image(Renderable):
         self.make_figure_pretty()
         tmpfile = BytesIO()
         self.fig.savefig(tmpfile, format=self.extension, transparent=True, bbox_inches="tight")
+        plt.close()
         return base64.b64encode(tmpfile.getvalue()).decode("utf-8")
 
     def __str__(self) -> str:

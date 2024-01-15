@@ -8,7 +8,9 @@ explore
 sandbox
 *.html
 .env
-tuto.*
+*.h5ad
+*.zarr
+*.explorer
 
 # OS related
 .DS_Store
@@ -31,6 +33,7 @@ run.log
 .ipynb_checkpoints
 exploration/*
 *.ipynb
+!docs/tutorials/**.ipynb
 !notebooks/*.ipynb
 
 # pyenv

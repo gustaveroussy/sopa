@@ -150,6 +150,10 @@ def geometrize(
     """
     max_cells = mask.max()
 
+    if max_cells == 0:
+        log.warn("No cell was returned by the segmentation")
+        return []
+
     cells = [_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
 
     mean_radius = np.sqrt(np.array([cell.area for cell in cells]) / np.pi).mean()
