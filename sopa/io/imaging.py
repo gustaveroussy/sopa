@@ -221,15 +221,16 @@ def _ome_channels_names(path: str):
     return [c.attrib["Name"] if "Name" in c.attrib else c.attrib["ID"] for c in channels]
 
 
-def ome_tif(path: Path) -> SpatialImage:
+def ome_tif(path: Path, as_image: bool = False) -> SpatialImage | SpatialData:
     """Read an `.ome.tif` image. This image should be a 2D image (with possibly multiple channels).
     Typically, this function can be used to open Xenium IF images.
 
     Args:
         path: Path to the `.ome.tif` image
+        as_image: If `True`, will return a `SpatialImage` object
 
     Returns:
-        A `SpatialImage`
+        A `SpatialImage` or a `SpatialData` object
     """
     image_models_kwargs = _default_image_models_kwargs(None)
     image_name = Path(path).absolute().name.split(".")[0]
@@ -249,4 +250,17 @@ def ome_tif(path: Path) -> SpatialImage:
         channel_names = [str(i) for i in range(len(image))]
         log.warn(f"Channel names couldn't be read. Using {channel_names} instead.")
 
-    return SpatialImage(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
+    image = SpatialImage(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
+
+    if as_image:
+        return image
+
+    image = Image2DModel.parse(
+        image,
+        dims=("c", "y", "x"),
+        c_coords=channel_names,
+        transformations={"pixels": Identity()},
+        **image_models_kwargs,
+    )
+
+    return SpatialData(images={image_name: image})

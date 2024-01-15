@@ -116,7 +116,7 @@ def add_aligned(
     from sopa.io.explorer.images import align
 
     sdata = spatialdata.read_zarr(sdata_path)
-    image = io.imaging.ome_tif(image_path)
+    image = io.imaging.ome_tif(image_path, as_image=True)
 
     align(
         sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=original_image_key
