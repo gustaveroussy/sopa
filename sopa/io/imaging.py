@@ -5,11 +5,13 @@
 import logging
 import re
 from pathlib import Path
+from typing import Callable
 
 import dask.array as da
 import numpy as np
 import pandas as pd
 import tifffile as tf
+from dask.delayed import delayed
 from dask_image.imread import imread
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
@@ -52,9 +54,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None):
     return image_models_kwargs
 
 
-def macsima(
-    path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
-) -> SpatialData:
+def macsima(path: Path, **kwargs: int) -> SpatialData:
     """Read MACSIMA data as a `SpatialData` object
 
     Notes:
@@ -62,18 +62,33 @@ def macsima(
 
     Args:
         path: Path to the directory containing the MACSIMA `.tif` images
-        image_models_kwargs: Kwargs provided to the `Image2DModel`
-        imread_kwargs: Kwargs provided to `dask_image.imread.imread`
+        kwargs: Kwargs for `_general_tif_directory_reader`
 
     Returns:
         A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
     """
+    return _general_tif_directory_reader(
+        path, files_to_channels=_get_channel_names_macsima, **kwargs
+    )
+
+
+def _get_files_stem(files: list[Path]):
+    return [file.stem for file in files]
+
+
+def _general_tif_directory_reader(
+    path: str,
+    files_to_channels: Callable = _get_files_stem,
+    suffix: str = ".tif",
+    image_models_kwargs: dict | None = None,
+    imread_kwargs: dict | None = None,
+):
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
     imread_kwargs = {} if imread_kwargs is None else imread_kwargs
 
-    files = [file for file in Path(path).iterdir() if file.suffix == ".tif"]
+    files = [file for file in Path(path).iterdir() if file.suffix == suffix]
 
-    names = _get_channel_names_macsima(files)
+    names = files_to_channels(files)
     image = da.concatenate(
         [imread(file, **imread_kwargs) for file in files],
         axis=0,
@@ -114,13 +129,39 @@ def _get_channel_names_qptiff(page_series):
     return _deduplicate_names(df_names)
 
 
+def _get_IJ_channel_names(path: str) -> list[str]:
+    with tf.TiffFile(path) as tif:
+        default_names = [str(i) for i in range(len(tif.pages))]
+
+        if len(tif.pages) > 1:
+            ij_metadata_tag = tif.pages[0].tags.get("IJMetadata", None)
+
+            if ij_metadata_tag and "Labels" in ij_metadata_tag.value:
+                return ij_metadata_tag.value["Labels"]
+
+            log.warn("Could not find channel names in IJMetadata.")
+            return default_names
+
+        log.warn("The TIF file does not have multiple channels.")
+        return default_names
+
+
+def _rename_channels(names: list[str], channels_renaming: dict | None = None):
+    log.info(f"Found channel names {names}")
+    if channels_renaming is not None and len(channels_renaming):
+        log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
+        names = [channels_renaming.get(name, name) for name in names]
+        log.info(f"New names are: {names}")
+    return names
+
+
 def qptiff(
-    path: Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
+    path: str | Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
 ) -> SpatialData:
     """Read a `.qptiff` file as a `SpatialData` object
 
     Args:
-        path: Path to a `.qptiff` file
+        path: Path to a `.qptiff` file (or a `.tif` file exported from QuPath)
         channels_renaming: A dictionnary whose keys correspond to channels and values to their corresponding new name
         image_models_kwargs: Kwargs provided to the `Image2DModel`
 
@@ -129,27 +170,32 @@ def qptiff(
     """
     image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
-    with tf.TiffFile(path) as tif:
-        page_series = tif.series[0]
-        names = _get_channel_names_qptiff(page_series)
+    path = Path(path)
+    image_name = path.absolute().stem
 
-        log.info(f"Found channel names {names}")
+    if path.suffix == ".qptiff":
+        with tf.TiffFile(path) as tif:
+            series = tif.series[0]
+            names = _get_channel_names_qptiff(series)
 
-        if channels_renaming is not None and len(channels_renaming):
-            log.info(f"Channels will be renamed by the dictionnary: {channels_renaming}")
-            names = [channels_renaming.get(name, name) for name in names]
-            log.info(f"New names are: {names}")
+            delayed_image = delayed(lambda series: series.asarray())(tif)
+            image = da.from_delayed(delayed_image, dtype=series.dtype, shape=series.shape)
+    else:
+        image = imread(path)
+        names = _get_IJ_channel_names(path)
 
-        image_name = Path(path).absolute().stem
-        image = Image2DModel.parse(
-            da.from_array(page_series.asarray(), chunks=image_models_kwargs["chunks"]),
-            dims=list(page_series._axes.lower()),
-            transformations={"pixels": Identity()},
-            c_coords=names,
-            **image_models_kwargs,
-        )
+    names = _rename_channels(names, channels_renaming)
+    image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
-        return SpatialData(images={image_name: image})
+    image = Image2DModel.parse(
+        image,
+        dims=("c", "y", "x"),
+        transformations={"pixels": Identity()},
+        c_coords=names,
+        **image_models_kwargs,
+    )
+
+    return SpatialData(images={image_name: image})
 
 
 def phenocycler(path: Path, *args) -> SpatialData:
