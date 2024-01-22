@@ -155,14 +155,14 @@ def _rename_channels(names: list[str], channels_renaming: dict | None = None):
     return names
 
 
-def qptiff(
+def phenocycler(
     path: str | Path, channels_renaming: dict | None = None, image_models_kwargs: dict | None = None
 ) -> SpatialData:
-    """Read a `.qptiff` file as a `SpatialData` object
+    """Read Phenocycler data as a `SpatialData` object
 
     Args:
-        path: Path to a `.qptiff` file (or a `.tif` file exported from QuPath)
-        channels_renaming: A dictionnary whose keys correspond to channels and values to their corresponding new name
+        path: Path to a `.qptiff` file, or a `.tif` file (if exported from QuPath)
+        channels_renaming: A dictionnary whose keys correspond to channels and values to their corresponding new name. Not all channels need to be renamed.
         image_models_kwargs: Kwargs provided to the `Image2DModel`
 
     Returns:
@@ -180,9 +180,11 @@ def qptiff(
 
             delayed_image = delayed(lambda series: series.asarray())(tif)
             image = da.from_delayed(delayed_image, dtype=series.dtype, shape=series.shape)
-    else:
+    elif path.suffix == ".tif":
         image = imread(path)
         names = _get_IJ_channel_names(path)
+    else:
+        raise ValueError(f"Unsupported file extension {path.suffix}. Must be '.qptiff' or '.tif'.")
 
     names = _rename_channels(names, channels_renaming)
     image = image.rechunk(chunks=image_models_kwargs["chunks"])
@@ -196,19 +198,6 @@ def qptiff(
     )
 
     return SpatialData(images={image_name: image})
-
-
-def phenocycler(path: Path, *args) -> SpatialData:
-    """Read phenocycler data as a `SpatialData` object
-
-    Args:
-        path: Path to PhenoCycler `.qptiff` file
-        args: Args provided to the `qptiff` reader function
-
-    Returns:
-        A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
-    """
-    return qptiff(path, *args)
 
 
 def _get_channel_names_hyperion(files: list[Path]):
