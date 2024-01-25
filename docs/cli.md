@@ -413,7 +413,7 @@ $ sopa read [OPTIONS] DATA_PATH
 
 **Options**:
 
-* `--technology TEXT`: Name of the technology used to collected the data (`xenium`/`merfish`/`cosmx`/`phenocycler`/`macsima`/`qptiff`/`hyperion`)
+* `--technology TEXT`: Name of the technology used to collected the data (`xenium`/`merfish`/`cosmx`/`phenocycler`/`macsima`/`hyperion`)
 * `--sdata-path TEXT`: Optional path to write the SpatialData object. If not provided, will write to the `{data_path}.zarr` directory
 * `--config-path TEXT`: Path to the snakemake config. This can be useful in order not to provide the `--technology` and the `--kwargs` arguments
 * `--kwargs TEXT`: Dictionary provided to the reader function as kwargs  [default: {}]

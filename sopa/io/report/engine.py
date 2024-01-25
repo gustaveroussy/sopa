@@ -219,7 +219,7 @@ class Image(Renderable):
         self.pretty_legend = pretty_legend
 
     def make_figure_pretty(self):
-        if self.pretty_legend and any(ax.get_legend() for ax in self.fig.get_axes()):
+        if self.pretty_legend and _has_handles(self.fig):
             self.fig.legend(
                 bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False
             )
@@ -234,6 +234,10 @@ class Image(Renderable):
 
     def __str__(self) -> str:
         return f"""<img src=\'data:image/{self.extension};base64,{self.encod()}\'  width="{self.width}%" height="auto"/>"""
+
+
+def _has_handles(fig: Figure) -> bool:
+    return any(len(ax.get_legend_handles_labels()[0]) for ax in fig.get_axes())
 
 
 class Root(Renderable):

@@ -24,10 +24,6 @@
     options:
       show_root_heading: true
 
-::: sopa.io.qptiff
-    options:
-      show_root_heading: true
-
 ::: sopa.io.hyperion
     options:
       show_root_heading: true

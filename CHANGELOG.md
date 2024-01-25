@@ -1,3 +1,9 @@
+## [1.0.x] - tbd
+
+### Added
+- The `phenocycler` reader can now also read `.tif` files (not just `.qptiff`)
+- Added missing legend in the HTML report under the "Channels" section (#15)
+
 ## [1.0.2] - 2024-01-15
 
 ### Fix

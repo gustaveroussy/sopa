@@ -48,7 +48,7 @@ def read(
     ),
     technology: str = typer.Option(
         None,
-        help="Name of the technology used to collected the data (`xenium`/`merfish`/`cosmx`/`phenocycler`/`macsima`/`qptiff`/`hyperion`)",
+        help="Name of the technology used to collected the data (`xenium`/`merfish`/`cosmx`/`phenocycler`/`macsima`/`hyperion`)",
     ),
     sdata_path: str = typer.Option(
         None,
@@ -91,7 +91,7 @@ def read(
 
     assert hasattr(
         io, technology
-    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, phenocycler, hyperion, macsima, qptiff"
+    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, phenocycler, hyperion, macsima"
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path, delete_table=True)
