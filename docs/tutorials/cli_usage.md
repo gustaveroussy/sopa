@@ -2,15 +2,50 @@ Here, we provide a minimal example of command line usage. For more details and t
 
 ## Save the `SpatialData` object
 
-For this tutorial, we use a generated dataset. The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). See [here](`../../cli/#sopa-read`) for details on how to use your own technology.
+For this tutorial, we use a generated dataset. The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below, or see the [`sopa read` CLI documentation](`../../cli/#sopa-read`).
 
-```sh
-# this generates a 'tuto.zarr' directory
-sopa read . --sdata-path tuto.zarr --technology uniform
-```
+=== "Tutorial"
+    ```sh
+    # it will generate a 'tuto.zarr' directory
+    sopa read . --sdata-path tuto.zarr --technology uniform
+    ```
+=== "Xenium"
+    ```sh
+    # it will generate a '/path/to/sample/directory.zarr' directory
+    sopa read /path/to/sample/directory --technology xenium
+    ```
+=== "MERSCOPE"
+    ```sh
+    # it will generate a '/path/to/sample/directory.zarr' directory
+    sopa read /path/to/sample/directory --technology merscope
+    ```
+=== "CosMX"
+    ```sh
+    # it will generate a '/path/to/sample/directory.zarr' directory
+    sopa read /path/to/sample/directory --technology cosmx
+    ```
+
+    !!! warning
+        The CosMX data requires stitching the FOVs. It will be added soon, see [this issue](https://github.com/gustaveroussy/sopa/issues/5).
+=== "PhenoCycler"
+    ```sh
+    # it will generate a '/path/to/sample.zarr' directory
+    sopa read /path/to/sample.qptiff --technology phenocycler
+    ```
+=== "MACSima"
+    ```sh
+    # it will generate a '/path/to/sample/directory.zarr' directory
+    sopa read /path/to/sample/directory --technology macsima
+    ```
+=== "Hyperion"
+    ```sh
+    # it will generate a '/path/to/sample/directory.zarr' directory
+    sopa read /path/to/sample/directory --technology hyperion
+    ```
+
 
 !!! info
-    This generates a `.zarr` directory corresponding to a [`SpatialData` object](https://github.com/scverse/spatialdata).
+    It has created a `.zarr` directory which stores a [`SpatialData` object](https://github.com/scverse/spatialdata) corresponding to your data sample. You can choose the location of the `.zarr` directory using the `--sdata-path` command line argument.
 
 ## (Optional) ROI selection
 

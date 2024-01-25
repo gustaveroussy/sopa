@@ -6,14 +6,14 @@ You need the raw inputs of your machine, that is:
 
 - Optionally, a file of transcript location, usually a `.csv` or `.parquet` file
 
-Our tutorials use `data_path` to denote the path to your raw data. Select the correct tab below to understand what is the right path to your raw data:
+In this documentation, `data_path` denotes the path to your raw data. Select the correct tab below to understand what is the right path to your raw data:
 
 === "Xenium"
     `data_path` is the directory containing the following files: `morphology.ome.tif` and `transcripts.parquet`
 === "MERSCOPE"
-    `data_path` is the "region" directory containing a `detected_transcripts.csv` file and an `image` directory
+    `data_path` is the "region" directory containing a `detected_transcripts.csv` file and an `image` directory. For instance, the directory can be called `region_0`.
 === "CosMX"
-    (More details coming soon)
+    (The CosMX data requires stitching the FOVs. It will be added soon, see [this issue](https://github.com/gustaveroussy/sopa/issues/5))
 === "MACSima"
     `data_path` is the directory containing multiple `.ome.tif` files (one file per channel)
 === "PhenoCycler"
