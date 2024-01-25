@@ -6,7 +6,7 @@
 ### config that works for you, see https://github.com/gustaveroussy/sopa/tree/master/workflow/config
 
 read:
-  technology: merscope # Name of the machine, e.g. xenium/merscope/cosmx/phenocycler/macsima/hyperion
+  technology: merscope # name of the machine, e.g. xenium/merscope/cosmx/phenocycler/macsima/hyperion
 
 
 patchify:
@@ -22,7 +22,7 @@ patchify:
 segmentation:
   # [only if running cellpose]
   cellpose:
-    diameter: 55 # typical size of a cell, in pixels. This depends on the technology resolution
+    diameter: 55 # [crucial parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/master/workflow/config)
     channels: ["DAPI"] # list of one or two channel(s) used for segmentation. If two channels, provide a nuclear staining, and then a cytoplasm staining
     flow_threshold: 2 # see cellpose parameters
     cellprob_threshold: -6 # see cellpose parameters
@@ -47,7 +47,7 @@ segmentation:
         min_molecules_per_segment: 8
         confidence_nn_id: 16
 
-        # Important: do not update x/y/z below, since these names are standardized with SpatialData
+        # [important] do not update x/y/z below, since these names are standardized with SpatialData
         x: "x"
         y: "y"
         z: "z"
@@ -67,7 +67,7 @@ segmentation:
 
 
 aggregate:
-  intensity_mean: true # [optional] Whether to compute, for each cell, the mean intensity per staining/channel
+  intensity_mean: true # [optional] whether to compute, for each cell, the mean intensity per staining/channel
   min_intensity_ratio: 0.1 # [optional] cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
   expand_radius_ratio: 0.1 # [optional] cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
 
@@ -83,7 +83,7 @@ annotation:
   args:
     sc_reference_path: /path/to/reference_annotated.h5ad # path to the annotated scRNAseq reference used by Tangram
     cell_type_key: ct # key of adata_ref.obs containing the cell-type annotation
-    reference_preprocessing: log1p # preprocessing method applied to the reference scRNAseq. Either `normalized` (sc.pp.normalize_total), or `log1p` (sc.pp.normalize_total and sc.pp.log1p), or remove this parameter (raw counts)
+    reference_preprocessing: log1p # if your reference `adata.X` contains raw counts, then remove this parameter from the config. Else, choose "log1p" (if you have already run both `sc.pp.normalize_total` and `sc.pp.log1p` on your reference) or "normalized" (if you have already run `sc.pp.normalize_total` on your reference)
 
   # if you choose the simple staining-based annotation. In the example below, cells with high CD3 staining will be annotated as T cells.
 
