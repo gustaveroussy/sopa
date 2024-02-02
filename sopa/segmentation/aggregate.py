@@ -81,6 +81,8 @@ class Aggregator:
         )
         self.table.obs[SopaKeys.INSTANCE_KEY] = self.geo_df.index
 
+        self.table.obs[SopaKeys.AREA_OBS] = self.geo_df.area.values
+
         if "spatialdata_attrs" in self.table.uns:
             del self.table.uns["spatialdata_attrs"]
 

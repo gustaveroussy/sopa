@@ -81,11 +81,11 @@ class SectionBuilder:
     def cell_section(self):
         log.info("Writing cell section")
 
-        shapes_key, gdf = get_boundaries(self.sdata, return_key=True)
+        shapes_key, _ = get_boundaries(self.sdata, return_key=True)
         coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
-        _kdeplot_vmax_quantile(gdf.area)
+        _kdeplot_vmax_quantile(self.sdata.table.obs[SopaKeys.AREA_OBS])
         plt.xlabel("Area (coordinate_system_unit ^ 2)")
 
         return Section(
