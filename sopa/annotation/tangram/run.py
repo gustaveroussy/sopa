@@ -66,6 +66,11 @@ class MultiLevelAnnotation:
         self.ad_sp = ad_sp
         self.ad_sc = ad_sc
 
+        if not self.ad_sp.uns.get(SopaKeys.UNS_KEY, {}).get(SopaKeys.UNS_HAS_TRANSCRIPTS, False):
+            log.warn(
+                "The values in adata.X doesn't seem to be transcript count, which may create unexpected behaviors when running Tangram."
+            )
+
         self.cell_type_key = cell_type_key
         self.reference_preprocessing = reference_preprocessing
         self.bag_size = bag_size
