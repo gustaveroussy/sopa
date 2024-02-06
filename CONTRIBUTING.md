@@ -13,10 +13,10 @@ Contributions are welcome as we aim to continue improving the pipeline. For inst
 To add some new code to **sopa**, you should:
 
 1. Install the dependencies.
-2. Create your personal branch from `master`.
+2. Create your personal branch from `dev`.
 3. Make sure you read the coding guidelines below.
 4. Implement your changes.
-5. Create a pull request with explanations about your developed features. Then, wait for discussion and validation of your pull request.
+5. Create a pull request on `dev` with explanations about your developed features. Then, wait for discussion and validation of your pull request.
 
 ## Coding guidelines
 
