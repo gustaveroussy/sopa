@@ -12,7 +12,13 @@ def read_wsi(path: Path) -> DataArray:
         consolidated=False,
         mask_and_scale=False,
     )
-    image.attrs = image.attrs | tiff.properties
+
+    image.attrs['properties'] = tiff.properties
+    image.attrs['dimensions'] = tiff.dimensions
+    image.attrs['level_count'] = tiff.level_count
+    image.attrs['level_dimensions'] = tiff.level_dimensions
+    image.attrs['level_downsamples'] = tiff.level_downsamples
+
     return image
 
 if __name__ == '__main__':
