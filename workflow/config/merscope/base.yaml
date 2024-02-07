@@ -10,8 +10,10 @@ patchify:
 
 segmentation:
   baysor:
+    min_area: 20
     cell_key: cell_id # this allows to use the prior segmentation performed by Vizgen
     unassigned_value: -1
+
     config:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
