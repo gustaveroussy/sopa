@@ -1,9 +1,12 @@
-## [1.0.x] - tbd
+## [1.0.3] - tbd
 
 ### Added
 - The `phenocycler` reader can now also read `.tif` files (not just `.qptiff`)
 - Added missing legend in the HTML report under the "Channels" section (#15)
 - The cell area is also stored in the table (in `.obs["area"]`)
+
+### Changed
+- The `uniform` toy dataset now has two coordinate systems (better test case)
 
 ## [1.0.2] - 2024-01-15
 

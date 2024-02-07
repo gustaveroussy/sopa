@@ -5,8 +5,8 @@ read:
 patchify:
   patch_width_pixel: 1200
   patch_overlap_pixel: 50
-  patch_width_microns: 400
-  patch_overlap_microns: 20
+  patch_width_microns: 150
+  patch_overlap_microns: 10
 
 segmentation:
   baysor:
