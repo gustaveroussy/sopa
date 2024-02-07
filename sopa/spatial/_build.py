@@ -33,7 +33,7 @@ def spatial_neighbors(
     Args:
         adata: AnnData object
         radius: tuple that prunes the final graph to only contain edges in interval `[min(radius), max(radius)]`. If `None`, all edges are kept.
-        library_key: Optional batch key in adata.obs
+        library_key: Optional slide key in adata.obs used to avoid connecting graphs of distinct samples
         percentile: Percentile of the distances to use as threshold.
         set_diag: Whether to set the diagonal of the spatial connectivities to `1.0`.
     """

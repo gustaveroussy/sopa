@@ -105,13 +105,24 @@ def mean_distance(
     return df_distances
 
 
+def _to_weights(df: pd.DataFrame, clip_weight: float) -> pd.DataFrame:
+    """Convert distances to symmetric weights"""
+    weights = 1 / df
+    np.fill_diagonal(weights.values, 0)
+    weights = weights.clip(0, clip_weight)
+    weights = (weights.T + weights) / 2
+    return weights
+
+
 def prepare_network(
     adata: AnnData,
     cell_type_key: str,
     niche_key: str,
+    library_key: str | None = None,
     clip_weight: float = 3,
     node_colors: tuple[str] = ("#5c7dc4", "#f05541"),
     node_sizes: float = (1.3, 5),
+    return_distances: bool = False,
 ) -> tuple[pd.DataFrame, dict, dict, dict]:
     """Create a dataframe representing weights between cell-types and/or niches.
     This can be later use to plot a cell-type/niche represention of a whole slide
@@ -121,22 +132,43 @@ def prepare_network(
         adata: An `AnnData` object
         cell_type_key: Key of `adata.obs` containing the cell types
         niche_key: Key of `adata.obs` containing the niches
+        library_key: Optional slide key in adata.obs used to avoid connecting graphs of distinct samples
         clip_weight: Maximum weight
         node_colors: Tuple of (cell-type color, niche color)
         node_sizes: Tuple of (cell-type size, niche size)
+        return_distances: If `True`, will return distances instead of adjacency weights. Only valid if `library_key` is `None`.
 
     Returns:
         A DataFrame of weights between cell-types and/or niches, and three dict for netgraph display
     """
+    if library_key is not None:
+        distances_libraries = []
+
+        for library_id in adata.obs[library_id].unique():
+            sample = adata[adata.obs[library_key] == library_id].copy()
+            distances, node_color, node_size, node_shape = prepare_network(
+                sample,
+                cell_type_key,
+                niche_key,
+                clip_weight=clip_weight,
+                node_colors=node_colors,
+                node_sizes=node_sizes,
+                return_distances=True,
+            )
+            distances_libraries.append(distances)
+        distances = pd.concat(distances_libraries, axis=0).groupby(level=0).mean()
+
+        return _to_weights(distances, clip_weight), node_color, node_size, node_shape
+
     node_color, node_size, node_shape = {}, {}, {}
 
     log.info("Computing all distances for the 4 pairs of categories")
-    weights = mean_distance(adata, cell_type_key)
+    distances = mean_distance(adata, cell_type_key)
     top_right = mean_distance(adata, cell_type_key, niche_key)
     bottom_left = mean_distance(adata, niche_key, cell_type_key)
     bottom_right = mean_distance(adata, niche_key, niche_key)
 
-    for pop in weights.index:
+    for pop in distances.index:
         node_color[pop] = node_colors[0]
         node_size[pop] = node_sizes[0]
         node_shape[pop] = "o"
@@ -148,13 +180,9 @@ def prepare_network(
 
     # assemble dataframe per-block
     bottom_left[bottom_right.columns] = bottom_right
-    weights[top_right.columns] = top_right
-    weights = pd.concat([weights, bottom_left], axis=0).copy()
+    distances[top_right.columns] = top_right
+    distances = pd.concat([distances, bottom_left], axis=0).copy()
 
-    # convert distances to symmetric weights
-    weights = 1 / weights
-    np.fill_diagonal(weights.values, 0)
-    weights = weights.clip(0, clip_weight)
-    weights = (weights.T + weights) / 2
-
-    return weights, node_color, node_size, node_shape
+    if return_distances:
+        return distances, node_color, node_size, node_shape
+    return _to_weights(distances, clip_weight), node_color, node_size, node_shape
