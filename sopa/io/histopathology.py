@@ -3,12 +3,12 @@ from pathlib import Path
 import dask.array as da
 import tiffslide
 import xarray
+from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 from xarray import DataArray
-from multiscale_spatial_image import MultiscaleSpatialImage
 
 
 def read_wsi(path: Path) -> SpatialData:
@@ -36,17 +36,17 @@ def read_wsi(path: Path) -> SpatialData:
             img[k].transpose("S", "Y" + ap, "X" + ap),
             dims=("c", "y", "x"),
             attrs={"metadata": tiff_metadata},
-        ).chunk({'c':3,'y':256,'x':256})
+        ).chunk({"c": 3, "y": 256, "x": 256})
 
         sf = tiff.level_downsamples[i]
-        images[f'scale{k}'] = Image2DModel.parse(
-            simg, 
-            transformations={"pixels": Scale([sf,sf],axes=('x','y'))}, 
-            c_coords=("r", "g", "b")
+        images[f"scale{k}"] = Image2DModel.parse(
+            simg,
+            transformations={"pixels": Scale([sf, sf], axes=("x", "y"))},
+            c_coords=("r", "g", "b"),
         )
 
     mimg = MultiscaleSpatialImage.from_dict(images)
-    
+
     return SpatialData(images={image_name: mimg})
 
 
