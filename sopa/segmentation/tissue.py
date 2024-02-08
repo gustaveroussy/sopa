@@ -12,17 +12,17 @@ from sopa.io import read_wsi
 
 def hsv_otsu(
     sdata: SpatialData,
+    element_name: str,
     lvl: int = -1,
     blur_k: int = 5,
     open_k: int = 5,
     close_k: int = 5,
     drop_threshold: int = 0.01,
 ):
+    level_keys = list(sdata[element_name].keys())
+    image = sdata[element_name][level_keys[lvl]]
 
-    level_keys = list(sdata.images.keys())
-    image = sdata[level_keys[lvl]]
-
-    thumbnail = np.array(image.transpose("y", "x", "c"))
+    thumbnail = np.array(image['image'].transpose("y", "x", "c"))
     thumbnail_hsv = cv2.cvtColor(thumbnail, cv2.COLOR_RGB2HSV)
     thumbnail_hsv_blurred = cv2.medianBlur(thumbnail_hsv[:, :, 1], blur_k)
     _, mask = cv2.threshold(thumbnail_hsv_blurred, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
@@ -48,16 +48,19 @@ def hsv_otsu(
     polygons = [Polygon(contour) for contour in contours]
     geo_df = gpd.GeoDataFrame(geometry=polygons)
 
-    geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True))
+    geo_df = ShapesModel.parse(
+        geo_df, 
+        transformations=get_transformation(sdata[element_name], get_all=True)
+    )
     sdata.add_shapes("tissue", geo_df)
 
 
 if __name__ == "__main__":
     img = read_wsi("CMU-1.ndpi")
-    hsv_otsu(img)
+    hsv_otsu(img,"CMU-1")
 
     # import spatialdata_plot
     # img\
-    #     .pl.render_images('4')\
+    #     .pl.render_images('CMU-1',scale='scale3')\
     #     .pl.render_shapes(outline_color='green',fill_alpha=0, outline=True)\
     #     .pl.show(save='CMU-1-tissue_segmentation.png')
