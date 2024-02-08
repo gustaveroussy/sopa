@@ -6,7 +6,7 @@ import xarray
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from spatialdata.transformations import Identity
+from spatialdata.transformations import Scale
 from xarray import DataArray
 from multiscale_spatial_image import MultiscaleSpatialImage
 
@@ -29,7 +29,7 @@ def read_wsi(path: Path) -> SpatialData:
     }
 
     images = {}
-    for k in list(img.keys()):
+    for i, k in enumerate(list(img.keys())):
         ap = k if k != "0" else ""
 
         simg = SpatialImage(
@@ -38,8 +38,11 @@ def read_wsi(path: Path) -> SpatialData:
             attrs={"metadata": tiff_metadata},
         ).chunk({'c':3,'y':256,'x':256})
 
+        sf = tiff.level_downsamples[i]
         images[f'scale{k}'] = Image2DModel.parse(
-            simg, transformations={"pixels": Identity()}, c_coords=("r", "g", "b")
+            simg, 
+            transformations={"pixels": Scale([sf,sf],axes=('x','y'))}, 
+            c_coords=("r", "g", "b")
         )
 
     mimg = MultiscaleSpatialImage.from_dict(images)

@@ -50,7 +50,7 @@ def hsv_otsu(
 
     geo_df = ShapesModel.parse(
         geo_df, 
-        transformations=get_transformation(sdata[element_name], get_all=True)
+        transformations=sdata.images[element_name][level_keys[lvl]]['image'].attrs['transform']
     )
     sdata.add_shapes("tissue", geo_df)
 
@@ -59,8 +59,8 @@ if __name__ == "__main__":
     img = read_wsi("CMU-1.ndpi")
     hsv_otsu(img,"CMU-1")
 
-    # import spatialdata_plot
-    # img\
-    #     .pl.render_images('CMU-1',scale='scale3')\
-    #     .pl.render_shapes(outline_color='green',fill_alpha=0, outline=True)\
-    #     .pl.show(save='CMU-1-tissue_segmentation.png')
+    import spatialdata_plot
+    img\
+        .pl.render_images('CMU-1',scale='scale3')\
+        .pl.render_shapes(outline_color='green',fill_alpha=0, outline=True)\
+        .pl.show(dpi=300, save='CMU-1-tissue_segmentation.png')
