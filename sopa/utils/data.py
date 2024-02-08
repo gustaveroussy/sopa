@@ -23,7 +23,7 @@ def uniform(
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
     genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
     sigma_factor: float = 0.1,
-    pixelsize: float = 0.1,
+    pixel_size: float = 0.1,
     seed: int = 0,
     include_vertices: bool = False,
     include_image: bool = True,
@@ -38,7 +38,7 @@ def uniform(
         c_coords: Channel names
         genes: Number of different genes, or list of gene names
         sigma_factor: Factor used to determine `sigma` for the gaussian blur.
-        pixelsize: Number of microns in one pixel.
+        pixel_size: Number of microns in one pixel.
         seed: Numpy random seed
         include_vertices: Whether to include the vertices of the cells (as points) in the spatialdata object
         include_image: Whether to include the image in the spatialdata object
@@ -125,7 +125,7 @@ def uniform(
     )
 
     # apply an arbritrary transformation for a more complete test case
-    affine = np.array([[pixelsize, 0, 100], [0, pixelsize, 600], [0, 0, 1]])
+    affine = np.array([[pixel_size, 0, 100], [0, pixel_size, 600], [0, 0, 1]])
     df[["x", "y", "z"]] = df[["x", "y", "z"]] @ affine.T
     affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
 

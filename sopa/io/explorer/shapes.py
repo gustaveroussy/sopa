@@ -49,7 +49,7 @@ def write_polygons(
     polygons: Iterable[Polygon],
     max_vertices: int,
     is_dir: bool = True,
-    pixelsize: float = 0.2125,
+    pixel_size: float = 0.2125,
 ) -> None:
     """Write a `cells.zarr.zip` file containing the cell polygonal boundaries
 
@@ -58,13 +58,13 @@ def write_polygons(
         polygons: A list of `shapely` polygons to be written
         max_vertices: The number of vertices per polygon (they will be transformed to have the right number of vertices)
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
-        pixelsize: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
+        pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
     path = explorer_file_path(path, FileNames.SHAPES, is_dir)
 
     log.info(f"Writing {len(polygons)} cell polygons")
     coordinates = np.stack([pad_polygon(p, max_vertices) for p in polygons])
-    coordinates *= pixelsize
+    coordinates *= pixel_size
 
     num_cells = len(coordinates)
     cells_fourth = ceil(num_cells / 4)

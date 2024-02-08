@@ -19,7 +19,7 @@ def write(
         None,
         help="Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries",
     ),
-    pixelsize: float = typer.Option(
+    pixel_size: float = typer.Option(
         0.2125,
         help="Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.",
     ),
@@ -56,7 +56,7 @@ def write(
         sdata,
         shapes_key=shapes_key,
         gene_column=gene_column,
-        pixelsize=pixelsize,
+        pixel_size=pixel_size,
         lazy=lazy,
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,

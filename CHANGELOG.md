@@ -1,5 +1,8 @@
 ## [1.0.3] - tbd
 
+### Breaking changes
+- `pixelsize` argument has been renamed to `pixel_size`
+
 ### Added
 - The `phenocycler` reader can now also read `.tif` files (not just `.qptiff`)
 - Added missing legend in the HTML report under the "Channels" section (#15)
