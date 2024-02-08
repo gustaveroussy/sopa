@@ -186,7 +186,7 @@ rule image_write:
         mem_mb=64_000,
         partition="longq"
     params:
-        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixel_size'])),
+        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize'])),
     shell:
         """
         sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode '+i' --no-save-h5ad
