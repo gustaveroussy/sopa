@@ -4,10 +4,6 @@ import numpy as np
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from spatialdata.transformations import get_transformation
-from xarray import DataArray
-
-from sopa.io import read_wsi
 
 
 def hsv_otsu(
@@ -56,6 +52,8 @@ def hsv_otsu(
 
 
 if __name__ == "__main__":
+    from sopa.io import read_wsi
+    
     img = read_wsi("CMU-1.ndpi")
     hsv_otsu(img, "CMU-1")
 

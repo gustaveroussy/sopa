@@ -8,7 +8,6 @@ from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
-from xarray import DataArray
 
 
 def read_wsi(path: Path) -> SpatialData:
