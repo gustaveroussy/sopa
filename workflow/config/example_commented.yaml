@@ -22,7 +22,7 @@ patchify:
 segmentation:
   # [only if running cellpose]
   cellpose:
-    diameter: 55 # [crucial parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/master/workflow/config)
+    diameter: 55 # [important parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/master/workflow/config)
     channels: ["DAPI"] # list of one or two channel(s) used for segmentation. If two channels, provide a nuclear staining, and then a cytoplasm staining
     flow_threshold: 2 # see cellpose parameters
     cellprob_threshold: -6 # see cellpose parameters
@@ -36,8 +36,7 @@ segmentation:
     cell_key: cell_id # [optional] if prior segmentation has been performed, this is the column in the transcript dataframe that indicated the cell that contains the transcript. This doesn't need to be provided if you run cellpose with Sopa.
     unassigned_value: -1 # [optional] if prior segmentation has been performed and if 'cell_key' above is provided, this is the value given to transcript that is not contained inside any cell
 
-    # [required if running baysor: see baysor config https://github.com/kharchenkolab/Baysor]
-    config:
+    config: # [this is the baysor config, as in https://github.com/kharchenkolab/Baysor]
       data:
         exclude_genes: "Blank*"      # genes excluded from the Baysor segmentation
         force_2d: true               # if false, uses 3D mode
@@ -53,7 +52,7 @@ segmentation:
         z: "z"
 
       segmentation:
-        scale: 6.25                        # typical cell radius in microns
+        scale: 6.25                        # [important parameter] typical cell radius in microns
         scale_std: "25%"                   # cell radius standard deviation
         prior_segmentation_confidence: 0.5 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false
@@ -77,19 +76,18 @@ aggregate:
 
 # [optional] if annotation is desired, choose either 'tangram' or 'fluorescence'. If 'fluorescence' is used, make sure 'intensity_mean' is true (see parameter above)
 annotation:
-  # if you choose transcript-based annotation with Tangram
 
+  # [only if you choose transcript-based annotation with Tangram]
   method: tangram
   args:
     sc_reference_path: /path/to/reference_annotated.h5ad # path to the annotated scRNAseq reference used by Tangram
     cell_type_key: ct # key of adata_ref.obs containing the cell-type annotation
     reference_preprocessing: log1p # if your reference `adata.X` contains raw counts, then remove this parameter from the config. Else, choose "log1p" (if you have already run both `sc.pp.normalize_total` and `sc.pp.log1p` on your reference) or "normalized" (if you have already run `sc.pp.normalize_total` on your reference)
 
-  # if you choose the simple staining-based annotation. In the example below, cells with high CD3 staining will be annotated as T cells.
-
+  # [only if you choose the simple staining-based annotation (comment out the lines below)]
   # method: fluorescence
   # args:
-  #   marker_cell_dict:
+  #   marker_cell_dict: # mapping between a channel name and a population name
   #     CK: Tumoral cell
   #     CD3: T cell
   #     CD31: Endothelial
@@ -104,4 +102,4 @@ explorer: # parameters related to the conversion to the Xenium Explorer (Sopa's 
   pixelsize: 0.2125 # [optional] this is the number of microns in a pixel for the technology used (see the config of your technology of interest)
 
 executables:
-  baysor: ~/.julia/bin/baysor # [optional] if you run baysor, put here the path to the 'baysor' executable
+  baysor: ~/.julia/bin/baysor # [optional] if you run baysor, write here the path to the 'baysor' executable
