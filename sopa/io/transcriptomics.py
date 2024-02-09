@@ -21,8 +21,7 @@ from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata._logging import logger
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel, TableModel
-from spatialdata.transformations import Affine, Identity
-from spatialdata.transformations.transformations import Identity, Scale
+from spatialdata.transformations import Affine, Identity, Scale
 from spatialdata_io._constants._constants import MerscopeKeys, XeniumKeys
 
 

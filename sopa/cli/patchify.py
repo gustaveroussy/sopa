@@ -69,8 +69,6 @@ def baysor(
     ),
 ):
     """Prepare the patches for Baysor segmentation"""
-    from pathlib import Path
-
     from sopa._constants import SopaFiles, SopaKeys
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check

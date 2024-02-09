@@ -73,7 +73,7 @@ def group_attrs() -> dict:
     }
 
 
-def experiment_dict(run_name: str, region_name: str, num_cells: int, pixelsize: float) -> dict:
+def experiment_dict(run_name: str, region_name: str, num_cells: int, pixel_size: float) -> dict:
     return {
         "major_version": Versions.EXPERIMENT[0],
         "minor_version": Versions.EXPERIMENT[1],
@@ -93,11 +93,10 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int, pixelsize: 
         "panel_organism": "Human",
         "panel_num_targets_predesigned": 0,
         "panel_num_targets_custom": 0,
-        "pixel_size": pixelsize,
+        "pixel_size": pixel_size,
         "instrument_sn": "N/A",
         "instrument_sw_version": "N/A",
         "analysis_sw_version": "xenium-1.3.0.5",
-        "experiment_uuid": "",
         "cassette_uuid": "",
         "roi_uuid": "",
         "z_step_size": 3.0,
@@ -118,12 +117,12 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int, pixelsize: 
     }
 
 
-def image_metadata(channel_names: list[str], pixelsize: float) -> dict:
+def image_metadata(channel_names: list[str], pixel_size: float) -> dict:
     return {
         "SignificantBits": 8,
-        "PhysicalSizeX": pixelsize,
+        "PhysicalSizeX": pixel_size,
         "PhysicalSizeXUnit": "µm",
-        "PhysicalSizeY": pixelsize,
+        "PhysicalSizeY": pixel_size,
         "PhysicalSizeYUnit": "µm",
         "Channel": {"Name": channel_names},
     }

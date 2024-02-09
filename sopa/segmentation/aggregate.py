@@ -130,7 +130,7 @@ class Aggregator:
 
         assert (
             average_intensities or does_count
-        ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
+        ), "You must choose at least one aggregation: transcripts or fluorescence intensities"
 
         if gene_column is not None:
             if self.table is not None:

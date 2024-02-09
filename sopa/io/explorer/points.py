@@ -23,7 +23,7 @@ def write_transcripts(
     gene: str = "gene",
     max_levels: int = 15,
     is_dir: bool = True,
-    pixelsize: float = 0.2125,
+    pixel_size: float = 0.2125,
 ):
     """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations
 
@@ -33,7 +33,7 @@ def write_transcripts(
         gene: Column of `df` containing the genes names.
         max_levels: Maximum number of levels in the pyramid.
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
-        pixelsize: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
+        pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
     path = explorer_file_path(path, FileNames.POINTS, is_dir)
 
@@ -41,11 +41,11 @@ def write_transcripts(
     df = df.compute()
 
     num_transcripts = len(df)
-    grid_size = ExplorerConstants.GRID_SIZE / ExplorerConstants.PIXELS_TO_MICRONS * pixelsize
+    grid_size = ExplorerConstants.GRID_SIZE / ExplorerConstants.PIXELS_TO_MICRONS * pixel_size
     df[gene] = df[gene].astype("category")
 
     location = df[["x", "y"]]
-    location *= pixelsize
+    location *= pixel_size
     location = np.concatenate([location, np.zeros((num_transcripts, 1))], axis=1)
 
     if location.min() < 0:
