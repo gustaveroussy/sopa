@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import dask.array as da
-import tiffslide
 import xarray
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
@@ -10,8 +8,11 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
 
-def read_wsi(path: Path) -> SpatialData:
+def wsi(path: Path) -> SpatialData:
+    import tiffslide
+
     image_name = Path(path).absolute().name.split(".")[0]
+
     tiff = tiffslide.open_slide(path)
     img = xarray.open_zarr(
         tiff.zarr_group.store,
@@ -29,27 +30,21 @@ def read_wsi(path: Path) -> SpatialData:
 
     images = {}
     for i, k in enumerate(list(img.keys())):
-        ap = k if k != "0" else ""
+        scale_factor = tiff.level_downsamples[i]
+        suffix = k if k != "0" else ""
 
-        simg = SpatialImage(
-            img[k].transpose("S", "Y" + ap, "X" + ap),
+        scale_image = SpatialImage(
+            img[k].transpose("S", f"Y{suffix}", f"X{suffix}"),
             dims=("c", "y", "x"),
             attrs={"metadata": tiff_metadata},
-        ).chunk({"c": 3, "y": 256, "x": 256})
+        ).chunk((3, 256, 256))
 
-        sf = tiff.level_downsamples[i]
         images[f"scale{k}"] = Image2DModel.parse(
-            simg,
-            transformations={"pixels": Scale([sf, sf], axes=("x", "y"))},
+            scale_image,
+            transformations={"pixels": Scale([scale_factor, scale_factor], axes=("x", "y"))},
             c_coords=("r", "g", "b"),
         )
 
-    mimg = MultiscaleSpatialImage.from_dict(images)
+    multiscale_image = MultiscaleSpatialImage.from_dict(images)
 
-    return SpatialData(images={image_name: mimg})
-
-
-if __name__ == "__main__":
-    # test file here: https://openslide.cs.cmu.edu/download/openslide-testdata/Hamamatsu/CMU-1.ndpi
-    img = read_wsi("CMU-1.ndpi")
-    print(img)
+    return SpatialData(images={image_name: multiscale_image})
