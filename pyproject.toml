@@ -53,7 +53,7 @@ cellpose = ["cellpose", "opencv-python", "torch"]
 baysor = ["toml", "loompy"]
 tangram = ["tangram-sc"]
 snakemake = ["snakemake", "pulp"]
-wsi = ["tiffslide", "opencv-python"]
+wsi = ["tiffslide", "opencv-python", "torch"]
 dev = [
   "black",
   "isort",
