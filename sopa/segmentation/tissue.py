@@ -24,14 +24,18 @@ def hsv_otsu(
 ):
     """Perform WSI tissue segmentation. The resulting ROI are saved as shapes.
 
+    Details:
+        This segmentation method first transforms the image from RBG color space to HSV and then on the basis of the saturation channel it performing the rest of the steps. As a preprocessing step a median bluring is applied with an element of size `blur_k` before the otsu. Then a morphological opening and closing is applied as prostprocessing step with square elemets of size `open_k` and `close_k`. Lastly, the connected componenets with size less that `drop_threshold`*`number_of_pixel_of_the_image` are removed and the rest are converted into polygons.
+
+
     Args:
         sdata: A `SpatialData` object representing an H&E image
         image_key: Optional key of the H&E image
-        level: Level of the multiscale image on which
-        blur_k: TODO@stergios
-        open_k: TODO@stergios
-        close_k: TODO@stergios
-        drop_threshold: TODO@stergios
+        level: Level of the multiscale image on which the segmentation will be performed
+        blur_k: The kernel size of the median bluring operation
+        open_k: The kernel size of the morphological openning operation
+        close_k: The kernel size of the morphological closing operation
+        drop_threshold: Segments that cover less area than `drop_threshold`*100% of the number of pixels of the image will be removed
     """
     import cv2
 
