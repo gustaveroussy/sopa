@@ -5,10 +5,10 @@ from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from spatialdata.transformations import Scale
+from spatialdata.transformations import Identity, Scale
 
 
-def wsi(path: Path) -> SpatialData:
+def _open_wsi(path: str | Path):
     import tiffslide
 
     image_name = Path(path).absolute().name.split(".")[0]
@@ -27,6 +27,11 @@ def wsi(path: Path) -> SpatialData:
         "level_dimensions": tiff.level_dimensions,
         "level_downsamples": tiff.level_downsamples,
     }
+    return image_name, img, tiff, tiff_metadata
+
+
+def wsi(path: str | Path) -> SpatialData:
+    image_name, img, tiff, tiff_metadata = _open_wsi(path)
 
     images = {}
     for i, k in enumerate(list(img.keys())):
@@ -46,5 +51,23 @@ def wsi(path: Path) -> SpatialData:
         )
 
     multiscale_image = MultiscaleSpatialImage.from_dict(images)
+
+    return SpatialData(images={image_name: multiscale_image})
+
+
+def wsi_autoscale(path: str | Path) -> SpatialData:
+    image_name, img, _, tiff_metadata = _open_wsi(path)
+
+    img = img.rename_dims({"S": "c", "Y": "y", "X": "x"})
+
+    multiscale_image = Image2DModel.parse(
+        img["0"].transpose("c", "y", "x"),
+        transformations={"pixels": Identity()},
+        c_coords=("r", "g", "b"),
+        chunks=(3, 256, 256),
+        scale_factors=[2, 2, 2, 2],
+    )
+
+    multiscale_image.attrs["metadata"] = tiff_metadata
 
     return SpatialData(images={image_name: multiscale_image})
