@@ -56,7 +56,7 @@ class SectionBuilder:
         self.sdata = sdata
 
     def _table_has(self, key, default=False):
-        if not SopaKeys.UNS_KEY in self.sdata.table.uns:
+        if SopaKeys.UNS_KEY not in self.sdata.table.uns:
             return default
         return self.sdata.table.uns[SopaKeys.UNS_KEY].get(key, default)
 
@@ -70,7 +70,7 @@ class SectionBuilder:
                     "SpatialData information",
                     [
                         Paragraph(
-                            f"Sopa is using <a href='https://spatialdata.scverse.org/en/latest/'>SpatialData</a> under the hood. This is how the object looks like:"
+                            "Sopa is using <a href='https://spatialdata.scverse.org/en/latest/'>SpatialData</a> under the hood. This is how the object looks like:"
                         ),
                         CodeBlock(str(self.sdata)),
                     ],

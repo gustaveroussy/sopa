@@ -97,7 +97,6 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int, pixel_size:
         "instrument_sn": "N/A",
         "instrument_sw_version": "N/A",
         "analysis_sw_version": "xenium-1.3.0.5",
-        "experiment_uuid": "",
         "cassette_uuid": "",
         "roi_uuid": "",
         "z_step_size": 3.0,

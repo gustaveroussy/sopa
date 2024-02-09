@@ -141,7 +141,7 @@ def niches_geometry_stats(
     gdf = geometrize_niches(adata, niche_key, **geometrize_niches_kwargs)
     value_counts = gdf[niche_key].value_counts()
 
-    assert len(gdf), f"No niche geometry found, stats can't be computed"
+    assert len(gdf), "No niche geometry found, stats can't be computed"
 
     log.info(f"Computing pairwise distances between {len(gdf)} components")
     pairwise_distances: pd.DataFrame = gdf.geometry.apply(lambda g: gdf.distance(g))

@@ -144,7 +144,7 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     ]
     valid_colors = [c for c in ExplorerConstants.COLORS if c != ExplorerConstants.NUCLEUS_COLOR]
     n_missing = sum(
-        not is_wavelength and not c in ExplorerConstants.KNOWN_CHANNELS
+        not is_wavelength and c not in ExplorerConstants.KNOWN_CHANNELS
         for c, is_wavelength in zip(channel_names, existing_wavelength)
     )
     colors_iterator: list = np.repeat(valid_colors, ceil(n_missing / len(valid_colors))).tolist()

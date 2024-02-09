@@ -7,7 +7,7 @@ import numpy as np
 import zarr
 from shapely.geometry import Polygon
 
-from ._constants import ExplorerConstants, FileNames, cell_summary_attrs, group_attrs
+from ._constants import FileNames, cell_summary_attrs, group_attrs
 from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)

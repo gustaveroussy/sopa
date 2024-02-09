@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 def _check_explorer_directory(path: Path):
     assert (
         not path.exists() or path.is_dir()
-    ), f"A path to an existing file was provided. It should be a path to a directory."
+    ), "A path to an existing file was provided. It should be a path to a directory."
     path.mkdir(parents=True, exist_ok=True)
 
 
@@ -33,7 +33,7 @@ def _should_save(mode: str | None, character: str):
     assert len(mode) and mode[0] in [
         "-",
         "+",
-    ], f"Mode should be a string that starts with '+' or '-'"
+    ], "Mode should be a string that starts with '+' or '-'"
 
     return character in mode if mode[0] == "+" else character not in mode
 

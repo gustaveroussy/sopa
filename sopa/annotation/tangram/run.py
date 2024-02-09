@@ -166,7 +166,7 @@ class MultiLevelAnnotation:
 
         assert len(
             selection
-        ), f"No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        ), "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
         log.info(f"Keeping {len(selection)} shared genes")
 
         for ad_ in [ad_sp_split, ad_sc_]:

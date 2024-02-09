@@ -1,0 +1,20 @@
+[flake8]
+max-line-length = 100
+ignore =
+    # line break before a binary operator -> black does not adhere to PEP8
+    W503
+    # line break occured after a binary operator -> black does not adhere to PEP8
+    W504
+    # line too long -> we accept long comment lines; black gets rid of long code lines
+    E501
+    # whitespace before : -> black does not adhere to PEP8
+    E203
+    # leading '#' are fine if not used too often
+    E266
+    # it can be more convenient to use a bare 'except'
+    E722
+exclude = .git,__pycache__
+per-file-ignores =
+    tests/*: D
+    */__init__.py: F401
+    sopa/main.py: F401

@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = False):
     assert (
         len(sdata.images) > 0
-    ), f"The spatialdata object has no image. Sopa is not designed for this."
+    ), "The spatialdata object has no image. Sopa is not designed for this."
 
     if len(sdata.images) != 1:
         message = f"The spatialdata object has {len(sdata.images)} images. We advise to run sopa on one image (which can have multiple channels and multiple scales)"

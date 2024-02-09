@@ -77,7 +77,7 @@ def reference(
 
 def _get(config, *args):
     for arg in args:
-        if not arg in config:
+        if arg not in config:
             return False
         config = config[arg]
     return config
@@ -85,7 +85,7 @@ def _get(config, *args):
 
 def _check_dict(config: dict, d: dict, log, prefix: str = "config"):
     for key, values in d.items():
-        if not key in config:
+        if key not in config:
             log.warn(f"Required config key {prefix}['{key}'] not found")
         elif isinstance(values, dict):
             _check_dict(config[key], values, log, f"{prefix}['{key}']")

@@ -272,7 +272,7 @@ def ome_tif(path: Path, as_image: bool = False) -> SpatialImage | SpatialData:
     image: da.Array = imread(path)
 
     if image.ndim == 4:
-        assert image.shape[0] == 1, f"4D images not supported"
+        assert image.shape[0] == 1, "4D images not supported"
         image = da.moveaxis(image[0], 2, 0)
         log.info(f"Transformed 4D image into a 3D image of shape (c, y, x) = {image.shape}")
     elif image.ndim != 3:
