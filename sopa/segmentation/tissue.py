@@ -22,7 +22,7 @@ def hsv_otsu(
     open_k: int = 5,
     close_k: int = 5,
     drop_threshold: int = 0.01,
-):
+) -> bool:
     """Perform WSI tissue segmentation. The resulting ROIs are saved as shapes.
 
     !!! info
@@ -42,6 +42,9 @@ def hsv_otsu(
         open_k: The kernel size of the morphological openning operation
         close_k: The kernel size of the morphological closing operation
         drop_threshold: Segments that cover less area than `drop_threshold`*100% of the number of pixels of the image will be removed
+
+    Returns:
+        `True` if tissue segmentation was successful, else `False` if no polygon was output.
     """
     import cv2
 
@@ -75,7 +78,14 @@ def hsv_otsu(
 
     polygons = [Polygon(contour) for contour in contours]
 
+    if not len(polygons):
+        log.warn(
+            "No polygon has been found after tissue segmentation. Check that there is some tissue in the image, or consider updating the segmentation parameters."
+        )
+        return False
+
     _save_tissue_segmentation(sdata, polygons, image_key, image)
+    return True
 
 
 def _save_tissue_segmentation(
