@@ -2,13 +2,14 @@ import logging
 
 import geopandas as gpd
 import numpy as np
+import spatialdata
 import xarray as xr
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 
 from .._constants import ROI
-from .._sdata import get_key
+from .._sdata import get_intrinsic_cs, get_key
 
 log = logging.getLogger(__name__)
 
@@ -22,11 +23,16 @@ def hsv_otsu(
     close_k: int = 5,
     drop_threshold: int = 0.01,
 ):
-    """Perform WSI tissue segmentation. The resulting ROI are saved as shapes.
+    """Perform WSI tissue segmentation. The resulting ROIs are saved as shapes.
 
-    Details:
-        This segmentation method first transforms the image from RBG color space to HSV and then on the basis of the saturation channel it performing the rest of the steps. As a preprocessing step a median bluring is applied with an element of size `blur_k` before the otsu. Then a morphological opening and closing is applied as prostprocessing step with square elemets of size `open_k` and `close_k`. Lastly, the connected componenets with size less that `drop_threshold`*`number_of_pixel_of_the_image` are removed and the rest are converted into polygons.
-
+    !!! info
+        This segmentation method first transforms the image from RBG color space to HSV and then
+        on the basis of the saturation channel, it performs the rest of the steps.
+        As a preprocessing step, a median blurring is applied with an element of size `blur_k`
+        before the otsu. Then a morphological opening and closing are applied as a prostprocessing
+        step with square elements of size `open_k` and `close_k`. Lastly, the connected components
+        with size less than `drop_threshold * number_of_pixel_of_the_image` are removed, and the
+        rest are converted into polygons.
 
     Args:
         sdata: A `SpatialData` object representing an H&E image
@@ -38,10 +44,6 @@ def hsv_otsu(
         drop_threshold: Segments that cover less area than `drop_threshold`*100% of the number of pixels of the image will be removed
     """
     import cv2
-
-    assert (
-        ROI.KEY not in sdata.shapes
-    ), f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top. Delete the shape(s) first."
 
     image_key = get_key(sdata, "images", image_key)
 
@@ -71,10 +73,27 @@ def hsv_otsu(
             c_closed = np.array(list(cc) + [cc[0]])
             contours.extend([c_closed.squeeze()])
 
-    geo_df = gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
+    polygons = [Polygon(contour) for contour in contours]
+
+    _save_tissue_segmentation(sdata, polygons, image_key, image)
+
+
+def _save_tissue_segmentation(
+    sdata: SpatialData, polygons: list[Polygon], image_key: str, image_scale: xr.DataArray
+):
+    assert (
+        ROI.KEY not in sdata.shapes
+    ), f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top. Delete the shape(s) first."
+
+    geo_df = gpd.GeoDataFrame(geometry=polygons)
     geo_df = ShapesModel.parse(
         geo_df,
-        transformations=image.attrs["transform"],
+        transformations=image_scale.attrs["transform"],
+    )
+
+    image_cs = get_intrinsic_cs(sdata, sdata[image_key])
+    geo_df = spatialdata.transform(
+        geo_df, image_scale.attrs["transform"][image_cs], maintain_positioning=True
     )
 
     sdata.add_shapes(ROI.KEY, geo_df)

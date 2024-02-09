@@ -17,23 +17,22 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
 
     Returns:
-        A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
+        A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`
     """
     image_name, img, tiff, tiff_metadata = _open_wsi(path)
 
     images = {}
-    for i, k in enumerate(list(img.keys())):
-        scale_factor = tiff.level_downsamples[i]
-        suffix = k if k != "0" else ""
+    for level, key in enumerate(list(img.keys())):
+        suffix = key if key != "0" else ""
 
         scale_image = SpatialImage(
-            img[k].transpose("S", f"Y{suffix}", f"X{suffix}"),
+            img[key].transpose("S", f"Y{suffix}", f"X{suffix}"),
             dims=("c", "y", "x"),
         ).chunk(chunks)
 
-        images[f"scale{k}"] = Image2DModel.parse(
+        images[f"scale{key}"] = Image2DModel.parse(
             scale_image,
-            transformations={"pixels": Scale([scale_factor, scale_factor], axes=("x", "y"))},
+            transformations={"pixels": _get_scale_transformation(tiff, level)},
             c_coords=("r", "g", "b"),
         )
 
@@ -41,6 +40,13 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
     multiscale_image.attrs["metadata"] = tiff_metadata
 
     return SpatialData(images={image_name: multiscale_image})
+
+
+def _get_scale_transformation(tiff, level: int):
+    scale_factor = tiff.level_downsamples[level]
+    if scale_factor == 1:
+        return Identity()
+    return Scale([scale_factor, scale_factor], axes=("x", "y"))
 
 
 def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> SpatialData:
