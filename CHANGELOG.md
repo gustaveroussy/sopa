@@ -4,6 +4,8 @@
 - The `phenocycler` reader can now also read `.tif` files (not just `.qptiff`)
 - Added missing legend in the HTML report under the "Channels" section (#15)
 - The cell area is also stored in the table (in `.obs["area"]`)
+- Supporting multiple region-of-interest queries
+- Support WSI analysis (reader, tissue segmentation)
 
 ### Changed
 - The `uniform` toy dataset now has two coordinate systems (better test case)
