@@ -8,7 +8,7 @@ import geopandas as gpd
 import pandas as pd
 from dask.diagnostics import ProgressBar
 from multiscale_spatial_image import MultiscaleSpatialImage
-from shapely.geometry import Polygon, box
+from shapely.geometry import MultiPolygon, Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
@@ -92,9 +92,18 @@ class Patches2D:
         self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, tight, int_coords)
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
-        self.roi = sdata.shapes[ROI.KEY] if ROI.KEY in sdata.shapes else None
-        if self.roi is not None:
-            self.roi = to_intrinsic(sdata, self.roi, element_name).geometry[0]
+        self.roi = None
+        if ROI.KEY in sdata.shapes:
+            geo_df = to_intrinsic(sdata, sdata[ROI.KEY], element_name)
+
+            assert all(
+                isinstance(geom, Polygon) for geom in geo_df.geometry
+            ), f"All sdata['{ROI.KEY}'] geometries must be polygons"
+
+            if len(geo_df) == 1:
+                self.roi: Polygon = geo_df.geometry[0]
+            else:
+                self.roi = MultiPolygon(list(geo_df.geometry))
 
         self._ilocs = []
 
@@ -148,20 +157,20 @@ class Patches2D:
         for i in range(len(self)):
             yield self[i]
 
-    def polygon(self, i: int) -> Polygon:
+    def polygon(self, i: int) -> Polygon | MultiPolygon:
         """One patch as a shapely polygon. The polygon may not be just a square, if a ROI has been previously selected.
 
         Args:
             i: Patch index
 
         Returns:
-            Polygon representing the patch
+            Polygon or MultiPolygon representing the patch
         """
         rectangle = box(*self[i])
         return rectangle if self.roi is None else rectangle.intersection(self.roi)
 
     @property
-    def polygons(self) -> list[Polygon]:
+    def polygons(self) -> list[Polygon | MultiPolygon]:
         """All the patches as polygons
 
         Returns:
