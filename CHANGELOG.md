@@ -10,6 +10,7 @@
 
 ### Changed
 - The `uniform` toy dataset now has two coordinate systems (better test case)
+- Faster table conversion to the Xenium Explorer
 
 ## [1.0.2] - 2024-01-15
 
