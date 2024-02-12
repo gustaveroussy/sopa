@@ -7,3 +7,4 @@ from .models import (
     CellViTSAMShared,
 )
 from .utils import DetectionCellPostProcessor
+from .load import load_cellvit
