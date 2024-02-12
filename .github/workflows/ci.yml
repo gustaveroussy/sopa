@@ -1,7 +1,7 @@
 name: ci
 on:
   push:
-    branches: [master, dev]
+    branches: [master]
     tags:
       - v*
   pull_request:
@@ -28,7 +28,7 @@ jobs:
         id: setup-python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: "3.10"
 
       #----------------------------------------------
       #         install & configure poetry
