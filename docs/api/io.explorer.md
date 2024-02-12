@@ -33,7 +33,7 @@
 ::: sopa.io.explorer.str_cell_id
     options:
       show_root_heading: true
-    
+
 ::: sopa.io.explorer.align
     options:
       show_root_heading: true

@@ -14,7 +14,7 @@ def sanity_check_config(config: dict):
         "data_path" in config or "sdata_path" in config
     ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
 
-    if "data_path" in config and not "sdata_path" in config:
+    if "data_path" in config and "sdata_path" not in config:
         config["sdata_path"] = Path(config["data_path"]).with_suffix(".zarr")
         print(
             f"SpatialData object path set to default: {config['sdata_path']}\nTo change this behavior, provide `--config sdata_path=...` when running the snakemake pipeline"

@@ -11,7 +11,7 @@ When installing `sopa` as written in our [getting-started guidelines](../getting
 ```console
 // Run the Sopa CLI helper
 $ sopa --help
- Usage: sopa [OPTIONS] COMMAND [ARGS]...    
+ Usage: sopa [OPTIONS] COMMAND [ARGS]...
 ╭─ Commands ─────────────────────────────────────────────────────╮
 │ aggregate     Aggregate transcripts/channels inside cells      │
 │ annotate      Perform cell-type annotation                     │

@@ -173,7 +173,7 @@ def dummy_method(**method_kwargs):
 
 ### 2. Setup
 
-To use the CLI, you'll need to clone the repository. Also, we recommend installing Sopa in dev mode, allowing you to update your segmentation function without re-installing everything. For instance: 
+To use the CLI, you'll need to clone the repository. Also, we recommend installing Sopa in dev mode, allowing you to update your segmentation function without re-installing everything. For instance:
 
 ```sh
 git clone https://github.com/gustaveroussy/sopa.git

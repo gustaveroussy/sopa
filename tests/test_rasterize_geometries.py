@@ -28,7 +28,7 @@ def test_raster_and_geometrize():
 
     assert (
         mask == new_mask
-    ).all(), f"Applying geometrize and then rasterize shouldn't change the mask"
+    ).all(), "Applying geometrize and then rasterize shouldn't change the mask"
 
 
 def test_rasterize_cropped():

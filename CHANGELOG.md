@@ -1,4 +1,9 @@
-## [1.0.3] - tbd
+## [1.0.4] - tbd
+
+### Changed
+- Explorer images should have a higher contrast (not clipping values anymore)
+
+## [1.0.3] - 2024-02-12
 
 ### Breaking changes
 - `pixelsize` argument has been renamed to `pixel_size` (the snakemake pipeline is only deprecating it for now)
@@ -12,6 +17,10 @@
 
 ### Changed
 - The `uniform` toy dataset now has two coordinate systems (better test case)
+- Faster table conversion to the Xenium Explorer
+
+### Fixed
+- Tight patching more stable with epsilon constant
 
 ## [1.0.2] - 2024-01-15
 

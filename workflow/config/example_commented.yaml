@@ -1,7 +1,7 @@
 ### This file details all existing Sopa parameters
 ###
 ### Most of these parameters are optional: don't hesitate to delete those that doesn't interest you
-### 
+###
 ### Before creating your own config, you should check if there is not already an existing
 ### config that works for you, see https://github.com/gustaveroussy/sopa/tree/master/workflow/config
 
