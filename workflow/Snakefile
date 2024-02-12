@@ -99,7 +99,7 @@ rule patch_segmentation_baysor:
         if command -v module &> /dev/null; then
             module purge
         fi
-        
+
         cd {input.baysor_patch}
         {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
         """
