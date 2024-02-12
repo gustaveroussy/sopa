@@ -4,6 +4,10 @@ from .utils import SDATA_HELPER
 
 app_explorer = typer.Typer()
 
+PIXELSIZE_DEPRECATED = (
+    "`pixelsize` is deprecated and will be removed in future versions. Use `pixel_size` instead."
+)
+
 
 @app_explorer.command()
 def write(
@@ -19,9 +23,13 @@ def write(
         None,
         help="Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries",
     ),
-    pixelsize: float = typer.Option(
+    pixel_size: float = typer.Option(
         0.2125,
         help="Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.",
+    ),
+    pixelsize: float = typer.Option(
+        None,
+        help=PIXELSIZE_DEPRECATED,
     ),
     lazy: bool = typer.Option(
         True,
@@ -41,6 +49,7 @@ def write(
     ),
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs"""
+    import logging
     from pathlib import Path
 
     from sopa.io.explorer import write
@@ -51,12 +60,17 @@ def write(
     if output_path is None:
         output_path = Path(sdata_path).with_suffix(".explorer")
 
+    if pixelsize is not None:
+        log = logging.getLogger(__name__)
+        log.critical(PIXELSIZE_DEPRECATED)
+        pixel_size = pixelsize
+
     write(
         output_path,
         sdata,
         shapes_key=shapes_key,
         gene_column=gene_column,
-        pixelsize=pixelsize,
+        pixel_size=pixel_size,
         lazy=lazy,
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,

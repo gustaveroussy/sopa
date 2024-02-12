@@ -27,7 +27,7 @@ def write_gene_counts(
 
     log.info(f"Writing table with {adata.n_vars} columns")
     counts = adata.X if layer is None else adata.layers[layer]
-    counts = csr_matrix(counts)
+    counts = csr_matrix(counts.T)
 
     feature_keys = list(adata.var_names) + ["Total transcripts"]
     feature_ids = feature_keys
@@ -43,23 +43,13 @@ def write_gene_counts(
         "feature_types": feature_types,
     }
 
-    data, indices, indptr = [], [], [0]
-
-    for i in range(adata.n_vars):
-        row_indices = counts[:, i].nonzero()[0]
-        data.append(counts[row_indices, i].data)
-        indices.append(row_indices)
-        indptr.append(indptr[-1] + len(row_indices))
-
     total_counts = counts.sum(1).A1
     loc = total_counts > 0
-    data.append(total_counts[loc])
-    indices.append(np.where(loc)[0])
-    indptr.append(indptr[-1] + loc.sum())
 
-    data = np.concatenate(data)
-    indices = np.concatenate(indices)
-    indptr = np.array(indptr)
+    data = np.concatenate([counts.data, total_counts[loc]])
+    indices = np.concatenate([counts.indices, np.where(loc)[0]])
+    indptr = counts.indptr
+    indptr = np.append(indptr, indptr[-1] + loc.sum())
 
     cell_id = np.ones((adata.n_obs, 2))
     cell_id[:, 0] = np.arange(adata.n_obs)

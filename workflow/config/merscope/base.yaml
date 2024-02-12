@@ -10,8 +10,10 @@ patchify:
 
 segmentation:
   baysor:
+    min_area: 20
     cell_key: cell_id # this allows to use the prior segmentation performed by Vizgen
     unassigned_value: -1
+
     config:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
@@ -52,7 +54,7 @@ aggregate:
 explorer:
   gene_column: "gene"
   ram_threshold_gb: 16
-  pixelsize: 0.108
+  pixel_size: 0.108
 
 executables:
   baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

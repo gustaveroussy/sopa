@@ -4,7 +4,6 @@ from typing import Callable
 
 import geopandas as gpd
 import numpy as np
-import zarr
 from scipy.ndimage import gaussian_filter
 from shapely import affinity
 from shapely.geometry import Polygon, box

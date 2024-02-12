@@ -15,23 +15,23 @@ def solve_conflicts(
     threshold: float = 0.5,
     patch_indices: np.ndarray | None = None,
     return_indices: bool = False,
-) -> np.ndarray[Polygon]:
+) -> np.ndarray[Polygon] | tuple[np.ndarray[Polygon], np.ndarray]:
     """Resolve segmentation conflicts (i.e. overlap) after running segmentation on patches
 
     Args:
         cells: List of cell polygons
         threshold: When two cells are overlapping, we look at the area of intersection over the area of the smallest cell. If this value is higher than the `threshold`, the cells are merged
         patch_indices: Patch from which each cell belongs.
-        return_indices: If `True`, returns also the cells indices.
+        return_indices: If `True`, returns also the cells indices. Merged cells have an index of -1.
 
     Returns:
-        Array of resolved cells polygons
+        Array of resolved cells polygons. If `return_indices`, it also returns an array of cell indices.
     """
     cells = list(cells)
     n_cells = len(cells)
     resolved_indices = np.arange(n_cells)
 
-    assert n_cells > 0, f"No cells was segmented, cannot continue"
+    assert n_cells > 0, "No cells was segmented, cannot continue"
 
     tree = shapely.STRtree(cells)
     conflicts = tree.query(cells, predicate="intersects")

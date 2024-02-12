@@ -1,8 +1,19 @@
-## [1.0.x] - tbd
+## [1.0.3] - tbd
+
+### Breaking changes
+- `pixelsize` argument has been renamed to `pixel_size` (the snakemake pipeline is only deprecating it for now)
 
 ### Added
 - The `phenocycler` reader can now also read `.tif` files (not just `.qptiff`)
 - Added missing legend in the HTML report under the "Channels" section (#15)
+- The cell area is also stored in the table (in `.obs["area"]`)
+
+### Changed
+- The `uniform` toy dataset now has two coordinate systems (better test case)
+- Faster table conversion to the Xenium Explorer
+
+### Fixed
+- Tight patching more stable with epsilon constant
 
 ## [1.0.2] - 2024-01-15
 

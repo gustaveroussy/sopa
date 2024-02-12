@@ -81,6 +81,8 @@ class Aggregator:
         )
         self.table.obs[SopaKeys.INSTANCE_KEY] = self.geo_df.index
 
+        self.table.obs[SopaKeys.AREA_OBS] = self.geo_df.area.values
+
         if "spatialdata_attrs" in self.table.uns:
             del self.table.uns["spatialdata_attrs"]
 
@@ -128,7 +130,7 @@ class Aggregator:
 
         assert (
             average_intensities or does_count
-        ), f"You must choose at least one aggregation: transcripts or fluorescence intensities"
+        ), "You must choose at least one aggregation: transcripts or fluorescence intensities"
 
         if gene_column is not None:
             if self.table is not None:

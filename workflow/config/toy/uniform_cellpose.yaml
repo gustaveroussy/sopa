@@ -31,7 +31,7 @@ annotation:
 explorer:
   gene_column: "genes"
   ram_threshold_gb: 16
-  pixelsize: 1
+  pixel_size: 1
 
 executables:
   baysor: ~/.julia/bin/baysor

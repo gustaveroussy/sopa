@@ -56,7 +56,7 @@ class SectionBuilder:
         self.sdata = sdata
 
     def _table_has(self, key, default=False):
-        if not SopaKeys.UNS_KEY in self.sdata.table.uns:
+        if SopaKeys.UNS_KEY not in self.sdata.table.uns:
             return default
         return self.sdata.table.uns[SopaKeys.UNS_KEY].get(key, default)
 
@@ -70,7 +70,7 @@ class SectionBuilder:
                     "SpatialData information",
                     [
                         Paragraph(
-                            f"Sopa is using <a href='https://spatialdata.scverse.org/en/latest/'>SpatialData</a> under the hood. This is how the object looks like:"
+                            "Sopa is using <a href='https://spatialdata.scverse.org/en/latest/'>SpatialData</a> under the hood. This is how the object looks like:"
                         ),
                         CodeBlock(str(self.sdata)),
                     ],
@@ -81,11 +81,11 @@ class SectionBuilder:
     def cell_section(self):
         log.info("Writing cell section")
 
-        shapes_key, gdf = get_boundaries(self.sdata, return_key=True)
+        shapes_key, _ = get_boundaries(self.sdata, return_key=True)
         coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
-        _kdeplot_vmax_quantile(gdf.area)
+        _kdeplot_vmax_quantile(self.sdata.table.obs[SopaKeys.AREA_OBS])
         plt.xlabel("Area (coordinate_system_unit ^ 2)")
 
         return Section(

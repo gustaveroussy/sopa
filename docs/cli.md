@@ -11,7 +11,7 @@ When installing `sopa` as written in our [getting-started guidelines](../getting
 ```console
 // Run the Sopa CLI helper
 $ sopa --help
- Usage: sopa [OPTIONS] COMMAND [ARGS]...    
+ Usage: sopa [OPTIONS] COMMAND [ARGS]...
 ╭─ Commands ─────────────────────────────────────────────────────╮
 │ aggregate     Aggregate transcripts/channels inside cells      │
 │ annotate      Perform cell-type annotation                     │
@@ -323,7 +323,7 @@ $ sopa explorer write [OPTIONS] SDATA_PATH
 * `--output-path TEXT`: Path to a directory where Xenium Explorer's outputs will be saved. By default, writes to the same path as `sdata_path` but with the `.explorer` suffix
 * `--gene-column TEXT`: Column name of the points dataframe containing the gene names
 * `--shapes-key TEXT`: Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries
-* `--pixelsize FLOAT`: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.  [default: 0.2125]
+* `--pixel_size FLOAT`: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.  [default: 0.2125]
 * `--lazy / --no-lazy`: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`)  [default: lazy]
 * `--ram-threshold-gb INTEGER`: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory  [default: 4]
 * `--mode TEXT`: String that indicated which files should be created. `'-ib'` means everything except images and boundaries, while `'+tocm'` means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything

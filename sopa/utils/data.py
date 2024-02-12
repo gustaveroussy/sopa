@@ -10,6 +10,7 @@ from shapely.geometry import Point, box
 from spatialdata import SpatialData
 from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
+from spatialdata.transformations import Affine, Identity
 
 log = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ def uniform(
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
     genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
     sigma_factor: float = 0.1,
+    pixel_size: float = 0.1,
     seed: int = 0,
     include_vertices: bool = False,
     include_image: bool = True,
@@ -36,6 +38,7 @@ def uniform(
         c_coords: Channel names
         genes: Number of different genes, or list of gene names
         sigma_factor: Factor used to determine `sigma` for the gaussian blur.
+        pixel_size: Number of microns in one pixel.
         seed: Numpy random seed
         include_vertices: Whether to include the vertices of the cells (as points) in the spatialdata object
         include_image: Whether to include the image in the spatialdata object
@@ -57,7 +60,7 @@ def uniform(
         f"Image of size ({len(c_coords), length, length}) with {n_cells} cells and {n_points_per_cell} transcripts per cell"
     )
 
-    # Compute cell vertices (xy array)
+    ### Compute cell vertices (xy array)
     vertices_x = dx / 2 + np.arange(grid_width) * dx
     x, y = np.meshgrid(vertices_x, vertices_x)
     xy = np.stack([x.ravel(), y.ravel()], axis=1)
@@ -66,7 +69,7 @@ def uniform(
 
     vertices = pd.DataFrame(xy, columns=["x", "y"])
 
-    # Create image
+    ### Create image
     images = {}
 
     if include_image:
@@ -85,14 +88,14 @@ def uniform(
         image = da.from_array(image, chunks=(1, 4096, 4096))
         images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
 
-    # Create cell boundaries
+    ### Create cell boundaries
     cells = [Point(vertex).buffer(radius).simplify(tolerance=1) for vertex in xy]
     bbox = box(0, 0, length - 1, length - 1)
     cells = [cell.intersection(bbox) for cell in cells]
     gdf = gpd.GeoDataFrame(geometry=cells)
     shapes = {"cells": ShapesModel.parse(gdf)}
 
-    # Create transcripts
+    ### Create transcripts
     n_genes = n_cells * n_points_per_cell
     point_cell_index = np.arange(n_cells).repeat(n_points_per_cell)
     points_coords = radius / 2 * np.random.randn(n_genes, 2) + xy[point_cell_index]
@@ -116,12 +119,23 @@ def uniform(
         {
             "x": points_coords[:, 0],
             "y": points_coords[:, 1],
+            "z": 1,
             "genes": gene_names,
         }
     )
+
+    # apply an arbritrary transformation for a more complete test case
+    affine = np.array([[pixel_size, 0, 100], [0, pixel_size, 600], [0, 0, 1]])
+    df[["x", "y", "z"]] = df[["x", "y", "z"]] @ affine.T
+    affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
+
     df = dd.from_pandas(df, chunksize=2_000_000)
 
-    points = {"transcripts": PointsModel.parse(df)}
+    points = {
+        "transcripts": PointsModel.parse(
+            df, transformations={"global": affine, "microns": Identity()}
+        )
+    }
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 

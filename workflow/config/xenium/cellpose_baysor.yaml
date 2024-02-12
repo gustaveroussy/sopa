@@ -17,6 +17,8 @@ segmentation:
     min_area: 400
 
   baysor:
+    min_area: 20
+
     config:
       data:
         force_2d: true # if false, uses 3D mode
@@ -44,7 +46,7 @@ segmentation:
 
 aggregate:
   average_intensities: true
-  
+
 # Comment this out if you want to use tangram -->
 
 # annotation:

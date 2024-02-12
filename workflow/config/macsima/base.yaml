@@ -21,4 +21,4 @@ aggregate:
 
 explorer:
   ram_threshold_gb: 8
-  pixelsize: 0.170
+  pixel_size: 0.170

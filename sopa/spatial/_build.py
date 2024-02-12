@@ -42,7 +42,7 @@ def spatial_neighbors(
 
     assert (
         radius is None or len(radius) == 2
-    ), f"Radius is expected to be a tuple (min_radius, max_radius)"
+    ), "Radius is expected to be a tuple (min_radius, max_radius)"
 
     log.info("Computing delaunay graph")
 

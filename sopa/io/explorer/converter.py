@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 def _check_explorer_directory(path: Path):
     assert (
         not path.exists() or path.is_dir()
-    ), f"A path to an existing file was provided. It should be a path to a directory."
+    ), "A path to an existing file was provided. It should be a path to a directory."
     path.mkdir(parents=True, exist_ok=True)
 
 
@@ -33,7 +33,7 @@ def _should_save(mode: str | None, character: str):
     assert len(mode) and mode[0] in [
         "-",
         "+",
-    ], f"Mode should be a string that starts with '+' or '-'"
+    ], "Mode should be a string that starts with '+' or '-'"
 
     return character in mode if mode[0] == "+" else character not in mode
 
@@ -45,7 +45,7 @@ def write(
     shapes_key: str | None = None,
     points_key: str | None = None,
     gene_column: str | None = None,
-    pixelsize: float = 0.2125,
+    pixel_size: float = 0.2125,
     layer: str | None = None,
     polygon_max_vertices: int = 13,
     lazy: bool = True,
@@ -84,7 +84,7 @@ def write(
         shapes_key: Name of the cell shapes (key of `sdata.shapes`).
         points_key: Name of the transcripts (key of `sdata.points`).
         gene_column: Column name of the points dataframe containing the gene names.
-        pixelsize: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
+        pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
         layer: Layer of `sdata.table` where the gene counts are saved. If `None`, uses `sdata.table.X`.
         polygon_max_vertices: Maximum number of vertices for the cell polygons.
         lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).
@@ -121,7 +121,7 @@ def write(
         if sdata.table is not None:
             geo_df = geo_df.loc[adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]]]
 
-        write_polygons(path, geo_df.geometry, polygon_max_vertices, pixelsize=pixelsize)
+        write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 
     ### Saving transcripts
     df = get_element(sdata, "points", points_key)
@@ -129,17 +129,19 @@ def write(
     if _should_save(mode, "t") and df is not None:
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
-            write_transcripts(path, df, gene_column, pixelsize=pixelsize)
+            write_transcripts(path, df, gene_column, pixel_size=pixel_size)
         else:
             log.warn("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
     if _should_save(mode, "i"):
-        write_image(path, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb, pixelsize=pixelsize)
+        write_image(
+            path, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb, pixel_size=pixel_size
+        )
 
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
-        write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixelsize)
+        write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
 
     if save_h5ad:
         sdata.table.write_h5ad(path / FileNames.H5AD)
@@ -160,7 +162,7 @@ def write_metadata(
     shapes_key: str = "NA",
     n_obs: int = 0,
     is_dir: bool = True,
-    pixelsize: float = 0.2125,
+    pixel_size: float = 0.2125,
 ):
     """Create an `experiment.xenium` file that can be open by the Xenium Explorer.
 
@@ -173,10 +175,10 @@ def write_metadata(
         shapes_key: Key of `SpatialData` object containing the boundaries shown on the explorer.
         n_obs: Number of cells
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
-        pixelsize: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
+        pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
     path = explorer_file_path(path, FileNames.METADATA, is_dir)
 
     with open(path, "w") as f:
-        metadata = experiment_dict(image_key, shapes_key, n_obs, pixelsize)
+        metadata = experiment_dict(image_key, shapes_key, n_obs, pixel_size)
         json.dump(metadata, f, indent=4)

@@ -47,6 +47,11 @@ def read_baysor(
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(make_valid(cell)))
     gdf = gdf[~gdf.geometry.isna()]
+
+    ratio_filtered = (gdf.area <= min_area).mean()
+    if ratio_filtered > 0.2:
+        log.warn(f"{ratio_filtered:.2%} of cells will be filtered due to {min_area=}")
+
     gdf = gdf[gdf.area > min_area]
 
     return gdf.geometry.values, adata[gdf.index].copy()
@@ -72,6 +77,15 @@ def read_all_baysor_patches(
 def resolve_patches(
     patches_cells: list[list[Polygon]], adatas: list[AnnData]
 ) -> tuple[gpd.GeoDataFrame, np.ndarray, np.ndarray]:
+    """Resolve the Baysor conflits on the patches overlaps.
+
+    Args:
+        patches_cells: List of polygons segmented on each patch
+        adatas: List of AnnData objects corresponding to each patch
+
+    Returns:
+        The new GeoDataFrame, the new cells indices (-1 for merged cells), and the ids of the merged cells.
+    """
     patch_ids = [adata.obs_names for adata in adatas]
 
     patch_indices = np.arange(len(patches_cells)).repeat([len(cells) for cells in patches_cells])
@@ -158,6 +172,7 @@ def resolve(
     sdata.add_shapes(SopaKeys.BAYSOR_BOUNDARIES, geo_df, overwrite=True)
 
     if sdata.table is not None:
+        log.warn("Table already existing. It will be replaced by the new one.")
         del sdata.table
 
     sdata.table = table

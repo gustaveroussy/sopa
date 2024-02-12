@@ -27,15 +27,15 @@ class MultiscaleImageWriter:
     resolutionunit = "CENTIMETER"
     dtype = np.uint8
 
-    def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixelsize: float):
+    def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixel_size: float):
         self.image = image
         self.tile_width = tile_width
-        self.pixelsize = pixelsize
+        self.pixel_size = pixel_size
 
         self.scale_names = list(image.children)
         self.channel_names = list(map(str, image[self.scale_names[0]].c.values))
         self.channel_names = _set_colors(self.channel_names)
-        self.metadata = image_metadata(self.channel_names, pixelsize)
+        self.metadata = image_metadata(self.channel_names, pixel_size)
         self.data = None
 
         self.lazy = True
@@ -72,7 +72,7 @@ class MultiscaleImageWriter:
 
     def _write_image_level(self, tif: tf.TiffWriter, scale_index: int, **kwargs):
         xarr: xr.DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
-        resolution = 1e4 * 2**scale_index / self.pixelsize
+        resolution = 1e4 * 2**scale_index / self.pixel_size
 
         if not self._should_load_memory(xarr.shape, xarr.dtype):
             n_tiles = xarr.shape[0] * self._n_tiles_axis(xarr, 1) * self._n_tiles_axis(xarr, 2)
@@ -144,7 +144,7 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     ]
     valid_colors = [c for c in ExplorerConstants.COLORS if c != ExplorerConstants.NUCLEUS_COLOR]
     n_missing = sum(
-        not is_wavelength and not c in ExplorerConstants.KNOWN_CHANNELS
+        not is_wavelength and c not in ExplorerConstants.KNOWN_CHANNELS
         for c, is_wavelength in zip(channel_names, existing_wavelength)
     )
     colors_iterator: list = np.repeat(valid_colors, ceil(n_missing / len(valid_colors))).tolist()
@@ -161,7 +161,7 @@ def write_image(
     lazy: bool = True,
     tile_width: int = 1024,
     n_subscales: int = 5,
-    pixelsize: float = 0.2125,
+    pixel_size: float = 0.2125,
     ram_threshold_gb: int | None = 4,
     is_dir: bool = True,
 ):
@@ -173,7 +173,7 @@ def write_image(
         lazy: If `False`, the image will not be read in-memory (except if the image size is below `ram_threshold_gb`). If `True`, all the images levels are always loaded in-memory.
         tile_width: Xenium tile width (do not update).
         n_subscales: Number of sub-scales in the pyramidal image.
-        pixelsize: Xenium pixel size (do not update).
+        pixel_size: Xenium pixel size (do not update).
         ram_threshold_gb: If an image (of any level of the pyramid) is below this threshold, it will be loaded in-memory.
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
     """
@@ -186,7 +186,7 @@ def write_image(
 
     image: MultiscaleSpatialImage = to_multiscale(image, [2] * n_subscales)
 
-    image_writer = MultiscaleImageWriter(image, pixelsize=pixelsize, tile_width=tile_width)
+    image_writer = MultiscaleImageWriter(image, pixel_size=pixel_size, tile_width=tile_width)
     image_writer.write(path, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
 
 
