@@ -23,30 +23,35 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
 
     images = {}
     for level, key in enumerate(list(img.keys())):
-        suffix = key if key != "0" else ""
+        suffix = key if key != '0' else ''
 
         scale_image = SpatialImage(
-            img[key].transpose("S", f"Y{suffix}", f"X{suffix}"),
-            dims=("c", "y", "x"),
+            img[key].transpose('S', f"Y{suffix}", f"X{suffix}"),
+            dims=('c', 'y', 'x'),
         ).chunk(chunks)
 
-        images[f"scale{key}"] = Image2DModel.parse(
+        scale_factor = tiff.level_downsamples[level]
+
+        scale_image = Image2DModel.parse(
             scale_image,
-            transformations={"pixels": _get_scale_transformation(tiff, level)},
-            c_coords=("r", "g", "b"),
+            transformations={'pixels': _get_scale_transformation(scale_factor)},
+            c_coords=('r', 'g', 'b'),
         )
+        scale_image.coords['y'] = scale_factor * scale_image.coords['y']
+        scale_image.coords['x'] = scale_factor * scale_image.coords['x']
+
+        images[f"scale{key}"] = scale_image
 
     multiscale_image = MultiscaleSpatialImage.from_dict(images)
-    multiscale_image.attrs["metadata"] = tiff_metadata
+    multiscale_image.attrs['metadata'] = tiff_metadata
 
     return SpatialData(images={image_name: multiscale_image})
 
 
-def _get_scale_transformation(tiff, level: int):
-    scale_factor = tiff.level_downsamples[level]
+def _get_scale_transformation(scale_factor: float):
     if scale_factor == 1:
         return Identity()
-    return Scale([scale_factor, scale_factor], axes=("x", "y"))
+    return Scale([scale_factor, scale_factor], axes=('x', 'y'))
 
 
 def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> SpatialData:
@@ -66,15 +71,15 @@ def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> S
 
     image_name, img, _, tiff_metadata = _open_wsi(path)
 
-    img = img.rename_dims({"S": "c", "Y": "y", "X": "x"})
+    img = img.rename_dims({'S': 'c', 'Y': 'y', 'X': 'x'})
 
     multiscale_image = Image2DModel.parse(
-        img["0"].transpose("c", "y", "x"),
-        transformations={"pixels": Identity()},
-        c_coords=("r", "g", "b"),
+        img['0'].transpose('c', 'y', 'x'),
+        transformations={'pixels': Identity()},
+        c_coords=('r', 'g', 'b'),
         **image_model_kwargs,
     )
-    multiscale_image.attrs["metadata"] = tiff_metadata
+    multiscale_image.attrs['metadata'] = tiff_metadata
 
     return SpatialData(images={image_name: multiscale_image})
 
@@ -82,11 +87,11 @@ def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> S
 def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
 
-    if "chunks" not in image_models_kwargs:
-        image_models_kwargs["chunks"] = (3, 4096, 4096)
+    if 'chunks' not in image_models_kwargs:
+        image_models_kwargs['chunks'] = (3, 4096, 4096)
 
-    if "scale_factors" not in image_models_kwargs:
-        image_models_kwargs["scale_factors"] = [2, 2, 2, 2]
+    if 'scale_factors' not in image_models_kwargs:
+        image_models_kwargs['scale_factors'] = [2, 2, 2, 2]
 
     return image_models_kwargs
 
@@ -94,7 +99,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
 def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
     import tiffslide
 
-    image_name = Path(path).absolute().name.split(".")[0]
+    image_name = Path(path).absolute().name.split('.')[0]
 
     tiff = tiffslide.open_slide(path)
     img = xarray.open_zarr(
@@ -104,10 +109,10 @@ def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
     )
 
     tiff_metadata = {
-        "properties": tiff.properties,
-        "dimensions": tiff.dimensions,
-        "level_count": tiff.level_count,
-        "level_dimensions": tiff.level_dimensions,
-        "level_downsamples": tiff.level_downsamples,
+        'properties': tiff.properties,
+        'dimensions': tiff.dimensions,
+        'level_count': tiff.level_count,
+        'level_dimensions': tiff.level_dimensions,
+        'level_downsamples': tiff.level_downsamples,
     }
     return image_name, img, tiff, tiff_metadata
