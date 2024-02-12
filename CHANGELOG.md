@@ -1,4 +1,9 @@
-## [1.0.3] - tbd
+## [1.0.4] - tbd
+
+### Changed
+- Explorer images should have a higher contrast (not clipping values anymore)
+
+## [1.0.3] - 2024-02-12
 
 ### Breaking changes
 - `pixelsize` argument has been renamed to `pixel_size` (the snakemake pipeline is only deprecating it for now)
