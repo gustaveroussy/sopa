@@ -14,7 +14,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
-from .._constants import ROI, SopaFiles, SopaKeys
+from .._constants import EPS, ROI, SopaFiles, SopaKeys
 from .._sdata import get_boundaries, get_item, get_spatial_image, to_intrinsic
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,9 @@ class Patches1D:
         self._count = self.count()
         if tight:
             self.patch_width = self.tight_width()
-            assert self._count == self.count()
+            assert (
+                self._count == self.count()
+            ), f"Invalid patching with {self.delta=}, {self.patch_width=} and {self.patch_overlap=}"
 
     def count(self):
         if self.patch_width >= self.delta:
@@ -45,7 +47,7 @@ class Patches1D:
 
     def tight_width(self):
         width = (self.delta + (self._count - 1) * self.patch_overlap) / self._count
-        return ceil(width) if self.int_coords else width
+        return ceil(width) if self.int_coords else width + EPS
 
     def __getitem__(self, i):
         start_delta = i * (self.patch_width - self.patch_overlap)

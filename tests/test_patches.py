@@ -34,10 +34,10 @@ def _patchify_transcripts(sdata: SpatialData, width: int, overlap: int) -> list[
 
 
 def test_patchify_baysor(sdata: SpatialData):
-    valid_indices = _patchify_transcripts(sdata, 300, 100)
+    valid_indices = _patchify_transcripts(sdata, 30, 10)
     assert len(valid_indices) == 9
 
-    valid_indices = _patchify_transcripts(sdata, 512, 0)
+    valid_indices = _patchify_transcripts(sdata, 52, 0)
     assert len(valid_indices) == 1
 
 
