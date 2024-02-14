@@ -15,11 +15,7 @@ from sopa.segmentation import Patches2D
 log = logging.getLogger(__name__)
 
 
-def _get_best_level_for_downsample(
-    level_downsamples: list, 
-    downsample: float, 
-    epsilon: float=0
-):
+def _get_best_level_for_downsample(level_downsamples: list, downsample: float, epsilon: float = 0):
     """return the best level for a given downsampling factor"""
     if downsample <= 1.0:
         return 0
@@ -29,14 +25,10 @@ def _get_best_level_for_downsample(
     return len(level_downsamples) - 1
 
 
-def _get_extraction_parameters(
-    tiff_metadata: dict, 
-    target_magnification: int, 
-    patch_width: int
-):
+def _get_extraction_parameters(tiff_metadata: dict, target_magnification: int, patch_width: int):
     """Given the metadata for the slide, a target magnification and a patch width
-       it returns the best scale to get it from (lvl), a resize factor (resize_f) 
-       and the corresponding patch size at scale0 (tile_s)"""
+    it returns the best scale to get it from (lvl), a resize factor (resize_f)
+    and the corresponding patch size at scale0 (tile_s)"""
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
         downsample = (
             int(tiff_metadata["properties"].get("tiffslide.objective-power")) / target_magnification
@@ -120,8 +112,6 @@ def embed_wsi_patches(
     if not success:
         log.error(f"Error retrieving the mpp for {image_key}, skipping tile embedding.")
         return False
-
-    # TODO: make this embedding size agnostic. At the moment it is not working for histoSSL
 
     patches = Patches2D(sdata, image_key, tile_s, 0)
     output = np.zeros((output_dim, *patches.shape), dtype="float32")
