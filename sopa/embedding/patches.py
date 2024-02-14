@@ -66,7 +66,9 @@ def _get_patch(image: SpatialImage, box: list, level: int, resize_f: float):
     import cv2
 
     patch = bounding_box_query(image, ("y", "x"), box[:2][::-1], box[2:][::-1], "pixels")
-    np_patch = np.array(patch[f"scale{level}"]["image"].transpose("y", "x", "c"))
+    np_patch = np.array(
+        patch[f"scale{level}"][next(iter(patch[f"scale{level}"]))].transpose("y", "x", "c")
+    )
     if resize_f != 1:
         shape = np_patch.shape
         dim = (int(shape[0] * resize_f), int(shape[1] * resize_f))
@@ -103,7 +105,6 @@ def patch_embedding(
     model_name: str,
     magnification: float | int,
     patch_width: float | int,
-    patch_overlap: float | int = 0,
     batch_size: int = 32,
     num_workers: int = 1,
     device: str = "cpu",
@@ -116,7 +117,6 @@ def patch_embedding(
 
     level, resize_f, tile_s = _get_extraction_parameters(tiff_metadata, magnification, patch_width)
 
-    slide_dim = tiff_metadata["level_dimensions"][0]
     # TODO: make this embedding size agnostic. At the moment it is not working for histoSSL
 
     patches = Patches2D(sdata, image_key, tile_s, 0)
