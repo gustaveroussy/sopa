@@ -41,12 +41,11 @@ def _get_extraction_parameters(
         )
     elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
         obj2mpp = {80: 0.125, 40: 0.25, 20: 0.5, 10: 1.0, 5: 2.0}
-        mppdiff = []
-        for mpp in obj2mpp.values():
-            mppdiff += [abs(mpp - float(tiff_metadata["properties"].get("tiffslide.mpp-x")))]
-        idx = np.argmin(mppdiff)
-        mpp_obj = list(obj2mpp.keys())[idx]
-        downsample = mpp_obj / target_magnification
+        mppx = float(tiff_metadata["properties"].get("tiffslide.mpp-x"))
+
+        mppdiff = [(key, abs(mpp - mppx)) for key, mpp in obj2mpp.items()]
+        mpp_obj = min(mppdiff, key=lambda x: x[1])[0]
+        downsample = mpp_obj / magnification
     else:
         return None, None, None, False
 
@@ -110,7 +109,10 @@ def embed_wsi_patches(
     num_workers: int = 1,
     device: str = "cpu",
 ):
-    """Create an image of embedding per patch of a WSI image
+    """Create an image made of patch embeddings of a WSI image.
+
+    !!! info
+        The image will be saved into the `SpatialData` object with the key `model_name` (see the argument below).
 
     Args:
         sdata: A `SpatialData` object
