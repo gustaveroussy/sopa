@@ -3,7 +3,7 @@ import torch
 from torchvision.models import resnet18
 
 
-class histoSSLFeatures(torch.nn.Module):
+class HistoSSLFeatures(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
