@@ -45,7 +45,7 @@ def read_baysor(
         index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num]
     )
 
-    gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(make_valid(cell)))
+    gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
     gdf = gdf[~gdf.geometry.isna()]
 
     ratio_filtered = (gdf.area <= min_area).mean()
