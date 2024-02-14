@@ -9,14 +9,16 @@ from spatialdata import SpatialData, bounding_box_query
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
-from sopa._sdata import get_key
+from sopa._sdata import get_intrinsic_cs, get_key
 from sopa.segmentation import Patches2D
 
 log = logging.getLogger(__name__)
 
 
-def _get_best_level_for_downsample(level_downsamples: list, downsample: float, epsilon: float = 0):
-    """return the best level for a given downsampling factor"""
+def _get_best_level_for_downsample(
+    level_downsamples: list[float], downsample: float, epsilon: float = 0.01
+) -> int:
+    """Return the best level for a given downsampling factor"""
     if downsample <= 1.0:
         return 0
     for level, ds in enumerate(level_downsamples):
@@ -25,10 +27,14 @@ def _get_best_level_for_downsample(level_downsamples: list, downsample: float, e
     return len(level_downsamples) - 1
 
 
-def _get_extraction_parameters(tiff_metadata: dict, target_magnification: int, patch_width: int):
-    """Given the metadata for the slide, a target magnification and a patch width
-    it returns the best scale to get it from (lvl), a resize factor (resize_f)
-    and the corresponding patch size at scale0 (tile_s)"""
+def _get_extraction_parameters(
+    tiff_metadata: dict, target_magnification: int, patch_width: int
+) -> tuple[int, int, int, bool]:
+    """
+    Given the metadata for the slide, a target magnification and a patch width,
+    it returns the best scale to get it from (level), a resize factor (resize_factor)
+    and the corresponding patch size at scale0 (patch_width)
+    """
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
         downsample = (
             int(tiff_metadata["properties"].get("tiffslide.objective-power")) / target_magnification
@@ -36,35 +42,36 @@ def _get_extraction_parameters(tiff_metadata: dict, target_magnification: int, p
     elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
         obj2mpp = {80: 0.125, 40: 0.25, 20: 0.5, 10: 1.0, 5: 2.0}
         mppdiff = []
-        for objpow, mpp in obj2mpp.items():
+        for mpp in obj2mpp.values():
             mppdiff += [abs(mpp - float(tiff_metadata["properties"].get("tiffslide.mpp-x")))]
-        idx = np.argmin([abs(mpp - 0.44177416504682804) for objpow, mpp in obj2mpp.items()])
-        mpp_obj = list(obj2mpp.keys())[idx]
+        index = np.argmin([abs(mpp - 0.44177416504682804) for mpp in obj2mpp.values()])
+        mpp_obj = list(obj2mpp.keys())[index]
         downsample = mpp_obj / target_magnification
     else:
         return None, None, None, False
 
-    level = _get_best_level_for_downsample(
-        tiff_metadata["level_downsamples"], downsample, epsilon=0.01
-    )
-    resize_f = tiff_metadata["level_downsamples"][level] / downsample
-    tile_s = int(patch_width * downsample)
+    level = _get_best_level_for_downsample(tiff_metadata["level_downsamples"], downsample)
+    resize_factor = tiff_metadata["level_downsamples"][level] / downsample
+    patch_width = int(patch_width * downsample)
 
-    return level, resize_f, tile_s, True
+    return level, resize_factor, patch_width, True
 
 
-def _get_patch(image: SpatialImage, box: list, level: int, resize_f: float):
+def _numpy_patch(
+    image: SpatialImage, box: list, level: int, resize_factor: float, coordinate_system: str
+) -> np.ndarray:
     import cv2
 
-    patch = bounding_box_query(image, ("y", "x"), box[:2][::-1], box[2:][::-1], "pixels")
-    np_patch = np.array(
-        patch[f"scale{level}"][next(iter(patch[f"scale{level}"]))].transpose("y", "x", "c")
+    sdata_patch = bounding_box_query(
+        image, ("y", "x"), box[:2][::-1], box[2:][::-1], coordinate_system
     )
-    if resize_f != 1:
-        shape = np_patch.shape
-        dim = (int(shape[0] * resize_f), int(shape[1] * resize_f))
-        np_patch = cv2.resize(np_patch, dim)
-    return np_patch.transpose(2, 0, 1)
+    patch = np.array(next(iter(sdata_patch[f"scale{level}"])).transpose("y", "x", "c"))
+
+    if resize_factor != 1:
+        dim = (int(patch.shape[0] * resize_factor), int(patch.shape[1] * resize_factor))
+        patch = cv2.resize(patch, dim)
+
+    return patch.transpose(2, 0, 1)
 
 
 def embed_batch(model_name: str, device: str) -> Callable:
@@ -103,23 +110,27 @@ def embed_wsi_patches(
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
     tiff_metadata = image.attrs["metadata"]
+    coordinate_system = get_intrinsic_cs(sdata, image)
 
     embedder, output_dim = embed_batch(model_name=model_name, device=device)
 
-    level, resize_f, tile_s, success = _get_extraction_parameters(
+    level, resize_factor, patch_width, success = _get_extraction_parameters(
         tiff_metadata, magnification, patch_width
     )
     if not success:
         log.error(f"Error retrieving the mpp for {image_key}, skipping tile embedding.")
         return False
 
-    patches = Patches2D(sdata, image_key, tile_s, 0)
-    output = np.zeros((output_dim, *patches.shape), dtype="float32")
+    patches = Patches2D(sdata, image_key, patch_width, 0)
+    output = np.zeros((output_dim, *patches.shape), dtype=np.float32)
 
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
         patch_boxes = patches[i : i + batch_size]
 
-        get_batches = [da.delayed(_get_patch)(image, box, level, resize_f) for box in patch_boxes]
+        get_batches = [
+            da.delayed(_numpy_patch)(image, box, level, resize_factor, coordinate_system)
+            for box in patch_boxes
+        ]
         batch = da.compute(*get_batches, num_workers=num_workers)
         embedding = embedder(np.stack(batch))
 
@@ -128,10 +139,11 @@ def embed_wsi_patches(
 
     embedding_image = SpatialImage(output, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
-        embedding_image, transformations={"pixels": Scale([tile_s, tile_s], axes=("x", "y"))}
+        embedding_image,
+        transformations={coordinate_system: Scale([patch_width, patch_width], axes=("x", "y"))},
     )
-    embedding_image.coords["y"] = tile_s * embedding_image.coords["y"]
-    embedding_image.coords["x"] = tile_s * embedding_image.coords["x"]
+    embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
+    embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
 
     sdata.add_image(model_name, embedding_image)
 
