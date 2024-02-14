@@ -147,7 +147,7 @@ class Patches2D:
         return [xmin, ymin, xmax, ymax]
 
     def __getitem__(self, i) -> tuple[int, int, int, int]:
-        """One patche bounding box: (xmin, ymin, xmax, ymax)"""
+        """One patch bounding box: (xmin, ymin, xmax, ymax)"""
         if isinstance(i, slice):
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
@@ -184,21 +184,25 @@ class Patches2D:
         """
         return [self.polygon(i) for i in range(len(self))]
 
-    def write(self, overwrite: bool = True):
-        """Save patches in `sdata.shapes["sopa_patches"]`
+    def write(self, overwrite: bool = True, shapes_key: str | None = None):
+        """Save patches in `sdata.shapes["sopa_patches"]` (or by the key specified)
 
         Args:
             overwrite: Whether to overwrite patches if existing
+            shapes_key: Optional name of the shapes to be saved. By default, uses "sopa_patches".
         """
+        shapes_key = SopaKeys.PATCHES if shapes_key is None else shapes_key
+
         geo_df = gpd.GeoDataFrame(
             {"geometry": self.polygons, SopaKeys.BOUNDS: [self[i] for i in range(len(self))]}
         )
         geo_df = ShapesModel.parse(
             geo_df, transformations=get_transformation(self.element, get_all=True)
         )
-        self.sdata.add_shapes(SopaKeys.PATCHES, geo_df, overwrite=overwrite)
 
-        log.info(f"{len(geo_df)} patches were saved in sdata['{SopaKeys.PATCHES}']")
+        self.sdata.add_shapes(shapes_key, geo_df, overwrite=overwrite)
+
+        log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 
     def patchify_transcripts(
         self,
