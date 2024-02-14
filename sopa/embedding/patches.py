@@ -124,6 +124,8 @@ def embed_wsi_patches(
     patches = Patches2D(sdata, image_key, patch_width, 0)
     output = np.zeros((output_dim, *patches.shape), dtype=np.float32)
 
+    log.info(f"Computing {len(patches)} embeddings at level {level}")
+
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
         patch_boxes = patches[i : i + batch_size]
 
