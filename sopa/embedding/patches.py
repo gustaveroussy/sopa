@@ -50,8 +50,7 @@ def _get_extraction_parameters(
         mpp_obj = list(obj2mpp.keys())[idx]
         downsample = mpp_obj / target_magnification
     else:
-        log.error("Error retrieving the mpp for {{image_key}}, skipping tile extration.")
-        return False
+        return None, None, None, False
 
     level = _get_best_level_for_downsample(
         tiff_metadata["level_downsamples"], downsample, epsilon=0.01
@@ -59,7 +58,7 @@ def _get_extraction_parameters(
     resize_f = tiff_metadata["level_downsamples"][level] / downsample
     tile_s = int(patch_width * downsample)
 
-    return level, resize_f, tile_s
+    return level, resize_f, tile_s, True
 
 
 def _get_patch(image: SpatialImage, box: list, level: int, resize_f: float):
@@ -99,7 +98,7 @@ def embed_batch(model_name: str, device: str) -> Callable:
     return _
 
 
-def patch_embedding(
+def embed_wsi_patches(
     sdata: SpatialData,
     image_key: str | None,
     model_name: str,
@@ -115,7 +114,12 @@ def patch_embedding(
 
     embedder = embed_batch(model_name=model_name, device=device)
 
-    level, resize_f, tile_s = _get_extraction_parameters(tiff_metadata, magnification, patch_width)
+    level, resize_f, tile_s, success = _get_extraction_parameters(
+        tiff_metadata, magnification, patch_width
+    )
+    if not success:
+        log.error(f"Error retrieving the mpp for {image_key}, skipping tile embedding.")
+        return False
 
     # TODO: make this embedding size agnostic. At the moment it is not working for histoSSL
 
