@@ -116,6 +116,10 @@ class Patches2D:
             if self.roi is None or self.roi.intersects(patch):
                 self._ilocs.append((ix, iy))
 
+    @property
+    def shape(self) -> tuple[int, int]:
+        return (self.patch_y._count, self.patch_x._count)
+
     def pair_indices(self, i: int) -> tuple[int, int]:
         """Index localization of one patch
 
