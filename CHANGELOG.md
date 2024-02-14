@@ -1,4 +1,4 @@
-## [1.0.4] - tbd
+## [1.0.4] - 2024-02-14
 
 ### Fix
 - Missing transcript count in cells due to concurrent writing processes (#20)
