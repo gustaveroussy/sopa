@@ -313,18 +313,23 @@ def _count_transcripts_aligned(
 
     geo_df = geo_df.reset_index()
 
+    X_partitions = []
+
     with ProgressBar():
         points.map_partitions(
-            partial(_add_coo, adata, geo_df, gene_column=value_key, gene_names=gene_names),
+            partial(_add_coo, X_partitions, geo_df, gene_column=value_key, gene_names=gene_names),
             meta=(),
         ).compute()
+
+    for X_partition in X_partitions:
+        adata.X += X_partition
 
     adata.X = adata.X.tocsr()
     return adata
 
 
 def _add_coo(
-    adata: AnnData,
+    X_partitions: list[coo_matrix],
     geo_df: gpd.GeoDataFrame,
     partition: pd.DataFrame,
     gene_column: list[str],
@@ -336,7 +341,9 @@ def _add_coo(
     joined = geo_df.sjoin(points_gdf)
     cells_indices, column_indices = joined.index, joined[gene_column].cat.codes
 
-    adata.X += coo_matrix(
+    X_partition = coo_matrix(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
         shape=(len(geo_df), len(gene_names)),
     )
+
+    X_partitions.append(X_partition)

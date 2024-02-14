@@ -1,5 +1,8 @@
 ## [1.0.4] - tbd
 
+### Fix
+- Missing transcript count in cells due to concurrent writing processes (#20)
+
 ### Changed
 - Explorer images should have a higher contrast (not clipping values anymore)
 
