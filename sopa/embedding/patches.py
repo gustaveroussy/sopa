@@ -4,6 +4,7 @@ from typing import Callable
 import dask as da
 import numpy as np
 import tqdm
+from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
 from spatialdata import SpatialData, bounding_box_query
 from spatialdata.models import Image2DModel
@@ -57,14 +58,20 @@ def _get_extraction_parameters(
 
 
 def _numpy_patch(
-    image: SpatialImage, box: list, level: int, resize_factor: float, coordinate_system: str
+    image: MultiscaleSpatialImage,
+    box: list,
+    level: int,
+    resize_factor: float,
+    coordinate_system: str,
 ) -> np.ndarray:
     import cv2
 
-    sdata_patch = bounding_box_query(
+    multiscale_patch = bounding_box_query(
         image, ("y", "x"), box[:2][::-1], box[2:][::-1], coordinate_system
     )
-    patch = np.array(next(iter(sdata_patch[f"scale{level}"])).transpose("y", "x", "c"))
+    patch = np.array(
+        next(iter(multiscale_patch[f"scale{level}"].values())).transpose("y", "x", "c")
+    )
 
     if resize_factor != 1:
         dim = (int(patch.shape[0] * resize_factor), int(patch.shape[1] * resize_factor))
@@ -123,6 +130,11 @@ def embed_wsi_patches(
     """
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
+
+    assert isinstance(
+        image, MultiscaleSpatialImage
+    ), "Only `MultiscaleSpatialImage` images are supported"
+
     tiff_metadata = image.attrs["metadata"]
     coordinate_system = get_intrinsic_cs(sdata, image)
 
