@@ -1,4 +1,12 @@
-## [1.0.3] - tbd
+## [1.0.4] - 2024-02-14
+
+### Fix
+- Missing transcript count in cells due to concurrent writing processes (#20)
+
+### Changed
+- Explorer images should have a higher contrast (not clipping values anymore)
+
+## [1.0.3] - 2024-02-12
 
 ### Breaking changes
 - `pixelsize` argument has been renamed to `pixel_size` (the snakemake pipeline is only deprecating it for now)
