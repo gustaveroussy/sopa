@@ -36,6 +36,10 @@ class Patches1D:
                 self._count == self.count()
             ), f"Invalid patching with {self.delta=}, {self.patch_width=} and {self.patch_overlap=}"
 
+    @property
+    def ratio(self):
+        return self.delta / self._count
+
     def count(self):
         if self.patch_width >= self.delta:
             return 1
@@ -110,7 +114,7 @@ class Patches2D:
         self._ilocs = []
 
         for i in range(self.patch_x._count * self.patch_y._count):
-            ix, iy = self.pair_indices(i)
+            iy, ix = divmod(i, self.patch_x._count)
             bounds = self.iloc(ix, iy)
             patch = box(*bounds)
             if self.roi is None or self.roi.intersects(patch):
@@ -120,7 +124,7 @@ class Patches2D:
     def shape(self) -> tuple[int, int]:
         return (self.patch_y._count, self.patch_x._count)
 
-    def pair_indices(self, i: int) -> tuple[int, int]:
+    def patch_iloc(self, i: int) -> tuple[int, int]:
         """Index localization of one patch
 
         Args:
@@ -129,8 +133,7 @@ class Patches2D:
         Returns:
             A tuple `(index_x, index_y)` representing the 2D localization of the patch
         """
-        iy, ix = divmod(i, self.patch_x._count)
-        return ix, iy
+        return self._ilocs[i]
 
     def iloc(self, ix: int, iy: int) -> list[int]:
         """Coordinates of the rectangle bounding box of the patch at the given indices
@@ -152,7 +155,7 @@ class Patches2D:
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
 
-        return self.iloc(*self._ilocs[i])
+        return self.iloc(*self.patch_iloc(i))
 
     def __len__(self):
         """Number of patches"""

@@ -41,12 +41,10 @@ def _get_extraction_parameters(
             int(tiff_metadata["properties"].get("tiffslide.objective-power")) / magnification
         )
     elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
-        obj2mpp = {80: 0.125, 40: 0.25, 20: 0.5, 10: 1.0, 5: 2.0}
         mppx = float(tiff_metadata["properties"].get("tiffslide.mpp-x"))
 
-        mppdiff = [(key, abs(mpp - mppx)) for key, mpp in obj2mpp.items()]
-        mpp_obj = min(mppdiff, key=lambda x: x[1])[0]
-        downsample = mpp_obj / magnification
+        mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - mppx))
+        downsample = mpp_objective / magnification
     else:
         return None, None, None, False
 
@@ -162,28 +160,21 @@ def embed_wsi_patches(
         batch = da.compute(*get_batches, num_workers=num_workers)
         embedding = embedder(np.stack(batch))
 
-        xy = np.array([patches.pair_indices(k) for k in range(i, i + batch_size)]).T
+        xy = np.array([patches.patch_iloc(k) for k in range(i, i + len(batch))]).T
         output[:, xy[1], xy[0]] = embedding.T
 
     embedding_image = SpatialImage(output, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
         embedding_image,
-        transformations={coordinate_system: Scale([patch_width, patch_width], axes=("x", "y"))},
+        transformations={
+            coordinate_system: Scale(
+                [patches.patch_x.ratio, patches.patch_y.ratio], axes=("x", "y")
+            )
+        },
     )
-    embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
-    embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
+    embedding_image.coords["y"] = patch_width * (embedding_image.coords["y"] + 0.5)
+    embedding_image.coords["x"] = patch_width * (embedding_image.coords["x"] + 0.5)
 
     sdata.add_image(model_name, embedding_image)
 
     log.info(f"Tissue segmentation saved in sdata['{model_name}']")
-
-if __name__ == '__main__':
-    import spatialdata_plot
-    from sopa.io import wsi
-    from sopa.segmentation.tissue import hsv_otsu
-
-    slide = wsi('CMU-1.svs')
-    hsv_otsu(slide, "CMU-1")
-    embed_wsi_patches(slide, "Resnet50Features", 10, 256, image_key="CMU-1", batch_size=64, num_workers=8,device='cuda')
-
-    slide.pl.render_images("Resnet50Features", channel=[1, 2, 3]).pl.show(save='lala.png')
