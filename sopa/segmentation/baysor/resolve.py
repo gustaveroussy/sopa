@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from shapely.geometry import Polygon, shape
-from shapely.validation import make_valid
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, TableModel
 from spatialdata.transformations import get_transformation
