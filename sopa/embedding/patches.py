@@ -28,7 +28,7 @@ def _get_best_level_for_downsample(
 
 
 def _get_extraction_parameters(
-    tiff_metadata: dict, target_magnification: int, patch_width: int
+    tiff_metadata: dict, magnification: int, patch_width: int
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
@@ -37,7 +37,7 @@ def _get_extraction_parameters(
     """
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
         downsample = (
-            int(tiff_metadata["properties"].get("tiffslide.objective-power")) / target_magnification
+            int(tiff_metadata["properties"].get("tiffslide.objective-power")) / magnification
         )
     elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
         obj2mpp = {80: 0.125, 40: 0.25, 20: 0.5, 10: 1.0, 5: 2.0}
@@ -46,7 +46,7 @@ def _get_extraction_parameters(
             mppdiff += [abs(mpp - float(tiff_metadata["properties"].get("tiffslide.mpp-x")))]
         index = np.argmin([abs(mpp - 0.44177416504682804) for mpp in obj2mpp.values()])
         mpp_obj = list(obj2mpp.keys())[index]
-        downsample = mpp_obj / target_magnification
+        downsample = mpp_obj / magnification
     else:
         return None, None, None, False
 
@@ -99,14 +99,26 @@ def embed_batch(model_name: str, device: str) -> Callable:
 
 def embed_wsi_patches(
     sdata: SpatialData,
-    image_key: str | None,
     model_name: str,
-    magnification: float | int,
-    patch_width: float | int,
+    magnification: int,
+    patch_width: int,
+    image_key: str | None = None,
     batch_size: int = 32,
     num_workers: int = 1,
     device: str = "cpu",
 ):
+    """Create an image of embedding per patch of a WSI image
+
+    Args:
+        sdata: A `SpatialData` object
+        model_name: Name of the computer vision model to be used. One of `Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`.
+        magnification: The target magnification.
+        patch_width: Width of the patches for which the embeddings will be computed.
+        image_key: Optional image key of the WSI image, unecessary if there is only one image.
+        batch_size: Mini-batch size used during inference.
+        num_workers: Number of workers used to extract patches.
+        device: Device used for the computer vision model.
+    """
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
     tiff_metadata = image.attrs["metadata"]
