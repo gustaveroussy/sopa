@@ -155,11 +155,15 @@ def embed_wsi_patches(
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
         patch_boxes = patches[i : i + batch_size]
 
-        get_batches = [
-            da.delayed(_numpy_patch)(image, box, level, resize_factor, coordinate_system)
-            for box in patch_boxes
+        # get_batches = [
+        #     da.delayed(_numpy_patch)(image, box, level, resize_factor, coordinate_system)
+        #     for box in patch_boxes
+        # ]
+        # batch = da.compute(*get_batches, num_workers=num_workers)
+
+        batch = [
+            _numpy_patch(image, box, level, resize_factor, coordinate_system) for box in patch_boxes
         ]
-        batch = da.compute(*get_batches, num_workers=num_workers)
         embedding = embedder(np.stack(batch))
 
         xy = np.array([patches.pair_indices(k) for k in range(i, i + batch_size)]).T
