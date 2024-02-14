@@ -44,9 +44,9 @@ def _get_extraction_parameters(
         mppdiff = []
         for mpp in obj2mpp.values():
             mppdiff += [abs(mpp - float(tiff_metadata["properties"].get("tiffslide.mpp-x")))]
-        index = np.argmin([abs(mpp - 0.44177416504682804) for mpp in obj2mpp.values()])
-        mpp_obj = list(obj2mpp.keys())[index]
-        downsample = mpp_obj / magnification
+        idx = np.argmin(mppdiff)
+        mpp_obj = list(obj2mpp.keys())[idx]
+        downsample = mpp_obj / target_magnification
     else:
         return None, None, None, False
 
