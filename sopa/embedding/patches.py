@@ -169,14 +169,3 @@ def embed_wsi_patches(
     sdata.add_image(model_name, embedding_image)
 
     log.info(f"Tissue segmentation saved in sdata['{model_name}']")
-
-if __name__ == '__main__':
-    import spatialdata_plot
-    from sopa.io import wsi
-    from sopa.segmentation.tissue import hsv_otsu
-
-    slide = wsi('CMU-1.svs')
-    hsv_otsu(slide, "CMU-1")
-    embed_wsi_patches(slide, "Resnet50Features", 10, 256, image_key="CMU-1", batch_size=64, num_workers=8,device='cuda')
-
-    slide.pl.render_images("Resnet50Features", channel=[1, 2, 3]).pl.show(save='lala.png')
