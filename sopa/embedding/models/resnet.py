@@ -26,6 +26,8 @@ class Resnet50Features(nn.Module):
             [transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))]
         )
 
+        self.output_dim = 1024
+
     def __call__(self, x):
         x = self.features(self.t(x))
         return x

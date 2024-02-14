@@ -13,6 +13,7 @@ class HistoSSLFeatures(torch.nn.Module):
         self.model = resnet18(weights=None)
         self._load_model_weights()
         self.model.fc = torch.nn.Sequential()
+        self.output_dim = 512
 
     def _load_model_weights(self):
         state_dict = self.state["state_dict"]

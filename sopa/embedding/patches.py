@@ -95,7 +95,7 @@ def embed_batch(model_name: str, device: str) -> Callable:
             embedding = model(torch_patch.to(device)).squeeze()
         return embedding.cpu()
 
-    return _
+    return _, model.output_dim
 
 
 def embed_wsi_patches(
@@ -112,7 +112,7 @@ def embed_wsi_patches(
     image = sdata.images[image_key]
     tiff_metadata = image.attrs["metadata"]
 
-    embedder = embed_batch(model_name=model_name, device=device)
+    embedder, output_dim = embed_batch(model_name=model_name, device=device)
 
     level, resize_f, tile_s, success = _get_extraction_parameters(
         tiff_metadata, magnification, patch_width
@@ -124,7 +124,7 @@ def embed_wsi_patches(
     # TODO: make this embedding size agnostic. At the moment it is not working for histoSSL
 
     patches = Patches2D(sdata, image_key, tile_s, 0)
-    output = np.zeros((1024, *patches.shape), dtype="float32")
+    output = np.zeros((output_dim, *patches.shape), dtype="float32")
 
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
         patch_boxes = patches[i : i + batch_size]
