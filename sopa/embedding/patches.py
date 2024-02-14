@@ -15,7 +15,11 @@ from sopa.segmentation import Patches2D
 log = logging.getLogger(__name__)
 
 
-def _get_best_level_for_downsample(level_downsamples, downsample, epsilon=0):
+def _get_best_level_for_downsample(
+    level_downsamples: list, 
+    downsample: float, 
+    epsilon: float=0
+):
     """return the best level for a given downsampling factor"""
     if downsample <= 1.0:
         return 0
@@ -25,7 +29,14 @@ def _get_best_level_for_downsample(level_downsamples, downsample, epsilon=0):
     return len(level_downsamples) - 1
 
 
-def _get_extraction_parameters(tiff_metadata, target_magnification, patch_width):
+def _get_extraction_parameters(
+    tiff_metadata: dict, 
+    target_magnification: int, 
+    patch_width: int
+):
+    """Given the metadata for the slide, a target magnification and a patch width
+       it returns the best scale to get it from (lvl), a resize factor (resize_f) 
+       and the corresponding patch size at scale0 (tile_s)"""
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
         downsample = (
             int(tiff_metadata["properties"].get("tiffslide.objective-power")) / target_magnification
