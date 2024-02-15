@@ -166,14 +166,10 @@ def embed_wsi_patches(
     embedding_image = SpatialImage(output, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
         embedding_image,
-        transformations={
-            coordinate_system: Scale(
-                [patches.patch_x.ratio, patches.patch_y.ratio], axes=("x", "y")
-            )
-        },
+        transformations={coordinate_system: Scale([patch_width, patch_width], axes=("x", "y"))},
     )
-    embedding_image.coords["y"] = patch_width * (embedding_image.coords["y"] + 0.5)
-    embedding_image.coords["x"] = patch_width * (embedding_image.coords["x"] + 0.5)
+    embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
+    embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
 
     sdata.add_image(model_name, embedding_image)
 
