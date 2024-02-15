@@ -172,8 +172,8 @@ def embed_wsi_patches(
     embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
     embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
 
-    shape_key = f"sopa_{model_name}"
+    image_key = f"sopa_{model_name}"
 
-    sdata.add_image(shape_key, embedding_image)
+    sdata.add_image(image_key, embedding_image)
 
-    log.info(f"Tissue segmentation saved in sdata['{shape_key}']")
+    log.info(f"WSI embeddings saved as an image in sdata['{image_key}']")
