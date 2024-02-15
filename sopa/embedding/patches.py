@@ -37,9 +37,9 @@ def _get_extraction_parameters(
     and the corresponding patch size at scale0 (patch_width)
     """
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
-        downsample = (
-            int(tiff_metadata["properties"].get("tiffslide.objective-power")) / magnification
-        )
+        objective_power = int(tiff_metadata["properties"].get("tiffslide.objective-power"))
+        downsample = objective_power / magnification
+
     elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
         mppx = float(tiff_metadata["properties"].get("tiffslide.mpp-x"))
 
@@ -57,11 +57,12 @@ def _get_extraction_parameters(
 
 def _numpy_patch(
     image: MultiscaleSpatialImage,
-    box: list,
+    box: tuple[int, int, int, int],
     level: int,
     resize_factor: float,
     coordinate_system: str,
 ) -> np.ndarray:
+    """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
     import cv2
 
     multiscale_patch = bounding_box_query(
@@ -114,7 +115,7 @@ def embed_wsi_patches(
     """Create an image made of patch embeddings of a WSI image.
 
     !!! info
-        The image will be saved into the `SpatialData` object with the key `model_name` (see the argument below).
+        The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below).
 
     Args:
         sdata: A `SpatialData` object
@@ -171,6 +172,8 @@ def embed_wsi_patches(
     embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
     embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
 
-    sdata.add_image(model_name, embedding_image)
+    shape_key = f"sopa_{model_name}"
 
-    log.info(f"Tissue segmentation saved in sdata['{model_name}']")
+    sdata.add_image(shape_key, embedding_image)
+
+    log.info(f"Tissue segmentation saved in sdata['{shape_key}']")
