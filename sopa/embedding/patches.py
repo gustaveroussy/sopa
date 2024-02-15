@@ -79,7 +79,7 @@ def _numpy_patch(
     return patch.transpose(2, 0, 1)
 
 
-def embed_batch(model_name: str, device: str) -> Callable:
+def embed_batch(model_name: str, device: str) -> tuple[Callable, int]:
     import torch
 
     import sopa.embedding.models as models
@@ -111,7 +111,7 @@ def embed_wsi_patches(
     batch_size: int = 32,
     num_workers: int = 1,
     device: str = "cpu",
-):
+) -> bool:
     """Create an image made of patch embeddings of a WSI image.
 
     !!! info
@@ -126,6 +126,9 @@ def embed_wsi_patches(
         batch_size: Mini-batch size used during inference.
         num_workers: Number of workers used to extract patches.
         device: Device used for the computer vision model.
+
+    Returns:
+        `True` if the embedding was successful, else `False`
     """
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
@@ -147,7 +150,7 @@ def embed_wsi_patches(
         return False
 
     patches = Patches2D(sdata, image_key, patch_width, 0)
-    output = np.zeros((output_dim, *patches.shape), dtype=np.float32)
+    embedding_image = np.zeros((output_dim, *patches.shape), dtype=np.float32)
 
     log.info(f"Computing {len(patches)} embeddings at level {level}")
 
@@ -161,10 +164,10 @@ def embed_wsi_patches(
         batch = da.compute(*get_batches, num_workers=num_workers)
         embedding = embedder(np.stack(batch))
 
-        xy = np.array([patches.patch_iloc(k) for k in range(i, i + len(batch))]).T
-        output[:, xy[1], xy[0]] = embedding.T
+        loc_x, loc_y = np.array([patches.patch_iloc(k) for k in range(i, i + len(batch))]).T
+        embedding_image[:, loc_y, loc_x] = embedding.T
 
-    embedding_image = SpatialImage(output, dims=("c", "y", "x"))
+    embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
         embedding_image,
         transformations={coordinate_system: Scale([patch_width, patch_width], axes=("x", "y"))},
@@ -173,7 +176,8 @@ def embed_wsi_patches(
     embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
 
     embedding_key = f"sopa_{model_name}"
-
     sdata.add_image(embedding_key, embedding_image)
 
     log.info(f"WSI embeddings saved as an image in sdata['{embedding_key}']")
+
+    return True
