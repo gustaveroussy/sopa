@@ -99,7 +99,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
 def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
     import tiffslide
 
-    image_name = Path(path).absolute().name.split(".")[0]
+    image_name = Path(path).stem
 
     tiff = tiffslide.open_slide(path)
     img = xarray.open_zarr(
