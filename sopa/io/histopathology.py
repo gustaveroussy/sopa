@@ -31,9 +31,8 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
         ).chunk(chunks)
 
         scale_factor = tiff.level_downsamples[level]
-
         scale_image = Image2DModel.parse(
-            scale_image,
+            scale_image[:3,:,:],
             transformations={"pixels": _get_scale_transformation(scale_factor)},
             c_coords=("r", "g", "b"),
         )

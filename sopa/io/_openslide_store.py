@@ -1,12 +1,12 @@
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any, Dict, Mapping, MutableMapping
+from typing import Any, Dict, List, Mapping, MutableMapping
 
 import numpy as np
 from openslide import OpenSlide
 
 from zarr.storage import _path_to_prefix, attrs_key, init_array, init_group, BaseStore, KVStore
-from zarr.util import json_dumps, normalize_storage_path
+from zarr.util import json_dumps, normalize_storage_path, normalize_shape
 
 
 def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str = None):
@@ -25,18 +25,27 @@ def create_meta_store(slide: OpenSlide, tilesize: int) -> Dict[str, bytes]:
                 "datasets": [{"path": str(i)} for i in range(slide.level_count)],
                 "version": "0.1",
             }
-        ]
+        ],
+        "metadata": dict(slide.properties),
     }
     init_group(store)
     init_attrs(store, root_attrs)
+
     for i, (x, y) in enumerate(slide.level_dimensions):
         init_array(
             store,
             path=str(i),
-            shape=(y, x, 4),
+            shape=normalize_shape((y, x, 4)),
             chunks=(tilesize, tilesize, 4),
+            fill_value=0,
             dtype="|u1",
             compressor=None,
+        )
+        suffix = str(i) if i != 0 else ''
+        init_attrs(
+            store, 
+            {"_ARRAY_DIMENSIONS": [f"Y{suffix}", f"X{suffix}", f"S"]}, 
+            path=str(i)
         )
     return KVStore(store)
 
@@ -46,6 +55,7 @@ def _parse_chunk_path(path: str):
     level, ckey = path.split("/")
     y, x, _ = map(int, ckey.split("."))
     return x, y, int(level)
+
 
 class OpenSlideBaseStore(BaseStore):
     """Wraps an OpenSlide object as a multiscale Zarr Store.
@@ -90,10 +100,7 @@ class OpenSlideBaseStore(BaseStore):
         return key in self._store
 
     def __eq__(self, other):
-        return (
-            isinstance(other, OpenSlideStore)
-            and self._slide._filename == other._slide._filename
-        )
+        return isinstance(other, OpenSlideStore) and self._slide._filename == other._slide._filename
 
     def __setitem__(self, key, val):
         raise RuntimeError("__setitem__ not implemented")
@@ -126,10 +133,11 @@ class OpenSlideBaseStore(BaseStore):
         self._slide.close()
 
 
-
 class OpenSlideStore(OpenSlideBaseStore):
-    def listdir(self, a, b=None):
-        return ''
+    def listdir(self, path: Path = None) -> List[str]:
+        import ipdb; ipdb.set_trace()
+        return ""
+
 
 if __name__ == "__main__":
     import sys
