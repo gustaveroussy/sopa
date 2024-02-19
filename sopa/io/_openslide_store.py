@@ -93,8 +93,7 @@ class OpenSlideBaseStore(BaseStore):
             # If anything goes wrong, we just signal the chunk
             # is missing from the store.
             raise KeyError(key)
-
-        return np.array(tile).tobytes()
+        return np.array(tile)#.tobytes()
 
     def __contains__(self, key: str):
         return key in self._store
