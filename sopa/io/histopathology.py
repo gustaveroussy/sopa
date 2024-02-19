@@ -97,22 +97,24 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
 
 
 def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
-    import tiffslide
+    import openslide
+    from ._openslide_store import OpenSlideStore
 
     image_name = Path(path).stem
 
-    tiff = tiffslide.open_slide(path)
-    img = xarray.open_zarr(
-        tiff.zarr_group.store,
+    slide = openslide.open_slide(path)
+    img_zarr = xarray.open_zarr(
+        OpenSlideStore(path)._store,
         consolidated=False,
         mask_and_scale=False,
     )
+    import ipdb; ipdb.set_trace()
 
-    tiff_metadata = {
-        "properties": tiff.properties,
-        "dimensions": tiff.dimensions,
-        "level_count": tiff.level_count,
-        "level_dimensions": tiff.level_dimensions,
-        "level_downsamples": tiff.level_downsamples,
+    slide_metadata = {
+        "properties": slide.properties,
+        "dimensions": slide.dimensions,
+        "level_count": slide.level_count,
+        "level_dimensions": slide.level_dimensions,
+        "level_downsamples": slide.level_downsamples,
     }
-    return image_name, img, tiff, tiff_metadata
+    return image_name, img_zarr, slide, slide_metadata
