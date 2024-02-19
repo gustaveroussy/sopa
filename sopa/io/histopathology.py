@@ -103,7 +103,7 @@ def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
 
     slide = openslide.open_slide(path)
     img_zarr = xarray.open_zarr(
-        OpenSlideStore(path)._store,
+        OpenSlideStore(path).store,
         consolidated=False,
         mask_and_scale=False,
     )

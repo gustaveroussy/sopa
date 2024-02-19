@@ -105,7 +105,7 @@ class OpenSlideBaseStore(BaseStore):
         raise RuntimeError("__setitem__ not implemented")
 
     def __delitem__(self, key):
-        raise RuntimeError("__setitem__ not implemented")
+        raise PermissionError('ZarrStore is read-only')
 
     def __iter__(self):
         return iter(self.keys())
@@ -131,14 +131,12 @@ class OpenSlideBaseStore(BaseStore):
     def close(self):
         self._slide.close()
 
-
-class OpenSlideStore(OpenSlideBaseStore):
     def listdir(self, path: Path = None) -> List[str]:
         import ipdb; ipdb.set_trace()
         return ""
 
 
-if __name__ == "__main__":
-    import sys
-
-    store = OpenSlideStore(sys.argv[1])
+class OpenSlideStore(OpenSlideBaseStore):
+    @property
+    def store(self) -> KVStore:
+        return KVStore(self)
