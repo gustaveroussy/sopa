@@ -36,12 +36,12 @@ def _get_extraction_parameters(
     it returns the best scale to get it from (level), a resize factor (resize_factor)
     and the corresponding patch size at scale0 (patch_width)
     """
-    if tiff_metadata["properties"].get("tiffslide.objective-power"):
-        objective_power = int(tiff_metadata["properties"].get("tiffslide.objective-power"))
+    if tiff_metadata["properties"].get("openslide.objective-power"):
+        objective_power = int(tiff_metadata["properties"].get("openslide.objective-power"))
         downsample = objective_power / magnification
 
-    elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
-        mppx = float(tiff_metadata["properties"].get("tiffslide.mpp-x"))
+    elif tiff_metadata["properties"].get("openslide.mpp-x"):
+        mppx = float(tiff_metadata["properties"].get("openslide.mpp-x"))
 
         mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - mppx))
         downsample = mpp_objective / magnification
