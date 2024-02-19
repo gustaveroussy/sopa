@@ -5,7 +5,7 @@ from typing import Any, Dict, Mapping, MutableMapping
 import numpy as np
 from openslide import OpenSlide
 
-from zarr.storage import _path_to_prefix, attrs_key, init_array, init_group, BaseStore
+from zarr.storage import _path_to_prefix, attrs_key, init_array, init_group, BaseStore, KVStore
 from zarr.util import json_dumps, normalize_storage_path
 
 
@@ -38,7 +38,7 @@ def create_meta_store(slide: OpenSlide, tilesize: int) -> Dict[str, bytes]:
             dtype="|u1",
             compressor=None,
         )
-    return store
+    return KVStore(store)
 
 
 def _parse_chunk_path(path: str):

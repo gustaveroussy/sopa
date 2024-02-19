@@ -108,7 +108,6 @@ def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
         consolidated=False,
         mask_and_scale=False,
     )
-    import ipdb; ipdb.set_trace()
 
     slide_metadata = {
         "properties": slide.properties,
