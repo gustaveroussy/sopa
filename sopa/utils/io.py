@@ -1,11 +1,12 @@
+# Adapted from https://github.com/manzt/napari-lazy-openslide/tree/main
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, MutableMapping
+from typing import Any, Dict, Mapping, MutableMapping
 
 import numpy as np
 from openslide import OpenSlide
 
-from zarr.storage import _path_to_prefix, attrs_key, init_array, init_group, BaseStore, KVStore
+from zarr.storage import _path_to_prefix, attrs_key, init_array, init_group, Store, KVStore
 from zarr.util import json_dumps, normalize_storage_path, normalize_shape
 
 
@@ -57,7 +58,7 @@ def _parse_chunk_path(path: str):
     return x, y, int(level)
 
 
-class OpenSlideBaseStore(BaseStore):
+class OpenSlideStore(Store):
     """Wraps an OpenSlide object as a multiscale Zarr Store.
 
     Parameters
@@ -65,8 +66,11 @@ class OpenSlideBaseStore(BaseStore):
     path: str
         The file to open with OpenSlide.
     tilesize: int
-        Desired "chunk" size for zarr store.
+        Desired "chunk" size for zarr store (default: 512).
     """
+
+    _writeable = False
+    _erasable = False
 
     def __init__(self, path: str, tilesize: int = 512):
         self._slide = OpenSlide(path)
@@ -116,7 +120,7 @@ class OpenSlideBaseStore(BaseStore):
     def __enter__(self):
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
     def _ref_pos(self, x: int, y: int, level: int):
@@ -131,12 +135,13 @@ class OpenSlideBaseStore(BaseStore):
     def close(self):
         self._slide.close()
 
-    def listdir(self, path: Path = None) -> List[str]:
-        import ipdb; ipdb.set_trace()
-        return ""
+    def rename(self):
+        raise PermissionError(f'{type(self)} is not erasable, cannot call "rename"')
+    
+    
+    def rmdir(self, path: str = "") -> None:
+        raise PermissionError(f'{type(self)} is not erasable, cannot call "rmdir"')
 
-
-class OpenSlideStore(OpenSlideBaseStore):
     @property
     def store(self) -> KVStore:
         return KVStore(self)
