@@ -29,19 +29,20 @@ def _get_best_level_for_downsample(
 
 
 def _get_extraction_parameters(
-    tiff_metadata: dict, magnification: int, patch_width: int
+    tiff_metadata: dict, magnification: int, patch_width: int, backend: str
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
     it returns the best scale to get it from (level), a resize factor (resize_factor)
-    and the corresponding patch size at scale0 (patch_width)
+    and the corresponding patch size at scale0 (patch_width). An additional parameter
+    is required that defines the WSI backend utilized.
     """
-    if tiff_metadata["properties"].get("tiffslide.objective-power"):
-        objective_power = int(tiff_metadata["properties"].get("tiffslide.objective-power"))
+    if tiff_metadata["properties"].get(f"{backend}.objective-power"):
+        objective_power = int(tiff_metadata["properties"].get(f"{backend}.objective-power"))
         downsample = objective_power / magnification
 
-    elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
-        mppx = float(tiff_metadata["properties"].get("tiffslide.mpp-x"))
+    elif tiff_metadata["properties"].get(f"{backend}.mpp-x"):
+        mppx = float(tiff_metadata["properties"].get(f"{backend}.mpp-x"))
 
         mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - mppx))
         downsample = mpp_objective / magnification
@@ -143,7 +144,7 @@ def embed_wsi_patches(
     embedder, output_dim = embed_batch(model_name=model_name, device=device)
 
     level, resize_factor, patch_width, success = _get_extraction_parameters(
-        tiff_metadata, magnification, patch_width
+        tiff_metadata, magnification, patch_width, backend=image.attrs['backend']
     )
     if not success:
         log.error(f"Error retrieving the mpp for {image_key}, skipping tile embedding.")

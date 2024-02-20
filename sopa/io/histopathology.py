@@ -9,16 +9,20 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
 
 
-def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> SpatialData:
+def wsi(
+    path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256), backend="openslide"
+) -> SpatialData:
     """Read a WSI into a `SpatialData` object
 
     Args:
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
+        backend: The library to use as a backend in order to load the WSI. (one of: openslide, tiffslide)
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`
     """
+    _open_wsi = {"openslide": _open_wsi_openslide, "tiffslide": _open_wsi_tiffslide}[backend]
     image_name, img, tiff, tiff_metadata = _open_wsi(path)
 
     images = {}
@@ -31,9 +35,8 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
         ).chunk(chunks)
 
         scale_factor = tiff.level_downsamples[level]
-
         scale_image = Image2DModel.parse(
-            scale_image,
+            scale_image[:3, :, :],
             transformations={"pixels": _get_scale_transformation(scale_factor)},
             c_coords=("r", "g", "b"),
         )
@@ -44,6 +47,7 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
 
     multiscale_image = MultiscaleSpatialImage.from_dict(images)
     multiscale_image.attrs["metadata"] = tiff_metadata
+    multiscale_image.attrs["backend"] = backend
 
     return SpatialData(images={image_name: multiscale_image})
 
@@ -96,7 +100,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
-def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
+def _open_wsi_tiffslide(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
     import tiffslide
 
     image_name = Path(path).stem
@@ -116,3 +120,26 @@ def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
         "level_downsamples": tiff.level_downsamples,
     }
     return image_name, img, tiff, tiff_metadata
+
+
+def _open_wsi_openslide(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
+    import openslide
+    from ..utils.io import OpenSlideStore
+
+    image_name = Path(path).stem
+
+    slide = openslide.open_slide(path)
+    img_zarr = xarray.open_zarr(
+        OpenSlideStore(path).store,
+        consolidated=False,
+        mask_and_scale=False,
+    )
+
+    slide_metadata = {
+        "properties": slide.properties,
+        "dimensions": slide.dimensions,
+        "level_count": slide.level_count,
+        "level_dimensions": slide.level_dimensions,
+        "level_downsamples": slide.level_downsamples,
+    }
+    return image_name, img_zarr, slide, slide_metadata
