@@ -73,6 +73,7 @@ class OpenSlideStore(Store):
     _erasable = False
 
     def __init__(self, path: str, tilesize: int = 512):
+        self._path = path
         self._slide = OpenSlide(path)
         self._tilesize = tilesize
         self._store = create_meta_store(self._slide, tilesize)
@@ -134,6 +135,15 @@ class OpenSlideStore(Store):
 
     def close(self):
         self._slide.close()
+
+    # Retrieved from napari-lazy-openslide PR#16
+    def __getstate__(self):
+        return {"_path": self._path, "_tilesize": self._tilesize}
+
+    def __setstate__(self, newstate):
+        path = newstate["_path"]
+        tilesize = newstate["_tilesize"]
+        self.__init__(path, tilesize)
 
     def rename(self):
         raise PermissionError(f'{type(self)} is not erasable, cannot call "rename"')
