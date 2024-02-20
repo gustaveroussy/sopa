@@ -27,6 +27,7 @@ class StainingSegmentation:
         sdata: SpatialData,
         method: Callable,
         channels: list[str] | str,
+        image_key: str | None = None,
         min_area: float = 0,
         clip_limit: float = 0.2,
         gaussian_sigma: float = 1,
@@ -64,6 +65,7 @@ class StainingSegmentation:
             sdata: A `SpatialData` object
             method: A segmentation `callable` whose input is an image of shape `(C, Y, X)` and output is a cell mask of shape `(Y, X)`. Each mask value `>0` represent a unique cell ID. Such callables can be found in `sopa.segmentation.methods`.
             channels: One or a list of channel names used for segmentation. If only one channel is provided, the image given to the `method` will be of shape `(1, Y, X)`.
+            image_key: Optional key of `sdata` containing the image (no needed if there is only one image)
             min_area: Minimum area (in pixels^2) for a cell to be kept
             clip_limit: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
             gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
@@ -76,7 +78,7 @@ class StainingSegmentation:
         self.clip_limit = clip_limit
         self.gaussian_sigma = gaussian_sigma
 
-        self.image_key, self.image = get_spatial_image(sdata, return_key=True)
+        self.image_key, self.image = get_spatial_image(sdata, key=image_key, return_key=True)
 
         image_channels = self.image.coords["c"].values
         assert np.isin(
