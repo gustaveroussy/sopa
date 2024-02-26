@@ -65,7 +65,7 @@ cd sopa/workflow
 snakemake --configfile=/path/to/yaml_config --config data_path=/path/to/data_directory --cores 1 --use-conda
 ```
 
-For more details on `snakemake` configuration and how to properly setup your environments, please refer to the [documentation](https://gustaveroussy.github.io/sopa/pipeline).
+For more details on `snakemake` configuration and how to properly setup your environments, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/snakemake/).
 
 ### CLI
 

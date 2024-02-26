@@ -1,3 +1,8 @@
+## [1.0.5] - tbd
+
+### Changed
+- Faster explorer image writing (default `chunksize` is the Xenium Explorer tile size).
+
 ## [1.0.4] - 2024-02-14
 
 ### Fix

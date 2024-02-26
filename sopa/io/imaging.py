@@ -49,7 +49,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None):
     image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
 
     if "chunks" not in image_models_kwargs:
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+        image_models_kwargs["chunks"] = (1, 1024, 1024)
 
     return image_models_kwargs
 

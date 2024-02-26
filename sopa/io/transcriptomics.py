@@ -102,7 +102,7 @@ def merscope(
         if isinstance(image_models_kwargs, MappingProxyType):
             image_models_kwargs = {}
         assert isinstance(image_models_kwargs, dict)
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+        image_models_kwargs["chunks"] = (1, 1024, 1024)
     if "scale_factors" not in image_models_kwargs:
         if isinstance(image_models_kwargs, MappingProxyType):
             image_models_kwargs = {}
@@ -252,7 +252,7 @@ def xenium(
         if isinstance(image_models_kwargs, MappingProxyType):
             image_models_kwargs = {}
         assert isinstance(image_models_kwargs, dict)
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+        image_models_kwargs["chunks"] = (1, 1024, 1024)
     if "scale_factors" not in image_models_kwargs:
         if isinstance(image_models_kwargs, MappingProxyType):
             image_models_kwargs = {}
@@ -325,4 +325,5 @@ def cosmx(path: str, **kwargs: int) -> SpatialData:
     Returns:
         A `SpatialData` object representing the CosMX experiment
     """
+    # TODO: add stitching + set chunksize to 1024
     return spatialdata_io.cosmx(path, **kwargs)
