@@ -85,7 +85,7 @@ def uniform(
         if apply_blur:
             image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
         image = (image / image.max() * 255).astype(np.uint8)
-        image = da.from_array(image, chunks=(1, 4096, 4096))
+        image = da.from_array(image, chunks=(1, 1024, 1024))
         images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
 
     ### Create cell boundaries
