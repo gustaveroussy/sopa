@@ -22,6 +22,8 @@ from .utils import explorer_file_path
 
 log = logging.getLogger(__name__)
 
+TILE_SIZE = ExplorerConstants.TILE_SIZE
+
 
 class MultiscaleImageWriter:
     photometric = "minisblack"
@@ -29,13 +31,15 @@ class MultiscaleImageWriter:
     resolutionunit = "CENTIMETER"
     dtype = np.uint8
 
-    def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixel_size: float):
-        self.image = image
+    def __init__(self, image: SpatialImage, n_subscales: int, tile_width: int, pixel_size: float):
+        self.image: MultiscaleSpatialImage = to_multiscale(
+            image, [2] * n_subscales, chunks=(1, TILE_SIZE, TILE_SIZE)
+        )
         self.tile_width = tile_width
         self.pixel_size = pixel_size
 
-        self.scale_names = list(image.children)
-        self.channel_names = list(map(str, image[self.scale_names[0]].c.values))
+        self.scale_names = list(self.image.children)
+        self.channel_names = list(map(str, self.image[self.scale_names[0]].c.values))
         self.channel_names = _set_colors(self.channel_names)
         self.metadata = image_metadata(self.channel_names, pixel_size)
         self.data = None
@@ -67,7 +71,7 @@ class MultiscaleImageWriter:
         itemsize = max(np.dtype(dtype).itemsize, np.dtype(self.dtype).itemsize)
         size = shape[0] * shape[1] * shape[2] * itemsize
 
-        return size <= self.ram_threshold_gb * 1024**3
+        return size <= self.ram_threshold_gb * TILE_SIZE**3
 
     def _scale(self, array: np.ndarray):
         return scale_dtype(array, self.dtype)
@@ -79,7 +83,7 @@ class MultiscaleImageWriter:
         if not self._should_load_memory(xarr.shape, xarr.dtype):
             n_tiles = xarr.shape[0] * self._n_tiles_axis(xarr, 1) * self._n_tiles_axis(xarr, 2)
             data = self._get_tiles(xarr)
-            data = iter(tqdm(data, total=n_tiles - 1, desc="Writing tiles"))
+            data = iter(tqdm(data, total=n_tiles, desc="Writing tiles"))
         else:
             if self.data is not None:
                 self.data = resize_numpy(self.data, 2, xarr.dims, xarr.shape)
@@ -161,7 +165,7 @@ def write_image(
     path: str,
     image: SpatialImage | np.ndarray,
     lazy: bool = True,
-    tile_width: int = 1024,
+    tile_width: int = TILE_SIZE,
     n_subscales: int = 5,
     pixel_size: float = 0.2125,
     ram_threshold_gb: int | None = 4,
@@ -186,9 +190,9 @@ def write_image(
         log.info(f"Converting image of shape {image.shape} into a SpatialImage (with dims: C,Y,X)")
         image = SpatialImage(image, dims=["c", "y", "x"], name="image")
 
-    image: MultiscaleSpatialImage = to_multiscale(image, [2] * n_subscales)
-
-    image_writer = MultiscaleImageWriter(image, pixel_size=pixel_size, tile_width=tile_width)
+    image_writer = MultiscaleImageWriter(
+        image, n_subscales, pixel_size=pixel_size, tile_width=tile_width
+    )
     image_writer.write(path, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
 
 
