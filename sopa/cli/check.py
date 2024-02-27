@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typer
 
 app_check = typer.Typer()

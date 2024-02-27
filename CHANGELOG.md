@@ -3,6 +3,9 @@
 ### Changed
 - Faster explorer image writing (default `chunksize` is the Xenium Explorer tile size).
 
+### Added
+- Support for python 3.9 to 3.12 (we still recommend `python==3.10`)
+
 ## [1.0.4] - 2024-02-14
 
 ### Fix

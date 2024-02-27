@@ -2,6 +2,8 @@
 # Updated from spatialdata-io: https://spatialdata.scverse.org/projects/io/en/latest/
 # In the future, we will completely rely on spatialdata-io (when stable enough)
 
+from __future__ import annotations
+
 import json
 import re
 from collections.abc import Mapping

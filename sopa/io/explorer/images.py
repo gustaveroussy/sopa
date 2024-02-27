@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from math import ceil
@@ -52,8 +54,8 @@ class MultiscaleImageWriter:
                         c,
                         self.tile_width * index_y : self.tile_width * (index_y + 1),
                         self.tile_width * index_x : self.tile_width * (index_x + 1),
-                    ].values
-                    yield self._scale(tile)
+                    ]
+                    yield self._scale(tile.values)
 
     def _should_load_memory(self, shape: tuple[int, int, int], dtype: np.dtype):
         if not self.lazy:

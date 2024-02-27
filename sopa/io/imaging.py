@@ -1,6 +1,7 @@
 # Readers for multiplex-imaging technologies
 # In the future, we will completely rely on spatialdata-io (when all these functions exist)
 
+from __future__ import annotations
 
 import logging
 import re

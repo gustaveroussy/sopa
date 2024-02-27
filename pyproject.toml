@@ -22,12 +22,21 @@ classifiers = [
 sopa = "sopa.main:app"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-botocore = "^1.31.47"
-spatialdata = "^0.0.15"
-spatialdata-io = "^0.0.8"
+python = ">=3.9,<3.13"
+spatialdata = ">=0.0.15"
+spatialdata-io = ">=0.0.8"
+scanpy = ">=1.9.5"
+botocore = "1.34.19"
 typer = "^0.9.0"
-scanpy = "^1.9.5"
+
+cellpose = { version = ">=2.2.3", optional = true }
+opencv-python = { version = "^4.8.0.76", optional = true }
+torch = { version = ">=2.0.0, !=2.0.1, !=2.1.0", optional = true }
+toml = { version = "^0.10.2", optional = true }
+loompy = { version = "^3.0.7", optional = true }
+tangram-sc = { version = ">=1.0.4", optional = true }
+snakemake = { version = "^7.32.4,<8.1.3", optional = true }
+pulp = { version = "^2.3.1,<2.8", optional = true }
 
 black = { version = "^22.8.0", optional = true }
 isort = { version = "^5.10.1", optional = true }
@@ -37,19 +46,7 @@ mkdocs-material = { version = "^9.3.2", optional = true }
 mkdocs-jupyter = { version = "^0.24.6", optional = true }
 mkdocstrings = { version = "^0.23.0", optional = true }
 mkdocstrings-python = { version = "^1.7.3", optional = true }
-
-cellpose = { version = "^2.2.3", optional = true }
-opencv-python = { version = "^4.8.0.76", optional = true }
-torch = { version = ">=2.0.0, !=2.0.1, !=2.1.0", optional = true }
-
-toml = { version = "^0.10.2", optional = true }
-loompy = { version = "^3.0.7", optional = true }
-
-tangram-sc = { version = "^1.0.4", optional = true }
-
-snakemake = { version = "^7.32.4,<8.1.3", optional = true }
-pulp = { version = ">=2.3.1,<2.8", optional = true }
-flake8 = { version = "^7.0.0", extras = ["dev"] }
+flake8 = { version = "^7.0.0", optional = true }
 
 [tool.poetry.extras]
 cellpose = ["cellpose", "opencv-python", "torch"]

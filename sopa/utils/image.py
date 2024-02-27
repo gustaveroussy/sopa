@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dask.array as da
 import dask_image.ndinterp
 import numpy as np
