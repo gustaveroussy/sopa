@@ -2412,17 +2412,18 @@ min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-imp
 
 [[package]]
 name = "mkdocs-autorefs"
-version = "0.5.0"
+version = "1.0.0"
 description = "Automatically link across pages in MkDocs."
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_autorefs-0.5.0-py3-none-any.whl", hash = "sha256:7930fcb8ac1249f10e683967aeaddc0af49d90702af111a5e390e8b20b3d97ff"},
-    {file = "mkdocs_autorefs-0.5.0.tar.gz", hash = "sha256:9a5054a94c08d28855cfab967ada10ed5be76e2bfad642302a610b252c3274c0"},
+    {file = "mkdocs_autorefs-1.0.0-py3-none-any.whl", hash = "sha256:2b6d288f0582589d1be7c99ce4470c8e7c5077892014051ff0d4ff574a73dbe8"},
+    {file = "mkdocs_autorefs-1.0.0.tar.gz", hash = "sha256:1b20db41cade632b07b7a73dee818977b52e869c9deb438f6f20e2896ff01859"},
 ]
 
 [package.dependencies]
 Markdown = ">=3.3"
+markupsafe = ">=2.0.1"
 mkdocs = ">=1.1"
 
 [[package]]
@@ -5908,4 +5909,4 @@ tangram = ["tangram-sc"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "8d77a5b051a4334387fafea8a623fe43432a73af4d50ed189100c1add34e38fa"
+content-hash = "e46b1056075e6937c32a2707cb1efb9ece192c3aec4a864481d2d1682faa7164"
