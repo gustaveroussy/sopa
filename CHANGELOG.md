@@ -1,7 +1,7 @@
 ## [1.0.5] - tbd
 
 ### Changed
-- Faster explorer image writing (default `chunksize` is the Xenium Explorer tile size).
+- Faster image writing for the Xenium Explorer (about x5 speedup)
 
 ### Added
 - Support for python 3.9 to 3.12 (we still recommend `python==3.10`)
