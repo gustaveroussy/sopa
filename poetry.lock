@@ -5932,4 +5932,4 @@ wsi = ["opencv-python", "tiffslide", "torch"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "9f4004f1048021da4e46a679caea6689cc1af4a57284ef1bb5d61d67837fa346"
+content-hash = "5655e8779497c3bea52f9edbe9f4a812039542d304281c1d949cd3f74c1c4532"

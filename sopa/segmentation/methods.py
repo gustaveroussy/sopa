@@ -6,7 +6,11 @@ import numpy as np
 
 
 def cellpose_patch(
-    diameter: float, channels: list[str], model_type: str = "cyto2", **cellpose_kwargs: int
+    diameter: float,
+    channels: list[str],
+    model_type: str = "cyto3",
+    pretrained_model: str | bool = False,
+    **cellpose_kwargs: int,
 ) -> Callable:
     """Creation of a callable that runs Cellpose segmentation on a patch
 
@@ -14,6 +18,7 @@ def cellpose_patch(
         diameter: Cellpose diameter parameter
         channels: List of channel names
         model_type: Cellpose model type
+        pretrained_model: Path to the pretrained model to be loaded
         **cellpose_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.Cellpose` object)
 
     Returns:
@@ -26,7 +31,7 @@ def cellpose_patch(
             "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'`"
         )
 
-    model = models.Cellpose(model_type=model_type)
+    model = models.CellposeModel(model_type=model_type, pretrained_model=pretrained_model)
 
     if isinstance(channels, str) or len(channels) == 1:
         channels = [0, 0]  # gray scale

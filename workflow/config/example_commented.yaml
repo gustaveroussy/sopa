@@ -26,6 +26,8 @@ segmentation:
     channels: ["DAPI"] # list of one or two channel(s) used for segmentation. If two channels, provide a nuclear staining, and then a cytoplasm staining
     flow_threshold: 2 # see cellpose parameters
     cellprob_threshold: -6 # see cellpose parameters
+
+    model_type: "cyto3" # [optional] name of the cellpose model to be used. If you have a custom model, use the "pretrained_model" argument instead, and give the path to your model
     min_area: 1000 # [optional] minimum area (in pixels^2) for a cell to not be filtered
     clip_limit: 0.2 # [optional] value used to increase the contrast of the image. 0 means no change, 1 means high contrast change (see skimage.exposure.equalize_adapthist).
     gaussian_sigma: 1 # [optional] sigma used for gaussian smoothing. This can improve segmentation for highly-pixelated images
