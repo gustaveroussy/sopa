@@ -4345,13 +4345,13 @@ files = [
 
 [[package]]
 name = "rich"
-version = "13.7.0"
+version = "13.7.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "rich-13.7.0-py3-none-any.whl", hash = "sha256:6da14c108c4866ee9520bbffa71f6fe3962e193b7da68720583850cd4548e235"},
-    {file = "rich-13.7.0.tar.gz", hash = "sha256:5cb5123b5cf9ee70584244246816e9114227e0b98ad9176eede6ad54bf5403fa"},
+    {file = "rich-13.7.1-py3-none-any.whl", hash = "sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222"},
+    {file = "rich-13.7.1.tar.gz", hash = "sha256:9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432"},
 ]
 
 [package.dependencies]
@@ -5205,6 +5205,28 @@ numpy = "*"
 all = ["defusedxml", "fsspec", "imagecodecs (>=2023.8.12)", "lxml", "matplotlib", "zarr"]
 
 [[package]]
+name = "tiffslide"
+version = "2.4.0"
+description = "tifffile-based drop-in replacement for openslide-python"
+optional = true
+python-versions = ">=3.8"
+files = [
+    {file = "tiffslide-2.4.0-py3-none-any.whl", hash = "sha256:f12964dd6356abc970efda6697fd4791147139dac9efc11ea008eec6883db35c"},
+    {file = "tiffslide-2.4.0.tar.gz", hash = "sha256:630bc36215e950dd9df279ded147cf129570f2040c7e3363cdf6845414da9672"},
+]
+
+[package.dependencies]
+fsspec = "<2022.11.0 || >2022.11.0,<2023.1.0 || >2023.1.0"
+imagecodecs = "*"
+pillow = "*"
+tifffile = ">=2021.6.14"
+typing-extensions = ">=4.0"
+zarr = ">=2.11.0"
+
+[package.extras]
+dev = ["black", "mypy", "pre-commit", "pytest (>=6)", "pytest-benchmark", "pytest-cov"]
+
+[[package]]
 name = "tinycss2"
 version = "1.2.1"
 description = "A tiny CSS parser"
@@ -5905,8 +5927,9 @@ cellpose = ["cellpose", "opencv-python", "torch"]
 dev = ["black", "ipykernel", "isort", "mkdocs-jupyter", "mkdocs-material", "mkdocstrings", "mkdocstrings-python", "pytest"]
 snakemake = ["pulp", "snakemake"]
 tangram = ["tangram-sc"]
+wsi = ["opencv-python", "tiffslide", "torch"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "e46b1056075e6937c32a2707cb1efb9ece192c3aec4a864481d2d1682faa7164"
+content-hash = "9f4004f1048021da4e46a679caea6689cc1af4a57284ef1bb5d61d67837fa346"

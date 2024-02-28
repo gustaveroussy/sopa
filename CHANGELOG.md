@@ -5,6 +5,8 @@
 
 ### Added
 - Support for python 3.9 to 3.12 (we still recommend `python==3.10`)
+- Support WSI analysis (reader, tissue segmentation, patch embedding)
+- Supporting multiple region-of-interest queries
 
 ## [1.0.4] - 2024-02-14
 

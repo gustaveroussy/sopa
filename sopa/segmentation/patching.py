@@ -10,7 +10,7 @@ import geopandas as gpd
 import pandas as pd
 from dask.diagnostics import ProgressBar
 from multiscale_spatial_image import MultiscaleSpatialImage
-from shapely.geometry import Polygon, box
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
@@ -96,20 +96,55 @@ class Patches2D:
         self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, tight, int_coords)
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
-        self.roi = sdata.shapes[ROI.KEY] if ROI.KEY in sdata.shapes else None
-        if self.roi is not None:
-            self.roi = to_intrinsic(sdata, self.roi, element_name).geometry[0]
+        self.roi = None
+        if ROI.KEY in sdata.shapes:
+            geo_df = to_intrinsic(sdata, sdata[ROI.KEY], element_name)
 
-        self._ilocs = []
+            assert all(
+                isinstance(geom, Polygon) for geom in geo_df.geometry
+            ), f"All sdata['{ROI.KEY}'] geometries must be polygons"
 
+            if len(geo_df) == 1:
+                self.roi: Polygon = geo_df.geometry[0]
+            else:
+                self.roi = MultiPolygon(list(geo_df.geometry))
+
+        self._ilocs, self._polygons = [], []
         for i in range(self.patch_x._count * self.patch_y._count):
-            ix, iy = self.pair_indices(i)
-            bounds = self.iloc(ix, iy)
-            patch = box(*bounds)
-            if self.roi is None or self.roi.intersects(patch):
-                self._ilocs.append((ix, iy))
+            self._register_patch(i)
 
-    def pair_indices(self, i: int) -> tuple[int, int]:
+    def _register_patch(self, i: int):
+        """Check that the patch is valid, and, if valid, register it"""
+        iy, ix = divmod(i, self.patch_x._count)
+        bounds = self.iloc(ix, iy)
+        patch = box(*bounds)
+
+        if self.roi is not None and not self.roi.intersects(patch):
+            return
+
+        patch = patch if self.roi is None else patch.intersection(self.roi)
+
+        if isinstance(patch, GeometryCollection):
+            geoms = [geom for geom in patch.geoms if isinstance(geom, Polygon)]
+            if not geoms:
+                return
+            patch = max(geoms, key=lambda polygon: polygon.area)
+
+        if not isinstance(patch, Polygon) and not isinstance(patch, MultiPolygon):
+            return
+
+        self._polygons.append(patch)
+        self._ilocs.append((ix, iy))
+
+    @property
+    def polygons(self) -> list[Polygon]:
+        return self._polygons
+
+    @property
+    def shape(self) -> tuple[int, int]:
+        return (self.patch_y._count, self.patch_x._count)
+
+    def patch_iloc(self, i: int) -> tuple[int, int]:
         """Index localization of one patch
 
         Args:
@@ -118,8 +153,7 @@ class Patches2D:
         Returns:
             A tuple `(index_x, index_y)` representing the 2D localization of the patch
         """
-        iy, ix = divmod(i, self.patch_x._count)
-        return ix, iy
+        return self._ilocs[i]
 
     def iloc(self, ix: int, iy: int) -> list[int]:
         """Coordinates of the rectangle bounding box of the patch at the given indices
@@ -136,12 +170,12 @@ class Patches2D:
         return [xmin, ymin, xmax, ymax]
 
     def __getitem__(self, i) -> tuple[int, int, int, int]:
-        """One patche bounding box: (xmin, ymin, xmax, ymax)"""
+        """One patch bounding box: (xmin, ymin, xmax, ymax)"""
         if isinstance(i, slice):
             start, stop, step = i.indices(len(self))
             return [self[i] for i in range(start, stop, step)]
 
-        return self.iloc(*self._ilocs[i])
+        return self.iloc(*self.patch_iloc(i))
 
     def __len__(self):
         """Number of patches"""
@@ -152,42 +186,25 @@ class Patches2D:
         for i in range(len(self)):
             yield self[i]
 
-    def polygon(self, i: int) -> Polygon:
-        """One patch as a shapely polygon. The polygon may not be just a square, if a ROI has been previously selected.
-
-        Args:
-            i: Patch index
-
-        Returns:
-            Polygon representing the patch
-        """
-        rectangle = box(*self[i])
-        return rectangle if self.roi is None else rectangle.intersection(self.roi)
-
-    @property
-    def polygons(self) -> list[Polygon]:
-        """All the patches as polygons
-
-        Returns:
-            List of `shapely` polygons
-        """
-        return [self.polygon(i) for i in range(len(self))]
-
-    def write(self, overwrite: bool = True):
-        """Save patches in `sdata.shapes["sopa_patches"]`
+    def write(self, overwrite: bool = True, shapes_key: str | None = None):
+        """Save patches in `sdata.shapes["sopa_patches"]` (or by the key specified)
 
         Args:
             overwrite: Whether to overwrite patches if existing
+            shapes_key: Optional name of the shapes to be saved. By default, uses "sopa_patches".
         """
+        shapes_key = SopaKeys.PATCHES if shapes_key is None else shapes_key
+
         geo_df = gpd.GeoDataFrame(
             {"geometry": self.polygons, SopaKeys.BOUNDS: [self[i] for i in range(len(self))]}
         )
         geo_df = ShapesModel.parse(
             geo_df, transformations=get_transformation(self.element, get_all=True)
         )
-        self.sdata.add_shapes(SopaKeys.PATCHES, geo_df, overwrite=overwrite)
 
-        log.info(f"{len(geo_df)} patches were saved in sdata['{SopaKeys.PATCHES}']")
+        self.sdata.add_shapes(shapes_key, geo_df, overwrite=overwrite)
+
+        log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 
     def patchify_transcripts(
         self,

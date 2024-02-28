@@ -31,3 +31,7 @@
 ::: sopa.io.ome_tif
     options:
       show_root_heading: true
+
+::: sopa.io.wsi
+    options:
+      show_root_heading: true
