@@ -33,7 +33,7 @@ cd workflow            # run this at the root of the 'sopa' directory
 
 === "Local execution (e.g., personal laptop)"
 
-    Most of the time, when executing locally, you'll run the pipeline sequentially, i.e. with one core:
+    You can execute the pipeline locally as below (in this example, we use only one core):
 
     ```sh
     # replace the configfile with yours
@@ -42,9 +42,12 @@ cd workflow            # run this at the root of the 'sopa' directory
     snakemake --config data_path=/path/to/directory --configfile=config/merscope/base.yaml --cores 1 --use-conda
     ```
 
+    !!! note "Faster pipeline"
+        Even though Sopa can be run locally, we recommend to use it on high-performance-clusters to benefit from all the pipeline capabilities (see the second tab just above).
+
 === "High-performance-cluster (e.g., Slurm cluster)"
 
-    You'll need a cluster profile. For instance, if on a Slurm cluster, it can look like [this file](https://github.com/gustaveroussy/sopa/blob/master/workflow/slurm/config.yaml). You can create your own in `sopa/workflow/<hpc-name>/config.yaml`, or simply re-use this file (as in the command below). For more details, see the [snakemake documentation on profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
+    To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). By default, we use [this `slurm` profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/slurm/config.yaml), but you can also update it or create your own profile under `sopa/workflow/<hpc-name>/config.yaml`.
 
     ```sh
     # replace the configfile with yours
@@ -55,7 +58,7 @@ cd workflow            # run this at the root of the 'sopa' directory
     ```
 
     !!! note
-        You may need to update the params under `resources` inside the `sopa/workflow/Snakefile` file, according to the partition names of your cluster.
+        You may need to update the `partition` parameters inside the `sopa/workflow/Snakefile` file, according to the partition names of your cluster. You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
 
 For more customization, see the [snakemake CLI documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html).
 
