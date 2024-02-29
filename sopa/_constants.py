@@ -2,7 +2,10 @@ class SopaKeys:
     CELLPOSE_BOUNDARIES = "cellpose_boundaries"
     BAYSOR_BOUNDARIES = "baysor_boundaries"
     PATCHES = "sopa_patches"
-    BOUNDS = "bounds"
+
+    BOUNDS = "bboxes"
+    PATCHES_ILOCS = "ilocs"
+    EMBEDDINGS_PATCHES_KEY = "sopa_embedding_patches"
 
     UNS_KEY = "sopa_attrs"
     UNS_HAS_TRANSCRIPTS = "transcripts"

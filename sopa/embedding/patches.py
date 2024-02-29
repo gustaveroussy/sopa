@@ -10,6 +10,7 @@ from spatialdata import SpatialData, bounding_box_query
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
+from sopa._constants import SopaKeys
 from sopa._sdata import get_intrinsic_cs, get_key
 from sopa.segmentation import Patches2D
 
@@ -111,7 +112,7 @@ def embed_wsi_patches(
     batch_size: int = 32,
     num_workers: int = 1,
     device: str = "cpu",
-) -> bool:
+) -> SpatialImage | bool:
     """Create an image made of patch embeddings of a WSI image.
 
     !!! info
@@ -128,7 +129,7 @@ def embed_wsi_patches(
         device: Device used for the computer vision model.
 
     Returns:
-        `True` if the embedding was successful, else `False`
+        If the embedding was successful, returns the `SpatialImage` of shape `(C,Y,X)` containing the embedding, else `False`
     """
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
@@ -155,7 +156,7 @@ def embed_wsi_patches(
     log.info(f"Computing {len(patches)} embeddings at level {level}")
 
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-        patch_boxes = patches[i : i + batch_size]
+        patch_boxes = patches.bboxes[i : i + batch_size]
 
         get_batches = [
             da.delayed(_numpy_patch)(image, box, level, resize_factor, coordinate_system)
@@ -164,7 +165,7 @@ def embed_wsi_patches(
         batch = da.compute(*get_batches, num_workers=num_workers)
         embedding = embedder(np.stack(batch))
 
-        loc_x, loc_y = np.array([patches.patch_iloc(k) for k in range(i, i + len(batch))]).T
+        loc_x, loc_y = patches.ilocs[i : i + len(batch)].T
         embedding_image[:, loc_y, loc_x] = embedding.T
 
     embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
@@ -180,4 +181,6 @@ def embed_wsi_patches(
 
     log.info(f"WSI embeddings saved as an image in sdata['{embedding_key}']")
 
-    return True
+    patches.write(shapes_key=SopaKeys.EMBEDDINGS_PATCHES_KEY)
+
+    return sdata[embedding_key]

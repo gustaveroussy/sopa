@@ -7,6 +7,7 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from dask.diagnostics import ProgressBar
 from multiscale_spatial_image import MultiscaleSpatialImage
@@ -59,7 +60,18 @@ class Patches1D:
 
 
 class Patches2D:
-    """Perform patching with overlap"""
+    """
+    Compute 2D-patches with overlaps. This can be done on an image or a DataFrame.
+
+    Attributes:
+        polygons (list[Polygon]): List of `shapely` polygons representing the patches
+        bboxes (np.ndarray): Array of shape `(n_patches, 4)` containing the (xmin, ymin, xmax, ymax) coordinates of the patches bounding boxes
+        ilocs (np.ndarray): Array of shape `(n_patches, 2)` containing the (x,y) indices of the patches
+    """
+
+    polygons: list[Polygon]
+    bboxes: np.ndarray
+    ilocs: np.ndarray
 
     def __init__(
         self,
@@ -71,7 +83,7 @@ class Patches2D:
         """
         Args:
             sdata: A `SpatialData` object
-            element_name: Name of the element on with patches will be made
+            element_name: Name of the element on with patches will be made (image or points)
             patch_width: Width of the patches (in the unit of the coordinate system of the element)
             patch_overlap: Overlap width between the patches
         """
@@ -109,14 +121,21 @@ class Patches2D:
             else:
                 self.roi = MultiPolygon(list(geo_df.geometry))
 
-        self._ilocs, self._polygons = [], []
-        for i in range(self.patch_x._count * self.patch_y._count):
-            self._register_patch(i)
+        self._init_patches()
 
-    def _register_patch(self, i: int):
+    def _init_patches(self):
+        self.ilocs, self.polygons, self.bboxes = [], [], []
+
+        for i in range(self.patch_x._count * self.patch_y._count):
+            self._try_register_patch(i)
+
+        self.ilocs = np.array(self.ilocs)
+        self.bboxes = np.array(self.bboxes)
+
+    def _try_register_patch(self, i: int):
         """Check that the patch is valid, and, if valid, register it"""
         iy, ix = divmod(i, self.patch_x._count)
-        bounds = self.iloc(ix, iy)
+        bounds = self._bbox_iloc(ix, iy)
         patch = box(*bounds)
 
         if self.roi is not None and not self.roi.intersects(patch):
@@ -133,29 +152,18 @@ class Patches2D:
         if not isinstance(patch, Polygon) and not isinstance(patch, MultiPolygon):
             return
 
-        self._polygons.append(patch)
-        self._ilocs.append((ix, iy))
+        self.polygons.append(patch)
+        self.ilocs.append((ix, iy))
+        self.bboxes.append(bounds)
 
-    @property
-    def polygons(self) -> list[Polygon]:
-        return self._polygons
+    def __repr__(self):
+        return f"{self.__class__.__name__} object with {len(self)} patches on {self.element_name}"
 
     @property
     def shape(self) -> tuple[int, int]:
         return (self.patch_y._count, self.patch_x._count)
 
-    def patch_iloc(self, i: int) -> tuple[int, int]:
-        """Index localization of one patch
-
-        Args:
-            i: The patch index
-
-        Returns:
-            A tuple `(index_x, index_y)` representing the 2D localization of the patch
-        """
-        return self._ilocs[i]
-
-    def iloc(self, ix: int, iy: int) -> list[int]:
+    def _bbox_iloc(self, ix: int, iy: int) -> list[int]:
         """Coordinates of the rectangle bounding box of the patch at the given indices
 
         Args:
@@ -169,34 +177,28 @@ class Patches2D:
         ymin, ymax = self.patch_y[iy]
         return [xmin, ymin, xmax, ymax]
 
-    def __getitem__(self, i) -> tuple[int, int, int, int]:
-        """One patch bounding box: (xmin, ymin, xmax, ymax)"""
-        if isinstance(i, slice):
-            start, stop, step = i.indices(len(self))
-            return [self[i] for i in range(start, stop, step)]
-
-        return self.iloc(*self.patch_iloc(i))
-
     def __len__(self):
         """Number of patches"""
-        return len(self._ilocs)
+        return len(self.bboxes)
 
-    def __iter__(self):
-        """Iterate over all patches (see `__getitem__`)"""
-        for i in range(len(self)):
-            yield self[i]
-
-    def write(self, overwrite: bool = True, shapes_key: str | None = None):
+    def write(self, overwrite: bool = True, shapes_key: str | None = None) -> gpd.GeoDataFrame:
         """Save patches in `sdata.shapes["sopa_patches"]` (or by the key specified)
 
         Args:
             overwrite: Whether to overwrite patches if existing
             shapes_key: Optional name of the shapes to be saved. By default, uses "sopa_patches".
+
+        Returns:
+            The saved GeoDataFrame
         """
         shapes_key = SopaKeys.PATCHES if shapes_key is None else shapes_key
 
         geo_df = gpd.GeoDataFrame(
-            {"geometry": self.polygons, SopaKeys.BOUNDS: [self[i] for i in range(len(self))]}
+            {
+                "geometry": self.polygons,
+                SopaKeys.BOUNDS: self.bboxes.tolist(),
+                SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
+            }
         )
         geo_df = ShapesModel.parse(
             geo_df, transformations=get_transformation(self.element, get_all=True)
@@ -205,6 +207,8 @@ class Patches2D:
         self.sdata.add_shapes(shapes_key, geo_df, overwrite=overwrite)
 
         log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
+
+        return geo_df
 
     def patchify_transcripts(
         self,

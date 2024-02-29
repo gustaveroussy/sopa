@@ -149,11 +149,11 @@ class StainingSegmentation:
         Returns:
             A list of cells represented as `shapely` polygons
         """
-        self.patches = Patches2D(self.sdata, self.image_key, patch_width, patch_overlap)
+        patches = Patches2D(self.sdata, self.image_key, patch_width, patch_overlap)
 
         cells = [
             cell
-            for patch in tqdm(self.patches.polygons, desc="Run on patches")
+            for patch in tqdm(patches.polygons, desc="Run on patches")
             for cell in self._run_patch(patch)
         ]
         cells = shapes.solve_conflicts(cells)
