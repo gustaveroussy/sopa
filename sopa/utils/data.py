@@ -24,7 +24,7 @@ def uniform(
     n_points_per_cell: int = 50,
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
     genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
-    sigma_factor: float = 0.1,
+    sigma_factor: float = 0.05,
     pixel_size: float = 0.1,
     seed: int = 0,
     include_vertices: bool = False,
