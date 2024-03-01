@@ -2,7 +2,7 @@
 
 Sopa can be installed on every OS with `pip` or [`poetry`](https://python-poetry.org/docs/).
 
-The preferred Python version is `python==3.10`, but we also support `3.9` to `3.12`.
+The preferred Python version is `python==3.10`, but we also support `3.9` to `3.11`.
 
 !!! note "Advice (optional)"
 
