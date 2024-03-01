@@ -1,3 +1,16 @@
+## [1.0.5] - 2024-03-01
+
+### Changed
+- Faster image writing for the Xenium Explorer (about x5 speedup)
+- Cellpose default model set to `"cyto3"` (new cellpose version)
+- Cell GeoDataFrame index consistent with `obs_names`
+
+### Added
+- Support for python 3.9 to 3.12 (we still recommend `python==3.10`)
+- Support WSI analysis: reader, tissue segmentation, patch embedding (tutorials coming soon)
+- Supporting multiple region-of-interest queries
+- Can load a custom cellpose model using the `pretrained_model`/`model_type` argument
+
 ## [1.0.4] - 2024-02-14
 
 ### Fix

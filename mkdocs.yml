@@ -27,6 +27,7 @@ nav:
       - sopa.segmentation.stainings: api/segmentation/stainings.md
       - sopa.segmentation.methods: api/segmentation/methods.md
       - sopa.segmentation.patching: api/segmentation/patching.md
+      - sopa.segmentation.tissue: api/segmentation/tissue.md
       - sopa.segmentation.baysor: api/segmentation/baysor.md
     - sopa.io: api/io.md
     - sopa.io.explorer: api/io.explorer.md
@@ -38,6 +39,7 @@ nav:
       - sopa.utils.data: api/utils/data.md
       - sopa.utils.image: api/utils/image.md
       - sopa.utils.polygon_crop: api/utils/polygon_crop.md
+    - sopa.embedding: api/embedding.md
     - sopa._sdata: api/_sdata.md
   - Frequently asked questions: faq.md
   - Cite us: cite_us.md

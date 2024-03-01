@@ -3,6 +3,8 @@ Copied from squidpy (to not have squidpy as a dependency)
 Functions for building graphs from spatial coordinates.
 """
 
+from __future__ import annotations
+
 import logging
 import warnings
 from functools import partial

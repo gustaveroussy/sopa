@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class FileNames:
     IMAGE = "morphology.ome.tif"
     POINTS = "transcripts.zarr.zip"
@@ -10,6 +13,7 @@ class FileNames:
 
 class ExplorerConstants:
     GRID_SIZE = 250
+    TILE_SIZE = 1024
     QUALITY_SCORE = 40
     MICRONS_TO_PIXELS = 4.705882
     PIXELS_TO_MICRONS = 0.2125

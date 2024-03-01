@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 
 import typer
@@ -16,7 +18,8 @@ def cellpose(
     ),
     flow_threshold: float = typer.Option(2, help="Cellpose `flow_threshold` parameter"),
     cellprob_threshold: float = typer.Option(-6, help="Cellpose `cellprob_threshold` parameter"),
-    model_type: str = typer.Option("cyto2", help="Name of the cellpose model"),
+    model_type: str = typer.Option("cyto3", help="Name of the cellpose model"),
+    pretrained_model: str = typer.Option(None, help="Path to the pretrained model to be loaded"),
     min_area: int = typer.Option(
         0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
     ),
@@ -60,6 +63,7 @@ def cellpose(
         flow_threshold=flow_threshold,
         cellprob_threshold=cellprob_threshold,
         model_type=model_type,
+        pretrained_model=pretrained_model,
     )
 
     _run_staining_segmentation(

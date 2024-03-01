@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 import dask.array as da
@@ -22,7 +24,7 @@ def uniform(
     n_points_per_cell: int = 50,
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
     genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
-    sigma_factor: float = 0.1,
+    sigma_factor: float = 0.05,
     pixel_size: float = 0.1,
     seed: int = 0,
     include_vertices: bool = False,
@@ -85,7 +87,7 @@ def uniform(
         if apply_blur:
             image = gaussian_filter(image, sigma=sigma, axes=(1, 2))
         image = (image / image.max() * 255).astype(np.uint8)
-        image = da.from_array(image, chunks=(1, 4096, 4096))
+        image = da.from_array(image, chunks=(1, 1024, 1024))
         images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
 
     ### Create cell boundaries

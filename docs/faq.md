@@ -28,6 +28,11 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 - This can be due to a low image quality. If the image is too pixelated, consider increasing `gaussian_sigma` (e.g., `2`) under the cellpose parameters of our config. If the image has a low contrast, consider increasing `clip_limit` (e.g., `0.3`). These parameters are detailed in [this example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml).
 - Consider updating the official Cellpose parameters. In particular, try `cellprob_threshold=-6` and `flow_threshold=2`.
 
+## How to use a custom Cellpose model?
+
+You can use any existing [Cellpose model](https://cellpose.readthedocs.io/en/latest/models.html) with the `model_type` argument (via the API, CLI, or Snakemake pipeline). For the Snakemake pipeline, see [here](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) how to set this argument.
+If you have a custom pretrained model, use the `pretrained_model` argument instead of `model_type`, and give the path to your cellpose model.
+
 ## Can I use Nextflow instead of Snakemake?
 
 Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).

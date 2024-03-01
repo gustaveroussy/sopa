@@ -323,7 +323,8 @@ $ sopa explorer write [OPTIONS] SDATA_PATH
 * `--output-path TEXT`: Path to a directory where Xenium Explorer's outputs will be saved. By default, writes to the same path as `sdata_path` but with the `.explorer` suffix
 * `--gene-column TEXT`: Column name of the points dataframe containing the gene names
 * `--shapes-key TEXT`: Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries
-* `--pixel_size FLOAT`: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.  [default: 0.2125]
+* `--pixel-size FLOAT`: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.  [default: 0.2125]
+* `--pixelsize FLOAT`: `pixelsize` is deprecated and will be removed in future versions. Use `pixel_size` instead.
 * `--lazy / --no-lazy`: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`)  [default: lazy]
 * `--ram-threshold-gb INTEGER`: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory  [default: 4]
 * `--mode TEXT`: String that indicated which files should be created. `'-ib'` means everything except images and boundaries, while `'+tocm'` means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything
@@ -564,7 +565,8 @@ $ sopa segmentation cellpose [OPTIONS] SDATA_PATH
 * `--channels TEXT`: Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel  [required]
 * `--flow-threshold FLOAT`: Cellpose `flow_threshold` parameter  [default: 2]
 * `--cellprob-threshold FLOAT`: Cellpose `cellprob_threshold` parameter  [default: -6]
-* `--model-type TEXT`: Name of the cellpose model  [default: cyto2]
+* `--model-type TEXT`: Name of the cellpose model  [default: cyto3]
+* `--pretrained-model TEXT`: Path to the pretrained model to be loaded  [default: False]
 * `--min-area INTEGER`: Minimum area (in pixels^2) for a cell to be considered as valid  [default: 0]
 * `--clip-limit FLOAT`: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)  [default: 0.2]
 * `--gaussian-sigma FLOAT`: Parameter for scipy gaussian_filter (applied before running cellpose)  [default: 1]

@@ -1,6 +1,7 @@
 # Readers for multiplex-imaging technologies
 # In the future, we will completely rely on spatialdata-io (when all these functions exist)
 
+from __future__ import annotations
 
 import logging
 import re
@@ -49,7 +50,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None):
     image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
 
     if "chunks" not in image_models_kwargs:
-        image_models_kwargs["chunks"] = (1, 4096, 4096)
+        image_models_kwargs["chunks"] = (1, 1024, 1024)
 
     return image_models_kwargs
 
