@@ -1,0 +1,31 @@
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
+read:
+  technology: xenium
+
+patchify:
+  patch_width_pixel: 9000
+  patch_overlap_pixel: 150
+  patch_width_microns: 1000
+  patch_overlap_microns: 20
+
+segmentation:
+  cellpose:
+    diameter: 30
+    channels: [0]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 400
+
+annotation:
+  method: tangram
+  args:
+    sc_reference_path: /mnt/beegfs/merfish/data/reference/2023_Reference_disco_pancreas_healthy.h5ad
+    cell_type_key: ct
+
+aggregate:
+  gene_column: "feature_name"
+  average_intensities: true
+
+explorer:
+  gene_column: "feature_name"
+  ram_threshold_gb: 16

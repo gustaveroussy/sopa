@@ -1,0 +1,35 @@
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
+read:
+  technology: merscope
+
+patchify:
+  patch_width_pixel: 90000
+  patch_overlap_pixel: 150
+  patch_width_microns: 1000
+  patch_overlap_microns: 20
+
+segmentation:
+  cellpose:
+    diameter: 60
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 2000
+
+aggregate:
+  gene_column: "gene"
+
+annotation:
+  method: tangram
+  args:
+    sc_reference_path: /mnt/beegfs/merfish/data/reference/2023_Reference_disco_liver.h5ad
+    cell_type_key: ct
+
+explorer:
+  gene_column: "gene"
+  ram_threshold_gb: 16
+  pixel_size: 0.108
+
+
+executables:
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable
