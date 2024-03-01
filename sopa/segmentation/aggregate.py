@@ -72,6 +72,9 @@ class Aggregator:
     def standardize_table(self):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
+        self.geo_df.index = list(self.table.obs_names)
+        self.sdata.add_shapes(self.shapes_key, self.geo_df, overwrite=True)
+
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
         )
@@ -95,19 +98,17 @@ class Aggregator:
             instance_key=SopaKeys.INSTANCE_KEY,
         )
 
+        if self.sdata.table is not None and self.overwrite:
+            del self.sdata.table
+        self.sdata.table = self.table
+
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
 
         self.geo_df = self.geo_df[~where_filter]
-        self.sdata.add_shapes(self.shapes_key, self.geo_df, overwrite=True)
 
         if self.table is not None:
             self.table = self.table[~where_filter]
-
-    def save_table(self):
-        if self.sdata.table is not None and self.overwrite:
-            del self.sdata.table
-        self.sdata.table = self.table
 
     def update_table(
         self,
@@ -179,7 +180,6 @@ class Aggregator:
         }
 
         self.standardize_table()
-        self.save_table()
 
 
 def average_channels(

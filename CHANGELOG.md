@@ -3,6 +3,7 @@
 ### Changed
 - Faster image writing for the Xenium Explorer (about x5 speedup)
 - Cellpose default model set to `"cyto3"` (new cellpose version)
+- Cell GeoDataFrame index consistent with `obs_names`
 
 ### Added
 - Support for python 3.9 to 3.12 (we still recommend `python==3.10`)

@@ -32,7 +32,8 @@ def read_baysor(
     )
     adata.obs.rename(columns={"area": SopaKeys.BAYSOR_AREA_OBS}, inplace=True)
 
-    cells_num = pd.Series(adata.obs.CellID.astype(int), index=adata.obs_names)
+    cells_num = pd.Series(adata.obs["CellID"].astype(int), index=adata.obs_names)
+    del adata.obs["CellID"]
 
     with open(directory / "segmentation_polygons.json") as f:
         polygons_dict = json.load(f)
