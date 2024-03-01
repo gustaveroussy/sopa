@@ -22,7 +22,7 @@ classifiers = [
 sopa = "sopa.main:app"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.9,<3.12"
 spatialdata = "0.0.15"
 spatialdata-io = ">=0.0.8"
 scanpy = ">=1.9.5, !=1.9.7"
