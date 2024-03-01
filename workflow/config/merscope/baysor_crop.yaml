@@ -17,6 +17,7 @@ segmentation:
 
   baysor:
     cell_key: cell_id
+    min_area: 20
     config:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation

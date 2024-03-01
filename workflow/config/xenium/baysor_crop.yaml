@@ -16,6 +16,7 @@ segmentation:
     cellprob_threshold: -6
 
   baysor:
+    min_area: 20
     config:
       data:
         force_2d: true # if false, uses 3D mode
