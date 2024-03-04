@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Callable
 
@@ -30,13 +32,23 @@ def _get_best_level_for_downsample(
 
 
 def _get_extraction_parameters(
-    tiff_metadata: dict, magnification: int, patch_width: int
+    tiff_metadata: dict,
+    patch_width: int,
+    level: int | None,
+    magnification: int | None,
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
     it returns the best scale to get it from (level), a resize factor (resize_factor)
     and the corresponding patch size at scale0 (patch_width)
     """
+    if level is None and magnification is None:
+        log.warn("Both level and magnification arguments are None. Using level=0 by default.")
+        level = 0
+
+    if magnification is None:
+        return level, 1, patch_width, True
+
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
         objective_power = int(tiff_metadata["properties"].get("tiffslide.objective-power"))
         downsample = objective_power / magnification
@@ -57,21 +69,23 @@ def _get_extraction_parameters(
 
 
 def _numpy_patch(
-    image: MultiscaleSpatialImage,
+    image: MultiscaleSpatialImage | SpatialImage,
     box: tuple[int, int, int, int],
     level: int,
-    resize_factor: float,
     coordinate_system: str,
+    resize_factor: float,
 ) -> np.ndarray:
     """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
     import cv2
 
-    multiscale_patch = bounding_box_query(
+    image_patch = bounding_box_query(
         image, ("y", "x"), box[:2][::-1], box[2:][::-1], coordinate_system
     )
-    patch = np.array(
-        next(iter(multiscale_patch[f"scale{level}"].values())).transpose("y", "x", "c")
-    )
+
+    if isinstance(image, MultiscaleSpatialImage):
+        patch = np.array(next(iter(image_patch[f"scale{level}"].values())).transpose("y", "x", "c"))
+    else:
+        patch = image_patch.transpose("y", "x", "c").compute().data
 
     if resize_factor != 1:
         dim = (int(patch.shape[0] * resize_factor), int(patch.shape[1] * resize_factor))
@@ -106,8 +120,9 @@ def embed_batch(model_name: str, device: str) -> tuple[Callable, int]:
 def embed_wsi_patches(
     sdata: SpatialData,
     model_name: str,
-    magnification: int,
     patch_width: int,
+    level: int | None = 0,
+    magnification: int | None = None,
     image_key: str | None = None,
     batch_size: int = 32,
     num_workers: int = 1,
@@ -121,8 +136,9 @@ def embed_wsi_patches(
     Args:
         sdata: A `SpatialData` object
         model_name: Name of the computer vision model to be used. One of `Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`.
-        magnification: The target magnification.
         patch_width: Width of the patches for which the embeddings will be computed.
+        level: Image level on which the embedding is performed. Either `level` or `magnification` should be provided.
+        magnification: The target magnification on which the embedding is performed. If `magnification` is provided, the `level` argument will be automatically computed.
         image_key: Optional image key of the WSI image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
         num_workers: Number of workers used to extract patches.
@@ -134,17 +150,13 @@ def embed_wsi_patches(
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
 
-    assert isinstance(
-        image, MultiscaleSpatialImage
-    ), "Only `MultiscaleSpatialImage` images are supported"
-
-    tiff_metadata = image.attrs["metadata"]
+    tiff_metadata = image.attrs.get("metadata", {})
     coordinate_system = get_intrinsic_cs(sdata, image)
 
     embedder, output_dim = embed_batch(model_name=model_name, device=device)
 
     level, resize_factor, patch_width, success = _get_extraction_parameters(
-        tiff_metadata, magnification, patch_width
+        tiff_metadata, patch_width, level, magnification
     )
     if not success:
         log.error(f"Error retrieving the mpp for {image_key}, skipping tile embedding.")
@@ -159,7 +171,7 @@ def embed_wsi_patches(
         patch_boxes = patches.bboxes[i : i + batch_size]
 
         get_batches = [
-            da.delayed(_numpy_patch)(image, box, level, resize_factor, coordinate_system)
+            da.delayed(_numpy_patch)(image, box, level, coordinate_system, resize_factor)
             for box in patch_boxes
         ]
         batch = da.compute(*get_batches, num_workers=num_workers)
