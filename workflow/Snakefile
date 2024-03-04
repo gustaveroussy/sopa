@@ -78,6 +78,8 @@ rule patch_segmentation_cellpose:
         "sopa"
     params:
         args_cellpose = str(args["segmentation"]["cellpose"]),
+    resources:
+        mem_mb=128_000,
     shell:
         """
         sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
