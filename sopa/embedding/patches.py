@@ -195,10 +195,10 @@ def embed_wsi_patches(
 
     embedder = Embedder(image, model_name, patch_width, level, magnification, device)
 
-    patches = Patches2D(sdata, image_key, patch_width, 0)
+    patches = Patches2D(sdata, image_key, embedder.patch_width, 0)
     embedding_image = np.zeros((embedder.output_dim, *patches.shape), dtype=np.float32)
 
-    log.info(f"Computing {len(patches)} embeddings at level {level}")
+    log.info(f"Computing {len(patches)} embeddings at level {embedder.level}")
 
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
         embedding = embedder.embed_bboxes(patches.bboxes[i : i + batch_size])
@@ -209,10 +209,12 @@ def embed_wsi_patches(
     embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
         embedding_image,
-        transformations={embedder.cs: Scale([patch_width, patch_width], axes=("x", "y"))},
+        transformations={
+            embedder.cs: Scale([embedder.patch_width, embedder.patch_width], axes=("x", "y"))
+        },
     )
-    embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
-    embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
+    embedding_image.coords["y"] = embedder.patch_width * embedding_image.coords["y"]
+    embedding_image.coords["x"] = embedder.patch_width * embedding_image.coords["x"]
 
     embedding_key = f"sopa_{model_name}"
     sdata.add_image(embedding_key, embedding_image)
