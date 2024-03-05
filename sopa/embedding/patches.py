@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable
+
+try:
+    import torch
+except ImportError:
+    raise ImportError(
+        "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'`"
+    )
 
 import numpy as np
 import tqdm
@@ -11,6 +17,7 @@ from spatialdata import SpatialData, bounding_box_query
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
+import sopa.embedding.models as models
 from sopa._constants import SopaKeys
 from sopa._sdata import get_intrinsic_cs, get_key
 from sopa.segmentation import Patches2D
@@ -67,58 +74,92 @@ def _get_extraction_parameters(
     return level, resize_factor, patch_width, True
 
 
-def _torch_patch(
-    image: MultiscaleSpatialImage | SpatialImage,
-    box: tuple[int, int, int, int],
-    level: int,
-    coordinate_system: str,
-    resize_factor: float,
-) -> np.ndarray:
-    """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
-    import cv2
-    import torch
+class Embedder:
+    def __init__(
+        self,
+        image: MultiscaleSpatialImage | SpatialImage,
+        model_name: str,
+        patch_width: int,
+        level: int | None = 0,
+        magnification: int | None = None,
+        device: str = "cpu",
+    ):
+        self.image = image
+        self.model_name = model_name
+        self.device = device
 
-    image_patch = bounding_box_query(
-        image, ("y", "x"), box[:2][::-1], box[2:][::-1], coordinate_system
-    )
+        self.cs = get_intrinsic_cs(None, image)
 
-    if isinstance(image, MultiscaleSpatialImage):
-        patch = np.array(next(iter(image_patch[f"scale{level}"].values())).transpose("y", "x", "c"))
-    else:
-        patch = image_patch.transpose("y", "x", "c").compute().data
+        tiff_metadata = image.attrs.get("metadata", {})
+        self.level, self.resize_factor, self.patch_width, success = _get_extraction_parameters(
+            tiff_metadata, patch_width, level, magnification
+        )
+        if not success:
+            log.error("Error retrieving the image mpp, skipping tile embedding.")
+            return False
 
-    if resize_factor != 1:
-        dim = (int(patch.shape[0] * resize_factor), int(patch.shape[1] * resize_factor))
+        assert hasattr(
+            models, model_name
+        ), f"'{model_name}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
+
+        self.model: torch.nn.Module = getattr(models, model_name)()
+        self.model.eval().to(device)
+
+    def _resize(self, patch: np.ndarray):
+        import cv2
+
+        patch = patch.transpose(1, 2, 0)
+        dim = (
+            int(patch.shape[0] * self.resize_factor),
+            int(patch.shape[1] * self.resize_factor),
+        )
         patch = cv2.resize(patch, dim)
+        return patch.transpose(2, 0, 1)
 
-    patch = patch.transpose(2, 0, 1)
-    return torch.tensor(patch / 255.0, dtype=torch.float32)
+    def _torch_patch(
+        self,
+        box: tuple[int, int, int, int],
+    ) -> np.ndarray:
+        """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
+        image_patch = bounding_box_query(
+            self.image, ("y", "x"), box[:2][::-1], box[2:][::-1], self.cs
+        )
 
+        if isinstance(self.image, MultiscaleSpatialImage):
+            image_patch = next(iter(image_patch[f"scale{self.level}"].values()))
 
-def embed_batch(model_name: str, device: str) -> tuple[Callable, int]:
-    import torch
+        patch = image_patch.compute().data
 
-    import sopa.embedding.models as models
+        if self.resize_factor != 1:
+            patch = self._resize(patch)
 
-    assert hasattr(
-        models, model_name
-    ), f"'{model_name}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
+        return torch.tensor(patch / 255.0, dtype=torch.float32)
 
-    model: torch.nn.Module = getattr(models, model_name)()
-    model.eval().to(device)
+    def _torch_batch(self, bboxes: np.ndarray):
+        batch = [self._torch_patch(box) for box in bboxes]
 
-    def _(patches: torch.Tensor):
-        """Uses the model to gets the patches outputs.
+        max_y = max(img.shape[1] for img in batch)
+        max_x = max(img.shape[2] for img in batch)
 
-        patches has a shape (B * Y * X * 3) and the output is of shape (B * output_dim)"""
+        def _pad(patch: torch.Tensor, max_y: int, max_x: int) -> torch.Tensor:
+            pad_x, pad_y = max_x - patch.shape[2], max_y - patch.shape[1]
+            return torch.nn.functional.pad(patch, (0, pad_x, 0, pad_y), value=0)
+
+        return torch.stack([_pad(patch, max_y, max_x) for patch in batch])
+
+    @property
+    def output_dim(self):
+        return self.model.output_dim
+
+    @torch.no_grad()
+    def embed_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
+        patches = self._torch_batch(bboxes)  # shape (B,3,Y,X)
+
         if len(patches.shape) == 3:
             patches = patches.unsqueeze(0)
 
-        with torch.no_grad():
-            embedding = model(patches.to(device)).squeeze()
-            return embedding.cpu()
-
-    return _, model.output_dim
+        embedding = self.model(patches.to(self.device)).squeeze()
+        return embedding.cpu()  # shape (B * output_dim)
 
 
 def embed_wsi_patches(
@@ -149,43 +190,26 @@ def embed_wsi_patches(
     Returns:
         If the embedding was successful, returns the `SpatialImage` of shape `(C,Y,X)` containing the embedding, else `False`
     """
-    import torch
-
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
 
-    tiff_metadata = image.attrs.get("metadata", {})
-    coordinate_system = get_intrinsic_cs(sdata, image)
-
-    embedder, output_dim = embed_batch(model_name=model_name, device=device)
-
-    level, resize_factor, patch_width, success = _get_extraction_parameters(
-        tiff_metadata, patch_width, level, magnification
-    )
-    if not success:
-        log.error(f"Error retrieving the mpp for {image_key}, skipping tile embedding.")
-        return False
+    embedder = Embedder(image, model_name, patch_width, level, magnification, device)
 
     patches = Patches2D(sdata, image_key, patch_width, 0)
-    embedding_image = np.zeros((output_dim, *patches.shape), dtype=np.float32)
+    embedding_image = np.zeros((embedder.output_dim, *patches.shape), dtype=np.float32)
 
     log.info(f"Computing {len(patches)} embeddings at level {level}")
 
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-        batch = torch.stack(
-            [
-                _torch_patch(image, box, level, coordinate_system, resize_factor)
-                for box in patches.bboxes[i : i + batch_size]
-            ]
-        )
+        embedding = embedder.embed_bboxes(patches.bboxes[i : i + batch_size])
 
-        loc_x, loc_y = patches.ilocs[i : i + len(batch)].T
-        embedding_image[:, loc_y, loc_x] = embedder(batch).T
+        loc_x, loc_y = patches.ilocs[i : i + len(embedding)].T
+        embedding_image[:, loc_y, loc_x] = embedding.T
 
     embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
         embedding_image,
-        transformations={coordinate_system: Scale([patch_width, patch_width], axes=("x", "y"))},
+        transformations={embedder.cs: Scale([patch_width, patch_width], axes=("x", "y"))},
     )
     embedding_image.coords["y"] = patch_width * embedding_image.coords["y"]
     embedding_image.coords["x"] = patch_width * embedding_image.coords["x"]
