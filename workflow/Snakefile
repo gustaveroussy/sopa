@@ -79,7 +79,7 @@ rule patch_segmentation_cellpose:
     params:
         args_cellpose = str(args["segmentation"]["cellpose"]),
     resources:
-        mem_mb=128_000,
+        mem_mb=512_000,
         partition="longq",
     shell:
         """
