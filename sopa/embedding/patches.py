@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import Callable
 
-import dask as da
 import numpy as np
 import tqdm
 from multiscale_spatial_image import MultiscaleSpatialImage
@@ -68,7 +67,7 @@ def _get_extraction_parameters(
     return level, resize_factor, patch_width, True
 
 
-def _numpy_patch(
+def _torch_patch(
     image: MultiscaleSpatialImage | SpatialImage,
     box: tuple[int, int, int, int],
     level: int,
@@ -77,6 +76,7 @@ def _numpy_patch(
 ) -> np.ndarray:
     """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
     import cv2
+    import torch
 
     image_patch = bounding_box_query(
         image, ("y", "x"), box[:2][::-1], box[2:][::-1], coordinate_system
@@ -91,7 +91,8 @@ def _numpy_patch(
         dim = (int(patch.shape[0] * resize_factor), int(patch.shape[1] * resize_factor))
         patch = cv2.resize(patch, dim)
 
-    return patch.transpose(2, 0, 1)
+    patch = patch.transpose(2, 0, 1)
+    return torch.tensor(patch / 255.0, dtype=torch.float32)
 
 
 def embed_batch(model_name: str, device: str) -> tuple[Callable, int]:
@@ -106,13 +107,16 @@ def embed_batch(model_name: str, device: str) -> tuple[Callable, int]:
     model: torch.nn.Module = getattr(models, model_name)()
     model.eval().to(device)
 
-    def _(patch: np.ndarray):
-        torch_patch = torch.tensor(patch / 255.0, dtype=torch.float32)
-        if len(torch_patch.shape) == 3:
-            torch_patch = torch_patch.unsqueeze(0)
+    def _(patches: torch.Tensor):
+        """Uses the model to gets the patches outputs.
+
+        patches has a shape (B * Y * X * 3) and the output is of shape (B * output_dim)"""
+        if len(patches.shape) == 3:
+            patches = patches.unsqueeze(0)
+
         with torch.no_grad():
-            embedding = model(torch_patch.to(device)).squeeze()
-        return embedding.cpu()
+            embedding = model(patches.to(device)).squeeze()
+            return embedding.cpu()
 
     return _, model.output_dim
 
@@ -125,7 +129,6 @@ def embed_wsi_patches(
     magnification: int | None = None,
     image_key: str | None = None,
     batch_size: int = 32,
-    num_workers: int = 1,
     device: str = "cpu",
 ) -> SpatialImage | bool:
     """Create an image made of patch embeddings of a WSI image.
@@ -141,12 +144,13 @@ def embed_wsi_patches(
         magnification: The target magnification on which the embedding is performed. If `magnification` is provided, the `level` argument will be automatically computed.
         image_key: Optional image key of the WSI image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
-        num_workers: Number of workers used to extract patches.
         device: Device used for the computer vision model.
 
     Returns:
         If the embedding was successful, returns the `SpatialImage` of shape `(C,Y,X)` containing the embedding, else `False`
     """
+    import torch
+
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
 
@@ -168,17 +172,15 @@ def embed_wsi_patches(
     log.info(f"Computing {len(patches)} embeddings at level {level}")
 
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-        patch_boxes = patches.bboxes[i : i + batch_size]
-
-        get_batches = [
-            da.delayed(_numpy_patch)(image, box, level, coordinate_system, resize_factor)
-            for box in patch_boxes
-        ]
-        batch = da.compute(*get_batches, num_workers=num_workers)
-        embedding = embedder(np.stack(batch))
+        batch = torch.stack(
+            [
+                _torch_patch(image, box, level, coordinate_system, resize_factor)
+                for box in patches.bboxes[i : i + batch_size]
+            ]
+        )
 
         loc_x, loc_y = patches.ilocs[i : i + len(batch)].T
-        embedding_image[:, loc_y, loc_x] = embedding.T
+        embedding_image[:, loc_y, loc_x] = embedder(batch).T
 
     embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
