@@ -97,6 +97,7 @@ rule patch_segmentation_baysor:
         args_baysor_prior_seg = args.baysor_prior_seg,
     resources:
         mem_mb=256_000,
+        partition="longq",
     shell:
         """
         if command -v module &> /dev/null; then
