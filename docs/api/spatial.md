@@ -1,3 +1,7 @@
+::: sopa.spatial.sjoin
+    options:
+      show_root_heading: true
+
 ::: sopa.spatial.mean_distance
     options:
       show_root_heading: true
