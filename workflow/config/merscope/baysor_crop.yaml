@@ -9,14 +9,7 @@ patchify:
   patch_overlap_microns: 20
 
 segmentation:
-  cellpose:
-    diameter: 60
-    channels: ["DAPI"]
-    flow_threshold: 2
-    cellprob_threshold: -6
-
   baysor:
-    cell_key: cell_id
     min_area: 20
     config:
       data:
