@@ -46,11 +46,14 @@ def _get_channel_names_macsima(files):
     return _deduplicate_names(df_antibodies)
 
 
-def _default_image_models_kwargs(image_models_kwargs: dict | None):
+def _default_image_models_kwargs(image_models_kwargs: dict | None = None):
     image_models_kwargs = {} if image_models_kwargs is None else image_models_kwargs
 
     if "chunks" not in image_models_kwargs:
         image_models_kwargs["chunks"] = (1, 1024, 1024)
+
+    if "scale_factors" not in image_models_kwargs:
+        image_models_kwargs["scale_factors"] = [2, 2, 2, 2]
 
     return image_models_kwargs
 
@@ -268,7 +271,7 @@ def ome_tif(path: Path, as_image: bool = False) -> SpatialImage | SpatialData:
     Returns:
         A `SpatialImage` or a `SpatialData` object
     """
-    image_models_kwargs = _default_image_models_kwargs(None)
+    image_models_kwargs = _default_image_models_kwargs()
     image_name = Path(path).absolute().name.split(".")[0]
     image: da.Array = imread(path)
 

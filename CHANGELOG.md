@@ -2,6 +2,10 @@
 
 ### Added
 - Spatial join between shapes (`from sdata.spatial import sjoin`)
+- H&E tutorial (basic usage)
+
+## Changed
+- Using `MultiscaleSpatialImage` by default for multiplex imaging technologies
 
 ## [1.0.5] - 2024-03-01
 

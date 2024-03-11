@@ -11,12 +11,15 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
 
 
-def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> SpatialData:
+def wsi(
+    path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256), as_image: bool = False
+) -> SpatialData:
     """Read a WSI into a `SpatialData` object
 
     Args:
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
+        as_image: If `True`, returns a, image instead of a `SpatialData` object
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`
@@ -46,6 +49,10 @@ def wsi(path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256)) -> Spati
 
     multiscale_image = MultiscaleSpatialImage.from_dict(images)
     multiscale_image.attrs["metadata"] = tiff_metadata
+    multiscale_image.name = image_name
+
+    if as_image:
+        return multiscale_image
 
     return SpatialData(images={image_name: multiscale_image})
 

@@ -4,12 +4,13 @@ import geopandas as gpd
 import numpy as np
 import spatialdata
 import xarray as xr
+from multiscale_spatial_image import MultiscaleSpatialImage
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 
 from .._constants import ROI
-from .._sdata import get_intrinsic_cs, get_key
+from .._sdata import get_intrinsic_cs, get_item
 
 log = logging.getLogger(__name__)
 
@@ -48,10 +49,16 @@ def hsv_otsu(
     """
     import cv2
 
-    image_key = get_key(sdata, "images", image_key)
+    image_key, image = get_item(sdata, "images", image_key)
 
-    level_keys = list(sdata[image_key].keys())
-    image: xr.DataArray = next(iter(sdata[image_key][level_keys[level]].values()))
+    if level == 0 or not isinstance(image, MultiscaleSpatialImage):
+        log.warn(
+            "Running hsv_otsu on the full image can be slow. We recommend using a MultiscaleSpatialImage"
+        )
+
+    if isinstance(image, MultiscaleSpatialImage):
+        level_keys = list(image.keys())
+        image: xr.DataArray = next(iter(image[level_keys[level]].values()))
 
     thumbnail = np.array(image.transpose("y", "x", "c"))
     thumbnail_hsv = cv2.cvtColor(thumbnail, cv2.COLOR_RGB2HSV)

@@ -10,13 +10,11 @@ import xarray as xr
 from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
 from spatial_image import SpatialImage
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel
-from spatialdata.transformations import Affine
+from spatialdata.transformations import Affine, set_transformation
 from tqdm import tqdm
 
 from ..._sdata import get_intrinsic_cs, get_spatial_image
 from ...utils.image import resize_numpy, scale_dtype
-from ..imaging import _default_image_models_kwargs
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
 
@@ -201,7 +199,6 @@ def align(
     image: SpatialImage,
     transformation_matrix_path: str,
     image_key: str = None,
-    image_models_kwargs: dict | None = None,
     overwrite: bool = False,
 ):
     """Add an image to the `SpatialData` object after alignment with the Xenium Explorer.
@@ -211,11 +208,9 @@ def align(
         image: A `SpatialImage` object. Note that `image.name` is used as the key for the aligned image.
         transformation_matrix_path: Path to the `.csv` transformation matrix exported from the Xenium Explorer
         image_key: Optional name of the image on which it has been aligned. Required if multiple images in the `SpatialData` object.
-        image_models_kwargs: Kwargs to the `Image2DModel` model.
         overwrite: Whether to overwrite the image, if already existing.
     """
     image_name = image.name
-    image_models_kwargs = _default_image_models_kwargs(image_models_kwargs)
 
     to_pixel = Affine(
         np.genfromtxt(transformation_matrix_path, delimiter=","),
@@ -226,13 +221,7 @@ def align(
     default_image = get_spatial_image(sdata, image_key)
     pixel_cs = get_intrinsic_cs(sdata, default_image)
 
-    image = Image2DModel.parse(
-        image,
-        dims=("c", "y", "x"),
-        transformations={pixel_cs: to_pixel},
-        c_coords=image.coords["c"].values,
-        **image_models_kwargs,
-    )
+    set_transformation(image, to_pixel, pixel_cs)
 
     log.info(f"Adding image {image_name}:\n{image}")
     sdata.add_image(image_name, image, overwrite=overwrite)

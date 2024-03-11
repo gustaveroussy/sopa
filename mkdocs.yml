@@ -17,6 +17,7 @@ nav:
     - API usage: tutorials/api_usage.ipynb
     - Spatial statistics: tutorials/spatial.ipynb
     - Align images (e.g. H&E): tutorials/align.md
+    - H&E usage: tutorials/he.ipynb
     - Advanced segmentation: tutorials/advanced_segmentation.md
   - CLI: cli.md
   - API:
