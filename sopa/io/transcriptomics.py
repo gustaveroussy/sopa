@@ -143,7 +143,9 @@ def _rioxarray_load_merscope(
                 images_dir / f"mosaic_{stain}_z{z_layer}.tif",
                 chunks=image_models_kwargs["chunks"],
                 **kwargs,
-            ).rename({"band": "c"})
+            )
+            .rename({"band": "c"})
+            .reset_coords("spatial_ref", drop=True)
             for stain in stainings
         ],
         dim="c",
