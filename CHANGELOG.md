@@ -1,4 +1,4 @@
-## [1.0.6] - tbd
+## [1.0.6] - 2024-03-13
 
 ### Added
 - Spatial join between shapes (`from sdata.spatial import sjoin`)
