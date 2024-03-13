@@ -53,7 +53,7 @@ def _get_extraction_parameters(
         level = 0
 
     if magnification is None:
-        return level, 1, patch_width, True
+        return level, 1, patch_width * 2**level, True  # TODO: what if scaling != 2?
 
     if tiff_metadata["properties"].get("tiffslide.objective-power"):
         objective_power = int(tiff_metadata["properties"].get("tiffslide.objective-power"))

@@ -1,3 +1,16 @@
+## [1.0.6] - 2024-03-13
+
+### Added
+- Spatial join between shapes (`from sdata.spatial import sjoin`)
+- H&E tutorial (basic usage)
+- New backend for the MERSCOPE reader (requires `rioxarray`, currently experimental, should use less RAM)
+
+## Changed
+- Using `MultiscaleSpatialImage` by default for multiplex imaging technologies
+
+## Fixed
+- Issue in report creation when channel names are integers
+
 ## [1.0.5] - 2024-03-01
 
 ### Changed

@@ -118,7 +118,7 @@ class SectionBuilder:
             SubSection(
                 "Names",
                 Paragraph(
-                    f"Channels names:<br>{Message(', '.join(list(image.coords['c'].values)))}"
+                    f"Channels names:<br>{Message(', '.join(map(str, list(image.coords['c'].values))))}"
                 ),
             )
         ]
