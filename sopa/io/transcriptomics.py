@@ -151,7 +151,9 @@ def _rioxarray_load_merscope(
         dim="c",
     )
 
-    return Image2DModel.parse(im, transformations=transformations, **image_models_kwargs)
+    return Image2DModel.parse(
+        im, transformations=transformations, c_coords=stainings, **image_models_kwargs
+    )
 
 
 def _dask_image_load_merscope(
