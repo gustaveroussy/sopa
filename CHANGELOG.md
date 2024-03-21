@@ -1,13 +1,13 @@
 ## [1.0.7] - tbd
 
-## Changed
+### Changed
 - Improvements in the CLI and API tutorials
 - Sequential segmentation now requires `patchify` to be run independently
 
 ### Added
 - Kwargs can be provided to Cellpose model init
 
-## Fixed
+### Fixed
 - `set_transformation` issue for image alignment
 
 ## [1.0.6] - 2024-03-13
@@ -17,10 +17,10 @@
 - H&E tutorial (basic usage)
 - New backend for the MERSCOPE reader (requires `rioxarray`, currently experimental, should use less RAM)
 
-## Changed
+### Changed
 - Using `MultiscaleSpatialImage` by default for multiplex imaging technologies
 
-## Fixed
+### Fixed
 - Issue in report creation when channel names are integers
 
 ## [1.0.5] - 2024-03-01
