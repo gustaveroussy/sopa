@@ -33,6 +33,12 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 You can use any existing [Cellpose model](https://cellpose.readthedocs.io/en/latest/models.html) with the `model_type` argument (via the API, CLI, or Snakemake pipeline). For the Snakemake pipeline, see [here](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) how to set this argument.
 If you have a custom pretrained model, use the `pretrained_model` argument instead of `model_type`, and give the path to your cellpose model.
 
+## How to provide dictionnaries to CLI arguments?
+
+Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../cli/#sopa-read) has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
+
+`--kwargs "{'backend': 'rioxarray'}"`
+
 ## Can I use Nextflow instead of Snakemake?
 
 Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).

@@ -1,5 +1,12 @@
 ## [1.0.7] - tbd
 
+## Changed
+- Improvements in the CLI and API tutorials
+- Sequential segmentation now requires `patchify` to be run independently
+
+### Added
+- Kwargs can be provided to Cellpose model init
+
 ## Fixed
 - `set_transformation` issue for image alignment
 
