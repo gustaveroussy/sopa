@@ -1,3 +1,8 @@
+## [1.0.7] - tbd
+
+## Fixed
+- `set_transformation` issue for image alignment
+
 ## [1.0.6] - 2024-03-13
 
 ### Added

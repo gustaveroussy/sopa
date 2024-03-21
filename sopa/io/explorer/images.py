@@ -221,7 +221,7 @@ def align(
     default_image = get_spatial_image(sdata, image_key)
     pixel_cs = get_intrinsic_cs(sdata, default_image)
 
-    set_transformation(image, to_pixel, pixel_cs)
+    set_transformation(image, {pixel_cs: to_pixel}, set_all=True)
 
     log.info(f"Adding image {image_name}:\n{image}")
     sdata.add_image(image_name, image, overwrite=overwrite)

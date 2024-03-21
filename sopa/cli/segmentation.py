@@ -162,7 +162,7 @@ def _run_staining_segmentation(
     min_area: float,
     clip_limit: float,
     gaussian_sigma: float,
-    patch_index: int,
+    patch_index: int | None,
     patch_dir: str,
     patch_width: int,
     patch_overlap: int,
