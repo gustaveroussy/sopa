@@ -3,6 +3,7 @@
 ### Changed
 - Improvements in the CLI and API tutorials
 - Sequential segmentation now requires `patchify` to be run independently
+- Dependency `spatialdata>=0.1.0`
 
 ### Added
 - Kwargs can be provided to Cellpose model init
