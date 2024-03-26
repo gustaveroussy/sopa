@@ -52,7 +52,7 @@ aggregate:
 
 explorer:
   gene_column: "feature_name"
-  ram_threshold_gb: 16
+  ram_threshold_gb: 4
 
 executables:
   baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor

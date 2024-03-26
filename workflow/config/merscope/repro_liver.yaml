@@ -53,7 +53,7 @@ annotation:
 
 explorer:
   gene_column: "gene"
-  ram_threshold_gb: 16
+  ram_threshold_gb: 4
   pixel_size: 0.108
 
 executables:
