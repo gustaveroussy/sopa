@@ -545,9 +545,9 @@ Perform cellpose segmentation. This can be done on all patches directly, or on o
 
 !!! note "Usage"
 
-    - [On one patch] Use this mode to run patches in parallel. Just provide `--patch-index` and `--patch-dir`. Note that `--patch-dir` will be used during `sopa resolve cellpose` afterwards.
+    - [On one patch] Use this mode to run patches in parallel. Provide `--patch-index` to run one patch, and execute all patches in a parallel manner (you need to define your own parallelization, else, use the Snakemake pipeline).
 
-    - [On all patches at once] For small images, you can run cellpose sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
+    - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
 
 **Usage**:
 
@@ -566,14 +566,13 @@ $ sopa segmentation cellpose [OPTIONS] SDATA_PATH
 * `--flow-threshold FLOAT`: Cellpose `flow_threshold` parameter  [default: 2]
 * `--cellprob-threshold FLOAT`: Cellpose `cellprob_threshold` parameter  [default: -6]
 * `--model-type TEXT`: Name of the cellpose model  [default: cyto3]
-* `--pretrained-model TEXT`: Path to the pretrained model to be loaded  [default: False]
+* `--pretrained-model TEXT`: Path to the pretrained model to be loaded
 * `--min-area INTEGER`: Minimum area (in pixels^2) for a cell to be considered as valid  [default: 0]
 * `--clip-limit FLOAT`: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)  [default: 0.2]
 * `--gaussian-sigma FLOAT`: Parameter for scipy gaussian_filter (applied before running cellpose)  [default: 1]
 * `--patch-index INTEGER`: Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`
 * `--patch-dir TEXT`: Path to the temporary cellpose directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/cellpose_boundaries` directory
-* `--patch-width INTEGER`: Ignore this if you already run `sopa patchify`. Patch width in pixels
-* `--patch-overlap INTEGER`: Ignore this if you already run `sopa patchify`. Patches overlaps in pixels
+* `--method-kwargs TEXT`: Kwargs for the cellpose method builder. This should be a dictionnary, in inline string format.  [default: {}]
 * `--help`: Show this message and exit.
 
 #### `sopa segmentation generic-staining`
@@ -585,9 +584,9 @@ Perform generic staining-based segmentation. This can be done on all patches dir
 
     As for Cellpose, two modes ara available:
 
-    - [On one patch] Use this mode to run patches in parallel. Just provide `--patch-index` and `--patch-dir`. Note that `--patch-dir` will be used during `sopa resolve cellpose` afterwards.
+    - [On one patch] Use this mode to run patches in parallel. Provide `--patch-index` to run one patch, and execute all patches in a parallel manner (you need to define your own parallelization, else, use the Snakemake pipeline).
 
-    - [On all patches at once] For small images, you can run the segmentation method sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
+    - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
 
 **Usage**:
 
@@ -609,6 +608,4 @@ $ sopa segmentation generic-staining [OPTIONS] SDATA_PATH
 * `--gaussian-sigma FLOAT`: Parameter for scipy gaussian_filter (applied before running the segmentation method)  [default: 1]
 * `--patch-index INTEGER`: Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['sopa_patches'])`
 * `--patch-dir TEXT`: Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory
-* `--patch-width INTEGER`: Ignore this if you already run `sopa patchify`. Patch width in pixels
-* `--patch-overlap INTEGER`: Ignore this if you already run `sopa patchify`. Patches overlaps in pixels
 * `--help`: Show this message and exit.

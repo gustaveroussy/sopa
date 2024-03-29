@@ -38,21 +38,19 @@ def cellpose(
         default=None,
         help="Path to the temporary cellpose directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/cellpose_boundaries` directory",
     ),
-    patch_width: int = typer.Option(
-        default=None, help="Ignore this if you already run `sopa patchify`. Patch width in pixels"
-    ),
-    patch_overlap: int = typer.Option(
-        default=None,
-        help="Ignore this if you already run `sopa patchify`. Patches overlaps in pixels",
+    method_kwargs: str = typer.Option(
+        {},
+        callback=ast.literal_eval,
+        help="Kwargs for the cellpose method builder. This should be a dictionnary, in inline string format.",
     ),
 ):
     """Perform cellpose segmentation. This can be done on all patches directly, or on one individual patch.
 
     Usage:
 
-        - [On one patch] Use this mode to run patches in parallel. Just provide `--patch-index` and `--patch-dir`. Note that `--patch-dir` will be used during `sopa resolve cellpose` afterwards.
+        - [On one patch] Use this mode to run patches in parallel. Provide `--patch-index` to run one patch, and execute all patches in a parallel manner (you need to define your own parallelization, else, use the Snakemake pipeline).
 
-        - [On all patches at once] For small images, you can run cellpose sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
+        - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
     """
     from sopa._constants import SopaKeys
     from sopa.segmentation.methods import cellpose_patch
@@ -64,6 +62,7 @@ def cellpose(
         cellprob_threshold=cellprob_threshold,
         model_type=model_type,
         pretrained_model=pretrained_model,
+        **method_kwargs,
     )
 
     _run_staining_segmentation(
@@ -76,8 +75,6 @@ def cellpose(
         gaussian_sigma,
         patch_index,
         patch_dir,
-        patch_width,
-        patch_overlap,
     )
 
 
@@ -112,13 +109,6 @@ def generic_staining(
         default=None,
         help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory",
     ),
-    patch_width: int = typer.Option(
-        default=None, help="Ignore this if you already run `sopa patchify`. Patch width in pixels"
-    ),
-    patch_overlap: int = typer.Option(
-        default=None,
-        help="Ignore this if you already run `sopa patchify`. Patches overlaps in pixels",
-    ),
 ):
     """Perform generic staining-based segmentation. This can be done on all patches directly, or on one individual patch.
 
@@ -127,9 +117,9 @@ def generic_staining(
 
         As for Cellpose, two modes ara available:
 
-        - [On one patch] Use this mode to run patches in parallel. Just provide `--patch-index` and `--patch-dir`. Note that `--patch-dir` will be used during `sopa resolve cellpose` afterwards.
+        - [On one patch] Use this mode to run patches in parallel. Provide `--patch-index` to run one patch, and execute all patches in a parallel manner (you need to define your own parallelization, else, use the Snakemake pipeline).
 
-        - [On all patches at once] For small images, you can run the segmentation method sequentially (no need to run `sopa patchify`). You need to provide `--patch-width` and `--patch-overlap`
+        - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
     """
     from sopa.segmentation import methods
 
@@ -149,8 +139,6 @@ def generic_staining(
         gaussian_sigma,
         patch_index,
         patch_dir,
-        patch_width,
-        patch_overlap,
     )
 
 
@@ -162,10 +150,8 @@ def _run_staining_segmentation(
     min_area: float,
     clip_limit: float,
     gaussian_sigma: float,
-    patch_index: int,
+    patch_index: int | None,
     patch_dir: str,
-    patch_width: int,
-    patch_overlap: int,
 ):
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.stainings import StainingSegmentation
@@ -183,13 +169,10 @@ def _run_staining_segmentation(
         gaussian_sigma=gaussian_sigma,
     )
 
-    if patch_index is not None:
-        if patch_dir is None:
-            patch_dir = _default_boundary_dir(sdata_path, shapes_key)
+    if patch_dir is None:
+        patch_dir = _default_boundary_dir(sdata_path, shapes_key)
 
+    if patch_index is None:
+        segmentation.write_patches_cells(patch_dir)
+    else:
         segmentation.write_patch_cells(patch_dir, patch_index)
-        return
-
-    cells = segmentation.run_patches(patch_width, patch_overlap)
-
-    StainingSegmentation.add_shapes(sdata, cells, segmentation.image_key, shapes_key)

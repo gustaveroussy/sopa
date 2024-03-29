@@ -1,5 +1,8 @@
 Here, we provide a minimal example of command line usage. For more details and to learn about other optional arguments, refer to the full [CLI documentation](../../cli).
 
+!!! tip
+    The [Snakemake pipeline](https://gustaveroussy.github.io/sopa/tutorials/snakemake/) is recommended to get started with Sopa. Using the CLI is advised if you want more flexibility, but you'll need to parallelize the segmentation yourself, as detailed below.
+
 ## Save the `SpatialData` object
 
 For this tutorial, we use a generated dataset. You can expect a total runtime of a few minutes.
@@ -90,7 +93,7 @@ sopa patchify image tuto.zarr --patch-width-pixel 1500 --patch-overlap-pixel 50
 Now, we can run Cellpose on each individual patch. Execute the following command line on all `patch-index` (i.e., `0`, `1`, `2`, and `3`) to run Cellpose using DAPI only (you can add an additional channel, for instance, `--channels DAPI --channels PolyT`):
 
 !!! tip
-    Manually running the commands below can involve using many consecutive commands, so we recommend automatizing it. For instance, this can be done using Snakemake or Nextflow. This will help you parallelize it since you can run each task on separate jobs or using multithreading. You can also see how we do it in the [Sopa Snakemake pipeline](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile).
+    Manually running the commands below can involve using many consecutive commands, so we recommend automatizing it. For instance, this can be done using Snakemake or Nextflow. This will help you parallelize it since you can run each task on separate jobs or using multithreading. You can also see how we do it in our [Snakefile](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile). If you prefer using the already existing pipeline instead of the CLI, you can read our [Snakemake pipeline tutorial](https://gustaveroussy.github.io/sopa/tutorials/snakemake/).
 
     To automatically get the number of patches, you can either open the `tuto.zarr/.sopa_cache/patches_file_image` file, or compute `len(sdata['sopa_patches'])` in Python.
 

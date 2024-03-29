@@ -1,3 +1,17 @@
+## [1.0.7] - 2024-03-29
+
+### Changed
+- Improvements in the CLI and API tutorials
+- Sequential segmentation now requires `patchify` to be run independently
+- Dependency `spatialdata>=0.1.1`
+
+### Added
+- Kwargs can be provided to Cellpose model init
+
+### Fixed
+- `set_transformation` issue for image alignment
+- Import issue #37 #39
+
 ## [1.0.6] - 2024-03-13
 
 ### Added
@@ -5,10 +19,10 @@
 - H&E tutorial (basic usage)
 - New backend for the MERSCOPE reader (requires `rioxarray`, currently experimental, should use less RAM)
 
-## Changed
+### Changed
 - Using `MultiscaleSpatialImage` by default for multiplex imaging technologies
 
-## Fixed
+### Fixed
 - Issue in report creation when channel names are integers
 
 ## [1.0.5] - 2024-03-01

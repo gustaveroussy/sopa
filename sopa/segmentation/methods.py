@@ -10,7 +10,8 @@ def cellpose_patch(
     channels: list[str],
     model_type: str = "cyto3",
     pretrained_model: str | bool = False,
-    **cellpose_kwargs: int,
+    cellpose_model_kwargs: dict | None = None,
+    **cellpose_eval_kwargs: int,
 ) -> Callable:
     """Creation of a callable that runs Cellpose segmentation on a patch
 
@@ -19,7 +20,8 @@ def cellpose_patch(
         channels: List of channel names
         model_type: Cellpose model type
         pretrained_model: Path to the pretrained model to be loaded
-        **cellpose_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.Cellpose` object)
+        cellpose_model_kwargs: Kwargs to be provided to the `cellpose.models.CellposeModel` object
+        **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
 
     Returns:
         A `callable` whose input is an image of shape `(C, Y, X)` and output is a cell mask of shape `(Y, X)`. Each mask value `>0` represent a unique cell ID
@@ -31,7 +33,11 @@ def cellpose_patch(
             "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'`"
         )
 
-    model = models.CellposeModel(model_type=model_type, pretrained_model=pretrained_model)
+    cellpose_model_kwargs = cellpose_model_kwargs or {}
+
+    model = models.CellposeModel(
+        model_type=model_type, pretrained_model=pretrained_model, **cellpose_model_kwargs
+    )
 
     if isinstance(channels, str) or len(channels) == 1:
         channels = [0, 0]  # gray scale
@@ -41,7 +47,7 @@ def cellpose_patch(
         raise ValueError(f"Provide 1 or 2 channels. Found {len(channels)}")
 
     def _(patch: np.ndarray):
-        mask, *_ = model.eval(patch, diameter=diameter, channels=channels, **cellpose_kwargs)
+        mask, *_ = model.eval(patch, diameter=diameter, channels=channels, **cellpose_eval_kwargs)
         return mask
 
     return _

@@ -18,7 +18,6 @@ from tqdm import tqdm
 from .._constants import SopaKeys
 from .._sdata import get_spatial_image
 from . import shapes
-from .patching import Patches2D
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +42,9 @@ class StainingSegmentation:
             method = ... # custom callable that runs segmentation on each patch
 
             segmentation = StainingSegmentation(sdata, method, "DAPI")
-            cells = segmentation.run_patches(2000, 100)
+            segmentation.write_patches_cells("./temp_dir")
+
+            cells = StainingSegmentation.read_patches_cells("./temp_dir")
             StainingSegmentation.add_shapes(sdata, cells, image_key, "method_name")
             ```
 
@@ -135,29 +136,12 @@ class StainingSegmentation:
 
         gdf.to_parquet(patch_file)
 
-    def run_patches(
-        self,
-        patch_width: int,
-        patch_overlap: int,
-    ) -> list[Polygon]:
-        """Run segmentation over all patches, in a sequential manner (this is slower than running all patches in parallel)
-
-        Args:
-            patch_width: Width of the patches
-            patch_overlap: Number of pixels of overlap between patches
-
-        Returns:
-            A list of cells represented as `shapely` polygons
-        """
-        patches = Patches2D(self.sdata, self.image_key, patch_width, patch_overlap)
-
-        cells = [
-            cell
-            for patch in tqdm(patches.polygons, desc="Run on patches")
-            for cell in self._run_patch(patch)
-        ]
-        cells = shapes.solve_conflicts(cells)
-        return cells
+    def write_patches_cells(self, patch_dir: str):
+        log.warn(
+            "Running segmentation in a sequential manner. This is not recommended on large images because it can be extremely slow (see https://github.com/gustaveroussy/sopa/discussions/36 for more details)"
+        )
+        for patch_index in tqdm(range(len(self.sdata[SopaKeys.PATCHES])), desc="Run all patches"):
+            self.write_patch_cells(patch_dir, patch_index)
 
     @classmethod
     def read_patches_cells(cls, patch_dir: str | list[str]) -> list[Polygon]:
