@@ -1,4 +1,4 @@
-## [1.0.7] - tbd
+## [1.0.7] - 2024-03-29
 
 ### Changed
 - Improvements in the CLI and API tutorials
