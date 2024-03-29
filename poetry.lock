@@ -4758,7 +4758,7 @@ stdlib_list = "*"
 name = "setuptools"
 version = "69.2.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
-optional = true
+optional = false
 python-versions = ">=3.8"
 files = [
     {file = "setuptools-69.2.0-py3-none-any.whl", hash = "sha256:c21c49fb1042386df081cb5d86759792ab89efca84cf114889191cd09aacc80c"},
@@ -5967,4 +5967,4 @@ wsi = ["opencv-python", "tiffslide", "torch"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "3934c277a8c2dbc525f67f5e1acb7f451aa5659c997a1f4680e6206911b4649b"
+content-hash = "7385b42f2e13e719fc1820606590d7d7a59be978e15964cc04ed6b49a846848b"
