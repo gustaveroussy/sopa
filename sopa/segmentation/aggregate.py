@@ -103,7 +103,7 @@ class Aggregator:
 
         if self.sdata.table is not None and self.overwrite:
             del self.sdata.table
-        self.sdata.table = self.table
+        self.sdata.tables["table"] = self.table
         save_table(self.sdata)
 
     def filter_cells(self, where_filter: np.ndarray):
