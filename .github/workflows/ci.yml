@@ -58,13 +58,16 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --extras "dev cellpose" --no-interaction
+        run: poetry install --extras "dev cellpose snakemake" --no-interaction
 
       #----------------------------------------------
       #              perform tasks
       #----------------------------------------------
       - name: Tests
         run: poetry run pytest
+
+      - name: Snakemake
+        run: cd workflow && poetry run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/uniform_cellpose.yaml -c1
 
       - name: Deploy doc
         if: contains(github.ref, 'tags')

@@ -13,7 +13,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
 from .._constants import ROI
-from .._sdata import get_spatial_image
+from .._sdata import get_spatial_image, save_shapes
 from .image import resize
 
 log = logging.getLogger(__name__)
@@ -134,6 +134,7 @@ def polygon_selection(
     geo_df = ShapesModel.parse(
         geo_df, transformations=get_transformation(sdata[image_key], get_all=True)
     )
-    sdata.add_shapes(ROI.KEY, geo_df)
+    sdata.shapes[ROI.KEY] = geo_df
+    save_shapes(sdata, ROI.KEY)
 
     log.info(f"Polygon saved in sdata['{ROI.KEY}']")
