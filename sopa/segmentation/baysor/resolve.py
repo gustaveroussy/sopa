@@ -16,7 +16,7 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from ..._constants import SopaKeys
-from ..._sdata import get_element, get_key
+from ..._sdata import get_element, get_key, save_shapes
 from .. import aggregate, shapes
 
 log = logging.getLogger(__name__)
@@ -171,7 +171,8 @@ def resolve(
         instance_key=SopaKeys.INSTANCE_KEY,
     )
 
-    sdata.add_shapes(SopaKeys.BAYSOR_BOUNDARIES, geo_df, overwrite=True)
+    sdata.shapes[SopaKeys.BAYSOR_BOUNDARIES] = geo_df
+    save_shapes(sdata, SopaKeys.BAYSOR_BOUNDARIES, overwrite=True)
 
     if sdata.table is not None:
         log.warn("Table already existing. It will be replaced by the new one.")

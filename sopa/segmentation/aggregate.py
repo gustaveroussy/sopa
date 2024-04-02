@@ -25,6 +25,8 @@ from .._sdata import (
     get_element,
     get_item,
     get_spatial_image,
+    save_shapes,
+    save_table,
     to_intrinsic,
 )
 from ..io.explorer.utils import str_cell_id
@@ -73,7 +75,8 @@ class Aggregator:
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
         self.geo_df.index = list(self.table.obs_names)
-        self.sdata.add_shapes(self.shapes_key, self.geo_df, overwrite=True)
+        self.sdata.shapes[self.shapes_key] = self.geo_df
+        save_shapes(self.sdata, self.shapes_key, overwrite=True)
 
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
@@ -101,6 +104,7 @@ class Aggregator:
         if self.sdata.table is not None and self.overwrite:
             del self.sdata.table
         self.sdata.table = self.table
+        save_table(self.sdata)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")

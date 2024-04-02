@@ -1,3 +1,7 @@
+## [1.0.8] - 2024-04-02
+
+Hotfix: resolve issues related to `spatialdata>=1.0.0`
+
 ## [1.0.7] - 2024-03-29
 
 ### Changed

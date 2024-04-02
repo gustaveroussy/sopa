@@ -17,10 +17,10 @@ from spatialdata import SpatialData, bounding_box_query
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
-import sopa.embedding.models as models
-from sopa._constants import SopaKeys
-from sopa._sdata import get_intrinsic_cs, get_key
-from sopa.segmentation import Patches2D
+from .._constants import SopaKeys
+from .._sdata import get_intrinsic_cs, get_key, save_image
+from ..segmentation import Patches2D
+from . import models
 
 log = logging.getLogger(__name__)
 
@@ -217,7 +217,8 @@ def embed_wsi_patches(
     embedding_image.coords["x"] = embedder.patch_width * embedding_image.coords["x"]
 
     embedding_key = f"sopa_{model_name}"
-    sdata.add_image(embedding_key, embedding_image)
+    sdata.images[embedding_key] = embedding_image
+    save_image(sdata, embedding_key)
 
     log.info(f"WSI embeddings saved as an image in sdata['{embedding_key}']")
 
