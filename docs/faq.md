@@ -21,6 +21,12 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 === "Hyperion"
     `data_path` is the directory containing multiple `.ome.tiff` files (one file per channel)
 
+## I have small artifact cells, how do remove them?
+
+You may have small cells that were segmented but that should be removed. For that, `Sopa` offers three filtering approaches: using their area, their transcript count, or their fluorescence intensity. Refer to the following config parameters from this [example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml): `min_area`, `min_transcripts`, and `min_intensity_ratio`.
+
+If using the CLI, `--min-area` can be provided to `sopa segmentation cellpose` or `sopa resolve baysor`, and `--min-transcripts`/`--min-intensity-ratio` can be provided to `sopa aggregate`.
+
 ## Cellpose is not segmenting enough cells; what should I do?
 
 - The main Cellpose parameter to check is `diameter`, i.e. a typical cell diameter **in pixels**. Note that this is highly specific to the technology you're using since the micron-to-pixel ratio can differ. We advise you to start with the default parameter for your technology of interest (see the `diameter` parameter inside our config files [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config)).

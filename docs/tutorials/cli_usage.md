@@ -149,7 +149,7 @@ For this tutorial, we will use the config below. Save this in a `config.toml` fi
 ```toml
 [data]
 force_2d = true
-min_molecules_per_cell = 10   # min number of transcripts per cell
+min_molecules_per_cell = 1
 x = "x"
 y = "y"
 z = "z"
@@ -229,11 +229,11 @@ This **mandatory** step turns the data into an `AnnData` object. We can count th
 
 === "Count transcripts + average intensities"
     ```sh
-    sopa aggregate tuto.zarr --gene-column genes --average-intensities
+    sopa aggregate tuto.zarr --gene-column genes --average-intensities --min-transcripts 10
     ```
 === "Count transcripts"
     ```sh
-    sopa aggregate tuto.zarr --gene-column genes
+    sopa aggregate tuto.zarr --gene-column genes --min-transcripts 10
     ```
 === "Average intensities"
     ```sh

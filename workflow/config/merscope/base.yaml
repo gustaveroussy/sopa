@@ -18,7 +18,7 @@ segmentation:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
-        min_molecules_per_cell: 10 # min number of transcripts per cell
+        min_molecules_per_cell: 1
         x: "x"
         y: "y"
         z: "z"
@@ -42,6 +42,7 @@ segmentation:
 
 aggregate:
   average_intensities: true
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->
 
