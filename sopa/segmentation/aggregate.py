@@ -75,6 +75,8 @@ class Aggregator:
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
         self.geo_df.index = list(self.table.obs_names)
+        self.sdata.shapes[self.shapes_key] = self.geo_df
+        save_shapes(self.sdata, self.shapes_key, overwrite=True)
 
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
