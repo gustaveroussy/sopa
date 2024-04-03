@@ -47,7 +47,7 @@ class WorkflowPaths:
         self.shapes_dir = self.sdata_path / "shapes"
         self.points_dir = self.sdata_path / "points"
         self.images_dir = self.sdata_path / "images"
-        self.table_dir = self.sdata_path / "table"
+        self.table_dir = self.sdata_path / "tables"
 
         # sdata.shapes
         self.baysor_boundaries = self.shapes_dir / "baysor_boundaries"

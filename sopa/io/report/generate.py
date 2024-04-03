@@ -56,11 +56,12 @@ def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):
 class SectionBuilder:
     def __init__(self, sdata: SpatialData):
         self.sdata = sdata
+        self.adata = self.sdata.tables.get(SopaKeys.TABLE)
 
     def _table_has(self, key, default=False):
-        if SopaKeys.UNS_KEY not in self.sdata.table.uns:
+        if SopaKeys.UNS_KEY not in self.adata.uns:
             return default
-        return self.sdata.table.uns[SopaKeys.UNS_KEY].get(key, default)
+        return self.adata.uns[SopaKeys.UNS_KEY].get(key, default)
 
     def general_section(self):
         log.info("Writing general section")
@@ -87,7 +88,7 @@ class SectionBuilder:
         coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
-        _kdeplot_vmax_quantile(self.sdata.table.obs[SopaKeys.AREA_OBS])
+        _kdeplot_vmax_quantile(self.adata.obs[SopaKeys.AREA_OBS])
         plt.xlabel("Area (coordinate_system_unit ^ 2)")
 
         return Section(
@@ -95,7 +96,7 @@ class SectionBuilder:
             [
                 SubSection(
                     "Number",
-                    Paragraph(f"Number of cells:<br>{Message(f'{self.sdata.table.n_obs} cells')}"),
+                    Paragraph(f"Number of cells:<br>{Message(f'{self.adata.n_obs} cells')}"),
                 ),
                 SubSection(
                     "Areas",
@@ -155,7 +156,7 @@ class SectionBuilder:
 
         log.info("Writing transcript section")
 
-        mean_transcript_count = self.sdata.table.X.mean(0).A1
+        mean_transcript_count = self.adata.X.mean(0).A1
         low_average = mean_transcript_count < LOW_AVERAGE_COUNT
 
         QC_subsubsections = []
@@ -166,7 +167,7 @@ class SectionBuilder:
                 )
             )
             QC_subsubsections.append(
-                Message(", ".join(self.sdata.table.var_names[low_average]), color="danger")
+                Message(", ".join(self.adata.var_names[low_average]), color="danger")
             )
 
         fig1 = plt.figure()
@@ -174,7 +175,7 @@ class SectionBuilder:
         plt.xlabel("Count per transcript (average / cells)")
 
         fig2 = plt.figure()
-        _kdeplot_vmax_quantile(self.sdata.table.X.sum(1).A1)
+        _kdeplot_vmax_quantile(self.adata.X.sum(1).A1)
         plt.xlabel("Transcript count per cell")
 
         QC_subsubsections.append(Columns([Image(fig1), Image(fig2)]))
@@ -184,23 +185,21 @@ class SectionBuilder:
     def representation_section(self, max_obs: int = 400_000):
         log.info("Writing representation section")
 
-        adata = self.sdata.table
-
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
-            sc.pp.normalize_total(adata)
-            sc.pp.log1p(adata)
+            sc.pp.normalize_total(self.adata)
+            sc.pp.log1p(self.adata)
 
-        if adata.n_obs > max_obs:
-            sc.pp.subsample(adata, n_obs=max_obs)
+        if self.adata.n_obs > max_obs:
+            sc.pp.subsample(self.adata, n_obs=max_obs)
 
-        log.info(f"Computing UMAP on {adata.n_obs} cells")
+        log.info(f"Computing UMAP on {self.adata.n_obs} cells")
 
-        sc.pp.pca(adata)
-        sc.pp.neighbors(adata)
-        sc.tl.umap(adata)
+        sc.pp.pca(self.adata)
+        sc.pp.neighbors(self.adata)
+        sc.tl.umap(self.adata)
 
         colors = self._table_has(SopaKeys.UNS_CELL_TYPES, None)
-        sc.pl.umap(adata, color=colors, show=False)
+        sc.pl.umap(self.adata, color=colors, show=False)
 
         return Section(
             "Representation",

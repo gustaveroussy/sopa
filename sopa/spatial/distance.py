@@ -8,6 +8,7 @@ from anndata import AnnData
 from spatialdata import SpatialData
 from tqdm import tqdm
 
+from .._constants import SopaKeys
 from ._build import _check_has_delaunay
 
 log = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def cells_to_groups(
         A `Dataframe` of shape `n_obs * n_groups`, or `None` if `key_added_prefix` was provided (in this case, the dataframe is saved in `"{key_added_prefix}{group_key}"`)
     """
     if isinstance(adata, SpatialData):
-        adata = adata.table
+        adata = adata.tables[SopaKeys.TABLE]
 
     _check_has_delaunay(adata)
 
@@ -91,7 +92,7 @@ def mean_distance(
         `DataFrame` of shape `n_groups * n_groups_target` of mean hop-distances
     """
     if isinstance(adata, SpatialData):
-        adata = adata.table
+        adata = adata.tables[SopaKeys.TABLE]
 
     target_group_key = group_key if target_group_key is None else target_group_key
 

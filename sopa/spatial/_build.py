@@ -19,6 +19,8 @@ from scipy.spatial import Delaunay
 from sklearn.metrics.pairwise import euclidean_distances
 from spatialdata import SpatialData
 
+from .._constants import SopaKeys
+
 log = logging.getLogger(__name__)
 __all__ = ["spatial_neighbors"]
 
@@ -40,7 +42,7 @@ def spatial_neighbors(
         set_diag: Whether to set the diagonal of the spatial connectivities to `1.0`.
     """
     if isinstance(adata, SpatialData):
-        adata = adata.table
+        adata = adata.tables[SopaKeys.TABLE]
 
     assert (
         radius is None or len(radius) == 2

@@ -6,7 +6,7 @@ from pathlib import Path
 import spatialdata
 from spatialdata import SpatialData
 
-from .._constants import VALID_DIMENSIONS
+from .._constants import VALID_DIMENSIONS, SopaKeys
 from .._sdata import get_spatial_image
 from ..utils.image import _check_integer_dtype
 
@@ -42,12 +42,12 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
     #     log.warn(f"Channel names are not strings. Converting {image_channels} to string values.")
     #     sdata[image_key].data = sdata[image_key].assign_coords(c=image_channels.astype(str))
 
-    if sdata.table is not None:
+    if SopaKeys.TABLE in sdata.tables:
         if delete_table:
             log.info(
-                "The table (i.e. `sdata.table`) will not be saved, since it will be created later by sopa"
+                f"The table `sdata.tables['{SopaKeys.TABLE}']` will not be saved, since it will be created later by sopa"
             )
-            del sdata.table
+            del sdata.tables[SopaKeys.TABLE]
 
 
 def read_zarr_standardized(path: str, warn: bool = False) -> SpatialData:
@@ -73,8 +73,8 @@ def write_standardized(sdata: SpatialData, sdata_path: str, delete_table: bool =
     sanity_check(sdata, delete_table)
 
     assert (
-        sdata.table is None
-    ), "sdata.table exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
+        SopaKeys.TABLE not in sdata.tables
+    ), f"sdata.tables['{SopaKeys.TABLE}'] exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
 
     if len(sdata.points) == 0:
         log.warn("No transcripts found. Some tools from sopa will not be available.")
