@@ -150,7 +150,7 @@ class Aggregator:
             mean_intensities = average_channels(
                 self.sdata,
                 image_key=self.image_key,
-                shapes_key=self.shapes_key,
+                geo_df=self.geo_df,
                 expand_radius_ratio=expand_radius_ratio,
             )
 
@@ -188,6 +188,7 @@ def average_channels(
     sdata: SpatialData,
     image_key: str = None,
     shapes_key: str = None,
+    geo_df: gpd.GeoDataFrame | None = None,
     expand_radius_ratio: float = 0,
 ) -> np.ndarray:
     """Average channel intensities per cell.
@@ -196,6 +197,7 @@ def average_channels(
         sdata: A `SpatialData` object
         image_key: Key of `sdata` containing the image. If only one `images` element, this does not have to be provided.
         shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
+        geo_df: `GeoDataFrame` used instead of `shapes_key` if the shapes are not inside `sdata`
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
 
     Returns:
@@ -203,7 +205,8 @@ def average_channels(
     """
     image = get_spatial_image(sdata, image_key)
 
-    geo_df = get_element(sdata, "shapes", shapes_key)
+    if not isinstance(geo_df, gpd.GeoDataFrame):
+        geo_df = get_element(sdata, "shapes", shapes_key)
     geo_df = to_intrinsic(sdata, geo_df, image)
 
     expand_radius = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
