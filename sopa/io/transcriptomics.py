@@ -384,7 +384,7 @@ def cosmx(
         stitched_image[:, ymin:ymax, xmin:xmax] = im
 
     stitched_image = Image2DModel.parse(
-        stitched_image,
+        stitched_image[:, :30_000, :30_000],  # TODO: remove slicing
         transformations={
             "global": Identity(),
         },
@@ -393,10 +393,10 @@ def cosmx(
     )
 
     transcripts_data = pd.read_csv(
-        path / transcripts_file, header=0, nrows=100_000
+        path / transcripts_file, header=0, nrows=500_000
     )  # TODO: remove nrows
     transcripts_data["x"] = transcripts_data["x_global_px"] - x0
-    transcripts_data["y"] = transcripts_data["x_global_px"] - y0
+    transcripts_data["y"] = transcripts_data["y_global_px"] - y0
 
     transcripts = PointsModel.parse(
         transcripts_data,
