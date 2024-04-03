@@ -353,6 +353,11 @@ def cosmx(
     x0 = positions.x_pixel.min()
     y0 = positions.y_pixel.min()
 
+    positions["xmin"] = (positions["x_pixel"] - x0).round().astype(int)
+    positions["ymin"] = (positions["y_pixel"] - y0).round().astype(int)
+    positions["xmax"] = 0
+    positions["ymax"] = 0
+
     # prepare to read images and labels
     file_extensions = (".jpg", ".png", ".jpeg", ".tif", ".tiff", ".TIF")
     pat = re.compile(r".*_F(\d+)")
@@ -361,33 +366,44 @@ def cosmx(
     images = {}
     for fname in os.listdir(path / "images"):
         if fname.endswith(file_extensions):
-            fov = str(int(pat.findall(fname)[0]))
+            fov = int(pat.findall(fname)[0])
 
-            # aff = affine_transforms_to_global[fov]
             im = imread(path / "images" / fname, **imread_kwargs)
             # flipped_im = da.flip(im, axis=0)
-            parsed_im = Image2DModel.parse(
-                im,
-                transformations={
-                    fov: Identity(),
-                },
-                dims=("c", "y", "x"),
-                **image_models_kwargs,
-            )
-            images[f"{fov}_image"] = parsed_im
+            positions.loc[fov, "xmax"] = positions.loc[fov, "xmin"] + im.shape[2]
+            positions.loc[fov, "ymax"] = positions.loc[fov, "ymin"] + im.shape[1]
+            images[fov] = im
 
-    transcripts_data = pd.read_csv(path / transcripts_file, header=0, nrows=1000)
+    stitched_image = da.zeros(
+        shape=(im.shape[0], positions["ymax"].max(), positions["xmax"].max()), dtype=im.dtype
+    )
+
+    for fov, im in images.items():
+        xmin, xmax = positions.loc[fov, "xmin"], positions.loc[fov, "xmax"]
+        ymin, ymax = positions.loc[fov, "ymin"], positions.loc[fov, "ymax"]
+        stitched_image[:, ymin:ymax, xmin:xmax] = im
+
+    stitched_image = Image2DModel.parse(
+        stitched_image,
+        transformations={
+            "global": Identity(),
+        },
+        dims=("c", "y", "x"),
+        **image_models_kwargs,
+    )
+
+    transcripts_data = pd.read_csv(
+        path / transcripts_file, header=0, nrows=100_000
+    )  # TODO: remove nrows
     transcripts_data["x"] = transcripts_data["x_global_px"] - x0
     transcripts_data["y"] = transcripts_data["x_global_px"] - y0
 
-    points = {
-        "points": PointsModel.parse(
-            transcripts_data,
-            feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT,
-            transformations={
-                "global": Identity(),
-            },
-        )
-    }
+    transcripts = PointsModel.parse(
+        transcripts_data,
+        feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT,
+        transformations={
+            "global": Identity(),
+        },
+    )
 
-    return SpatialData(images=images, points=points)
+    return SpatialData(images={"image": stitched_image}, points={"points": transcripts})
