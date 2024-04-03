@@ -208,6 +208,9 @@ class MultiLevelAnnotation:
 
         log.info("Finished running Tangram")
 
+        if SopaKeys.UNS_KEY not in self.ad_sp.uns:
+            self.ad_sp.uns[SopaKeys.UNS_KEY] = {}
+
         self.ad_sp.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_CELL_TYPES] = [
             self.level_obs_key(level) for level in range(self.levels)
         ]

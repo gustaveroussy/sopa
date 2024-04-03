@@ -6,25 +6,26 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Optional
 
+import dask.array as da
 import dask.dataframe as dd
 import numpy as np
-import spatialdata_io
+import pandas as pd
 import xarray
-from dask import array as da
 from dask.dataframe import read_parquet
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata._logging import logger
 from spatialdata.models import Image2DModel, PointsModel
 from spatialdata.transformations import Affine, Identity, Scale
-from spatialdata_io._constants._constants import MerscopeKeys, XeniumKeys
+from spatialdata_io._constants._constants import CosmxKeys, MerscopeKeys, XeniumKeys
 
 log = logging.getLogger(__name__)
 
@@ -274,15 +275,119 @@ def _get_images_xenium(
     )
 
 
-def cosmx(path: str, **kwargs: int) -> SpatialData:
-    """Alias to the [spatialdata-io reader](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.cosmx.html).
-
-    Args:
-        path: Path to the CosMX data directory
-        **kwargs: See link above.
-
-    Returns:
-        A `SpatialData` object representing the CosMX experiment
+def cosmx(
+    path: str | Path,
+    dataset_id: Optional[str] = None,
+    imread_kwargs: Mapping[str, Any] = MappingProxyType({}),
+    image_models_kwargs: Mapping[str, Any] = MappingProxyType({}),
+) -> SpatialData:
     """
-    # TODO: add stitching + set chunksize to 1024
-    return spatialdata_io.cosmx(path, **kwargs)
+    Read *Cosmx Nanostring* data.
+
+    This function reads the following files:
+
+        - ``<dataset_id>_`{cx.COUNTS_SUFFIX!r}```: Counts matrix.
+        - ``<dataset_id>_`{cx.METADATA_SUFFIX!r}```: Metadata file.
+        - ``<dataset_id>_`{cx.FOV_SUFFIX!r}```: Field of view file.
+        - ``{cx.IMAGES_DIR!r}``: Directory containing the images.
+        - ``{cx.LABELS_DIR!r}``: Directory containing the labels.
+
+    .. seealso::
+
+        - `Nanostring Spatial Molecular Imager <https://nanostring.com/products/cosmx-spatial-molecular-imager/>`_.
+
+    Parameters
+    ----------
+    path
+        Path to the root directory containing *Nanostring* files.
+    dataset_id
+        Name of the dataset.
+    transcripts
+        Whether to also read in transcripts information.
+    imread_kwargs
+        Keyword arguments passed to :func:`dask_image.imread.imread`.
+    image_models_kwargs
+        Keyword arguments passed to :class:`spatialdata.models.Image2DModel`.
+
+    Returns
+    -------
+    :class:`spatialdata.SpatialData`
+    """
+    path = Path(path)
+
+    # tries to infer dataset_id from the name of the counts file
+    if dataset_id is None:
+        counts_files = [
+            f for f in os.listdir(path) if str(f).endswith(CosmxKeys.TRANSCRIPTS_SUFFIX)
+        ]
+        if len(counts_files) == 1:
+            found = re.match(rf"(.*)_{CosmxKeys.TRANSCRIPTS_SUFFIX}", counts_files[0])
+            if found:
+                dataset_id = found.group(1)
+    if dataset_id is None:
+        raise ValueError(
+            "Could not infer `dataset_id` from the name of the counts file. Please specify it manually."
+        )
+
+    transcripts_file = path / f"{dataset_id}_{CosmxKeys.TRANSCRIPTS_SUFFIX}"
+    if not transcripts_file.exists():
+        raise FileNotFoundError(f"Transcripts file not found: {transcripts_file}.")
+
+    fov_file = path / f"{dataset_id}_{CosmxKeys.FOV_SUFFIX}"
+    if not fov_file.exists():
+        raise FileNotFoundError(f"Missing field of view file: {fov_file}.")
+
+    images_dir = path / "images"
+    if not images_dir.exists():
+        raise FileNotFoundError(f"Images directory not found: {images_dir}.")
+
+    # FOV positions
+    positions = pd.read_csv(fov_file, index_col=1)
+
+    pixel_size = 0.120280945  # size of a pixel in microns
+    mm_to_pixel = 1000 / pixel_size
+
+    positions["x_pixel"] = positions["X_mm"] * mm_to_pixel
+    positions["y_pixel"] = positions["Y_mm"] * mm_to_pixel
+
+    x0 = positions.x_pixel.min()
+    y0 = positions.y_pixel.min()
+
+    # prepare to read images and labels
+    file_extensions = (".jpg", ".png", ".jpeg", ".tif", ".tiff", ".TIF")
+    pat = re.compile(r".*_F(\d+)")
+
+    # read images
+    images = {}
+    for fname in os.listdir(path / "images"):
+        if fname.endswith(file_extensions):
+            fov = str(int(pat.findall(fname)[0]))
+
+            # aff = affine_transforms_to_global[fov]
+            im = imread(path / "images" / fname, **imread_kwargs)
+            # flipped_im = da.flip(im, axis=0)
+            parsed_im = Image2DModel.parse(
+                im,
+                transformations={
+                    fov: Identity(),
+                },
+                dims=("c", "y", "x"),
+                **image_models_kwargs,
+            )
+            images[f"{fov}_image"] = parsed_im
+
+    transcripts_data = pd.read_csv(path / transcripts_file, header=0, nrows=1000)
+    transcripts_data["x"] = transcripts_data["x_global_px"] - x0
+    transcripts_data["y"] = transcripts_data["x_global_px"] - y0
+
+    points = {
+        "points": PointsModel.parse(
+            transcripts_data,
+            feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT,
+            transformations={
+                "global": Identity(),
+            },
+        )
+    }
+
+    return SpatialData(images=images, points=points)
