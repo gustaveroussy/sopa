@@ -63,13 +63,13 @@ class Aggregator:
             self.shapes_key = shapes_key
             self.geo_df = self.sdata[shapes_key]
 
-        if sdata.table is not None and len(self.geo_df) != sdata.table.n_obs:
-            log.warn(
-                f"Table already existing with {sdata.table.n_obs} obs, but aggregating on {len(self.geo_df)} cells. Deleting table."
-            )
-            del sdata.table
-
-        self.table = sdata.table
+        self.table = None
+        if SopaKeys.TABLE in sdata.tables:
+            table = sdata.tables[SopaKeys.TABLE]
+            if len(self.geo_df) != table.n_obs:
+                log.warn("Not using existing table (aggregating on a different number of cells)")
+            else:
+                self.table = table
 
     def standardize_table(self):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
@@ -101,10 +101,8 @@ class Aggregator:
             instance_key=SopaKeys.INSTANCE_KEY,
         )
 
-        if self.sdata.table is not None and self.overwrite:
-            del self.sdata.table
-        self.sdata.tables["table"] = self.table
-        save_table(self.sdata)
+        self.sdata.tables[SopaKeys.TABLE] = self.table
+        save_table(self.sdata, SopaKeys.TABLE)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")

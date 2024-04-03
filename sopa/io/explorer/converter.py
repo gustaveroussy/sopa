@@ -7,6 +7,7 @@ from pathlib import Path
 import geopandas as gpd
 from spatialdata import SpatialData
 
+from ..._constants import SopaKeys
 from ..._sdata import get_boundaries, get_element, get_spatial_image, to_intrinsic
 from . import (
     write_cell_categories,
@@ -87,7 +88,7 @@ def write(
         points_key: Name of the transcripts (key of `sdata.points`).
         gene_column: Column name of the points dataframe containing the gene names.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
-        layer: Layer of `sdata.table` where the gene counts are saved. If `None`, uses `sdata.table.X`.
+        layer: Layer of the AnnData table where the gene counts are saved. If `None`, uses `table.X`.
         polygon_max_vertices: Maximum number of vertices for the cell polygons.
         lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).
         ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
@@ -100,8 +101,8 @@ def write(
     image_key, image = get_spatial_image(sdata, image_key, return_key=True)
 
     ### Saving cell categories and gene counts
-    if sdata.table is not None:
-        adata = sdata.table
+    if SopaKeys.TABLE in sdata.tables:
+        adata = sdata.tables[SopaKeys.TABLE]
 
         shapes_key = adata.uns["spatialdata_attrs"]["region"]
         geo_df = sdata[shapes_key]
@@ -120,7 +121,7 @@ def write(
     if _should_save(mode, "b") and geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image_key)
 
-        if sdata.table is not None:
+        if SopaKeys.TABLE in sdata.tables:
             geo_df = geo_df.loc[adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]]]
 
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
@@ -145,16 +146,16 @@ def write(
     if _should_save(mode, "m"):
         write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
 
-    if save_h5ad:
-        sdata.table.write_h5ad(path / FileNames.H5AD)
+    if save_h5ad and SopaKeys.TABLE in sdata.tables:
+        sdata.tables[SopaKeys.TABLE].write_h5ad(path / FileNames.H5AD)
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
-    if sdata.table is not None:
-        return sdata.table.n_obs
+    if SopaKeys.TABLE in sdata.tables:
+        return sdata.tables[SopaKeys.TABLE].n_obs
     return len(geo_df) if geo_df is not None else 0
 
 

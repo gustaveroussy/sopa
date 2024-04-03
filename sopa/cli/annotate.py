@@ -21,17 +21,17 @@ def fluorescence(
 
     For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
     """
-    from pathlib import Path
-
+    from sopa._constants import SopaKeys
+    from sopa._sdata import save_table
     from sopa.annotation.fluorescence import higher_z_score
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
 
-    assert sdata.table is not None, "Annotation requires `sdata.table` to be not None"
+    assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
 
-    higher_z_score(sdata.table, marker_cell_dict, cell_type_key)
-    sdata.table.write_zarr(Path(sdata_path) / "table" / "table")
+    higher_z_score(sdata.tables[SopaKeys.TABLE], marker_cell_dict, cell_type_key)
+    save_table(sdata, SopaKeys.TABLE)
 
 
 @app_annotate.command()
@@ -55,10 +55,10 @@ def tangram(
     ),
 ):
     """Tangram segmentation (i.e., uses an annotated scRNAseq reference to transfer cell-types)"""
-    from pathlib import Path
-
     import anndata
 
+    from sopa._constants import SopaKeys
+    from sopa._sdata import save_table
     from sopa.annotation.tangram.run import tangram_annotate
     from sopa.io.standardize import read_zarr_standardized
 
@@ -73,4 +73,4 @@ def tangram(
         bag_size=bag_size,
         max_obs_reference=max_obs_reference,
     )
-    sdata.table.write_zarr(Path(sdata_path) / "table" / "table")
+    save_table(sdata, SopaKeys.TABLE)

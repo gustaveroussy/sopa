@@ -42,7 +42,7 @@ def geometrize_niches(
         A `GeoDataFrame` with geometries for each niche component. We also compute the area/perimeter/roundness of each component.
     """
     if isinstance(adata, SpatialData):
-        adata = adata.table
+        adata = adata.tables[SopaKeys.TABLE]
 
     _check_has_delaunay(adata)
     data = {"geometry": [], niche_key: []}
@@ -138,7 +138,7 @@ def niches_geometry_stats(
         A `DataFrame` of shape `n_niches * n_statistics`
     """
     if isinstance(adata, SpatialData):
-        adata = adata.table
+        adata = adata.tables[SopaKeys.TABLE]
 
     gdf = geometrize_niches(adata, niche_key, **geometrize_niches_kwargs)
     value_counts = gdf[niche_key].value_counts()

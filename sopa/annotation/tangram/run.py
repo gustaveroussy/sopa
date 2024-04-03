@@ -41,7 +41,9 @@ def tangram_annotate(
         bag_size: Size of each bag on which tangram will be run. Use smaller bags to lower the RAM usage
         max_obs_reference: Maximum number of cells used in `adata_sc` at each level. Decrease it to lower the RAM usage.
     """
-    ad_sp = sdata.table
+    assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
+
+    ad_sp = sdata.tables[SopaKeys.TABLE]
 
     MultiLevelAnnotation(
         ad_sp,

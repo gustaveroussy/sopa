@@ -130,13 +130,17 @@ def get_item(sdata: SpatialData, attr: str, key: str | None = None):
 
 def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
     """Gets the intensity dataframe of shape `n_obs x n_channels`"""
-    if not sdata.table.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_INTENSITIES]:
+    assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
+
+    adata = sdata.tables[SopaKeys.TABLE]
+
+    if not adata.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_INTENSITIES]:
         return None
 
-    if sdata.table.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_TRANSCRIPTS]:
-        return sdata.table.obsm[SopaKeys.INTENSITIES_OBSM]
+    if adata.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_TRANSCRIPTS]:
+        return adata.obsm[SopaKeys.INTENSITIES_OBSM]
 
-    return sdata.table.to_df()
+    return adata.to_df()
 
 
 def iter_scales(image: MultiscaleSpatialImage) -> Iterator[xr.DataArray]:
@@ -187,6 +191,9 @@ def save_shapes(
     name: str,
     overwrite: bool = False,
 ) -> None:
+    if not sdata.is_backed():
+        return
+
     elem_group = sdata._init_add_element(name=name, element_type="shapes", overwrite=overwrite)
     write_shapes(
         shapes=sdata.shapes[name],
@@ -200,6 +207,9 @@ def save_image(
     name: str,
     overwrite: bool = False,
 ) -> None:
+    if not sdata.is_backed():
+        return
+
     elem_group = sdata._init_add_element(name=name, element_type="images", overwrite=overwrite)
     write_image(
         image=sdata.images[name],
@@ -213,11 +223,14 @@ def save_image(
     assert elem_group.path == "images"
     path = Path(elem_group.store.path) / "images" / name
     image = _read_multiscale(path, raster_type="image")
-    sdata._add_image_in_memory(name=name, image=image, overwrite=True)
+    sdata.images[name] = image
 
 
-def save_table(sdata: SpatialData):
+def save_table(sdata: SpatialData, name: str):
+    if not sdata.is_backed():
+        return
+
     store = parse_url(sdata.path, mode="r+").store
     root = zarr.group(store=store)
-    elem_group = root.require_group(name="table")
-    write_table(table=sdata.table, group=elem_group, name="table")
+    elem_group = root.require_group(name="tables")
+    write_table(table=sdata.tables[name], group=elem_group, name=name)

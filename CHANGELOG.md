@@ -1,3 +1,11 @@
+## [1.0.9] - 2024-04-03
+
+### Added:
+- Support multiple tables
+
+### Fixed
+- Spatial elements not saved when data is not backed
+
 ## [1.0.8] - 2024-04-02
 
 Hotfix: resolve issues related to `spatialdata>=1.0.0`
