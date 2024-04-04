@@ -110,7 +110,6 @@ class Aggregator:
         self.geo_df = self.geo_df[~where_filter]
 
         self.sdata.shapes[self.shapes_key] = self.geo_df
-        save_shapes(self.sdata, self.shapes_key, overwrite=True)
 
         if self.table is not None:
             self.table = self.table[~where_filter]
