@@ -369,7 +369,7 @@ def cosmx(
             fov = int(pat.findall(fname)[0])
 
             im = imread(path / "images" / fname, **imread_kwargs)
-            # flipped_im = da.flip(im, axis=0)
+            im = da.flip(im, axis=1)
             positions.loc[fov, "xmax"] = positions.loc[fov, "xmin"] + im.shape[2]
             positions.loc[fov, "ymax"] = positions.loc[fov, "ymin"] + im.shape[1]
             images[fov] = im
@@ -384,7 +384,7 @@ def cosmx(
         stitched_image[:, ymin:ymax, xmin:xmax] = im
 
     stitched_image = Image2DModel.parse(
-        stitched_image[:, :30_000, :30_000],  # TODO: remove slicing
+        stitched_image,
         transformations={
             "global": Identity(),
         },
@@ -392,9 +392,7 @@ def cosmx(
         **image_models_kwargs,
     )
 
-    transcripts_data = pd.read_csv(
-        path / transcripts_file, header=0, nrows=500_000
-    )  # TODO: remove nrows
+    transcripts_data = pd.read_csv(path / transcripts_file, header=0)
     transcripts_data["x"] = transcripts_data["x_global_px"] - x0
     transcripts_data["y"] = transcripts_data["y_global_px"] - y0
 
