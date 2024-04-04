@@ -311,14 +311,14 @@ def cosmx(
 
     dataset_id = _infer_dataset_id(path, dataset_id)
     fov_id, fov = _check_fov_id(fov)
-    positions = _read_cosmx_fov_positions(path / f"{dataset_id}_{CosmxKeys.FOV_SUFFIX}")
+    fov_locs = _read_cosmx_fov_locs(path / f"{dataset_id}_{CosmxKeys.FOV_SUFFIX}")
 
     ### Read image(s)
     images_dir = path / "Morphology2D"
     assert images_dir.exists(), f"Images directory not found: {images_dir}."
 
     if fov is None:
-        image = _read_stitched_image(images_dir, positions, **imread_kwargs)
+        image = _read_stitched_image(images_dir, fov_locs, **imread_kwargs)
         image_name = "stitched_image"
     else:
         pattern = f"*{fov_id}.TIF"
@@ -332,14 +332,18 @@ def cosmx(
         image = imread(images_dir / fov_files[0], **imread_kwargs)
         image_name = f"{fov}_image"
 
-    parsed_image = Image2DModel.parse(image, dims=("c", "y", "x"), **image_models_kwargs)
+    c_coords = _cosmx_channel_names(path, image.shape[0])
+
+    parsed_image = Image2DModel.parse(
+        image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs
+    )
 
     ### Read transcripts
     transcripts_data = _read_cosmx_csv(path, dataset_id)
 
     if fov is None:
-        transcripts_data["x"] = transcripts_data["x_global_px"] - positions["x_pixel"].min()
-        transcripts_data["y"] = transcripts_data["y_global_px"] - positions["y_pixel"].min()
+        transcripts_data["x"] = transcripts_data["x_global_px"] - fov_locs["xmin"].min()
+        transcripts_data["y"] = transcripts_data["y_global_px"] - fov_locs["ymin"].min()
         coordinates = None
         points_name = "points"
     else:
@@ -354,22 +358,6 @@ def cosmx(
     )
 
     return SpatialData(images={image_name: parsed_image}, points={points_name: transcripts})
-
-
-def _read_cosmx_fov_positions(fov_file: Path) -> pd.DataFrame:
-    assert fov_file.exists(), f"Missing field of view file: {fov_file}."
-
-    positions = pd.read_csv(fov_file, index_col=1)
-
-    pixel_size = 0.120280945  # size of a pixel in microns
-
-    for dim in ["x", "y"]:
-        positions[f"{dim}_pixel"] = positions[f"{dim.upper()}_mm"] * 1e3 / pixel_size
-        delta_pixel = positions[f"{dim}_pixel"] - positions[f"{dim}_pixel"].min()
-        positions[f"{dim}min"] = delta_pixel.round().astype(int)
-        positions[f"{dim}max"] = 0  # will be filled when reading the images
-
-    return positions
 
 
 def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
@@ -387,7 +375,23 @@ def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
     )
 
 
-def _read_stitched_image(images_dir: Path, positions: pd.DataFrame, **imread_kwargs) -> da.Array:
+def _read_cosmx_fov_locs(fov_file: Path) -> pd.DataFrame:
+    assert fov_file.exists(), f"Missing field of view file: {fov_file}."
+
+    fov_locs = pd.read_csv(fov_file, index_col=1)
+
+    pixel_size = 0.120280945  # size of a pixel in microns
+
+    fov_locs["xmin"] = fov_locs["X_mm"] * 1e3 / pixel_size
+    fov_locs["xmax"] = 0  # will be filled when reading the images
+
+    fov_locs["ymin"] = 0  # will be filled when reading the images
+    fov_locs["ymax"] = fov_locs["Y_mm"] * 1e3 / pixel_size
+
+    return fov_locs
+
+
+def _read_stitched_image(images_dir: Path, fov_locs: pd.DataFrame, **imread_kwargs) -> da.Array:
     fov_images = {}
     pattern = re.compile(r".*_F(\d+)")
     for image_path in images_dir.iterdir():
@@ -397,16 +401,21 @@ def _read_stitched_image(images_dir: Path, positions: pd.DataFrame, **imread_kwa
             image = imread(image_path, **imread_kwargs)
             fov_images[fov] = da.flip(image, axis=1)
 
-            positions.loc[fov, "xmax"] = positions.loc[fov, "xmin"] + image.shape[2]
-            positions.loc[fov, "ymax"] = positions.loc[fov, "ymin"] + image.shape[1]
+            fov_locs.loc[fov, "xmax"] = fov_locs.loc[fov, "xmin"] + image.shape[2]
+            fov_locs.loc[fov, "ymin"] = fov_locs.loc[fov, "ymax"] - image.shape[1]
+
+    for dim in ["x", "y"]:
+        shift = fov_locs[f"{dim}min"].min()
+        fov_locs[f"{dim}0"] = (fov_locs[f"{dim}min"] - shift).round().astype(int)
+        fov_locs[f"{dim}1"] = (fov_locs[f"{dim}max"] - shift).round().astype(int)
 
     stitched_image = da.zeros(
-        shape=(image.shape[0], positions["ymax"].max(), positions["xmax"].max()), dtype=image.dtype
+        shape=(image.shape[0], fov_locs["y1"].max(), fov_locs["x1"].max()), dtype=image.dtype
     )
 
     for fov, im in fov_images.items():
-        xmin, xmax = positions.loc[fov, "xmin"], positions.loc[fov, "xmax"]
-        ymin, ymax = positions.loc[fov, "ymin"], positions.loc[fov, "ymax"]
+        xmin, xmax = fov_locs.loc[fov, "x0"], fov_locs.loc[fov, "x1"]
+        ymin, ymax = fov_locs.loc[fov, "y0"], fov_locs.loc[fov, "y1"]
         stitched_image[:, ymin:ymax, xmin:xmax] = im
 
     return stitched_image.rechunk((1, 1024, 1024))
@@ -437,3 +446,15 @@ def _read_cosmx_csv(path: Path, dataset_id: str) -> pd.DataFrame:
     assert transcripts_file.exists(), f"Transcript file {transcripts_file} not found."
 
     return pd.read_csv(transcripts_file)
+
+
+def _cosmx_channel_names(path: Path, n_channels: int) -> list[str]:
+    channel_ids_path = path / "Morphology_ChannelID_Dictionary.txt"
+
+    if channel_ids_path.exists():
+        channel_names = list(pd.read_csv(channel_ids_path, delimiter="\t")["BiologicalTarget"])
+    else:
+        channel_names = [str(i) for i in range(n_channels)]
+        log.warn(f"Channel file not found at {channel_ids_path}. Using {channel_names=} instead.")
+
+    return channel_names
