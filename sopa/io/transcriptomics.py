@@ -329,7 +329,7 @@ def cosmx(
             "Could not infer `dataset_id` from the name of the counts file. Please specify it manually."
         )
 
-    transcripts_file = path / f"{dataset_id}_{CosmxKeys.TRANSCRIPTS_SUFFIX}"
+    transcripts_file = path / f"{dataset_id}_tx_file.csv.gz"
     if not transcripts_file.exists():
         raise FileNotFoundError(f"Transcripts file not found: {transcripts_file}.")
 
@@ -392,7 +392,7 @@ def cosmx(
         **image_models_kwargs,
     )
 
-    transcripts_data = pd.read_csv(transcripts_file, header=0)
+    transcripts_data = pd.read_csv(transcripts_file, compression="gzip")
     transcripts_data["x"] = transcripts_data["x_global_px"] - x0
     transcripts_data["y"] = transcripts_data["y_global_px"] - y0
 
