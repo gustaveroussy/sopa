@@ -383,6 +383,8 @@ def cosmx(
         ymin, ymax = positions.loc[fov, "ymin"], positions.loc[fov, "ymax"]
         stitched_image[:, ymin:ymax, xmin:xmax] = im
 
+    stitched_image = stitched_image.rechunk((1, 1024, 1024))
+
     stitched_image = Image2DModel.parse(
         stitched_image,
         transformations={
