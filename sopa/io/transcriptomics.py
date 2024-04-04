@@ -392,7 +392,7 @@ def cosmx(
         **image_models_kwargs,
     )
 
-    transcripts_data = pd.read_csv(path / transcripts_file, header=0)
+    transcripts_data = pd.read_csv(transcripts_file, header=0)
     transcripts_data["x"] = transcripts_data["x_global_px"] - x0
     transcripts_data["y"] = transcripts_data["y_global_px"] - y0
 
