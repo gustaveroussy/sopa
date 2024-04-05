@@ -18,7 +18,7 @@ segmentation:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
-        min_molecules_per_cell: 1
+        min_molecules_per_cell: 10
         x: "x"
         y: "y"
         z: "z"

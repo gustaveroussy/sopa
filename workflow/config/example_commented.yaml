@@ -42,7 +42,7 @@ segmentation:
       data:
         exclude_genes: "Blank*"      # genes excluded from the Baysor segmentation
         force_2d: true               # if false, uses 3D mode
-        min_molecules_per_cell: 1
+        min_molecules_per_cell: 10
         gene: "gene"                 # name of the column of the transcript dataframe indicating the genes names
         min_molecules_per_gene: 0
         min_molecules_per_segment: 8

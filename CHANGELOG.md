@@ -1,8 +1,11 @@
 ## [1.0.10] - tbd
 
+### Added
+- CosMX reader with image stitching (experimental)
+
 ### Changed
-- Default `min_molecules_per_cell` set to 1 in snakemake configs (fix #37)
 - Default `min_transcripts` set in snakemake configs
+- Minimum number of transcripts per patch set to 4000 (#41)
 
 ## [1.0.9] - 2024-04-03
 

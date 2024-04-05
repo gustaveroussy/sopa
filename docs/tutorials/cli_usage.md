@@ -149,7 +149,7 @@ For this tutorial, we will use the config below. Save this in a `config.toml` fi
 ```toml
 [data]
 force_2d = true
-min_molecules_per_cell = 1
+min_molecules_per_cell = 10
 x = "x"
 y = "y"
 z = "z"
