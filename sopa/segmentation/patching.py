@@ -245,6 +245,8 @@ class Patches2D:
 
 
 class BaysorPatches:
+    MIN_TRANSCRIPTS_PER_PATCH = 4000
+
     def __init__(self, patches_2d: Patches2D, df: dd.DataFrame):
         self.patches_2d = patches_2d
         self.df = df
@@ -302,10 +304,12 @@ class BaysorPatches:
     def valid_indices(self):
         for index in range(len(self.patches_2d)):
             patch_path = self._patch_path(index)
-            if self._check_min_lines(patch_path, 1000):
+            if self._check_min_lines(patch_path, self.MIN_TRANSCRIPTS_PER_PATCH):
                 yield index
             else:
-                log.info(f"Patch {index} has < 1000 transcripts. Baysor will not be run on it.")
+                log.info(
+                    f"Patch {index} has < {self.MIN_TRANSCRIPTS_PER_PATCH} transcripts. Baysor will not be run on it."
+                )
 
     def _query_points_partition(self, gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
