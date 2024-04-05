@@ -18,6 +18,7 @@ segmentation:
 
 aggregate:
   average_intensities: true
+  gene_column: "target"
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->
