@@ -1,6 +1,6 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
-  technology: merscope
+  technology: xenium
 
 patchify:
   patch_width_pixel: 6000
@@ -10,15 +10,15 @@ patchify:
 
 segmentation:
   cellpose:
-    diameter: 60
-    channels: ["DAPI"]
+    diameter: 30
+    channels: [0]
     flow_threshold: 2
     cellprob_threshold: -6
-    min_area: 2000
+    min_area: 400
 
 aggregate:
   average_intensities: true
-  gene_column: "gene"
+  gene_column: "feature_name"
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->
@@ -30,9 +30,8 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "gene"
+  gene_column: "feature_name"
   ram_threshold_gb: 4
-  pixel_size: 0.108
 
 executables:
   baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

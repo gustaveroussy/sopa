@@ -7,7 +7,7 @@ Here, we provide a minimal example of command line usage. For more details and t
 
 For this tutorial, we use a generated dataset. You can expect a total runtime of a few minutes.
 
-The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below, or see the [`sopa read` CLI documentation](`../../cli/#sopa-read`).
+The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa) describing which data input you need, or see the [`sopa read`](`../../cli/#sopa-read`) documentation.
 
 === "Tutorial"
     ```sh
@@ -29,9 +29,6 @@ The command below will generate and save it on disk (you can change the path `tu
     # it will generate a '/path/to/sample/directory.zarr' directory
     sopa read /path/to/sample/directory --technology cosmx
     ```
-
-    !!! warning
-        The CosMX data requires stitching the FOVs. It will be added soon, see [this issue](https://github.com/gustaveroussy/sopa/issues/5).
 === "PhenoCycler"
     ```sh
     # it will generate a '/path/to/sample.zarr' directory

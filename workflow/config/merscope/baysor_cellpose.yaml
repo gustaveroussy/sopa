@@ -1,6 +1,6 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
-  technology: xenium
+  technology: merscope
 
 patchify:
   patch_width_pixel: 6000
@@ -10,20 +10,24 @@ patchify:
 
 segmentation:
   cellpose:
-    diameter: 30
-    channels: [0]
+    diameter: 60
+    channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
+    min_area: 2000
 
   baysor:
+    min_area: 20
+
     config:
       data:
+        exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
-        min_molecules_per_cell: 10 # min number of transcripts per cell
+        min_molecules_per_cell: 10
         x: "x"
         y: "y"
         z: "z"
-        gene: "feature_name"
+        gene: "gene"
         min_molecules_per_gene: 0
         min_molecules_per_segment: 3
         confidence_nn_id: 6
@@ -41,18 +45,22 @@ segmentation:
         new_component_weight: 0.2
         new_component_fraction: 0.3
 
-annotation:
-  method: tangram
-  args:
-    sc_reference_path: /mnt/beegfs/merfish/data/reference/2023_Reference_disco_pancreas_healthy.h5ad
-    cell_type_key: ct
-
 aggregate:
+  average_intensities: true
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
+# Comment this out if you want to use tangram -->
+
+# annotation:
+#   method: tangram
+#   args:
+#     sc_reference_path: "..."
+#     cell_type_key: ct
 
 explorer:
-  gene_column: "feature_name"
+  gene_column: "gene"
   ram_threshold_gb: 4
+  pixel_size: 0.108
 
 executables:
-  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

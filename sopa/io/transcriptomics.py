@@ -52,6 +52,11 @@ def merscope(
 ) -> SpatialData:
     """Read MERSCOPE data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.merscope.html).
 
+    This function reads the following files:
+        - `detected_transcripts.csv`: transcripts locations and names
+        - all the images under the `images` directory
+        - `images/micron_to_mosaic_pixel_transform.csv`: affine transformation
+
     Args:
         path: Path to the MERSCOPE directory containing all the experiment files
         backend: Either `dask_image` or `rioxarray` (the latter should use less RAM, but it is still experimental)
@@ -199,6 +204,10 @@ def xenium(
 ) -> SpatialData:
     """Read Xenium data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.xenium.html).
 
+    This function reads the following files:
+        - `transcripts.parquet`: transcripts locations and names
+        - `morphology_mip.ome.tif`: morphology image
+
     Args:
         path: Path to the Xenium directory containing all the experiment files
         imread_kwargs: See link above.
@@ -278,34 +287,30 @@ def cosmx(
     path: str | Path,
     dataset_id: Optional[str] = None,
     fov: int | str | None = None,
+    read_proteins: bool = False,
     imread_kwargs: Mapping[str, Any] = MappingProxyType({}),
     image_models_kwargs: Mapping[str, Any] = MappingProxyType({}),
 ) -> SpatialData:
     """
-    Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov_id` is provided.
+    Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
 
     This function reads the following files:
+        - `*_fov_positions_file.csv`: FOV locations
+        - `Morphology2D` directory: all the FOVs morphology images
+        - `Morphology_ChannelID_Dictionary.txt`: Morphology channels names
+        - `*_tx_file.csv.gz` or `*_tx_file.csv`: Transcripts location and names
+        - If `read_proteins` is `True`, all the images under the nested `ProteinImages` directories will be read
 
-        - ``<dataset_id>_`{cx.FOV_SUFFIX!r}```: Field of view file.
-        - ``{cx.IMAGES_DIR!r}``: Directory containing the images.
-        - ``{cx.LABELS_DIR!r}``: Directory containing the labels.
+    Args:
+        path: Path to the root directory containing *Nanostring* files.
+        dataset_id: Optional name of the dataset (needs to be provided if not infered).
+        fov: Name or number of one single field of view to be read. If a string is provided, an example of correct syntax is "F008". By default, reads all FOVs.
+        read_proteins: Whether to read the proteins or the transcripts.
+        imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
+        image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
 
-    Parameters
-    ----------
-    path
-        Path to the root directory containing *Nanostring* files.
-    dataset_id
-        Name of the dataset.
-    fov
-        Name or number of one single field of view to be read. If a string is provided, an example of correct syntax is "F008". By default, reads all FOVs.
-    imread_kwargs
-        Keyword arguments passed to :func:`dask_image.imread.imread`.
-    image_models_kwargs
-        Keyword arguments passed to :class:`spatialdata.models.Image2DModel`.
-
-    Returns
-    -------
-    :class:`spatialdata.SpatialData`
+    Returns:
+        A `SpatialData` object representing the CosMX experiment
     """
     path = Path(path)
 
@@ -313,10 +318,10 @@ def cosmx(
     fov_id, fov = _check_fov_id(fov)
     fov_locs = _read_cosmx_fov_locs(path / f"{dataset_id}_{CosmxKeys.FOV_SUFFIX}")
 
-    ### Read image(s)
-    images_dir = path / "Morphology2D"
-    assert images_dir.exists(), f"Images directory not found: {images_dir}."
+    assert not read_proteins, "Protein reading is not yet supported"
 
+    ### Read image(s)
+    images_dir = _find_dir(path, "Morphology2D")
     if fov is None:
         image = _read_stitched_image(images_dir, fov_locs, **imread_kwargs)
         image_name = "stitched_image"
@@ -392,6 +397,8 @@ def _read_cosmx_fov_locs(fov_file: Path) -> pd.DataFrame:
 
 
 def _read_stitched_image(images_dir: Path, fov_locs: pd.DataFrame, **imread_kwargs) -> da.Array:
+    log.warn("Image stitching is currently experimental")
+
     fov_images = {}
     pattern = re.compile(r".*_F(\d+)")
     for image_path in images_dir.iterdir():
@@ -458,3 +465,13 @@ def _cosmx_channel_names(path: Path, n_channels: int) -> list[str]:
         log.warn(f"Channel file not found at {channel_ids_path}. Using {channel_names=} instead.")
 
     return channel_names
+
+
+def _find_dir(path: Path, name: str):
+    if (path / name).is_dir():
+        return path / name
+
+    paths = list(path.rglob(f"**/{name}"))
+    assert len(paths) == 1, f"Found {len(paths)} path(s) with name {name} inside {path}"
+
+    return paths[0]

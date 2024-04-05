@@ -13,7 +13,7 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 === "MERSCOPE"
     `data_path` is the "region" directory containing a `detected_transcripts.csv` file and an `image` directory. For instance, the directory can be called `region_0`.
 === "CosMX"
-    (The CosMX data requires stitching the FOVs. It will be added soon, see [this issue](https://github.com/gustaveroussy/sopa/issues/5))
+    `data_path` is the directory containing (i) the transcript file (ending with `_tx_file.csv` or `_tx_file.csv.gz`), (ii) the FOV locations file, and (iii) a `Morphology2D` directory containing the images.
 === "MACSima"
     `data_path` is the directory containing multiple `.ome.tif` files (one file per channel)
 === "PhenoCycler"
