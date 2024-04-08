@@ -1,31 +1,38 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
-  technology: uniform
+  technology: cosmx
 
 patchify:
-  patch_width_pixel: 1200
-  patch_overlap_pixel: 50
-  patch_width_microns: 150
-  patch_overlap_microns: 10
+  patch_width_pixel: 6000
+  patch_overlap_pixel: 150
+  patch_width_microns: 8000
+  patch_overlap_microns: 150
 
 segmentation:
+  cellpose:
+    diameter: 60
+    channels: ["DNA"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 2000
+
   baysor:
-    min_area: 10
+    min_area: 2000
 
     config:
       data:
-        force_2d: true
+        force_2d: true # if false, uses 3D mode
         min_molecules_per_cell: 10
         x: "x"
         y: "y"
         z: "z"
-        gene: "genes"
+        gene: "target"
         min_molecules_per_gene: 0
         min_molecules_per_segment: 3
         confidence_nn_id: 6
 
       segmentation:
-        scale: 3 # typical cell radius
+        scale: 60 # typical cell radius
         scale_std: "25%" # cell radius standard deviation
         prior_segmentation_confidence: 0
         estimate_scale_from_centers: false
@@ -39,20 +46,19 @@ segmentation:
 
 aggregate:
   average_intensities: true
-  min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
-annotation:
-  method: fluorescence
-  args:
-    marker_cell_dict:
-      CK: Tumoral cell
-      CD3: T cell
-      CD20: B cell
+# Comment this out if you want to use tangram -->
+
+# annotation:
+#   method: tangram
+#   args:
+#     sc_reference_path: "..."
+#     cell_type_key: ct
 
 explorer:
-  gene_column: "genes"
+  gene_column: "target"
   ram_threshold_gb: 4
-  pixel_size: 0.1
 
 executables:
-  baysor: ~/.julia/bin/baysor
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

@@ -9,16 +9,21 @@ patchify:
   patch_overlap_microns: 20
 
 segmentation:
+  cellpose:
+    diameter: 60
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 2000
+
   baysor:
     min_area: 20
-    cell_key: cell_id # this allows to use the prior segmentation performed by Vizgen
-    unassigned_value: -1
 
     config:
       data:
         exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
-        min_molecules_per_cell: 10 # min number of transcripts per cell
+        min_molecules_per_cell: 10
         x: "x"
         y: "y"
         z: "z"
@@ -42,6 +47,7 @@ segmentation:
 
 aggregate:
   average_intensities: true
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->
 

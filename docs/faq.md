@@ -13,13 +13,19 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 === "MERSCOPE"
     `data_path` is the "region" directory containing a `detected_transcripts.csv` file and an `image` directory. For instance, the directory can be called `region_0`.
 === "CosMX"
-    (The CosMX data requires stitching the FOVs. It will be added soon, see [this issue](https://github.com/gustaveroussy/sopa/issues/5))
+    `data_path` is the directory containing (i) the transcript file (ending with `_tx_file.csv` or `_tx_file.csv.gz`), (ii) the FOV locations file, and (iii) a `Morphology2D` directory containing the images.
 === "MACSima"
     `data_path` is the directory containing multiple `.ome.tif` files (one file per channel)
 === "PhenoCycler"
     `data_path` corresponds to the path to one `.qptiff` file, or one `.tif` file (if exported from QuPath)
 === "Hyperion"
     `data_path` is the directory containing multiple `.ome.tiff` files (one file per channel)
+
+## I have small artifact cells, how do remove them?
+
+You may have small cells that were segmented but that should be removed. For that, `Sopa` offers three filtering approaches: using their area, their transcript count, or their fluorescence intensity. Refer to the following config parameters from this [example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml): `min_area`, `min_transcripts`, and `min_intensity_ratio`.
+
+If using the CLI, `--min-area` can be provided to `sopa segmentation cellpose` or `sopa resolve baysor`, and `--min-transcripts`/`--min-intensity-ratio` can be provided to `sopa aggregate`.
 
 ## Cellpose is not segmenting enough cells; what should I do?
 

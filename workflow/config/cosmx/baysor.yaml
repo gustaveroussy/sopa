@@ -1,39 +1,33 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
-  technology: merscope
+  technology: cosmx
 
 patchify:
   patch_width_pixel: 6000
   patch_overlap_pixel: 150
-  patch_width_microns: 1000
-  patch_overlap_microns: 20
+  patch_width_microns: 8000
+  patch_overlap_microns: 150
 
 segmentation:
-  cellpose:
-    diameter: 60
-    channels: ["DAPI"]
-    flow_threshold: 2
-    cellprob_threshold: -6
-
   baysor:
-    cell_key: cell_id
+    min_area: 2000
+
     config:
       data:
-        exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
-        min_molecules_per_cell: 10 # min number of transcripts per cell
+        min_molecules_per_cell: 10
         x: "x"
         y: "y"
         z: "z"
-        gene: "gene"
+        gene: "target"
         min_molecules_per_gene: 0
         min_molecules_per_segment: 3
         confidence_nn_id: 6
 
       segmentation:
-        scale: 6.25 # typical cell radius
+        scale: 60 # typical cell radius
         scale_std: "25%" # cell radius standard deviation
-        prior_segmentation_confidence: 0.75 # confidence of the cellpose confidence (float in [0, 1])
+        prior_segmentation_confidence: 0
         estimate_scale_from_centers: false
         n_clusters: 4
         iters: 500
@@ -44,17 +38,20 @@ segmentation:
         new_component_fraction: 0.3
 
 aggregate:
+  average_intensities: true
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
-annotation:
-  method: tangram
-  args:
-    sc_reference_path: /mnt/beegfs/merfish/data/reference/2023_Reference_disco_liver.h5ad
-    cell_type_key: ct
+# Comment this out if you want to use tangram -->
+
+# annotation:
+#   method: tangram
+#   args:
+#     sc_reference_path: "..."
+#     cell_type_key: ct
 
 explorer:
-  gene_column: "gene"
+  gene_column: "target"
   ram_threshold_gb: 4
-  pixel_size: 0.108
 
 executables:
-  baysor: /mnt/beegfs/merfish/bin/baysor/bin/baysor
+  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable
