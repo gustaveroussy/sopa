@@ -35,3 +35,11 @@
 ::: sopa.io.wsi
     options:
       show_root_heading: true
+
+::: sopa.io.uniform
+    options:
+      show_root_heading: true
+
+::: sopa.io.blobs
+    options:
+      show_root_heading: true

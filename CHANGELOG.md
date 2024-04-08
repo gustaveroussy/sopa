@@ -7,6 +7,7 @@
 - Default `min_transcripts` set in snakemake configs
 - Minimum number of transcripts per patch set to 4000 (#41)
 - Config files refactoring (configs added or renamed)
+- Readers refactoring
 
 ## [1.0.9] - 2024-04-03
 
