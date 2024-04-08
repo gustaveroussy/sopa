@@ -21,7 +21,7 @@ def uniform(
     *_,
     length: int = 2_048,
     cell_density: float = 1e-4,
-    n_points_per_cell: int = 50,
+    n_points_per_cell: int = 100,
     c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
     genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
     sigma_factor: float = 0.05,
