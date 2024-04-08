@@ -180,6 +180,7 @@ def _get_points(transcript_path: Path):
     transcripts = PointsModel.parse(
         transcript_df,
         coordinates={"x": MerscopeKeys.GLOBAL_X, "y": MerscopeKeys.GLOBAL_Y},
+        feature_key="gene",
         transformations={"microns": Identity()},
     )
     transcripts["gene"] = transcripts["gene"].astype("category")
