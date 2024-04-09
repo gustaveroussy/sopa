@@ -48,7 +48,7 @@ def create_meta_store(slide: OpenSlide, tilesize: int) -> Dict[str, bytes]:
             {"_ARRAY_DIMENSIONS": [f"Y{suffix}", f"X{suffix}", f"S"]}, 
             path=str(i)
         )
-    return KVStore(store)
+    return store
 
 
 def _parse_chunk_path(path: str):
@@ -69,14 +69,13 @@ class OpenSlideStore(Store):
         Desired "chunk" size for zarr store (default: 512).
     """
 
-    _writeable = False
-    _erasable = False
-
     def __init__(self, path: str, tilesize: int = 512):
         self._path = path
         self._slide = OpenSlide(path)
         self._tilesize = tilesize
         self._store = create_meta_store(self._slide, tilesize)
+        self._writeable = False
+        self._erasable = False
 
     def __getitem__(self, key: str):
         if key in self._store:
@@ -100,14 +99,11 @@ class OpenSlideStore(Store):
             raise KeyError(key)
         return np.array(tile)#.tobytes()
 
-    def __contains__(self, key: str):
-        return key in self._store
-
     def __eq__(self, other):
         return isinstance(other, OpenSlideStore) and self._slide._filename == other._slide._filename
 
     def __setitem__(self, key, val):
-        raise RuntimeError("__setitem__ not implemented")
+        raise PermissionError('ZarrStore is read-only')
 
     def __delitem__(self, key):
         raise PermissionError('ZarrStore is read-only')
