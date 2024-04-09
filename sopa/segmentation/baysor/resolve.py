@@ -133,7 +133,7 @@ def resolve(
 
     image_key = get_key(sdata, "images")
     points = get_element(sdata, "points")
-    transformations = get_transformation(points, get_all=True)
+    transformations = get_transformation(points, get_all=True).copy()
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 

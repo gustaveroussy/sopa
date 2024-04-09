@@ -37,7 +37,6 @@ nav:
       - sopa.annotation.tangram: api/annotation/tangram.md
       - sopa.annotation.fluorescence: api/annotation/fluorescence.md
     - sopa.utils:
-      - sopa.utils.data: api/utils/data.md
       - sopa.utils.image: api/utils/image.md
       - sopa.utils.polygon_crop: api/utils/polygon_crop.md
     - sopa.embedding: api/embedding.md
