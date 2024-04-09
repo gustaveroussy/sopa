@@ -207,7 +207,7 @@ class Patches2D:
             }
         )
         geo_df = ShapesModel.parse(
-            geo_df, transformations=get_transformation(self.element, get_all=True)
+            geo_df, transformations=get_transformation(self.element, get_all=True).copy()
         )
 
         self.sdata.shapes[shapes_key] = geo_df
