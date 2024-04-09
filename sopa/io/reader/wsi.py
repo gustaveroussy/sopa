@@ -132,7 +132,7 @@ def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray
     zarr_img = xarray.open_zarr(
         zarr_store,
         consolidated=False,
-        mask_and_scale=False,
+        mask_and_scale=False
     )
 
     metadata = {
