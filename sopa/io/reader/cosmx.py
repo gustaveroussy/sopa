@@ -58,7 +58,7 @@ def cosmx(
     if read_proteins:
         protein_dir_dict = {
             int(protein_dir.parent.name[3:]): protein_dir
-            for protein_dir in list(path.rglob("**/ProteinImages"))
+            for protein_dir in list(path.rglob("**/FOV*/ProteinImages"))
         }
         assert len(protein_dir_dict), f"No directory called 'ProteinImages' was found under {path}"
 
