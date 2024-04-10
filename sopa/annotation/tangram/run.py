@@ -14,7 +14,7 @@ try:
     import tangram as tg
 except ImportError:
     raise ImportError(
-        "To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'`"
+        "To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'` (normal mode) or `pip install -e '.[tangram]'` (if using snakemake)"
     )
 
 from sopa._constants import SopaKeys
