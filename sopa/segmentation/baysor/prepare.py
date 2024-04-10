@@ -4,7 +4,7 @@ try:
     import toml
 except ImportError:
     raise ImportError(
-        "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'`.\
+        "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'` (normal mode) or `pip install -e '.[baysor]'` (if using snakemake).\
         \nAlso, make sure to install the baysor executable (https://github.com/kharchenkolab/Baysor)."
     )
 

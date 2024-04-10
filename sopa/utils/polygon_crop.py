@@ -132,7 +132,7 @@ def polygon_selection(
     geo_df = gpd.GeoDataFrame(geometry=[polygon])
 
     geo_df = ShapesModel.parse(
-        geo_df, transformations=get_transformation(sdata[image_key], get_all=True)
+        geo_df, transformations=get_transformation(sdata[image_key], get_all=True).copy()
     )
     sdata.shapes[ROI.KEY] = geo_df
     save_shapes(sdata, ROI.KEY)

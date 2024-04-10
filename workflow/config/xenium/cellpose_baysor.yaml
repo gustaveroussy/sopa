@@ -34,7 +34,7 @@ segmentation:
       segmentation:
         scale: 6.25 # typical cell radius
         scale_std: "25%" # cell radius standard deviation
-        prior_segmentation_confidence: 0.75 # confidence of the cellpose confidence (float in [0, 1])
+        prior_segmentation_confidence: 1 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false
         n_clusters: 4
         iters: 500

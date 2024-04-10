@@ -49,12 +49,15 @@ def wsi(
 
     multiscale_image = MultiscaleSpatialImage.from_dict(images)
     multiscale_image.attrs["metadata"] = tiff_metadata
-    multiscale_image.name = image_name
 
     if as_image:
+        multiscale_image.name = image_name
         return multiscale_image
 
-    return SpatialData(images={image_name: multiscale_image})
+    sdata = SpatialData(images={image_name: multiscale_image})
+    sdata[image_name].attrs["metadata"] = tiff_metadata
+
+    return sdata
 
 
 def _get_scale_transformation(scale_factor: float):

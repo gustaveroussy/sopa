@@ -30,7 +30,7 @@ def cellpose_patch(
         from cellpose import models
     except ImportError:
         raise ImportError(
-            "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'`"
+            "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'` (normal mode) or `pip install -e '.[cellpose]'` (if using snakemake)"
         )
 
     cellpose_model_kwargs = cellpose_model_kwargs or {}
