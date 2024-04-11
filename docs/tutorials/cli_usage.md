@@ -279,13 +279,13 @@ If you have downloaded the Xenium Explorer, you can now open the results in the 
     Creating the image needed by the Xenium Explorer can be time-consuming. Therefore, we recommend performing one run for the image generation (below) and another to save the transcripts/boundaries/observations.
     ```sh
     # this can be done directly after saving the raw data in a .zarr directory
-    sopa explorer write tuto.zarr --mode '+i' --no-save-h5ad
+    sopa explorer write tuto.zarr --mode "+i" --no-save-h5ad
     ```
 
     After running everything with Sopa, you can finally save all the other Xenium Explorer input (e.g. boundaries and cell categories):
     ```sh
     # this should be done after aggregation and an eventual annotation
-    sopa explorer write tuto.zarr --mode '-i' --gene-column genes
+    sopa explorer write tuto.zarr --mode "-i" --gene-column genes
     ```
     For more details and customization, refer to the [command line helper](../../cli/#sopa-explorer-write).
 

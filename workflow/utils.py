@@ -148,8 +148,6 @@ class Args:
         if isinstance(value, list):
             for v in value:
                 yield from (option, stringify_for_cli(v))
-        elif isinstance(value, dict):
-            yield from (option, '"' + stringify_for_cli(value) + '"')
         elif value is True:
             yield option
         elif value is False:
@@ -202,8 +200,8 @@ class Args:
 
 
 def stringify_for_cli(value) -> str:
-    if isinstance(value, str):
-        return f"'{value}'"
+    if isinstance(value, str) or isinstance(value, dict):
+        return f'"{value}"'
     return str(value)
 
 

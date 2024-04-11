@@ -60,7 +60,7 @@ checkpoint patchify_baysor:
     params:
         args_patchify = str(args["patchify"].where(contains="micron")),
         args_baysor = args.dump_baysor_patchify() if args.baysor else "",
-        arg_prior = "--use-prior" if args.cellpose else ""
+        arg_prior = "--use-prior" if args.cellpose else "",
     conda:
         "sopa"
     shell:
@@ -128,12 +128,12 @@ rule resolve_baysor:
         dirs = get_input_resolve("baysor", dirs=True),
     output:
         touch(paths.smk_baysor_boundaries),
-        touch(paths.smk_table)
+        touch(paths.smk_table),
     conda:
         "sopa"
     params:
         args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
-        args_min_area = args.min_area("baysor")
+        args_min_area = args.min_area("baysor"),
     shell:
         """
         sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
@@ -189,7 +189,7 @@ rule image_write:
         args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize'])),
     shell:
         """
-        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode '+i' --no-save-h5ad
+        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode "+i" --no-save-h5ad
         """
 
 rule report:
@@ -221,5 +221,5 @@ rule explorer:
         args_explorer = str(args["explorer"]),
     shell:
         """
-        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode '-i'
+        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode "-i"
         """
