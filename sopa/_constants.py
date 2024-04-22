@@ -3,6 +3,8 @@ class SopaKeys:
     BAYSOR_BOUNDARIES = "baysor_boundaries"
     PATCHES = "sopa_patches"
     TABLE = "table"
+    OLD_TABLE = "old_table"
+    CELL_OVERLAY_KEY = "is_overlay"
 
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"

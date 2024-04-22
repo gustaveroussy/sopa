@@ -1,4 +1,4 @@
-from .explorer import write, align
+from .explorer import write, align, add_explorer_selection
 from .standardize import write_standardized
 from .reader.cosmx import cosmx
 from .reader.merscope import merscope

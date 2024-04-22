@@ -1,3 +1,12 @@
+## [1.0.11] - 2024-xx-xx
+
+### Added
+- Can overlay a custom segmentation (merge boundaries)
+- Xenium Explorer selection(s) can be added as shapes in a SpatialData object
+
+### Changed
+- Rename `Aggregator.update_table` to `Aggregator.compute_table`
+
 ## [1.0.10] - 2024-04-08
 
 ### Added

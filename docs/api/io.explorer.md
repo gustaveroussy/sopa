@@ -41,3 +41,7 @@
 ::: sopa.io.explorer.save_column_csv
     options:
       show_root_heading: true
+
+::: sopa.io.explorer.add_explorer_selection
+    options:
+      show_root_heading: true

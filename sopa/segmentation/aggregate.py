@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from functools import partial
 
+import anndata
 import dask.array as da
 import dask.dataframe as dd
 import geopandas as gpd
@@ -26,13 +27,51 @@ from .._sdata import (
     get_item,
     get_spatial_image,
     save_shapes,
-    save_table,
-    to_intrinsic,
 )
+from .._sdata import save_table as _save_table
+from .._sdata import to_intrinsic
 from ..io.explorer.utils import str_cell_id
 from . import shapes
 
 log = logging.getLogger(__name__)
+
+
+def overlay_segmentation(
+    sdata: SpatialData,
+    shapes_key: str,
+    gene_column: str | None = None,
+    area_ratio_threshold: float = 0.25,
+    image_key: str | None = None,
+    save_table: bool = False,
+):
+    """Overlay a segmentation on top of an existing segmentation
+
+    Args:
+        sdata: A `SpatialData` object
+        shapes_key: The key of the new shapes to be added
+        gene_column: Key of the points dataframe containing the genes names
+        area_ratio_threshold: Threshold between 0 and 1. For each original cell overlapping with a new cell, we compute the overlap-area/cell-area, if above the threshold the cell is removed.
+        image_key: Optional key of the original image
+        save_table: Whether to save the new table on-disk or not
+    """
+    average_intensities = False
+
+    if "table" in sdata.tables and SopaKeys.UNS_KEY in sdata.tables["table"].uns:
+        sopa_attrs = sdata.tables["table"].uns[SopaKeys.UNS_KEY]
+
+        if sopa_attrs[SopaKeys.UNS_HAS_TRANSCRIPTS]:
+            assert gene_column is not None, "Need 'gene_column' argument to count transcripts"
+        else:
+            gene_column = gene_column
+        average_intensities = sopa_attrs[SopaKeys.UNS_HAS_INTENSITIES]
+
+    aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key)
+    aggr.overlay_segmentation(
+        gene_column=gene_column,
+        average_intensities=average_intensities,
+        area_ratio_threshold=area_ratio_threshold,
+        save_table=save_table,
+    )
 
 
 class Aggregator:
@@ -64,14 +103,61 @@ class Aggregator:
             self.geo_df = self.sdata[shapes_key]
 
         self.table = None
-        if SopaKeys.TABLE in sdata.tables:
-            table = sdata.tables[SopaKeys.TABLE]
-            if len(self.geo_df) != table.n_obs:
-                log.warn("Not using existing table (aggregating on a different number of cells)")
-            else:
+        if SopaKeys.TABLE in self.sdata.tables:
+            table = self.sdata.tables[SopaKeys.TABLE]
+            if len(self.geo_df) == table.n_obs:
+                log.info("Using existing table for aggregation")
                 self.table = table
 
-    def standardize_table(self):
+    def overlay_segmentation(
+        self,
+        gene_column: str | None = None,
+        average_intensities: bool = True,
+        area_ratio_threshold: float = 0.25,
+        save_table: bool = True,
+    ):
+        old_table: AnnData = self.sdata.tables[SopaKeys.TABLE]
+        self.sdata.tables[SopaKeys.OLD_TABLE] = old_table
+        del self.sdata.tables[SopaKeys.TABLE]
+
+        old_shapes_key = old_table.uns["spatialdata_attrs"]["region"]
+        instance_key = old_table.uns["spatialdata_attrs"]["instance_key"]
+
+        if isinstance(old_shapes_key, list):
+            assert (
+                len(old_shapes_key) == 1
+            ), "Can't overlap segmentation on multi-region SpatialData object"
+            old_shapes_key = old_shapes_key[0]
+
+        old_geo_df = self.sdata[old_shapes_key]
+        geo_df = to_intrinsic(self.sdata, self.geo_df, old_geo_df)
+
+        gdf_join = gpd.sjoin(old_geo_df, geo_df)
+        gdf_join["geometry_right"] = gdf_join["index_right"].map(lambda i: geo_df.geometry.iloc[i])
+        gdf_join["overlap_ratio"] = gdf_join.apply(_overlap_area_ratio, axis=1)
+        gdf_join: gpd.GeoDataFrame = gdf_join[gdf_join.overlap_ratio >= area_ratio_threshold]
+
+        table_crop = old_table[~np.isin(old_table.obs[instance_key], gdf_join.index)].copy()
+        table_crop.obs[SopaKeys.CELL_OVERLAY_KEY] = False
+
+        self.compute_table(
+            gene_column=gene_column, average_intensities=average_intensities, save_table=False
+        )
+        self.table.obs[SopaKeys.CELL_OVERLAY_KEY] = True
+
+        self.table = anndata.concat(
+            [table_crop, self.table], uns_merge="first", join="outer", fill_value=0
+        )
+        _fillna(self.table.obs)
+
+        self.shapes_key = f"{old_shapes_key}+{self.shapes_key}"
+        geo_df_cropped = old_geo_df.loc[~old_geo_df.index.isin(gdf_join.index)]
+        self.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
+        self.geo_df.attrs = old_geo_df.attrs
+
+        self.standardized_table(save_table=save_table)
+
+    def standardized_table(self, save_table: bool = True):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
         self.geo_df.index = list(self.table.obs_names)
@@ -102,7 +188,9 @@ class Aggregator:
         )
 
         self.sdata.tables[SopaKeys.TABLE] = self.table
-        save_table(self.sdata, SopaKeys.TABLE)
+
+        if save_table:
+            _save_table(self.sdata, SopaKeys.TABLE)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
@@ -114,13 +202,18 @@ class Aggregator:
         if self.table is not None:
             self.table = self.table[~where_filter]
 
-    def update_table(
+    def update_table(self, *args, **kwargs):
+        log.warn("'update_table' is deprecated, use 'compute_table' instead")
+        self.compute_table(*args, **kwargs)
+
+    def compute_table(
         self,
         gene_column: str | None = None,
         average_intensities: bool = True,
         expand_radius_ratio: float = 0,
         min_transcripts: int = 0,
         min_intensity_ratio: float = 0,
+        save_table: bool = True,
     ):
         """Perform aggregation and update the spatialdata table
 
@@ -130,6 +223,7 @@ class Aggregator:
             expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
             min_transcripts: Minimum amount of transcript to keep a cell
             min_intensity_ratio: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
+            save_table: Whether the table should be saved on disk or not
         """
         does_count = (
             self.table is not None and isinstance(self.table.X, csr_matrix)
@@ -183,7 +277,21 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
         }
 
-        self.standardize_table()
+        self.standardized_table(save_table=save_table)
+
+
+def _overlap_area_ratio(row) -> float:
+    poly: Polygon = row["geometry"]
+    poly_right: Polygon = row["geometry_right"]
+    return poly.intersection(poly_right).area / poly.area
+
+
+def _fillna(df: pd.DataFrame):
+    for key in df:
+        if df[key].dtype == "category":
+            df[key] = df[key].cat.add_categories("NA").fillna("NA")
+        else:
+            df[key] = df[key].fillna(0)
 
 
 def average_channels(
@@ -315,7 +423,7 @@ def _count_transcripts_aligned(
 
     X = coo_matrix((len(geo_df), len(gene_names)), dtype=int)
     adata = AnnData(X=X, var=pd.DataFrame(index=gene_names))
-    adata.obs_names = geo_df.index
+    adata.obs_names = geo_df.index.astype(str)
 
     geo_df = geo_df.reset_index()
 

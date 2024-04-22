@@ -188,7 +188,7 @@ def aggregate(
     sdata = read_zarr_standardized(sdata_path, warn=True)
 
     aggregator = Aggregator(sdata, image_key=image_key, shapes_key=method_name)
-    aggregator.update_table(
+    aggregator.compute_table(
         gene_column, average_intensities, expand_radius_ratio, min_transcripts, min_intensity_ratio
     )
 
