@@ -1,3 +1,7 @@
+::: sopa.segmentation.aggregate.overlay_segmentation
+    options:
+      show_root_heading: true
+
 ::: sopa.segmentation.aggregate.average_channels
     options:
       show_root_heading: true
