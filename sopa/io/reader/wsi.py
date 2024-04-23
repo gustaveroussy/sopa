@@ -12,7 +12,7 @@ from spatialdata.transformations import Identity, Scale
 
 
 def wsi(
-    path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256), as_image: bool = False, backend: str = "openslide"
+    path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256), as_image: bool = False, backend: str = "tiffslide"
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object
 
