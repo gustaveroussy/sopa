@@ -3,6 +3,7 @@
 ### Added
 - Can overlay a custom segmentation (merge boundaries)
 - Xenium Explorer selection(s) can be added as shapes in a SpatialData object
+- Optionnal OpenSlide backend for WSI data
 
 ### Changed
 - Rename `Aggregator.update_table` to `Aggregator.compute_table`
