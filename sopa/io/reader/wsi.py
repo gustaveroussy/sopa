@@ -23,7 +23,7 @@ def wsi(
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
         as_image: If `True`, returns a, image instead of a `SpatialData` object
-        backend: The library to use as a backend in order to load the WSI. (one of: openslide, tiffslide)
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`
