@@ -5,9 +5,15 @@ from typing import Any, Dict, Mapping, MutableMapping
 
 import numpy as np
 from openslide import OpenSlide
-
-from zarr.storage import _path_to_prefix, attrs_key, init_array, init_group, Store, KVStore
-from zarr.util import json_dumps, normalize_storage_path, normalize_shape
+from zarr.storage import (
+    KVStore,
+    Store,
+    _path_to_prefix,
+    attrs_key,
+    init_array,
+    init_group,
+)
+from zarr.util import json_dumps, normalize_shape, normalize_storage_path
 
 
 def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str = None):
@@ -42,12 +48,8 @@ def create_meta_store(slide: OpenSlide, tilesize: int) -> Dict[str, bytes]:
             dtype="|u1",
             compressor=None,
         )
-        suffix = str(i) if i != 0 else ''
-        init_attrs(
-            store, 
-            {"_ARRAY_DIMENSIONS": [f"Y{suffix}", f"X{suffix}", f"S"]}, 
-            path=str(i)
-        )
+        suffix = str(i) if i != 0 else ""
+        init_attrs(store, {"_ARRAY_DIMENSIONS": [f"Y{suffix}", f"X{suffix}", "S"]}, path=str(i))
     return store
 
 
@@ -97,16 +99,16 @@ class OpenSlideStore(Store):
             # If anything goes wrong, we just signal the chunk
             # is missing from the store.
             raise KeyError(key)
-        return np.array(tile)#.tobytes()
+        return np.array(tile)  # .tobytes()
 
     def __eq__(self, other):
         return isinstance(other, OpenSlideStore) and self._slide._filename == other._slide._filename
 
     def __setitem__(self, key, val):
-        raise PermissionError('ZarrStore is read-only')
+        raise PermissionError("ZarrStore is read-only")
 
     def __delitem__(self, key):
-        raise PermissionError('ZarrStore is read-only')
+        raise PermissionError("ZarrStore is read-only")
 
     def __iter__(self):
         return iter(self.keys())
@@ -143,8 +145,7 @@ class OpenSlideStore(Store):
 
     def rename(self):
         raise PermissionError(f'{type(self)} is not erasable, cannot call "rename"')
-    
-    
+
     def rmdir(self, path: str = "") -> None:
         raise PermissionError(f'{type(self)} is not erasable, cannot call "rmdir"')
 

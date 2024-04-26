@@ -42,7 +42,7 @@ def _get_extraction_parameters(
     patch_width: int,
     level: int | None,
     magnification: int | None,
-    backend: str
+    backend: str,
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
@@ -93,7 +93,7 @@ class Embedder:
 
         slide_metadata = image.attrs.get("metadata", {})
         self.level, self.resize_factor, self.patch_width, success = _get_extraction_parameters(
-            slide_metadata, patch_width, level, magnification, backend=image.attrs['backend']
+            slide_metadata, patch_width, level, magnification, backend=image.attrs["backend"]
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")

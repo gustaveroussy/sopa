@@ -12,7 +12,10 @@ from spatialdata.transformations import Identity, Scale
 
 
 def wsi(
-    path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256), as_image: bool = False, backend: str = "tiffslide"
+    path: str | Path,
+    chunks: tuple[int, int, int] = (3, 256, 256),
+    as_image: bool = False,
+    backend: str = "tiffslide",
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object
 
@@ -108,11 +111,14 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
-def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray.Dataset, Any, dict]:
+def _open_wsi(
+    path: str | Path, backend: str = "openslide"
+) -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
     if backend == "tiffslide":
         import tiffslide
+
         slide = tiffslide.open_slide(path)
         zarr_store = slide.zarr_group.store
         zarr_img = xarray.open_zarr(
@@ -122,6 +128,7 @@ def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray
         )
     elif backend == "openslide":
         import openslide
+
         from ...utils.io import OpenSlideStore
 
         slide = openslide.open_slide(path)
@@ -129,11 +136,7 @@ def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray
     else:
         raise ValueError("Invalid backend. Supported options are 'openslide' and 'tiffslide'.")
 
-    zarr_img = xarray.open_zarr(
-        zarr_store,
-        consolidated=False,
-        mask_and_scale=False
-    )
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
     metadata = {
         "properties": slide.properties,
