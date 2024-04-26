@@ -1,4 +1,6 @@
-## [1.0.11] - 2024-xx-xx
+## [1.x.x] - xxxx-xx-xx
+
+## [1.0.11] - 2024-04-26
 
 ### Added
 - Can overlay a custom segmentation (merge boundaries)
