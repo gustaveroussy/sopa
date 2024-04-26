@@ -31,11 +31,7 @@ nav:
       - sopa.segmentation.tissue: api/segmentation/tissue.md
       - sopa.segmentation.baysor: api/segmentation/baysor.md
     - sopa.io: api/io.md
-    - sopa.io.explorer: api/io.explorer.md
-    - sopa.io.report: api/io.report.md
-    - sopa.annotation:
-      - sopa.annotation.tangram: api/annotation/tangram.md
-      - sopa.annotation.fluorescence: api/annotation/fluorescence.md
+    - sopa.annotation: api/annotation.md
     - sopa.utils:
       - sopa.utils.image: api/utils/image.md
       - sopa.utils.polygon_crop: api/utils/polygon_crop.md
@@ -45,7 +41,12 @@ nav:
   - Cite us: cite_us.md
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            heading_level: 3
   - mkdocs-jupyter:
       include_source: True
 markdown_extensions:

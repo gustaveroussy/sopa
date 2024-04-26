@@ -1,8 +1,12 @@
-## [1.0.11] - 2024-xx-xx
+## [1.x.x] - xxxx-xx-xx
+
+## [1.0.11] - 2024-04-26
 
 ### Added
 - Can overlay a custom segmentation (merge boundaries)
 - Xenium Explorer selection(s) can be added as shapes in a SpatialData object
+- Optionnal OpenSlide backend for WSI data
+- New `sopa.io.aicsimageio` reader for special formats (#58)
 
 ### Changed
 - Rename `Aggregator.update_table` to `Aggregator.compute_table`

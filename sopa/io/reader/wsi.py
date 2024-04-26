@@ -12,7 +12,10 @@ from spatialdata.transformations import Identity, Scale
 
 
 def wsi(
-    path: str | Path, chunks: tuple[int, int, int] = (3, 256, 256), as_image: bool = False
+    path: str | Path,
+    chunks: tuple[int, int, int] = (3, 256, 256),
+    as_image: bool = False,
+    backend: str = "tiffslide",
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object
 
@@ -20,11 +23,12 @@ def wsi(
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
         as_image: If `True`, returns a, image instead of a `SpatialData` object
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`
     """
-    image_name, img, tiff, tiff_metadata = _open_wsi(path)
+    image_name, img, slide, slide_metadata = _open_wsi(path, backend=backend)
 
     images = {}
     for level, key in enumerate(list(img.keys())):
@@ -35,10 +39,10 @@ def wsi(
             dims=("c", "y", "x"),
         ).chunk(chunks)
 
-        scale_factor = tiff.level_downsamples[level]
+        scale_factor = slide.level_downsamples[level]
 
         scale_image = Image2DModel.parse(
-            scale_image,
+            scale_image[:3, :, :],
             transformations={"pixels": _get_scale_transformation(scale_factor)},
             c_coords=("r", "g", "b"),
         )
@@ -48,14 +52,13 @@ def wsi(
         images[f"scale{key}"] = scale_image
 
     multiscale_image = MultiscaleSpatialImage.from_dict(images)
-    multiscale_image.attrs["metadata"] = tiff_metadata
+    sdata = SpatialData(images={image_name: multiscale_image})
+    sdata[image_name].attrs["metadata"] = slide_metadata
+    sdata[image_name].attrs["backend"] = backend
+    sdata[image_name].name = image_name
 
     if as_image:
-        multiscale_image.name = image_name
         return multiscale_image
-
-    sdata = SpatialData(images={image_name: multiscale_image})
-    sdata[image_name].attrs["metadata"] = tiff_metadata
 
     return sdata
 
@@ -108,23 +111,38 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
-def _open_wsi(path: str | Path) -> tuple[str, xarray.Dataset, Any, dict]:
-    import tiffslide
-
+def _open_wsi(
+    path: str | Path, backend: str = "openslide"
+) -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
-    tiff = tiffslide.open_slide(path)
-    img = xarray.open_zarr(
-        tiff.zarr_group.store,
-        consolidated=False,
-        mask_and_scale=False,
-    )
+    if backend == "tiffslide":
+        import tiffslide
 
-    tiff_metadata = {
-        "properties": tiff.properties,
-        "dimensions": tiff.dimensions,
-        "level_count": tiff.level_count,
-        "level_dimensions": tiff.level_dimensions,
-        "level_downsamples": tiff.level_downsamples,
+        slide = tiffslide.open_slide(path)
+        zarr_store = slide.zarr_group.store
+        zarr_img = xarray.open_zarr(
+            zarr_store,
+            consolidated=False,
+            mask_and_scale=False,
+        )
+    elif backend == "openslide":
+        import openslide
+
+        from ...utils.io import OpenSlideStore
+
+        slide = openslide.open_slide(path)
+        zarr_store = OpenSlideStore(path).store
+    else:
+        raise ValueError("Invalid backend. Supported options are 'openslide' and 'tiffslide'.")
+
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
+
+    metadata = {
+        "properties": slide.properties,
+        "dimensions": slide.dimensions,
+        "level_count": slide.level_count,
+        "level_dimensions": slide.level_dimensions,
+        "level_downsamples": slide.level_downsamples,
     }
-    return image_name, img, tiff, tiff_metadata
+    return image_name, zarr_img, slide, metadata

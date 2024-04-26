@@ -38,10 +38,11 @@ def _get_best_level_for_downsample(
 
 
 def _get_extraction_parameters(
-    tiff_metadata: dict,
+    slide_metadata: dict,
     patch_width: int,
     level: int | None,
     magnification: int | None,
+    backend: str,
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
@@ -55,20 +56,20 @@ def _get_extraction_parameters(
     if magnification is None:
         return level, 1, patch_width * 2**level, True  # TODO: what if scaling != 2?
 
-    if tiff_metadata["properties"].get("tiffslide.objective-power"):
-        objective_power = int(tiff_metadata["properties"].get("tiffslide.objective-power"))
+    if slide_metadata["properties"].get(f"{backend}.objective-power"):
+        objective_power = int(slide_metadata["properties"].get(f"{backend}.objective-power"))
         downsample = objective_power / magnification
 
-    elif tiff_metadata["properties"].get("tiffslide.mpp-x"):
-        mppx = float(tiff_metadata["properties"].get("tiffslide.mpp-x"))
+    elif slide_metadata["properties"].get(f"{backend}.mpp-x"):
+        mppx = float(slide_metadata["properties"].get(f"{backend}.mpp-x"))
 
         mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - mppx))
         downsample = mpp_objective / magnification
     else:
         return None, None, None, False
 
-    level = _get_best_level_for_downsample(tiff_metadata["level_downsamples"], downsample)
-    resize_factor = tiff_metadata["level_downsamples"][level] / downsample
+    level = _get_best_level_for_downsample(slide_metadata["level_downsamples"], downsample)
+    resize_factor = slide_metadata["level_downsamples"][level] / downsample
     patch_width = int(patch_width * downsample)
 
     return level, resize_factor, patch_width, True
@@ -90,9 +91,9 @@ class Embedder:
 
         self.cs = get_intrinsic_cs(None, image)
 
-        tiff_metadata = image.attrs.get("metadata", {})
+        slide_metadata = image.attrs.get("metadata", {})
         self.level, self.resize_factor, self.patch_width, success = _get_extraction_parameters(
-            tiff_metadata, patch_width, level, magnification
+            slide_metadata, patch_width, level, magnification, backend=image.attrs["backend"]
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
