@@ -1,5 +1,8 @@
 ## [1.x.x] - xxxx-xx-xx
 
+### Fix
+- Fix polygon selection when no channel is provided
+
 ## [1.0.11] - 2024-04-26
 
 ### Added
