@@ -72,7 +72,7 @@ def _get_extraction_parameters(
     resize_factor = slide_metadata["level_downsamples"][level] / downsample
     patch_width = int(patch_width * downsample)
 
-    return level, resize_factor, patch_width, True
+    return level, resize_factor, patch_width, downsample, True
 
 
 class Embedder:
@@ -92,7 +92,7 @@ class Embedder:
         self.cs = get_intrinsic_cs(None, image)
 
         slide_metadata = image.attrs.get("metadata", {})
-        self.level, self.resize_factor, self.patch_width, success = _get_extraction_parameters(
+        self.level, self.resize_factor, self.patch_width, self.downsample, success = _get_extraction_parameters(
             slide_metadata, patch_width, level, magnification, backend=image.attrs['backend']
         )
         if not success:
@@ -167,6 +167,7 @@ def embed_wsi_patches(
     sdata: SpatialData,
     model_name: str,
     patch_width: int,
+    patch_overlap: int,
     level: int | None = 0,
     magnification: int | None = None,
     image_key: str | None = None,
@@ -181,7 +182,8 @@ def embed_wsi_patches(
     Args:
         sdata: A `SpatialData` object
         model_name: Name of the computer vision model to be used. One of `Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`.
-        patch_width: Width of the patches for which the embeddings will be computed.
+        patch_width: Width (pixels) of the patches for which the embeddings will be computed.
+        patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the embedding is performed. Either `level` or `magnification` should be provided.
         magnification: The target magnification on which the embedding is performed. If `magnification` is provided, the `level` argument will be automatically computed.
         image_key: Optional image key of the WSI image, unecessary if there is only one image.
@@ -196,7 +198,7 @@ def embed_wsi_patches(
 
     embedder = Embedder(image, model_name, patch_width, level, magnification, device)
 
-    patches = Patches2D(sdata, image_key, embedder.patch_width, 0)
+    patches = Patches2D(sdata, image_key, embedder.patch_width,  embedder.downsample*patch_overlap)
     embedding_image = np.zeros((embedder.output_dim, *patches.shape), dtype=np.float32)
 
     log.info(f"Computing {len(patches)} embeddings at level {embedder.level}")
@@ -207,15 +209,16 @@ def embed_wsi_patches(
         loc_x, loc_y = patches.ilocs[i : i + len(embedding)].T
         embedding_image[:, loc_y, loc_x] = embedding.T
 
+    patch_step = (embedder.patch_width - embedder.downsample * patch_overlap)
     embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
     embedding_image = Image2DModel.parse(
         embedding_image,
         transformations={
-            embedder.cs: Scale([embedder.patch_width, embedder.patch_width], axes=("x", "y"))
+            embedder.cs: Scale([patch_step, patch_step], axes=("x", "y"))
         },
     )
-    embedding_image.coords["y"] = embedder.patch_width * embedding_image.coords["y"]
-    embedding_image.coords["x"] = embedder.patch_width * embedding_image.coords["x"]
+    embedding_image.coords["y"] = patch_step * embedding_image.coords["y"]
+    embedding_image.coords["x"] = patch_step * embedding_image.coords["x"]
 
     embedding_key = f"sopa_{model_name}"
     sdata.images[embedding_key] = embedding_image
