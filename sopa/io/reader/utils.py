@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from pathlib import Path
 from typing import Callable
 
@@ -34,6 +35,17 @@ def _deduplicate_names(df):
     is_duplicated = df[0].duplicated(keep=False)
     df.loc[is_duplicated, 0] += " (" + df.loc[is_duplicated, 1] + ")"
     return df[0].values
+
+
+def _deduplicate_c_coords(c_coords: list[str]) -> list[str]:
+    counter, res = defaultdict(int), []
+    for channel in c_coords:
+        if channel not in counter:
+            res.append(channel)
+        else:
+            res.append(f"{channel} ({counter[channel]})")
+        counter[channel] += 1
+    return res
 
 
 def _get_files_stem(files: list[Path]):

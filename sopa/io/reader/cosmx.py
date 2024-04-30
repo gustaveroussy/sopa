@@ -13,7 +13,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
 from spatialdata_io._constants._constants import CosmxKeys
 
-from .utils import _default_image_kwargs
+from .utils import _deduplicate_c_coords, _default_image_kwargs
 
 log = logging.getLogger(__name__)
 
@@ -247,7 +247,7 @@ def _cosmx_c_coords(path: Path, n_channels: int, protein_names: list[str] | None
     if protein_names is not None:
         channel_names += protein_names
 
-    return channel_names
+    return _deduplicate_c_coords(channel_names)
 
 
 def _find_dir(path: Path, name: str):
