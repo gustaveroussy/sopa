@@ -8,6 +8,7 @@ from typing import Optional
 import dask.array as da
 import pandas as pd
 import tifffile
+import xarray as xr
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
@@ -64,14 +65,16 @@ def cosmx(
 
     ### Read image(s)
     images_dir = _find_dir(path, "Morphology2D")
+    morphology_coords = _cosmx_morphology_coords(path)
+
     if fov is None:
-        image, protein_names = _read_stitched_image(
+        image, c_coords = _read_stitched_image(
             images_dir,
             fov_locs,
             protein_dir_dict,
+            morphology_coords,
             **imread_kwargs,
         )
-        image = image.rechunk(image_models_kwargs["chunks"])
         image_name = "stitched_image"
     else:
         pattern = f"*{fov_id}.TIF"
@@ -82,12 +85,10 @@ def cosmx(
             len(fov_files) == 1
         ), f"Multiple files match the pattern {pattern}: {', '.join(fov_files)}"
 
-        image, protein_names = _read_fov_image(
-            images_dir / fov_files[0], protein_dir_dict.get(fov), **imread_kwargs
+        image, c_coords = _read_fov_image(
+            fov_files[0], protein_dir_dict.get(fov), morphology_coords, **imread_kwargs
         )
         image_name = f"{fov}_image"
-
-    c_coords = _cosmx_c_coords(path, image.shape[0], protein_names)
 
     parsed_image = Image2DModel.parse(
         image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs
@@ -119,16 +120,16 @@ def cosmx(
 
 
 def _read_fov_image(
-    morphology_path: Path, protein_path: Path | None, **imread_kwargs
-) -> tuple[da.Array, list[str] | None]:
+    morphology_path: Path, protein_path: Path | None, morphology_coords: list[str], **imread_kwargs
+) -> tuple[da.Array, list[str]]:
     image = imread(morphology_path, **imread_kwargs)
 
-    protein_names = None
+    protein_names = []
     if protein_path is not None:
         protein_image, protein_names = _read_protein_fov(protein_path)
         image = da.concatenate([image, protein_image], axis=0)
 
-    return image, protein_names
+    return image, _deduplicate_c_coords(morphology_coords + protein_names)
 
 
 def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
@@ -170,20 +171,26 @@ def _read_cosmx_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
 
 
 def _read_stitched_image(
-    images_dir: Path, fov_locs: pd.DataFrame, protein_dir_dict: dict, **imread_kwargs
+    images_dir: Path,
+    fov_locs: pd.DataFrame,
+    protein_dir_dict: dict,
+    morphology_coords: list[str],
+    **imread_kwargs,
 ) -> tuple[da.Array, list[str] | None]:
     log.warn("Image stitching is currently experimental")
 
     fov_images = {}
-    protein_names = None
+    c_coords_dict = {}
     pattern = re.compile(r".*_F(\d+)")
     for image_path in images_dir.iterdir():
         if image_path.suffix == ".TIF":
             fov = int(pattern.findall(image_path.name)[0])
 
-            image, protein_names = _read_fov_image(
-                image_path, protein_dir_dict.get(fov), **imread_kwargs
+            image, c_coords = _read_fov_image(
+                image_path, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs
             )
+
+            c_coords_dict[fov] = c_coords
 
             fov_images[fov] = da.flip(image, axis=1)
 
@@ -195,16 +202,22 @@ def _read_stitched_image(
         fov_locs[f"{dim}0"] = (fov_locs[f"{dim}min"] - shift).round().astype(int)
         fov_locs[f"{dim}1"] = (fov_locs[f"{dim}max"] - shift).round().astype(int)
 
+    c_coords = list(set.union(*[set(names) for names in c_coords_dict.values()]))
+
     stitched_image = da.zeros(
-        shape=(image.shape[0], fov_locs["y1"].max(), fov_locs["x1"].max()), dtype=image.dtype
+        shape=(len(c_coords), fov_locs["y1"].max(), fov_locs["x1"].max()), dtype=image.dtype
     )
+    stitched_image = xr.DataArray(stitched_image, dims=("c", "y", "x"), coords={"c": c_coords})
 
     for fov, im in fov_images.items():
         xmin, xmax = fov_locs.loc[fov, "x0"], fov_locs.loc[fov, "x1"]
         ymin, ymax = fov_locs.loc[fov, "y0"], fov_locs.loc[fov, "y1"]
-        stitched_image[:, ymin:ymax, xmin:xmax] = im
+        stitched_image.sel(c=c_coords_dict[fov])[:, ymin:ymax, xmin:xmax] = im
 
-    return stitched_image, protein_names
+        if len(c_coords_dict[fov]) < len(c_coords):
+            log.warn(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
+
+    return stitched_image.data, c_coords
 
 
 def _check_fov_id(fov: str | int | None) -> tuple[str, int]:
@@ -234,20 +247,11 @@ def _read_cosmx_csv(path: Path, dataset_id: str) -> pd.DataFrame:
     return pd.read_csv(transcripts_file)
 
 
-def _cosmx_c_coords(path: Path, n_channels: int, protein_names: list[str] | None) -> list[str]:
+def _cosmx_morphology_coords(path: Path) -> list[str]:
     channel_ids_path = path / "Morphology_ChannelID_Dictionary.txt"
 
-    if channel_ids_path.exists():
-        channel_names = list(pd.read_csv(channel_ids_path, delimiter="\t")["BiologicalTarget"])
-    else:
-        n_channels = n_channels - len(protein_names) if protein_names is not None else n_channels
-        channel_names = [str(i) for i in range(n_channels)]
-        log.warn(f"Channel file not found at {channel_ids_path}, using {channel_names=} instead.")
-
-    if protein_names is not None:
-        channel_names += protein_names
-
-    return _deduplicate_c_coords(channel_names)
+    assert channel_ids_path.exists(), f"Channel file not found at {channel_ids_path}"
+    return list(pd.read_csv(channel_ids_path, delimiter="\t")["BiologicalTarget"])
 
 
 def _find_dir(path: Path, name: str):
