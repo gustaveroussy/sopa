@@ -3,6 +3,9 @@
 ### Fix
 - Fix polygon selection when no channel is provided
 
+### Changed
+- Ensure categorical variables are used for patches clustering
+
 ## [1.0.11] - 2024-04-26
 
 ### Added
