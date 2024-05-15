@@ -212,7 +212,9 @@ def _read_stitched_image(
     for fov, im in fov_images.items():
         xmin, xmax = fov_locs.loc[fov, "x0"], fov_locs.loc[fov, "x1"]
         ymin, ymax = fov_locs.loc[fov, "y0"], fov_locs.loc[fov, "y1"]
-        stitched_image.sel(c=c_coords_dict[fov])[:, ymin:ymax, xmin:xmax] = im
+        stitched_image.loc[
+            {"c": c_coords_dict[fov], "y": slice(ymin, ymax), "x": slice(xmin, xmax)}
+        ] = im
 
         if len(c_coords_dict[fov]) < len(c_coords):
             log.warn(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
