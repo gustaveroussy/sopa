@@ -3,6 +3,9 @@
 ### Fix
 - Fix polygon selection when no channel is provided
 
+### Added
+- Check the columns of CosMX data to see if the correct export module was used
+
 ### Changed
 - Ensure categorical variables are used for patches clustering
 
