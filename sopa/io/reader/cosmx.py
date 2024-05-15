@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 import dask.array as da
+import numpy as np
 import pandas as pd
 import tifffile
 import xarray as xr
@@ -52,7 +53,7 @@ def cosmx(
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
     dataset_id = _infer_dataset_id(path, dataset_id)
-    fov_locs = _read_cosmx_fov_locs(path, dataset_id)
+    fov_locs = _read_fov_locs(path, dataset_id)
     fov_id, fov = _check_fov_id(fov)
 
     protein_dir_dict = {}
@@ -98,7 +99,7 @@ def cosmx(
         return SpatialData(images={image_name: parsed_image})
 
     ### Read transcripts
-    transcripts_data = _read_cosmx_csv(path, dataset_id)
+    transcripts_data = _read_transcripts_csv(path, dataset_id)
 
     if fov is None:
         transcripts_data["x"] = transcripts_data["x_global_px"] - fov_locs["xmin"].min()
@@ -119,6 +120,23 @@ def cosmx(
     return SpatialData(images={image_name: parsed_image}, points={points_name: transcripts})
 
 
+def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
+    if isinstance(dataset_id, str):
+        return dataset_id
+
+    for suffix in [".csv", ".csv.gz"]:
+        counts_files = list(path.rglob(f"[!\\.]*_fov_positions_file{suffix}"))
+
+        if len(counts_files) == 1:
+            found = re.match(rf"(.*)_fov_positions_file{suffix}", str(counts_files[0]))
+            if found:
+                return found.group(1)
+
+    raise ValueError(
+        "Could not infer `dataset_id` from the name of the transcript file. Please specify it manually."
+    )
+
+
 def _read_fov_image(
     morphology_path: Path, protein_path: Path | None, morphology_coords: list[str], **imread_kwargs
 ) -> tuple[da.Array, list[str]]:
@@ -132,24 +150,7 @@ def _read_fov_image(
     return image, _deduplicate_c_coords(morphology_coords + protein_names)
 
 
-def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
-    if isinstance(dataset_id, str):
-        return dataset_id
-
-    for suffix in [".csv", ".csv.gz"]:
-        counts_files = list(path.rglob(f"*_fov_positions_file{suffix}"))
-
-        if len(counts_files) == 1:
-            found = re.match(rf"(.*)_fov_positions_file{suffix}", str(counts_files[0]))
-            if found:
-                return found.group(1)
-
-    raise ValueError(
-        "Could not infer `dataset_id` from the name of the transcript file. Please specify it manually."
-    )
-
-
-def _read_cosmx_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
+def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
     fov_file = path / f"{dataset_id}_fov_positions_file.csv"
 
     if not fov_file.exists():
@@ -157,7 +158,14 @@ def _read_cosmx_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
 
     assert fov_file.exists(), f"Missing field of view file: {fov_file}"
 
-    fov_locs = pd.read_csv(fov_file, index_col=1)
+    fov_locs = pd.read_csv(fov_file)
+
+    FOV_COLUMNS = ["X_mm", "Y_mm", "FOV"]
+    assert np.isin(
+        FOV_COLUMNS, fov_locs.columns
+    ).all(), f"The file {fov_file} must contain the following columns: {', '.join(FOV_COLUMNS)}. Consider using a different export module."
+
+    fov_locs.index = fov_locs["FOV"]
 
     pixel_size = 0.120280945  # size of a pixel in microns
 
@@ -236,17 +244,22 @@ def _check_fov_id(fov: str | int | None) -> tuple[str, int]:
     return fov, int(fov[1:])
 
 
-def _read_cosmx_csv(path: Path, dataset_id: str) -> pd.DataFrame:
+def _read_transcripts_csv(path: Path, dataset_id: str) -> pd.DataFrame:
     transcripts_file = path / f"{dataset_id}_tx_file.csv.gz"
 
     if transcripts_file.exists():
-        return pd.read_csv(transcripts_file, compression="gzip")
+        df = pd.read_csv(transcripts_file, compression="gzip")
+    else:
+        transcripts_file = path / f"{dataset_id}_tx_file.csv"
+        assert transcripts_file.exists(), f"Transcript file {transcripts_file} not found."
+        df = pd.read_csv(transcripts_file)
 
-    transcripts_file = path / f"{dataset_id}_tx_file.csv"
+    TRANSCRIPT_COLUMNS = ["x_global_px", "y_global_px", "target"]
+    assert np.isin(
+        TRANSCRIPT_COLUMNS, df.columns
+    ).all(), f"The file {transcripts_file} must contain the following columns: {', '.join(TRANSCRIPT_COLUMNS)}. Consider using a different export module."
 
-    assert transcripts_file.exists(), f"Transcript file {transcripts_file} not found."
-
-    return pd.read_csv(transcripts_file)
+    return df
 
 
 def _cosmx_morphology_coords(path: Path) -> list[str]:
