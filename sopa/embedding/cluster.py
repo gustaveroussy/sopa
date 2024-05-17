@@ -59,5 +59,6 @@ def cluster_embeddings(
     embeddings = element.compute().data[:, ilocs[:, 1], ilocs[:, 0]].T
 
     gdf_patches[key_added] = method(embeddings, **method_kwargs)
+    gdf_patches[key_added] = gdf_patches[key_added].astype("category")
 
     return gdf_patches

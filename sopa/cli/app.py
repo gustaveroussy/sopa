@@ -147,7 +147,12 @@ def crop(
     sdata = read_zarr_standardized(sdata_path)
 
     polygon_selection(
-        sdata, intermediate_image, intermediate_polygon, list(channels), scale_factor, margin_ratio
+        sdata,
+        intermediate_image,
+        intermediate_polygon,
+        None if channels is None else list(channels),
+        scale_factor,
+        margin_ratio,
     )
 
 

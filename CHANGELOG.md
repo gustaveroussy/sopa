@@ -1,4 +1,15 @@
-## [1.x.x] - xxxx-xx-xx
+## [1.0.12] - 2024-05-17
+
+### Fix
+- Fix polygon selection when no channel is provided
+- Fix CosMX reader for proteins
+- Fix FOV column issue for CosMX data (#65)
+
+### Added
+- Check the columns of CosMX data to see if the correct export module was used
+
+### Changed
+- Ensure categorical variables are used for patches clustering
 
 ## [1.0.11] - 2024-04-26
 
