@@ -9,17 +9,65 @@ You need the raw inputs of your machine, that is:
 In this documentation, `data_path` denotes the path to your raw data. Select the correct tab below to understand what is the right path to your raw data:
 
 === "Xenium"
-    `data_path` is the directory containing the following files: `morphology.ome.tif` and `transcripts.parquet`
+    `data_path` is the path to the directory containing the following files: `morphology.ome.tif` and `transcripts.parquet`. In brief, you should have this file structure:
+
+    ```txt
+    .
+    ├─ morphology.ome.tif
+    └─ transcripts.parquet
+    ```
+
 === "MERSCOPE"
-    `data_path` is the "region" directory containing a `detected_transcripts.csv` file and an `image` directory. For instance, the directory can be called `region_0`.
+    `data_path` is the path to the "region" directory containing a `detected_transcripts.csv` file and an `images` directory. For instance, the directory may be called `region_0`. In brief, you should have this file structure:
+
+    ```txt
+    .
+    ├─ detected_transcripts.csv
+    └─ images
+       ├─ mosaic_{stain}_z{z_layer}.tif
+       └─ micron_to_mosaic_pixel_transform.csv
+    ```
 === "CosMX"
-    `data_path` is the directory containing (i) the transcript file (ending with `_tx_file.csv` or `_tx_file.csv.gz`), (ii) the FOV locations file, and (iii) a `Morphology2D` directory containing the images.
+    `data_path` is the path to the directory containing:
+
+    - a transcript file `*_tx_file` (with columns `target`, `x_global_px`, `y_global_px`)
+    - a FOV locations file `*_fov_positions_file` (with columns `FOV`, `X_mm`, `Y_mm`)
+    - a `Morphology2D` directory containing the images, end in `_F*.TIF`.
+
+    These files must be exported as flat files in AtomX. In brief, you should have this file structure:
+
+    ```txt
+    .
+    ├─ <DATASET_ID>_tx_file.csv (or csv.gz)
+    ├─ <DATASET_ID>_fov_positions_file.csv (or csv.gz)
+    └─ Morphology2D
+       ├─ XXX_F001.TIF
+       ├─ XXX_F002.TIF
+       └─ ...
+    ```
 === "MACSima"
-    `data_path` is the directory containing multiple `.ome.tif` files (one file per channel)
+    `data_path` is the path to the directory containing multiple `.ome.tif` files (one file per channel). In brief, you should have this file structure:
+
+    ```txt
+    .
+    ├─ AAA.ome.tif
+    ├─ BBB.ome.tif
+    └─ CCC.ome.tif
+    ```
 === "PhenoCycler"
-    `data_path` corresponds to the path to one `.qptiff` file, or one `.tif` file (if exported from QuPath)
+    `data_path` is the path to one `.qptiff` file, or one `.tif` file (if exported from QuPath).
 === "Hyperion"
-    `data_path` is the directory containing multiple `.ome.tiff` files (one file per channel)
+    `data_path` is path to the directory containing multiple `.ome.tiff` files (one file per channel). In brief, you should have this file structure:
+    ```txt
+    .
+    ├─ AAA.ome.tiff
+    ├─ BBB.ome.tiff
+    └─ CCC.ome.tiff
+    ```
+=== "Others (CZI, ...)"
+    Other file formats (ND2, CZI, LIF, or DV) are supported via the `aicsimageio` reader. In that case, you'll need to add new dependencies: `pip install aicsimageio` (and, for CZI data, also `pip install aicspylibczi`).
+
+    This reader is called `aicsimageio`, i.e. you can use it via `sopa.io.aicsimageio(data_path)`, where `data_path` is the path to your data file containing your image(s). For the Snakemake pipeline, provide `aicsimageio` as a `technology` in the config file.
 
 ## I have small artifact cells, how do remove them?
 
@@ -44,6 +92,20 @@ If you have a custom pretrained model, use the `pretrained_model` argument inste
 Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../cli/#sopa-read) has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
 
 `--kwargs "{'backend': 'rioxarray'}"`
+
+## How to fix an "out-of-memory" issue on MERSCOPE data?
+
+If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, to use `rioxarray` as a backend, do the following:
+
+- for the CLI: `sopa read merscope ... --kwargs "{'backend': 'rioxarray'}"`
+- for the API: `sdata = sopa.io.merscope(..., backend="rioxarray")`
+- for the Snakemake pipeline, update the config file as below:
+```yaml
+read:
+  technology: merscope
+  kwargs:
+    backend: rioxarray
+```
 
 ## Can I use Nextflow instead of Snakemake?
 
