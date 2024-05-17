@@ -1,3 +1,8 @@
+## [1.x.x] - xxxx-xx-xx
+
+### Changed
+- Renamed `sopa.embedding` into `sopa.patches`
+
 ## [1.0.12] - 2024-05-17
 
 ### Fix

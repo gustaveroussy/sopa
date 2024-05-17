@@ -35,7 +35,7 @@ nav:
     - sopa.utils:
       - sopa.utils.image: api/utils/image.md
       - sopa.utils.polygon_crop: api/utils/polygon_crop.md
-    - sopa.embedding: api/embedding.md
+    - sopa.patches: api/patches.md
     - sopa._sdata: api/_sdata.md
   - Frequently asked questions: faq.md
   - Cite us: cite_us.md
