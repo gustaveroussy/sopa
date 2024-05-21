@@ -29,10 +29,8 @@ class MultiscaleImageWriter:
     resolutionunit = "CENTIMETER"
     dtype = np.uint8
 
-    def __init__(self, image: SpatialImage, n_subscales: int, tile_width: int, pixel_size: float):
-        self.image: MultiscaleSpatialImage = to_multiscale(
-            image, [2] * n_subscales, chunks=(1, TILE_SIZE, TILE_SIZE)
-        )
+    def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixel_size: float):
+        self.image = image
         self.tile_width = tile_width
         self.pixel_size = pixel_size
 
@@ -159,9 +157,24 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     ]
 
 
+def _to_xenium_explorer_multiscale(
+    image: SpatialImage | MultiscaleSpatialImage, n_subscales: int
+) -> MultiscaleSpatialImage:
+    if isinstance(image, MultiscaleSpatialImage):
+        shapes = np.array(
+            [next(iter(data_tree.values())).shape[1:] for data_tree in image.values()]
+        )
+        if len(shapes) == n_subscales + 1 and (shapes[:-1] // shapes[1:] == 2).all():
+            return image
+
+        image = SpatialImage(next(iter(image["scale0"].values())))
+
+    return to_multiscale(image, [2] * n_subscales, chunks=(1, TILE_SIZE, TILE_SIZE))
+
+
 def write_image(
     path: str,
-    image: SpatialImage | np.ndarray,
+    image: MultiscaleSpatialImage | SpatialImage | np.ndarray,
     lazy: bool = True,
     tile_width: int = TILE_SIZE,
     n_subscales: int = 5,
@@ -188,9 +201,9 @@ def write_image(
         log.info(f"Converting image of shape {image.shape} into a SpatialImage (with dims: C,Y,X)")
         image = SpatialImage(image, dims=["c", "y", "x"], name="image")
 
-    image_writer = MultiscaleImageWriter(
-        image, n_subscales, pixel_size=pixel_size, tile_width=tile_width
-    )
+    image = _to_xenium_explorer_multiscale(image, n_subscales)
+
+    image_writer = MultiscaleImageWriter(image, pixel_size=pixel_size, tile_width=tile_width)
     image_writer.write(path, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
 
 

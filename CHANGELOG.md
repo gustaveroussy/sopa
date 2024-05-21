@@ -2,6 +2,7 @@
 
 ### Changed
 - Renamed `sopa.embedding` into `sopa.patches`
+- Don't recompute `to_multiscale` if the right scales are already used for Xenium Explorer image writing
 
 ## [1.0.12] - 2024-05-17
 
