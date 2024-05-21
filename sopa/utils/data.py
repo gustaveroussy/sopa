@@ -14,6 +14,8 @@ from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 from spatialdata.transformations import Affine, Identity
 
+from .._constants import SopaKeys
+
 log = logging.getLogger(__name__)
 
 
@@ -30,6 +32,7 @@ def uniform(
     include_vertices: bool = False,
     include_image: bool = True,
     apply_blur: bool = True,
+    as_output: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -45,6 +48,7 @@ def uniform(
         include_vertices: Whether to include the vertices of the cells (as points) in the spatialdata object
         include_image: Whether to include the image in the spatialdata object
         apply_blur: Whether to apply gaussian blur on the image (without blur, cells are just one pixel)
+        as_output: If `True`, the data will have the same format than an output of Sopa
 
     Returns:
         A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `include_vertices` is `True`.
@@ -95,7 +99,7 @@ def uniform(
     bbox = box(0, 0, length - 1, length - 1)
     cells = [cell.intersection(bbox) for cell in cells]
     gdf = gpd.GeoDataFrame(geometry=cells)
-    shapes = {"cells": ShapesModel.parse(gdf)}
+    shapes = {"cellpose_boundaries" if as_output else "cells": ShapesModel.parse(gdf)}
 
     ### Create transcripts
     n_genes = n_cells * n_points_per_cell
@@ -141,7 +145,20 @@ def uniform(
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 
-    return SpatialData(images=images, points=points, shapes=shapes)
+    sdata = SpatialData(images=images, points=points, shapes=shapes)
+
+    if as_output:
+        _add_table(sdata)
+
+    return sdata
+
+
+def _add_table(sdata: SpatialData):
+    from ..segmentation.aggregate import Aggregator
+
+    aggregator = Aggregator(sdata, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES)
+
+    aggregator.compute_table(gene_column="genes")
 
 
 def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
