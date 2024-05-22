@@ -139,7 +139,11 @@ def write(
     ### Saving image
     if _should_save(mode, "i"):
         write_image(
-            path, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb, pixel_size=pixel_size
+            path,
+            sdata[image_key],
+            lazy=lazy,
+            ram_threshold_gb=ram_threshold_gb,
+            pixel_size=pixel_size,
         )
 
     ### Saving experiment.xenium file

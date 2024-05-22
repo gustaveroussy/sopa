@@ -24,7 +24,7 @@ def image(
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
-    from sopa.segmentation.patching import Patches2D
+    from sopa.patches import Patches2D
 
     sdata = read_zarr_standardized(sdata_path)
     sanity_check(sdata)
@@ -74,7 +74,7 @@ def baysor(
     from sopa._constants import SopaFiles, SopaKeys
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
-    from sopa.segmentation.patching import Patches2D
+    from sopa.patches import Patches2D
 
     from .utils import _default_boundary_dir
 

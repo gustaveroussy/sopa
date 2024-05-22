@@ -1,3 +1,13 @@
+## [1.0.13] - 2024-04-22
+
+### Changed
+- Xenium reader now adds channel names, and support more recent versions (#68)
+- Renamed `sopa.embedding` into `sopa.patches`, and moved internal files
+- Don't recompute `to_multiscale` if the right scales are already used for Xenium Explorer image writing
+
+### Added
+- New tutorial on Xenium Explorer interoperability
+
 ## [1.0.12] - 2024-05-17
 
 ### Fix

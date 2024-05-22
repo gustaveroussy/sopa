@@ -33,7 +33,7 @@ run.log
 .ipynb_checkpoints
 exploration/*
 *.ipynb
-!docs/tutorials/**.ipynb
+!docs/tutorials/**/**.ipynb
 !notebooks/*.ipynb
 
 # pyenv

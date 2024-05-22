@@ -1,1 +1,1 @@
-::: sopa.segmentation.patching.Patches2D
+::: sopa.segmentation.Patches2D
