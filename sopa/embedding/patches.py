@@ -79,14 +79,23 @@ class Embedder:
     def __init__(
         self,
         image: MultiscaleSpatialImage | SpatialImage,
-        model_name: str,
+        model: Callable | str,
         patch_width: int,
         level: int | None = 0,
         magnification: int | None = None,
         device: str = "cpu",
     ):
         self.image = image
-        self.model_name = model_name
+
+        if isinstance(model, str):
+            assert hasattr(
+                models, model
+            ), f"'{model}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
+            self.model_str = model
+            self.model: torch.nn.Module = getattr(models, model)()
+        else:
+            self.model: torch.nn.Module = model
+
         self.device = device
 
         self.cs = get_intrinsic_cs(None, image)
@@ -99,11 +108,6 @@ class Embedder:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
             return False
 
-        assert hasattr(
-            models, model_name
-        ), f"'{model_name}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
-
-        self.model: torch.nn.Module = getattr(models, model_name)()
         self.model.eval().to(device)
 
     def _resize(self, patch: np.ndarray):
@@ -148,10 +152,6 @@ class Embedder:
 
         return torch.stack([_pad(patch, max_y, max_x) for patch in batch])
 
-    @property
-    def output_dim(self):
-        return self.model.output_dim
-
     @torch.no_grad()
     def embed_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
         patches = self._torch_batch(bboxes)  # shape (B,3,Y,X)
@@ -165,7 +165,7 @@ class Embedder:
 
 def embed_wsi_patches(
     sdata: SpatialData,
-    model_name: str,
+    model: Callable | str,
     patch_width: int,
     patch_overlap: int,
     level: int | None = 0,
@@ -181,7 +181,7 @@ def embed_wsi_patches(
 
     Args:
         sdata: A `SpatialData` object
-        model_name: Name of the computer vision model to be used. One of `Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`.
+        model: Callable that takes as an input a tensor of size (batch_size, channels, x, y) and returns an embedding vector for each tile (batch_size, emb_dim), or a string with the name of one of the available models (`Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`).
         patch_width: Width (pixels) of the patches for which the embeddings will be computed.
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the embedding is performed. Either `level` or `magnification` should be provided.
@@ -196,18 +196,23 @@ def embed_wsi_patches(
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
 
-    embedder = Embedder(image, model_name, patch_width, level, magnification, device)
-
+    embedder = Embedder(image, model, patch_width, level, magnification, device)
     patches = Patches2D(sdata, image_key, embedder.patch_width,  embedder.downsample*patch_overlap)
-    embedding_image = np.zeros((embedder.output_dim, *patches.shape), dtype=np.float32)
 
     log.info(f"Computing {len(patches)} embeddings at level {embedder.level}")
 
+    locations = []
+    embeddings = []
     for i in tqdm.tqdm(range(0, len(patches), batch_size)):
         embedding = embedder.embed_bboxes(patches.bboxes[i : i + batch_size])
-
         loc_x, loc_y = patches.ilocs[i : i + len(embedding)].T
-        embedding_image[:, loc_y, loc_x] = embedding.T
+        embeddings.extend(embedding)
+        locations.extend(list(zip(loc_x, loc_y)))
+    embeddings = torch.stack(embeddings)
+
+    embedding_image = np.zeros((embeddings.shape[1], *patches.shape), dtype=np.float32)
+    for (loc_x, loc_y), emb in zip(locations, embeddings):
+        embedding_image[:, loc_y, loc_x] = emb
 
     patch_step = (embedder.patch_width - embedder.downsample * patch_overlap)
     embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
@@ -220,7 +225,7 @@ def embed_wsi_patches(
     embedding_image.coords["y"] = patch_step * embedding_image.coords["y"]
     embedding_image.coords["x"] = patch_step * embedding_image.coords["x"]
 
-    embedding_key = f"sopa_{model_name}"
+    embedding_key = f"sopa_{embedder.model.__class__.__name__}"
     sdata.images[embedding_key] = embedding_image
     save_image(sdata, embedding_key)
 
