@@ -7,7 +7,7 @@ from shapely.geometry import box
 from spatialdata import SpatialData
 
 from sopa._sdata import get_key
-from sopa.segmentation.patching import Patches2D, _get_cell_id
+from sopa.patches import Patches2D, _get_cell_id
 from sopa.utils.data import uniform
 
 

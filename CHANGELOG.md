@@ -1,3 +1,37 @@
+## [1.0.13] - 2024-04-22
+
+### Changed
+- Xenium reader now adds channel names, and support more recent versions (#68)
+- Renamed `sopa.embedding` into `sopa.patches`, and moved internal files
+- Don't recompute `to_multiscale` if the right scales are already used for Xenium Explorer image writing
+
+### Added
+- New tutorial on Xenium Explorer interoperability
+
+## [1.0.12] - 2024-05-17
+
+### Fix
+- Fix polygon selection when no channel is provided
+- Fix CosMX reader for proteins
+- Fix FOV column issue for CosMX data (#65)
+
+### Added
+- Check the columns of CosMX data to see if the correct export module was used
+
+### Changed
+- Ensure categorical variables are used for patches clustering
+
+## [1.0.11] - 2024-04-26
+
+### Added
+- Can overlay a custom segmentation (merge boundaries)
+- Xenium Explorer selection(s) can be added as shapes in a SpatialData object
+- Optionnal OpenSlide backend for WSI data
+- New `sopa.io.aicsimageio` reader for special formats (#58)
+
+### Changed
+- Rename `Aggregator.update_table` to `Aggregator.compute_table`
+
 ## [1.0.10] - 2024-04-08
 
 ### Added

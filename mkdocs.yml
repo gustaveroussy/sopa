@@ -15,8 +15,9 @@ nav:
     - Snakemake pipeline: tutorials/snakemake.md
     - CLI usage: tutorials/cli_usage.md
     - API usage: tutorials/api_usage.ipynb
-    - Spatial statistics: tutorials/spatial.ipynb
+    - Explorer usage: tutorials/xenium_explorer/explorer.ipynb
     - Align images (e.g. H&E): tutorials/align.md
+    - Spatial statistics: tutorials/spatial.ipynb
     - H&E usage: tutorials/he.ipynb
     - Advanced segmentation: tutorials/advanced_segmentation.md
   - CLI: cli.md
@@ -31,21 +32,22 @@ nav:
       - sopa.segmentation.tissue: api/segmentation/tissue.md
       - sopa.segmentation.baysor: api/segmentation/baysor.md
     - sopa.io: api/io.md
-    - sopa.io.explorer: api/io.explorer.md
-    - sopa.io.report: api/io.report.md
-    - sopa.annotation:
-      - sopa.annotation.tangram: api/annotation/tangram.md
-      - sopa.annotation.fluorescence: api/annotation/fluorescence.md
+    - sopa.annotation: api/annotation.md
     - sopa.utils:
       - sopa.utils.image: api/utils/image.md
       - sopa.utils.polygon_crop: api/utils/polygon_crop.md
-    - sopa.embedding: api/embedding.md
+    - sopa.patches: api/patches.md
     - sopa._sdata: api/_sdata.md
   - Frequently asked questions: faq.md
   - Cite us: cite_us.md
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            heading_level: 3
   - mkdocs-jupyter:
       include_source: True
 markdown_extensions:

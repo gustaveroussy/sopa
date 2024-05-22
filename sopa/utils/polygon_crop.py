@@ -40,7 +40,7 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
     else:
         assert (
             len(image.coords["c"]) in VALID_N_CHANNELS
-        ), f"Choose one or three channels among {image.c.values} by using the -c argument"
+        ), f"Choose one or three channels among {image.c.values} by using the --channels argument"
 
     log.info(f"Resizing image by a factor of {scale_factor}")
     return image_key, resize(image, scale_factor).compute()

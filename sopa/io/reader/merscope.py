@@ -1,5 +1,5 @@
 # Updated from spatialdata-io: https://spatialdata.scverse.org/projects/io/en/latest/
-# In the future, we will completely rely on spatialdata-io (when stable enough)
+# In the future, we will completely rely on spatialdata-io
 
 from __future__ import annotations
 

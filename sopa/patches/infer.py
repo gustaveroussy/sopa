@@ -6,7 +6,7 @@ try:
     import torch
 except ImportError:
     raise ImportError(
-        "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'`"
+        "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'` (normal mode) or `pip install -e '.[wsi]'` (if using snakemake)"
     )
 
 import numpy as np
@@ -42,7 +42,7 @@ def _get_extraction_parameters(
     patch_width: int,
     level: int | None,
     magnification: int | None,
-    backend: str
+    backend: str,
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,

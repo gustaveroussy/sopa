@@ -5,11 +5,10 @@ Convert your image with QuPath as written in this [10x genomics webpage](https:/
 
 If you are not familiar with QuPath, you can also use our API to write the image:
 ```python
-from sopa import io
-from sopa.io.explorer import write_image
+import sopa.io
 
-image = io.ome_tif("path/to/your/image.tif") # or use a different reader
-write_image("where/to/save/image.ome.tif", image, is_dir=False)
+image = sopa.io.ome_tif("path/to/your/image.tif") # or use a different reader
+sopa.io.write_image("where/to/save/image.ome.tif", image, is_dir=False)
 ```
 
 !!! note "Xenium users"
