@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Callable
 
 try:
     import torch
@@ -46,7 +47,7 @@ def _get_extraction_parameters(
 ) -> tuple[int, int, int, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
-    it returns the best scale to get it from (level), a resize factor (resize_factor), 
+    it returns the best scale to get it from (level), a resize factor (resize_factor),
     the corresponding patch size at scale0 (patch_width) and downsample factor between
     scale0 and extraction level.
     """
@@ -102,8 +103,10 @@ class Inference:
         self.cs = get_intrinsic_cs(None, image)
 
         slide_metadata = image.attrs.get("metadata", {})
-        self.level, self.resize_factor, self.patch_width, self.downsample, success = _get_extraction_parameters(
-            slide_metadata, patch_width, level, magnification, backend=image.attrs['backend']
+        self.level, self.resize_factor, self.patch_width, self.downsample, success = (
+            _get_extraction_parameters(
+                slide_metadata, patch_width, level, magnification, backend=image.attrs["backend"]
+            )
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
@@ -198,7 +201,7 @@ def infer_wsi_patches(
     image = sdata.images[image_key]
 
     infer = Inference(image, model, patch_width, level, magnification, device)
-    patches = Patches2D(sdata, image_key, infer.patch_width,  infer.downsample*patch_overlap)
+    patches = Patches2D(sdata, image_key, infer.patch_width, infer.downsample * patch_overlap)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 
@@ -212,13 +215,11 @@ def infer_wsi_patches(
     for (loc_x, loc_y), pred in zip(patches.ilocs, predictions):
         output_image[:, loc_y, loc_x] = pred
 
-    patch_step = (infer.patch_width - infer.downsample * patch_overlap)
+    patch_step = infer.patch_width - infer.downsample * patch_overlap
     output_image = SpatialImage(output_image, dims=("c", "y", "x"))
     output_image = Image2DModel.parse(
         output_image,
-        transformations={
-            infer.cs: Scale([patch_step, patch_step], axes=("x", "y"))
-        },
+        transformations={infer.cs: Scale([patch_step, patch_step], axes=("x", "y"))},
     )
 
     output_key = f"sopa_{infer.model.__class__.__name__}"
