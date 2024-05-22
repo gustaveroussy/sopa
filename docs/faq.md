@@ -9,11 +9,12 @@ You need the raw inputs of your machine, that is:
 In this documentation, `data_path` denotes the path to your raw data. Select the correct tab below to understand what is the right path to your raw data:
 
 === "Xenium"
-    `data_path` is the path to the directory containing the following files: `morphology.ome.tif` and `transcripts.parquet`. In brief, you should have this file structure:
+    `data_path` is the path to the directory containing the following files: `morphology.ome.tif`, `experiment.xenium` and `transcripts.parquet`. In brief, you should have this file structure:
 
     ```txt
     .
-    ├─ morphology.ome.tif
+    ├─ morphology_focus.ome.tif   # or a directory (for recent versions of the Xenium)
+    ├─ experiment.xenium
     └─ transcripts.parquet
     ```
 
@@ -32,6 +33,7 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 
     - a transcript file `*_tx_file` (with columns `target`, `x_global_px`, `y_global_px`)
     - a FOV locations file `*_fov_positions_file` (with columns `FOV`, `X_mm`, `Y_mm`)
+    - a `Morphology_ChannelID_Dictionary.txt` file containing channel names
     - a `Morphology2D` directory containing the images, end in `_F*.TIF`.
 
     These files must be exported as flat files in AtomX. In brief, you should have this file structure:
@@ -40,6 +42,7 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
     .
     ├─ <DATASET_ID>_tx_file.csv (or csv.gz)
     ├─ <DATASET_ID>_fov_positions_file.csv (or csv.gz)
+    ├─ Morphology_ChannelID_Dictionary.txt
     └─ Morphology2D
        ├─ XXX_F001.TIF
        ├─ XXX_F002.TIF
