@@ -8,7 +8,7 @@ class SopaKeys:
 
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"
-    EMBEDDINGS_PATCHES_KEY = "sopa_embedding_patches"
+    PATCHES_INFERENCE_KEY = "sopa_patches_inference"
 
     UNS_KEY = "sopa_attrs"
     UNS_HAS_TRANSCRIPTS = "transcripts"
