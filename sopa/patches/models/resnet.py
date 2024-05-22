@@ -8,7 +8,6 @@ class Resnet50Features(nn.Module):
         from torchvision import transforms
         from torchvision.models import resnet50
 
-        # Using IMAGENET1K_V1 to be compatible with CLAM feats
         resnet = resnet50(weights="IMAGENET1K_V2")
 
         self.features = nn.Sequential(
