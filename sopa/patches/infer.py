@@ -44,7 +44,7 @@ def _get_extraction_parameters(
     level: int | None,
     magnification: int | None,
     backend: str,
-) -> tuple[int, int, int, bool]:
+) -> tuple[int, int, int, float, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
     it returns the best scale to get it from (level), a resize factor (resize_factor),
@@ -55,8 +55,11 @@ def _get_extraction_parameters(
         log.warn("Both level and magnification arguments are None. Using level=0 by default.")
         level = 0
 
+    if backend is None:
+        return None, None, None, None, False
+
     if magnification is None:
-        return level, 1, patch_width * 2**level, True  # TODO: what if scaling != 2?
+        return level, 1, patch_width * 2**level, 1.0, True  # TODO: what if scaling != 2?
 
     if slide_metadata["properties"].get(f"{backend}.objective-power"):
         objective_power = int(slide_metadata["properties"].get(f"{backend}.objective-power"))
@@ -68,7 +71,7 @@ def _get_extraction_parameters(
         mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - mppx))
         downsample = mpp_objective / magnification
     else:
-        return None, None, None, False
+        return None, None, None, None, False
 
     level = _get_best_level_for_downsample(slide_metadata["level_downsamples"], downsample)
     resize_factor = slide_metadata["level_downsamples"][level] / downsample
@@ -96,6 +99,7 @@ class Inference:
             self.model_str = model
             self.model: torch.nn.Module = getattr(models, model)()
         else:
+            self.model_str = model.__class__.__name__
             self.model: torch.nn.Module = model
 
         self.device = device
@@ -105,14 +109,18 @@ class Inference:
         slide_metadata = image.attrs.get("metadata", {})
         self.level, self.resize_factor, self.patch_width, self.downsample, success = (
             _get_extraction_parameters(
-                slide_metadata, patch_width, level, magnification, backend=image.attrs["backend"]
+                slide_metadata,
+                patch_width,
+                level,
+                magnification,
+                backend=image.attrs.get("backend"),
             )
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
             return False
 
-        self.model.eval().to(device)
+        self.model.to(device)
 
     def _resize(self, patch: np.ndarray):
         import cv2
@@ -171,7 +179,7 @@ def infer_wsi_patches(
     sdata: SpatialData,
     model: Callable | str,
     patch_width: int,
-    patch_overlap: int,
+    patch_overlap: int = 0,
     level: int | None = 0,
     magnification: int | None = None,
     image_key: str | None = None,
@@ -211,6 +219,9 @@ def infer_wsi_patches(
         predictions.extend(prediction)
     predictions = torch.stack(predictions)
 
+    if len(predictions.shape) == 1:
+        predictions = torch.unsqueeze(predictions, 1)
+
     output_image = np.zeros((predictions.shape[1], *patches.shape), dtype=np.float32)
     for (loc_x, loc_y), pred in zip(patches.ilocs, predictions):
         output_image[:, loc_y, loc_x] = pred
@@ -222,7 +233,7 @@ def infer_wsi_patches(
         transformations={infer.cs: Scale([patch_step, patch_step], axes=("x", "y"))},
     )
 
-    output_key = f"sopa_{infer.model.__class__.__name__}"
+    output_key = f"sopa_{infer.model_str}"
     sdata.images[output_key] = output_image
     save_image(sdata, output_key)
 
