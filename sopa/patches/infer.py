@@ -56,9 +56,9 @@ def _get_extraction_parameters(
         level = 0
 
     if backend is None:
-        return None, None, None, None, False
+        log.warn("No backend found, using downsample=1")
 
-    if magnification is None:
+    if magnification is None or backend is None:
         return level, 1, patch_width * 2**level, 1.0, True  # TODO: what if scaling != 2?
 
     if slide_metadata["properties"].get(f"{backend}.objective-power"):
