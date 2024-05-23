@@ -53,7 +53,7 @@ def cluster_embeddings(
         ), f"Method {method} is not available. Use one of: {', '.join(METHODS_DICT.keys())}"
         method = METHODS_DICT[method]
 
-    gdf_patches = sdata[SopaKeys.EMBEDDINGS_PATCHES_KEY]
+    gdf_patches = sdata[SopaKeys.PATCHES_INFERENCE_KEY]
 
     ilocs = np.array(list(gdf_patches.ilocs))
     embeddings = element.compute().data[:, ilocs[:, 1], ilocs[:, 0]].T
