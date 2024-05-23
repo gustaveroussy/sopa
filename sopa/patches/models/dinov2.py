@@ -6,7 +6,6 @@ class DINOv2Features(nn.Module):
     def __init__(self, model="dinov2_vitl14"):
         super().__init__()
         self.dinov2_vitl14 = torch.hub.load("facebookresearch/dinov2", model)
-        self.output_dim = 1024
 
     def forward(self, x):
         feats = self.dinov2_vitl14.forward_features(x)
