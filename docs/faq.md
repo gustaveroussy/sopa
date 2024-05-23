@@ -36,7 +36,7 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
     - a `Morphology_ChannelID_Dictionary.txt` file containing channel names
     - a `Morphology2D` directory containing the images, end in `_F*.TIF`.
 
-    These files must be exported as flat files in AtomX. In brief, you should have this file structure:
+    These files must be exported as flat files in AtomX. That is: within a study, click on "Export" and then select files from the "Flat CSV Files" section (transcripts flat and FOV position flat). You should have this file structure:
 
     ```txt
     .
