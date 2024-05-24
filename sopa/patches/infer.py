@@ -88,7 +88,7 @@ class Inference:
         patch_width: int,
         level: int | None = 0,
         magnification: int | None = None,
-        device: str = "cpu",
+        device: str = None,
     ):
         self.image = image
         self.patch_width = patch_width
@@ -121,7 +121,8 @@ class Inference:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
             return False
 
-        self.model.to(device)
+        if device:
+            self.model.to(device)
 
     def _torch_resize(self, tensor: torch.Tensor, resize_factor: float):
         from torchvision.transforms import Resize
@@ -182,7 +183,7 @@ def infer_wsi_patches(
     magnification: int | None = None,
     image_key: str | None = None,
     batch_size: int = 32,
-    device: str = "cpu",
+    device: str = None,
 ) -> SpatialImage | bool:
     """Create an image made of patch based predictions of a WSI image.
 
