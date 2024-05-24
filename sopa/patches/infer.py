@@ -147,11 +147,14 @@ class Inference:
 
         def _pad_to_width(patch: np.array, patch_width: int) -> np.array:
             """pads a patch to a specific width since some patches might be smaller (e.g., on edges)"""
-            pad_x, pad_y = patch_width - patch.shape[2], patch_width - patch.shape[1]
+            pad_x, pad_y = patch_width - patch.shape[1], patch_width - patch.shape[2]
             return np.pad(patch, ((0, 0), (0, pad_x), (0, pad_y)))
 
         patchlist = [self._numpy_patch(box) for box in bboxes]
-        batch = np.array([_pad_to_width(patch, self.patch_width_scale0) for patch in patchlist])
+        extraction_patch_width = int(
+            np.round(self.patch_width_scale0 / self.downsample / self.resize_factor)
+        )
+        batch = np.array([_pad_to_width(patch, extraction_patch_width) for patch in patchlist])
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
         if self.resize_factor != 1:
