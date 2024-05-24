@@ -14,7 +14,7 @@ import numpy as np
 import tqdm
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
-from spatialdata import SpatialData, bounding_box_query
+from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
@@ -91,6 +91,7 @@ class Inference:
         device: str = "cpu",
     ):
         self.image = image
+        self.patch_width = patch_width
 
         if isinstance(model, str):
             assert hasattr(
@@ -107,7 +108,7 @@ class Inference:
         self.cs = get_intrinsic_cs(None, image)
 
         slide_metadata = image.attrs.get("metadata", {})
-        self.level, self.resize_factor, self.patch_width, self.downsample, success = (
+        self.level, self.resize_factor, self.patch_width_scale0, self.downsample, success = (
             _get_extraction_parameters(
                 slide_metadata,
                 patch_width,
@@ -122,47 +123,41 @@ class Inference:
 
         self.model.to(device)
 
-    def _resize(self, patch: np.ndarray):
-        import cv2
+    def _torch_resize(self, tensor: torch.Tensor, resize_factor: float):
+        from torchvision.transforms import Resize
 
-        patch = patch.transpose(1, 2, 0)
         dim = (
-            int(patch.shape[0] * self.resize_factor),
-            int(patch.shape[1] * self.resize_factor),
+            int(tensor.shape[-2] * resize_factor),
+            int(tensor.shape[-1] * resize_factor),
         )
-        patch = cv2.resize(patch, dim)
-        return patch.transpose(2, 0, 1)
+        return Resize(dim)(tensor)
 
-    def _torch_patch(
+    def _numpy_patch(
         self,
         box: tuple[int, int, int, int],
     ) -> np.ndarray:
         """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
-        image_patch = bounding_box_query(
-            self.image, ("y", "x"), box[:2][::-1], box[2:][::-1], self.cs
+        image_patch = self.image[f"scale{self.level}"].image.sel(
+            x=slice(box[0], box[2]), y=slice(box[1], box[3])
         )
-
-        if isinstance(self.image, MultiscaleSpatialImage):
-            image_patch = next(iter(image_patch[f"scale{self.level}"].values()))
-
-        patch = image_patch.compute().data
-
-        if self.resize_factor != 1:
-            patch = self._resize(patch)
-
-        return torch.tensor(patch / 255.0, dtype=torch.float32)
+        return image_patch.values
 
     def _torch_batch(self, bboxes: np.ndarray):
-        batch = [self._torch_patch(box) for box in bboxes]
+        """retrives a batch of patches using the bboxes"""
 
-        max_y = max(img.shape[1] for img in batch)
-        max_x = max(img.shape[2] for img in batch)
+        def _pad_to_width(patch: np.array, patch_width: int) -> np.array:
+            """pads a patch to a specific width since some patches might be smaller (e.g., on edges)"""
+            pad_x, pad_y = patch_width - patch.shape[2], patch_width - patch.shape[1]
+            return np.pad(patch, ((0, 0), (0, pad_x), (0, pad_y)))
 
-        def _pad(patch: torch.Tensor, max_y: int, max_x: int) -> torch.Tensor:
-            pad_x, pad_y = max_x - patch.shape[2], max_y - patch.shape[1]
-            return torch.nn.functional.pad(patch, (0, pad_x, 0, pad_y), value=0)
+        patchlist = [self._numpy_patch(box) for box in bboxes]
+        batch = np.array([_pad_to_width(patch, self.patch_width) for patch in patchlist])
+        batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
-        return torch.stack([_pad(patch, max_y, max_x) for patch in batch])
+        if self.resize_factor != 1:
+            batch = self._torch_resize(batch, self.resize_factor)
+
+        return batch
 
     @torch.no_grad()
     def infer_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
@@ -209,7 +204,9 @@ def infer_wsi_patches(
     image = sdata.images[image_key]
 
     infer = Inference(image, model, patch_width, level, magnification, device)
-    patches = Patches2D(sdata, image_key, infer.patch_width, infer.downsample * patch_overlap)
+    patches = Patches2D(
+        sdata, image_key, infer.patch_width_scale0, infer.downsample * patch_overlap
+    )
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 
@@ -226,7 +223,7 @@ def infer_wsi_patches(
     for (loc_x, loc_y), pred in zip(patches.ilocs, predictions):
         output_image[:, loc_y, loc_x] = pred
 
-    patch_step = infer.patch_width - infer.downsample * patch_overlap
+    patch_step = infer.patch_width_scale0 - infer.downsample * patch_overlap
     output_image = SpatialImage(output_image, dims=("c", "y", "x"))
     output_image = Image2DModel.parse(
         output_image,
