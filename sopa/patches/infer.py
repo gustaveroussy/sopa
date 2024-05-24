@@ -151,7 +151,7 @@ class Inference:
             return np.pad(patch, ((0, 0), (0, pad_x), (0, pad_y)))
 
         patchlist = [self._numpy_patch(box) for box in bboxes]
-        batch = np.array([_pad_to_width(patch, self.patch_width) for patch in patchlist])
+        batch = np.array([_pad_to_width(patch, self.patch_width_scale0) for patch in patchlist])
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
         if self.resize_factor != 1:
