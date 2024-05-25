@@ -1,3 +1,10 @@
+## [1.0.14] - 2024-04-22
+
+### Changed
+- Renamed `embed_wsi_patches` to `infer_wsi_patches`
+- `infer_wsi_patches` now accepts also callables
+- Improves tile gathering speed and decreases overall computation of tile-wise inference
+
 ## [1.0.13] - 2024-04-22
 
 ### Changed

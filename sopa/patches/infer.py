@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Callable
 
 try:
     import torch
@@ -13,7 +14,7 @@ import numpy as np
 import tqdm
 from multiscale_spatial_image import MultiscaleSpatialImage
 from spatial_image import SpatialImage
-from spatialdata import SpatialData, bounding_box_query
+from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
 
@@ -43,18 +44,22 @@ def _get_extraction_parameters(
     level: int | None,
     magnification: int | None,
     backend: str,
-) -> tuple[int, int, int, bool]:
+) -> tuple[int, int, int, float, bool]:
     """
     Given the metadata for the slide, a target magnification and a patch width,
-    it returns the best scale to get it from (level), a resize factor (resize_factor)
-    and the corresponding patch size at scale0 (patch_width)
+    it returns the best scale to get it from (level), a resize factor (resize_factor),
+    the corresponding patch size at scale0 (patch_width) and downsample factor between
+    scale0 and extraction level.
     """
     if level is None and magnification is None:
         log.warn("Both level and magnification arguments are None. Using level=0 by default.")
         level = 0
 
-    if magnification is None:
-        return level, 1, patch_width * 2**level, True  # TODO: what if scaling != 2?
+    if backend is None:
+        log.warn("No backend found, using downsample=1")
+
+    if magnification is None or backend is None:
+        return level, 1, patch_width * 2**level, 1.0, True  # TODO: what if scaling != 2?
 
     if slide_metadata["properties"].get(f"{backend}.objective-power"):
         objective_power = int(slide_metadata["properties"].get(f"{backend}.objective-power"))
@@ -66,94 +71,100 @@ def _get_extraction_parameters(
         mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - mppx))
         downsample = mpp_objective / magnification
     else:
-        return None, None, None, False
+        return None, None, None, None, False
 
     level = _get_best_level_for_downsample(slide_metadata["level_downsamples"], downsample)
     resize_factor = slide_metadata["level_downsamples"][level] / downsample
     patch_width = int(patch_width * downsample)
 
-    return level, resize_factor, patch_width, True
+    return level, resize_factor, patch_width, downsample, True
 
 
-class Embedder:
+class Inference:
     def __init__(
         self,
         image: MultiscaleSpatialImage | SpatialImage,
-        model_name: str,
+        model: Callable | str,
         patch_width: int,
         level: int | None = 0,
         magnification: int | None = None,
-        device: str = "cpu",
+        device: str = None,
     ):
         self.image = image
-        self.model_name = model_name
+        self.patch_width = patch_width
+
+        if isinstance(model, str):
+            assert hasattr(
+                models, model
+            ), f"'{model}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
+            self.model_str = model
+            self.model: torch.nn.Module = getattr(models, model)()
+        else:
+            self.model_str = model.__class__.__name__
+            self.model: torch.nn.Module = model
+
         self.device = device
 
         self.cs = get_intrinsic_cs(None, image)
 
         slide_metadata = image.attrs.get("metadata", {})
-        self.level, self.resize_factor, self.patch_width, success = _get_extraction_parameters(
-            slide_metadata, patch_width, level, magnification, backend=image.attrs["backend"]
+        self.level, self.resize_factor, self.patch_width_scale0, self.downsample, success = (
+            _get_extraction_parameters(
+                slide_metadata,
+                patch_width,
+                level,
+                magnification,
+                backend=image.attrs.get("backend"),
+            )
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
             return False
 
-        assert hasattr(
-            models, model_name
-        ), f"'{model_name}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
+        if device:
+            self.model.to(device)
 
-        self.model: torch.nn.Module = getattr(models, model_name)()
-        self.model.eval().to(device)
+    def _torch_resize(self, tensor: torch.Tensor, resize_factor: float):
+        from torchvision.transforms import Resize
 
-    def _resize(self, patch: np.ndarray):
-        import cv2
-
-        patch = patch.transpose(1, 2, 0)
         dim = (
-            int(patch.shape[0] * self.resize_factor),
-            int(patch.shape[1] * self.resize_factor),
+            int(tensor.shape[-2] * resize_factor),
+            int(tensor.shape[-1] * resize_factor),
         )
-        patch = cv2.resize(patch, dim)
-        return patch.transpose(2, 0, 1)
+        return Resize(dim)(tensor)
 
-    def _torch_patch(
+    def _numpy_patch(
         self,
         box: tuple[int, int, int, int],
     ) -> np.ndarray:
         """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
-        image_patch = bounding_box_query(
-            self.image, ("y", "x"), box[:2][::-1], box[2:][::-1], self.cs
+        image_patch = self.image[f"scale{self.level}"].image.sel(
+            x=slice(box[0], box[2]), y=slice(box[1], box[3])
         )
-
-        if isinstance(self.image, MultiscaleSpatialImage):
-            image_patch = next(iter(image_patch[f"scale{self.level}"].values()))
-
-        patch = image_patch.compute().data
-
-        if self.resize_factor != 1:
-            patch = self._resize(patch)
-
-        return torch.tensor(patch / 255.0, dtype=torch.float32)
+        return image_patch.values
 
     def _torch_batch(self, bboxes: np.ndarray):
-        batch = [self._torch_patch(box) for box in bboxes]
+        """retrives a batch of patches using the bboxes"""
 
-        max_y = max(img.shape[1] for img in batch)
-        max_x = max(img.shape[2] for img in batch)
+        def _pad_to_width(patch: np.array, patch_width: int) -> np.array:
+            """pads a patch to a specific width since some patches might be smaller (e.g., on edges)"""
+            pad_x, pad_y = patch_width - patch.shape[1], patch_width - patch.shape[2]
+            return np.pad(patch, ((0, 0), (0, pad_x), (0, pad_y)))
 
-        def _pad(patch: torch.Tensor, max_y: int, max_x: int) -> torch.Tensor:
-            pad_x, pad_y = max_x - patch.shape[2], max_y - patch.shape[1]
-            return torch.nn.functional.pad(patch, (0, pad_x, 0, pad_y), value=0)
+        patchlist = [self._numpy_patch(box) for box in bboxes]
+        extraction_patch_width = int(
+            np.round(self.patch_width_scale0 / self.downsample / self.resize_factor)
+        )
+        batch = np.array([_pad_to_width(patch, extraction_patch_width) for patch in patchlist])
+        batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
-        return torch.stack([_pad(patch, max_y, max_x) for patch in batch])
+        if self.resize_factor != 1:
+            batch = self._torch_resize(batch, self.resize_factor)
 
-    @property
-    def output_dim(self):
-        return self.model.output_dim
+        return batch
 
     @torch.no_grad()
-    def embed_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
+    def infer_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
         patches = self._torch_batch(bboxes)  # shape (B,3,Y,X)
 
         if len(patches.shape) == 3:
@@ -163,66 +174,72 @@ class Embedder:
         return embedding.cpu()  # shape (B * output_dim)
 
 
-def embed_wsi_patches(
+def infer_wsi_patches(
     sdata: SpatialData,
-    model_name: str,
+    model: Callable | str,
     patch_width: int,
+    patch_overlap: int = 0,
     level: int | None = 0,
     magnification: int | None = None,
     image_key: str | None = None,
     batch_size: int = 32,
-    device: str = "cpu",
+    device: str = None,
 ) -> SpatialImage | bool:
-    """Create an image made of patch embeddings of a WSI image.
+    """Create an image made of patch based predictions of a WSI image.
 
     !!! info
         The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below).
 
     Args:
         sdata: A `SpatialData` object
-        model_name: Name of the computer vision model to be used. One of `Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`.
-        patch_width: Width of the patches for which the embeddings will be computed.
-        level: Image level on which the embedding is performed. Either `level` or `magnification` should be provided.
-        magnification: The target magnification on which the embedding is performed. If `magnification` is provided, the `level` argument will be automatically computed.
+        model: Callable that takes as an input a tensor of size (batch_size, channels, x, y) and returns a vector for each tile (batch_size, emb_dim), or a string with the name of one of the available models (`Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`).
+        patch_width: Width (pixels) of the patches.
+        patch_overlap: Width (pixels) of the overlap between the patches.
+        level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
+        magnification: The target magnification on which the processing is performed. If `magnification` is provided, the `level` argument will be automatically computed.
         image_key: Optional image key of the WSI image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
 
     Returns:
-        If the embedding was successful, returns the `SpatialImage` of shape `(C,Y,X)` containing the embedding, else `False`
+        If the processing was successful, returns the `SpatialImage` of shape `(C,Y,X)` containing the model predictions, else `False`
     """
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
 
-    embedder = Embedder(image, model_name, patch_width, level, magnification, device)
-
-    patches = Patches2D(sdata, image_key, embedder.patch_width, 0)
-    embedding_image = np.zeros((embedder.output_dim, *patches.shape), dtype=np.float32)
-
-    log.info(f"Computing {len(patches)} embeddings at level {embedder.level}")
-
-    for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-        embedding = embedder.embed_bboxes(patches.bboxes[i : i + batch_size])
-
-        loc_x, loc_y = patches.ilocs[i : i + len(embedding)].T
-        embedding_image[:, loc_y, loc_x] = embedding.T
-
-    embedding_image = SpatialImage(embedding_image, dims=("c", "y", "x"))
-    embedding_image = Image2DModel.parse(
-        embedding_image,
-        transformations={
-            embedder.cs: Scale([embedder.patch_width, embedder.patch_width], axes=("x", "y"))
-        },
+    infer = Inference(image, model, patch_width, level, magnification, device)
+    patches = Patches2D(
+        sdata, image_key, infer.patch_width_scale0, infer.downsample * patch_overlap
     )
-    embedding_image.coords["y"] = embedder.patch_width * embedding_image.coords["y"]
-    embedding_image.coords["x"] = embedder.patch_width * embedding_image.coords["x"]
 
-    embedding_key = f"sopa_{model_name}"
-    sdata.images[embedding_key] = embedding_image
-    save_image(sdata, embedding_key)
+    log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 
-    log.info(f"WSI embeddings saved as an image in sdata['{embedding_key}']")
+    predictions = []
+    for i in tqdm.tqdm(range(0, len(patches), batch_size)):
+        prediction = infer.infer_bboxes(patches.bboxes[i : i + batch_size])
+        predictions.extend(prediction)
+    predictions = torch.stack(predictions)
 
-    patches.write(shapes_key=SopaKeys.EMBEDDINGS_PATCHES_KEY)
+    if len(predictions.shape) == 1:
+        predictions = torch.unsqueeze(predictions, 1)
 
-    return sdata[embedding_key]
+    output_image = np.zeros((predictions.shape[1], *patches.shape), dtype=np.float32)
+    for (loc_x, loc_y), pred in zip(patches.ilocs, predictions):
+        output_image[:, loc_y, loc_x] = pred
+
+    patch_step = infer.patch_width_scale0 - infer.downsample * patch_overlap
+    output_image = SpatialImage(output_image, dims=("c", "y", "x"))
+    output_image = Image2DModel.parse(
+        output_image,
+        transformations={infer.cs: Scale([patch_step, patch_step], axes=("x", "y"))},
+    )
+
+    output_key = f"sopa_{infer.model_str}"
+    sdata.images[output_key] = output_image
+    save_image(sdata, output_key)
+
+    log.info(f"Patch predictions saved as an image in sdata['{output_key}']")
+
+    patches.write(shapes_key=SopaKeys.PATCHES_INFERENCE_KEY)
+
+    return sdata[output_key]
