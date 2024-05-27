@@ -7,6 +7,7 @@ import logging
 import re
 import warnings
 from pathlib import Path
+from typing import Callable
 
 import dask.array as da
 import dask.dataframe as dd
@@ -29,7 +30,7 @@ SUPPORTED_BACKENDS = ["dask_image", "rioxarray"]
 
 def merscope(
     path: str | Path,
-    backend: str = "dask_image",
+    backend: str = None,
     z_layers: int | list[int] | None = 3,
     region_name: str | None = None,
     slide_name: str | None = None,
@@ -45,7 +46,7 @@ def merscope(
 
     Args:
         path: Path to the MERSCOPE directory containing all the experiment files
-        backend: Either `dask_image` or `rioxarray` (the latter should use less RAM, but it is still experimental)
+        backend: Either `"dask_image"` or `"rioxarray"` (the latter uses less RAM). By default, uses `"rioxarray"` if and only if the `rioxarray` library is installed.
         z_layers: Indices of the z-layers to consider. Either one `int` index, or a list of `int` indices. If `None`, then no image is loaded. By default, only the middle layer is considered (that is, layer 3).
         region_name: Name of the region of interest, e.g., `'region_0'`. If `None` then the name of the `path` directory is used.
         slide_name: Name of the slide/run. If `None` then the name of the parent directory of `path` is used (whose name starts with a date).
@@ -56,7 +57,7 @@ def merscope(
         A `SpatialData` object representing the MERSCOPE experiment
     """
     assert (
-        backend in SUPPORTED_BACKENDS
+        backend is None or backend in SUPPORTED_BACKENDS
     ), f"Backend '{backend} not supported. Should be one of: {', '.join(SUPPORTED_BACKENDS)}"
 
     path = Path(path).absolute()
@@ -81,7 +82,8 @@ def merscope(
 
     stainings = _get_channel_names(images_dir)
     image_transformations = {"microns": microns_to_pixels.inverse()}
-    reader = _rioxarray_load_merscope if backend == "rioxarray" else _dask_image_load_merscope
+
+    reader = _get_reader(backend)
 
     if stainings:
         for z_layer in z_layers:
@@ -107,6 +109,17 @@ def merscope(
     return SpatialData(points=points, images=images)
 
 
+def _get_reader(backend: str | None) -> Callable:
+    if backend is not None:
+        return _rioxarray_load_merscope if backend == "rioxarray" else _dask_image_load_merscope
+    try:
+        import rioxarray  # noqa: F401
+
+        return _rioxarray_load_merscope
+    except:
+        return _dask_image_load_merscope
+
+
 def _get_channel_names(images_dir: Path) -> list[str]:
     exp = r"mosaic_(?P<stain>[\w|-]+[0-9]?)_z(?P<z>[0-9]+).tif"
     matches = [re.search(exp, file.name) for file in images_dir.iterdir()]
@@ -124,7 +137,7 @@ def _rioxarray_load_merscope(
     transformations: dict,
     **kwargs,
 ):
-    log.info("Using experimental rioxarray backend.")
+    log.info("Using rioxarray backend.")
 
     import rioxarray
     from rasterio.errors import NotGeoreferencedWarning

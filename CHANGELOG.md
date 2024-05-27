@@ -1,4 +1,10 @@
-## [1.0.14] - 2024-04-22
+## [1.x.x] - 2024-xx-xx
+
+### Changed
+- Using `rioxarray` as a default backend for MERSCOPE data if installed
+- Lower RAM usage for channels aggregation
+
+## [1.0.14] - 2024-04-25
 
 ### Changed
 - Renamed `embed_wsi_patches` to `infer_wsi_patches`
