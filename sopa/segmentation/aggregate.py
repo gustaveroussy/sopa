@@ -4,7 +4,7 @@ import logging
 from functools import partial
 
 import anndata
-import dask.array as da
+import dask
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
@@ -345,33 +345,42 @@ def _average_channels_aligned(
     intensities = np.zeros((len(cells), len(image.coords["c"])))
     areas = np.zeros(len(cells))
 
-    def func(chunk, block_info=None):
-        if block_info is not None:
-            (ymin, ymax), (xmin, xmax) = block_info[0]["array-location"][1:]
-            patch = box(xmin, ymin, xmax, ymax)
-            intersections = tree.query(patch, predicate="intersects")
+    chunk_sizes = image.data.chunks
+    offsets_y = np.cumsum(np.pad(chunk_sizes[1], (1, 0), "constant"))
+    offsets_x = np.cumsum(np.pad(chunk_sizes[2], (1, 0), "constant"))
 
-            for index in intersections:
-                cell = cells[index]
-                bounds = shapes.pixel_outer_bounds(cell.bounds)
+    def _average_chunk_inside_cells(chunk, iy, ix):
+        ymin, ymax = offsets_y[iy], offsets_y[iy + 1]
+        xmin, xmax = offsets_x[ix], offsets_x[ix + 1]
 
-                sub_image = chunk[
-                    :,
-                    max(bounds[1] - ymin, 0) : bounds[3] - ymin,
-                    max(bounds[0] - xmin, 0) : bounds[2] - xmin,
-                ]
+        patch = box(xmin, ymin, xmax, ymax)
+        intersections = tree.query(patch, predicate="intersects")
 
-                if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
-                    continue
+        for index in intersections:
+            cell = cells[index]
+            bounds = shapes.pixel_outer_bounds(cell.bounds)
 
-                mask = shapes.rasterize(cell, sub_image.shape[1:], bounds)
+            sub_image = chunk[
+                :,
+                max(bounds[1] - ymin, 0) : bounds[3] - ymin,
+                max(bounds[0] - xmin, 0) : bounds[2] - xmin,
+            ]
 
-                intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
-                areas[index] += np.sum(mask)
-        return da.zeros(chunk.shape[1:])
+            if sub_image.shape[1] == 0 or sub_image.shape[2] == 0:
+                continue
+
+            mask = shapes.rasterize(cell, sub_image.shape[1:], bounds)
+
+            intensities[index] += np.sum(sub_image * mask, axis=(1, 2))
+            areas[index] += np.sum(mask)
 
     with ProgressBar():
-        image.data.map_blocks(func, drop_axis=0).compute()
+        tasks = [
+            dask.delayed(_average_chunk_inside_cells)(chunk, iy, ix)
+            for iy, row in enumerate(image.chunk({"c": -1}).data.to_delayed()[0])
+            for ix, chunk in enumerate(row)
+        ]
+        dask.compute(tasks)
 
     return intensities / areas[:, None].clip(1)
 
