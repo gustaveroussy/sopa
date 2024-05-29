@@ -34,12 +34,19 @@ def get_boundaries(
     Returns:
         A `GeoDataFrame` containing the boundaries, or a tuple `(shapes_key, geo_df)`
     """
-    for shapes_key in [SopaKeys.BAYSOR_BOUNDARIES, SopaKeys.CELLPOSE_BOUNDARIES]:
+    VALID_BOUNDARIES = [
+        SopaKeys.BAYSOR_BOUNDARIES,
+        SopaKeys.COMSEG_BOUNDARIES,
+        SopaKeys.CELLPOSE_BOUNDARIES,
+    ]
+    for shapes_key in VALID_BOUNDARIES:
         res = _try_get_boundaries(sdata, shapes_key, return_key)
         if res is not None:
             return res
 
-    error_message = "sdata object has no cellpose boundaries and no baysor boundaries. Consider running segmentation first."
+    error_message = (
+        "sdata object has no valid segmentation boundary. Consider running Sopa segmentation first."
+    )
 
     if not warn:
         raise ValueError(error_message)

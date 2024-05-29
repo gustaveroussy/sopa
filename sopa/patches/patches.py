@@ -225,6 +225,9 @@ class Patches2D:
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,
+        config_name: str = SopaFiles.TOML_CONFIG_FILE,
+        csv_name: str = SopaFiles.TRANSCRIPTS_FILE,
+        min_transcripts_per_patch: int = 4000,
     ) -> list[int]:
         """Patchification of the transcripts
 
@@ -235,21 +238,33 @@ class Patches2D:
             use_prior: Whether to use Cellpose as a prior segmentation. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
             config: Dictionnary of segmentation parameters
             config_path: Path to the segmentation config file (you can also directly provide the argument via the `config` option)
+            config_name: Name of the config file to be saved in each patch subdirectory
+            csv_name: Name of the CSV file to be saved in each patch subdirectory
+            min_transcripts_per_patch: Minimum number of transcripts for a patch to be considered for segmentation
 
         Returns:
             A list of patches indices. Each index correspond to the name of a subdirectory inside `temp_dir`
         """
-        return TranscriptPatches(self, self.element).write(
-            temp_dir, cell_key, unassigned_value, use_prior, config, config_path
-        )
+        return TranscriptPatches(
+            self, self.element, config_name, csv_name, min_transcripts_per_patch
+        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path)
 
 
 class TranscriptPatches:
-    MIN_TRANSCRIPTS_PER_PATCH = 4000
-
-    def __init__(self, patches_2d: Patches2D, df: dd.DataFrame):
+    def __init__(
+        self,
+        patches_2d: Patches2D,
+        df: dd.DataFrame,
+        config_name: str,
+        csv_name: str,
+        min_transcripts_per_patch: int,
+    ):
         self.patches_2d = patches_2d
         self.df = df
+        self.min_transcripts_per_patch = min_transcripts_per_patch
+        self.config_name = config_name
+        self.csv_name = csv_name
+
         self.sdata = self.patches_2d.sdata
 
     def write(
@@ -261,14 +276,14 @@ class TranscriptPatches:
         config: dict = {},
         config_path: str | None = None,
     ):
-        from sopa.segmentation.transcripts import copy_toml_config
+        from sopa.segmentation.transcripts import copy_segmentation_config
 
         log.info("Writing sub-CSV for transcript segmentation")
 
         self.temp_dir = Path(temp_dir)
 
         if cell_key is None:
-            cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
+            cell_key = SopaKeys.DEFAULT_CELL_KEY
 
         if unassigned_value is not None and unassigned_value != 0:
             self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
@@ -285,14 +300,14 @@ class TranscriptPatches:
 
         if len(config) or config_path is not None:
             for i in range(len(self.patches_2d)):
-                path = self.temp_dir / str(i) / SopaFiles.BAYSOR_CONFIG
-                copy_toml_config(path, config, config_path)
+                path = self.temp_dir / str(i) / self.config_name
+                copy_segmentation_config(path, config, config_path)
 
         log.info(f"Patches saved in directory {temp_dir}")
         return list(self.valid_indices())
 
     def _patch_path(self, index: int) -> Path:
-        return self.temp_dir / str(index) / SopaFiles.BAYSOR_TRANSCRIPTS
+        return self.temp_dir / str(index) / self.csv_name
 
     def _clean_directory(self):
         for index in range(len(self.patches_2d)):
@@ -305,11 +320,11 @@ class TranscriptPatches:
     def valid_indices(self):
         for index in range(len(self.patches_2d)):
             patch_path = self._patch_path(index)
-            if self._check_min_lines(patch_path, self.MIN_TRANSCRIPTS_PER_PATCH):
+            if self._check_min_lines(patch_path, self.min_transcripts_per_patch):
                 yield index
             else:
                 log.info(
-                    f"Patch {index} has < {self.MIN_TRANSCRIPTS_PER_PATCH} transcripts. If using Baysor, it will not be run on it."
+                    f"Patch {index} has < {self.min_transcripts_per_patch} transcripts. Segmentation will not be run on this patch."
                 )
 
     def _query_points_partition(self, gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:

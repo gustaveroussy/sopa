@@ -97,12 +97,17 @@ def resolve(
 def _read_one_segmented_patch(
     directory: str, min_area: float = 0, min_vertices: int = 4
 ) -> tuple[list[Polygon], AnnData]:
-    directory = Path(directory)
+    directory: Path = Path(directory)
 
-    adata = anndata.read_loom(
-        directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
-    )
-    adata.obs.rename(columns={"area": SopaKeys.BAYSOR_AREA_OBS}, inplace=True)
+    loom_file = directory / "segmentation_counts.loom"
+    if loom_file.exists():
+        adata = anndata.read_loom(
+            directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
+        )
+    else:
+        adata = anndata.read_h5ad(directory / "segmentation_counts.h5ad")
+
+    adata.obs.rename(columns={"area": SopaKeys.ORIGINAL_AREA_OBS}, inplace=True)
 
     cells_num = pd.Series(adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
@@ -182,20 +187,28 @@ def _resolve_patches(
     )
 
 
-def copy_toml_config(path: str, config: dict, config_path: str | None):
+def copy_segmentation_config(path: str, config: dict, config_path: str | None):
     if config_path is not None:
         import shutil
 
         shutil.copy(config_path, path)
         return
 
-    try:
-        import toml
-    except ImportError:
-        raise ImportError(
-            "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'` (normal mode) or `pip install -e '.[baysor]'` (if using snakemake).\
-            \nAlso, make sure to install the baysor executable (https://github.com/kharchenkolab/Baysor)."
-        )
+    if config_path[-5:] == ".json":
+        with open(path, "w") as f:
+            json.dump(config, f)
+            return
 
-    with open(path, "w") as f:
-        toml.dump(config, f)
+    if config_path[-5:] == ".toml":
+        try:
+            import toml
+        except ImportError:
+            raise ImportError(
+                "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'` (normal mode) or `pip install -e '.[baysor]'` (if using snakemake).\
+                \nAlso, make sure to install the baysor executable (https://github.com/kharchenkolab/Baysor)."
+            )
+
+        with open(path, "w") as f:
+            toml.dump(config, f)
+
+    raise ValueError("Config file must be either a .json or a .toml file")
