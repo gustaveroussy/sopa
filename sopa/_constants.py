@@ -1,6 +1,7 @@
 class SopaKeys:
     CELLPOSE_BOUNDARIES = "cellpose_boundaries"
     BAYSOR_BOUNDARIES = "baysor_boundaries"
+    COMSEG_BOUNDARIES = "comseg_boundaries"
     PATCHES = "sopa_patches"
     TABLE = "table"
     OLD_TABLE = "old_table"

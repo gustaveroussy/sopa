@@ -27,10 +27,10 @@ nav:
       - sopa.segmentation.shapes: api/segmentation/shapes.md
       - sopa.segmentation.aggregate: api/segmentation/aggregate.md
       - sopa.segmentation.stainings: api/segmentation/stainings.md
+      - sopa.segmentation.transcripts: api/segmentation/transcripts.md
       - sopa.segmentation.methods: api/segmentation/methods.md
       - sopa.segmentation.patching: api/segmentation/patching.md
       - sopa.segmentation.tissue: api/segmentation/tissue.md
-      - sopa.segmentation.baysor: api/segmentation/baysor.md
     - sopa.io: api/io.md
     - sopa.annotation: api/annotation.md
     - sopa.utils:

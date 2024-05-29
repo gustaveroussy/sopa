@@ -219,7 +219,7 @@ class Patches2D:
 
     def patchify_transcripts(
         self,
-        baysor_temp_dir: str,
+        temp_dir: str,
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
@@ -229,22 +229,22 @@ class Patches2D:
         """Patchification of the transcripts
 
         Args:
-            baysor_temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
+            temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
             cell_key: Optional key of the transcript dataframe containing the cell IDs. This is useful if a prior segmentation has been run, assigning each transcript to a cell.
             unassigned_value: If `cell_key` has been provided, this corresponds to the value given in the 'cell ID' column for transcript that are not inside any cell.
-            use_prior: Whether to use Cellpose as a prior segmentation for Baysor. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
-            config: Dictionnary of baysor parameters
-            config_path: Path to the baysor config (you can also directly provide the argument via the `config` option)
+            use_prior: Whether to use Cellpose as a prior segmentation. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
+            config: Dictionnary of segmentation parameters
+            config_path: Path to the segmentation config file (you can also directly provide the argument via the `config` option)
 
         Returns:
-            A list of patches indices. Each index correspond to the name of a subdirectory inside `baysor_temp_dir`
+            A list of patches indices. Each index correspond to the name of a subdirectory inside `temp_dir`
         """
-        return BaysorPatches(self, self.element).write(
-            baysor_temp_dir, cell_key, unassigned_value, use_prior, config, config_path
+        return TranscriptPatches(self, self.element).write(
+            temp_dir, cell_key, unassigned_value, use_prior, config, config_path
         )
 
 
-class BaysorPatches:
+class TranscriptPatches:
     MIN_TRANSCRIPTS_PER_PATCH = 4000
 
     def __init__(self, patches_2d: Patches2D, df: dd.DataFrame):
@@ -254,18 +254,18 @@ class BaysorPatches:
 
     def write(
         self,
-        baysor_temp_dir: str,
+        temp_dir: str,
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,
     ):
-        from sopa.segmentation.baysor.prepare import copy_toml_config
+        from sopa.segmentation.transcripts import copy_toml_config
 
-        log.info("Writing sub-CSV for baysor")
+        log.info("Writing sub-CSV for transcript segmentation")
 
-        self.baysor_temp_dir = Path(baysor_temp_dir)
+        self.temp_dir = Path(temp_dir)
 
         if cell_key is None:
             cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
@@ -283,15 +283,16 @@ class BaysorPatches:
         with ProgressBar():
             self.df.map_partitions(partial(self._query_points_partition, gdf), meta=()).compute()
 
-        for i in range(len(self.patches_2d)):
-            path = self.baysor_temp_dir / str(i) / SopaFiles.BAYSOR_CONFIG
-            copy_toml_config(path, config, config_path)
+        if len(config) or config_path is not None:
+            for i in range(len(self.patches_2d)):
+                path = self.temp_dir / str(i) / SopaFiles.BAYSOR_CONFIG
+                copy_toml_config(path, config, config_path)
 
-        log.info(f"Patches saved in directory {baysor_temp_dir}")
+        log.info(f"Patches saved in directory {temp_dir}")
         return list(self.valid_indices())
 
     def _patch_path(self, index: int) -> Path:
-        return self.baysor_temp_dir / str(index) / SopaFiles.BAYSOR_TRANSCRIPTS
+        return self.temp_dir / str(index) / SopaFiles.BAYSOR_TRANSCRIPTS
 
     def _clean_directory(self):
         for index in range(len(self.patches_2d)):
@@ -308,7 +309,7 @@ class BaysorPatches:
                 yield index
             else:
                 log.info(
-                    f"Patch {index} has < {self.MIN_TRANSCRIPTS_PER_PATCH} transcripts. Baysor will not be run on it."
+                    f"Patch {index} has < {self.MIN_TRANSCRIPTS_PER_PATCH} transcripts. If using Baysor, it will not be run on it."
                 )
 
     def _query_points_partition(self, gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:

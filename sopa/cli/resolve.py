@@ -86,7 +86,7 @@ def baysor(
     """Resolve patches conflicts after baysor segmentation. Provide either `--baysor-temp-dir` or `--patches-dirs`"""
     from sopa._constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.baysor.resolve import resolve
+    from sopa.segmentation.transcripts import resolve
 
     from .utils import _default_boundary_dir
 

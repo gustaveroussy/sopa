@@ -3,6 +3,7 @@
 ### Changed
 - Using `rioxarray` as a default backend for MERSCOPE data if installed
 - Lower RAM usage for channels aggregation
+- Transcript-segmentation API more general (not Baysor-specific)
 
 ## [1.0.14] - 2024-04-25
 
