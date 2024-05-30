@@ -52,5 +52,6 @@ class SopaFiles:
     PATCHES_FILE_IMAGE = "patches_file_image"
     PATCHES_DIRS_BAYSOR = "patches_file_baysor"
     TRANSCRIPTS_FILE = "transcripts.csv"
+    CENTROIDS_FILE = "centroids.csv"
     JSON_CONFIG_FILE = "config.json"
     TOML_CONFIG_FILE = "config.toml"
