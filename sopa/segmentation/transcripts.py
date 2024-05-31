@@ -187,19 +187,26 @@ def _resolve_patches(
     )
 
 
-def copy_segmentation_config(path: str, config: dict, config_path: str | None):
+def copy_segmentation_config(path: Path, config: dict, config_path: str | None):
+    """Copy the segmentation config to a file.
+
+    Args:
+        path: Where the config will be saved
+        config: Dictionnary config
+        config_path: Already existing config file, will be copied if provided
+    """
     if config_path is not None:
         import shutil
 
         shutil.copy(config_path, path)
         return
 
-    if config_path[-5:] == ".json":
+    if path.suffix == ".json":
         with open(path, "w") as f:
             json.dump(config, f)
             return
 
-    if config_path[-5:] == ".toml":
+    if path.suffix == ".toml":
         try:
             import toml
         except ImportError:
@@ -210,5 +217,6 @@ def copy_segmentation_config(path: str, config: dict, config_path: str | None):
 
         with open(path, "w") as f:
             toml.dump(config, f)
+            return
 
-    raise ValueError("Config file must be either a .json or a .toml file")
+    raise ValueError(f"Config file must be either a .json or a .toml file. Found: {path.suffix}")
