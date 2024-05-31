@@ -5,6 +5,9 @@
 - Lower RAM usage for channels aggregation
 - Transcript-segmentation API more general (not Baysor-specific)
 
+### Fixed
+- Encoding issue while writing the report (#64)
+
 ## [1.0.14] - 2024-04-25
 
 ### Changed

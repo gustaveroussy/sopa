@@ -260,7 +260,7 @@ class Root(Renderable):
     def write(self, path: str) -> None:
         self.sanity_check()
 
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(str(self))
 
     def __str__(self) -> str:
