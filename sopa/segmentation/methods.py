@@ -113,7 +113,7 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
 
     Comsegdict.run_all(config=config)
 
-    if 'return_polygon' in config:
+    if "return_polygon" in config:
         assert config["return_polygon"] is True, "Only return_polygon=True is supported in sopa"
     anndata_comseg, json_dict = Comsegdict.anndata_from_comseg_result(config=config)
     anndata_comseg.write_h5ad(path_dataset_folder / "segmentation_counts.h5ad")
