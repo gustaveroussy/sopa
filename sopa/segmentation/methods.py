@@ -81,7 +81,6 @@ def dummy_method(**method_kwargs):
 
 
 def comseg_patch(temp_dir: str, patch_index: int, config: dict):
-    import importlib
     import json
 
     try:
@@ -91,9 +90,6 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
         raise ModuleNotFoundError(
             "Install the ComSeg package (`pip install comseg`) for this method to work"
         )
-
-    importlib.reload(ds)
-    importlib.reload(dictionary)
 
     path_dataset_folder = Path(temp_dir) / str(patch_index)
 
@@ -107,7 +103,7 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
         path_cell_centroid=path_dataset_folder,
     )
 
-    dataset.compute_edge_weight()
+    dataset.compute_edge_weight(config=config)
 
     Comsegdict = dictionary.ComSegDict(
         dataset=dataset,
@@ -115,11 +111,11 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
         prior_name=SopaKeys.DEFAULT_CELL_KEY,
     )
 
-    Comsegdict.run_all(max_cell_radius=config["max_cell_radius"])
+    Comsegdict.run_all(config=config)
 
-    anndata_comseg, json_dict = Comsegdict.anndata_from_comseg_result(
-        return_polygon=True, alpha=config["alpha"], min_rna_per_cell=config["min_rna_per_cell"]
-    )
+    if 'return_polygon' in config:
+        assert config["return_polygon"] is True, "Only return_polygon=True is supported in sopa"
+    anndata_comseg, json_dict = Comsegdict.anndata_from_comseg_result(config=config)
     anndata_comseg.write_h5ad(path_dataset_folder / "segmentation_counts.h5ad")
     with open(path_dataset_folder / "segmentation_polygons.json", "w") as f:
         json.dump(json_dict["transcripts"], f)
