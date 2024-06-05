@@ -18,17 +18,17 @@ Below we display a minimal example of a ComSeg config file.
 
 
 ```json
-{"dict_scale": {"x": 1, "y": 1, "z": 1}, 
-"mean_cell_diameter": 15, 
-"max_cell_radius": 50, 
-"alpha": 0.5, 
-"min_rna_per_cell": 5, 
+{"dict_scale": {"x": 1, "y": 1, "z": 1},
+"mean_cell_diameter": 15,
+"max_cell_radius": 50,
+"alpha": 0.5,
+"min_rna_per_cell": 5,
 "gene_column": "genes"}
 ```
 
 ####  Run ComSeg with the sopa command line tool
 
-1) create the ComSeg patches  
+1) create the ComSeg patches
 On the toy dataset, we will generate 4 patches.
 ```
 sopa patchify comseg tuto.zarr --config-path config.json --patch-width-microns 200 --patch-overlap-microns 50

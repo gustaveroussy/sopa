@@ -127,4 +127,11 @@ def comseg(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    resolve(sdata, comseg_temp_dir, gene_column, patches_dirs, min_area, shapes_key=SopaKeys.COMSEG_BOUNDARIES)
+    resolve(
+        sdata,
+        comseg_temp_dir,
+        gene_column,
+        patches_dirs,
+        min_area,
+        shapes_key=SopaKeys.COMSEG_BOUNDARIES
+    )
