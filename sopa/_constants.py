@@ -51,6 +51,7 @@ class SopaFiles:
     SOPA_CACHE_DIR = ".sopa_cache"
     PATCHES_FILE_IMAGE = "patches_file_image"
     PATCHES_DIRS_BAYSOR = "patches_file_baysor"
+    PATCHES_DIRS_COMSEG = "patches_file_comseg"
     TRANSCRIPTS_FILE = "transcripts.csv"
     CENTROIDS_FILE = "centroids.csv"
     JSON_CONFIG_FILE = "config.json"
