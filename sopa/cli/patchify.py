@@ -207,7 +207,7 @@ def transcript_segmentation(
         patches.patchify_centroids(temp_dir)
         assert (
             use_prior
-        ),  "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
+        ), "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
     valid_indices = patches.patchify_transcripts(
         temp_dir,
         cell_key,
