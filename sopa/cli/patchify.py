@@ -204,10 +204,8 @@ def transcript_segmentation(
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
     if method == "comseg":
-        valid_indices_centroid = patches.patchify_centroids(temp_dir)
-        assert (
-            use_prior == True,
-        ), "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
+        patches.patchify_centroids(temp_dir)
+        assert use_prior,  "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
     valid_indices = patches.patchify_transcripts(
         temp_dir,
         cell_key,
