@@ -4,14 +4,15 @@ import ast
 import logging
 from pathlib import Path
 
-
 import typer
 from tqdm import tqdm
 
 from .utils import SDATA_HELPER
+
 app_segmentation = typer.Typer()
 
 log = logging.getLogger(__name__)
+
 
 @app_segmentation.command()
 def cellpose(
@@ -181,6 +182,7 @@ def _run_staining_segmentation(
     else:
         segmentation.write_patch_cells(patch_dir, patch_index)
 
+
 @app_segmentation.command()
 def comseg(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
@@ -194,10 +196,11 @@ def comseg(
     ),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
-    from .utils import _default_boundary_dir
+    import json
     from sopa._constants import SopaFiles, SopaKeys
     from sopa.segmentation.methods import comseg_patch
-    import json
+    from .utils import _default_boundary_dir
+
 
     config_name = SopaFiles.JSON_CONFIG_FILE
 

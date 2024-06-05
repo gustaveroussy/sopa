@@ -70,7 +70,7 @@ def baysor(
         False,
         help="Whether to use cellpose segmentation as a prior for baysor (if True, make sure to first run Cellpose)",
     ),
-    ):
+):
     """Prepare patches for transcript-based segmentation with baysor"""
     return transcript_segmentation(
         sdata_path=sdata_path,
@@ -85,10 +85,17 @@ def baysor(
         use_prior = use_prior,
         )
 
-    return transcript_segmentation(sdata_path = sdata_path, method = 'baysor', patch_width_microns = patch_width_microns,
-                                   patch_overlap_microns = patch_overlap_microns, temp_dir = baysor_temp_dir,
-                                   config_path = config_path, config = config, cell_key = cell_key,
-                                   unassigned_value = unassigned_value, use_prior = use_prior)
+    return transcript_segmentation(
+        sdata_path = sdata_path,
+        method = 'baysor',
+        patch_width_microns = patch_width_microns,
+        patch_overlap_microns = patch_overlap_microns,
+        temp_dir = baysor_temp_dir,
+        config_path = config_path,
+        config = config,
+        cell_key = cell_key,
+        unassigned_value = unassigned_value,
+        use_prior = use_prior)
 
 @app_patchify.command()
 def comseg(
@@ -131,14 +138,15 @@ def comseg(
         config_path = config_path,
         config = config, cell_key = cell_key,
         unassigned_value = unassigned_value,
-        use_prior = True)
+        use_prior = True
+    )
 @app_patchify.command()
 def transcript_segmentation(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     method: str = typer.Option(
         "baysor",
         help="Name of the method to use, choose in ['baysor', 'comseg']. for ComSeg, make sure to first run Cellpose or "
-        f"manually add the segmentation boundaries to the sdata.shapes as {SopaKeys.CELLPOSE_BOUNDARIES} key"
+        f"manually add the segmentation boundaries to the sdata.shapes as {SopaKeys.CELLPOSE_BOUNDARIES} key",
     ),
     patch_width_microns: float = typer.Option(help="Width (and height) of each patch in microns"),
     patch_overlap_microns: float = typer.Option(
@@ -187,14 +195,14 @@ def transcript_segmentation(
     assert (
         config or config_path is not None
     ), "Provide '--config-path', the path to a Baysor config file (toml) or comseg file (jsons)"
-    assert method in ['baysor', 'comseg'], "method must be either 'baysor' or 'comseg'"
+    assert method in ["baysor", "comseg"], "method must be either 'baysor' or 'comseg'"
 
     if temp_dir is None:
         if method == "baysor":
             temp_dir = _default_boundary_dir(sdata_path, SopaKeys.BAYSOR_BOUNDARIES)
             filename = SopaFiles.PATCHES_DIRS_BAYSOR
             config_name = SopaFiles.TOML_CONFIG_FILE
-        elif method == 'comseg':
+        elif method == "comseg":
             temp_dir = _default_boundary_dir(sdata_path, SopaKeys.COMSEG_BOUNDARIES)
             filename = SopaFiles.PATCHES_DIRS_COMSEG
             config_name = SopaFiles.JSON_CONFIG_FILE
@@ -215,7 +223,7 @@ def transcript_segmentation(
         use_prior,
         config,
         config_path,
-        config_name=config_name
+        config_name=config_name,
     )
     _save_cache(sdata_path, filename, "\n".join(map(str, valid_indices)))
 

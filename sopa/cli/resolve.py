@@ -133,5 +133,5 @@ def comseg(
         gene_column,
         patches_dirs,
         min_area,
-        shapes_key=SopaKeys.COMSEG_BOUNDARIES
+        shapes_key=SopaKeys.COMSEG_BOUNDARIES,
     )
