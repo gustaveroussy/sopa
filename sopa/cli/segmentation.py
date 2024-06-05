@@ -183,13 +183,13 @@ def _run_staining_segmentation(
 @app_segmentation.command()
 def comseg(
         sdata_path: str = typer.Argument(help=SDATA_HELPER),
-        patch_dir: str = typer.Option(
-            default=None,
-            help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory",
-        ),
         patch_index: int = typer.Option(
             default=None,
             help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
+        ),
+        patch_dir: str = typer.Option(
+            default=None,
+            help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory",
         ),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""

@@ -624,6 +624,31 @@ $ sopa segmentation cellpose [OPTIONS] SDATA_PATH
 * `--method-kwargs TEXT`: Kwargs for the cellpose method builder. This should be a dictionnary, in inline string format.  [default: {}]
 * `--help`: Show this message and exit.
 
+#### `sopa segmentation comseg`
+
+Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch.
+
+!!! note "Usage"
+
+    - [On one patch] Use this mode to run patches in parallel. Provide `--patch-index` to run one patch, and execute all patches in a parallel manner (you need to define your own parallelization, else, use the Snakemake pipeline).
+
+    - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
+
+**Usage**:
+
+```console
+$ sopa segmentation comseg [OPTIONS] SDATA_PATH
+```
+
+**Arguments**:
+
+* `SDATA_PATH`: Path to the SpatialData `.zarr` directory  [required]
+
+**Options**:
+
+* `--patch-dir TEXT`: Path to the temporary comseg directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/comseg_boundaries` directory
+* `--patch-index INTEGER`: Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`
+
 #### `sopa segmentation generic-staining`
 
 Perform generic staining-based segmentation. This can be done on all patches directly, or on one individual patch.
