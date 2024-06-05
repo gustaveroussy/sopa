@@ -132,6 +132,7 @@ def comseg(
         use_prior=True,
     )
 
+
 @app_patchify.command()
 def transcript_segmentation(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
@@ -171,7 +172,6 @@ def transcript_segmentation(
         help="Whether to use cellpose segmentation as a prior for baysor and comseg (if True, make sure to first run Cellpose or "
         f"manually add the segmentation boundaries to the sdata.shapes as {SopaKeys.CELLPOSE_BOUNDARIES} key)",
     ),
-
 ):
     """Prepare patches for transcript-based segmentation for the different available methods (baysor, comseg)"""
     from sopa._constants import SopaFiles, SopaKeys
