@@ -74,28 +74,17 @@ def baysor(
     """Prepare patches for transcript-based segmentation with baysor"""
     return transcript_segmentation(
         sdata_path=sdata_path,
-        method = "baysor",
-        patch_width_microns = patch_width_microns,
-        patch_overlap_microns = patch_overlap_microns,
-        temp_dir = baysor_temp_dir,
-        config_path = config_path,
-        config = config,
-        cell_key = cell_key,
-        unassigned_value = unassigned_value,
+        method="baysor",
+        patch_width_microns=patch_width_microns,
+        patch_overlap_microns=patch_overlap_microns,
+        temp_dir=baysor_temp_dir,
+        config_path=config_path,
+        config=config,
+        cell_key=cell_key,
+        unassigned_value=unassigned_value,
         use_prior = use_prior,
-        )
+    )
 
-    return transcript_segmentation(
-        sdata_path = sdata_path,
-        method = 'baysor',
-        patch_width_microns = patch_width_microns,
-        patch_overlap_microns = patch_overlap_microns,
-        temp_dir = baysor_temp_dir,
-        config_path = config_path,
-        config = config,
-        cell_key = cell_key,
-        unassigned_value = unassigned_value,
-        use_prior = use_prior)
 
 @app_patchify.command()
 def comseg(
@@ -130,15 +119,16 @@ def comseg(
     """Prepare patches for transcript-based segmentation with ComSeg"""
 
     return transcript_segmentation(
-        sdata_path = sdata_path,
-        method = 'comseg',
-        patch_width_microns = patch_width_microns,
-        patch_overlap_microns = patch_overlap_microns,
-        temp_dir = baysor_temp_dir,
-        config_path = config_path,
-        config = config, cell_key = cell_key,
-        unassigned_value = unassigned_value,
-        use_prior = True
+        sdata_path=sdata_path,
+        method="comseg",
+        patch_width_microns=patch_width_microns,
+        patch_overlap_microns=patch_overlap_microns,
+        temp_dir=baysor_temp_dir,
+        config_path=config_path,
+        config=config,
+        cell_key=cell_key,
+        unassigned_value=unassigned_value,
+        use_prior=True,
     )
 @app_patchify.command()
 def transcript_segmentation(
