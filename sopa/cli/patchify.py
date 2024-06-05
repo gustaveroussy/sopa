@@ -37,6 +37,7 @@ def image(
 
     _save_cache(sdata_path, SopaFiles.PATCHES_FILE_IMAGE, str(len(patches)))
 
+
 @app_patchify.command()
 def baysor(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
@@ -82,7 +83,7 @@ def baysor(
         config=config,
         cell_key=cell_key,
         unassigned_value=unassigned_value,
-        use_prior = use_prior,
+        use_prior=use_prior,
     )
 
 
@@ -130,6 +131,7 @@ def comseg(
         unassigned_value=unassigned_value,
         use_prior=True,
     )
+
 @app_patchify.command()
 def transcript_segmentation(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
@@ -216,6 +218,7 @@ def transcript_segmentation(
         config_name=config_name,
     )
     _save_cache(sdata_path, filename, "\n".join(map(str, valid_indices)))
+
 
 def _save_cache(sdata_path: str, filename: str, content: str):
     from pathlib import Path

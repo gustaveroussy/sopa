@@ -197,11 +197,11 @@ def comseg(
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
     import json
+
     from sopa._constants import SopaFiles, SopaKeys
     from sopa.segmentation.methods import comseg_patch
 
     from .utils import _default_boundary_dir
-
 
     config_name = SopaFiles.JSON_CONFIG_FILE
 
