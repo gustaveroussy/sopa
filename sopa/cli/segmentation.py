@@ -10,7 +10,6 @@ from .utils import SDATA_HELPER
 app_segmentation = typer.Typer()
 
 
-
 @app_segmentation.command()
 def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
@@ -195,15 +194,15 @@ def comseg(
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
     import json
     import logging
+    from pathlib import Path
 
     from sopa._constants import SopaFiles, SopaKeys
     from sopa.segmentation.methods import comseg_patch
 
-    from pathlib import Path
 
     from .utils import _default_boundary_dir
 
-    log = logging.getLogger(__name__)
+    log=logging.getLogger(__name__)
 
     config_name = SopaFiles.JSON_CONFIG_FILE
 
