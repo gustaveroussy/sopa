@@ -202,7 +202,7 @@ def comseg(
 
     from .utils import _default_boundary_dir
 
-    log=logging.getLogger(__name__)
+    log = logging.getLogger(__name__)
 
     config_name = SopaFiles.JSON_CONFIG_FILE
 

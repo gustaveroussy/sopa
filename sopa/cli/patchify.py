@@ -73,7 +73,7 @@ def baysor(
     ),
 ):
     """Prepare patches for transcript-based segmentation with baysor"""
-    from sopa._constants import SopaKeys, SopaFiles
+    from sopa._constants import SopaFiles, SopaKeys
 
     from .utils import _default_boundary_dir
 
