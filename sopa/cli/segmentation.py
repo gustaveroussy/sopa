@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import ast
-import logging
-from pathlib import Path
+
 
 import typer
 from tqdm import tqdm
@@ -11,7 +10,6 @@ from .utils import SDATA_HELPER
 
 app_segmentation = typer.Typer()
 
-log = logging.getLogger(__name__)
 
 
 @app_segmentation.command()
@@ -188,11 +186,11 @@ def comseg(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     patch_index: int = typer.Option(
         default=None,
-        help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
+        help="Index of the patch on which the segmentation method should be run.`",
     ),
     patch_dir: str = typer.Option(
         default=None,
-        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory",
+        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/comseg` directory",
     ),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
@@ -200,7 +198,9 @@ def comseg(
 
     from sopa._constants import SopaFiles, SopaKeys
     from sopa.segmentation.methods import comseg_patch
-
+    import logging
+    log = logging.getLogger(__name__)
+    from pathlib import Path
     from .utils import _default_boundary_dir
 
     config_name = SopaFiles.JSON_CONFIG_FILE
