@@ -125,7 +125,9 @@ def comseg(
     ),
 ):
     """Prepare patches for transcript-based segmentation with ComSeg"""
+
     from sopa._constants import SopaKeys, SopaFiles
+
     from .utils import _default_boundary_dir
 
     if comseg_temp_dir is None:
@@ -190,7 +192,7 @@ def _transcript_segmentation(
 
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
-    if filename==SopaKeys.COMSEG_BOUNDARIES:
+    if filename == SopaKeys.COMSEG_BOUNDARIES:
         patches.patchify_centroids(temp_dir)
         assert (
             use_prior

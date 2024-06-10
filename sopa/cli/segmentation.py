@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 
-
 import typer
 from tqdm import tqdm
 
@@ -195,13 +194,16 @@ def comseg(
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
     import json
+    import logging
 
     from sopa._constants import SopaFiles, SopaKeys
     from sopa.segmentation.methods import comseg_patch
-    import logging
-    log = logging.getLogger(__name__)
+
     from pathlib import Path
+
     from .utils import _default_boundary_dir
+
+    log = logging.getLogger(__name__)
 
     config_name = SopaFiles.JSON_CONFIG_FILE
 
