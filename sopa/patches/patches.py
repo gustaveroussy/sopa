@@ -219,56 +219,89 @@ class Patches2D:
 
     def patchify_transcripts(
         self,
-        baysor_temp_dir: str,
+        temp_dir: str,
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,
+        config_name: str = SopaFiles.TOML_CONFIG_FILE,
+        csv_name: str = SopaFiles.TRANSCRIPTS_FILE,
+        min_transcripts_per_patch: int = 4000,
     ) -> list[int]:
         """Patchification of the transcripts
 
         Args:
-            baysor_temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
+            temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
             cell_key: Optional key of the transcript dataframe containing the cell IDs. This is useful if a prior segmentation has been run, assigning each transcript to a cell.
             unassigned_value: If `cell_key` has been provided, this corresponds to the value given in the 'cell ID' column for transcript that are not inside any cell.
-            use_prior: Whether to use Cellpose as a prior segmentation for Baysor. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
-            config: Dictionnary of baysor parameters
-            config_path: Path to the baysor config (you can also directly provide the argument via the `config` option)
+            use_prior: Whether to use Cellpose as a prior segmentation. If `True`, make sure you have already run Cellpose with Sopa, and no need to provide `cell_key` and `unassigned_value`. Note that, if you have MERFISH data, the prior has already been run, so just use `cell_key` and `unassigned_value`.
+            config: Dictionnary of segmentation parameters
+            config_path: Path to the segmentation config file (you can also directly provide the argument via the `config` option)
+            config_name: Name of the config file to be saved in each patch subdirectory
+            csv_name: Name of the CSV file to be saved in each patch subdirectory
+            min_transcripts_per_patch: Minimum number of transcripts for a patch to be considered for segmentation
 
         Returns:
-            A list of patches indices. Each index correspond to the name of a subdirectory inside `baysor_temp_dir`
+            A list of patches indices. Each index correspond to the name of a subdirectory inside `temp_dir`
         """
-        return BaysorPatches(self, self.element).write(
-            baysor_temp_dir, cell_key, unassigned_value, use_prior, config, config_path
-        )
+        return TranscriptPatches(
+            self, self.element, config_name, csv_name, min_transcripts_per_patch
+        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path)
+
+    def patchify_centroids(
+        self,
+        temp_dir: str,
+        shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
+        csv_name: str = SopaFiles.CENTROIDS_FILE,
+        min_cells_per_patch: int = 1,
+    ) -> list[int]:
+        assert isinstance(self.element, dd.DataFrame)
+
+        centroids = to_intrinsic(self.sdata, shapes_key, self.element).geometry.centroid
+        centroids = gpd.GeoDataFrame(geometry=centroids)
+        centroids[SopaKeys.DEFAULT_CELL_KEY] = range(1, len(centroids) + 1)
+        centroids["x"] = centroids.geometry.x
+        centroids["y"] = centroids.geometry.y
+        centroids["z"] = 0
+
+        TranscriptPatches(self, centroids, None, csv_name, min_cells_per_patch).write(temp_dir)
 
 
-class BaysorPatches:
-    MIN_TRANSCRIPTS_PER_PATCH = 4000
-
-    def __init__(self, patches_2d: Patches2D, df: dd.DataFrame):
+class TranscriptPatches:
+    def __init__(
+        self,
+        patches_2d: Patches2D,
+        df: dd.DataFrame | gpd.GeoDataFrame,
+        config_name: str,
+        csv_name: str,
+        min_transcripts_per_patch: int,
+    ):
         self.patches_2d = patches_2d
         self.df = df
+        self.min_transcripts_per_patch = min_transcripts_per_patch
+        self.config_name = config_name
+        self.csv_name = csv_name
+
         self.sdata = self.patches_2d.sdata
 
     def write(
         self,
-        baysor_temp_dir: str,
+        temp_dir: str,
         cell_key: str = None,
         unassigned_value: int | str = None,
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,
     ):
-        from sopa.segmentation.baysor.prepare import copy_toml_config
+        from sopa.segmentation.transcripts import copy_segmentation_config
 
-        log.info("Writing sub-CSV for baysor")
+        log.info("Writing sub-CSV for transcript segmentation")
 
-        self.baysor_temp_dir = Path(baysor_temp_dir)
+        self.temp_dir = Path(temp_dir)
 
         if cell_key is None:
-            cell_key = SopaKeys.BAYSOR_DEFAULT_CELL_KEY
+            cell_key = SopaKeys.DEFAULT_CELL_KEY
 
         if unassigned_value is not None and unassigned_value != 0:
             self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
@@ -277,56 +310,70 @@ class BaysorPatches:
             prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
             _map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
 
-        self._clean_directory()
+        self._setup_patches_directory()
 
-        gdf = gpd.GeoDataFrame(geometry=self.patches_2d.polygons)
-        with ProgressBar():
-            self.df.map_partitions(partial(self._query_points_partition, gdf), meta=()).compute()
+        patches_gdf = gpd.GeoDataFrame(geometry=self.patches_2d.polygons)
 
-        for i in range(len(self.patches_2d)):
-            path = self.baysor_temp_dir / str(i) / SopaFiles.BAYSOR_CONFIG
-            copy_toml_config(path, config, config_path)
+        if isinstance(self.df, dd.DataFrame):
+            with ProgressBar():
+                self.df.map_partitions(
+                    partial(self._query_points_partition, patches_gdf), meta=()
+                ).compute()
+        else:
+            self._write_points(patches_gdf, self.df)
 
-        log.info(f"Patches saved in directory {baysor_temp_dir}")
+        if len(config) or config_path is not None:
+            for i in range(len(self.patches_2d)):
+                path = self.temp_dir / str(i) / self.config_name
+                copy_segmentation_config(path, config, config_path)
+
+        log.info(f"Patches saved in directory {temp_dir}")
         return list(self.valid_indices())
 
     def _patch_path(self, index: int) -> Path:
-        return self.baysor_temp_dir / str(index) / SopaFiles.BAYSOR_TRANSCRIPTS
+        return self.temp_dir / str(index) / self.csv_name
 
-    def _clean_directory(self):
+    def _setup_patches_directory(self):
         for index in range(len(self.patches_2d)):
             patch_path = self._patch_path(index)
             patch_path.parent.mkdir(parents=True, exist_ok=True)
             if patch_path.exists():
                 patch_path.unlink()
-            pd.DataFrame(columns=self.df.columns).to_csv(patch_path, index=False)
+            if isinstance(self.df, dd.DataFrame):
+                pd.DataFrame(columns=self.df.columns).to_csv(patch_path, index=False)
 
     def valid_indices(self):
         for index in range(len(self.patches_2d)):
             patch_path = self._patch_path(index)
-            if self._check_min_lines(patch_path, self.MIN_TRANSCRIPTS_PER_PATCH):
+            if _check_min_lines(patch_path, self.min_transcripts_per_patch):
                 yield index
             else:
                 log.info(
-                    f"Patch {index} has < {self.MIN_TRANSCRIPTS_PER_PATCH} transcripts. Baysor will not be run on it."
+                    f"Patch {index} has < {self.min_transcripts_per_patch} transcripts. Segmentation will not be run on this patch."
                 )
 
-    def _query_points_partition(self, gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    def _query_points_partition(
+        self, patches_gdf: gpd.GeoDataFrame, df: pd.DataFrame
+    ) -> pd.DataFrame:
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
-        df_merged: gpd.GeoDataFrame = points_gdf.sjoin(gdf)
+        self._write_points(patches_gdf, points_gdf, mode="a")
+
+    def _write_points(self, patches_gdf: gpd.GeoDataFrame, points_gdf: gpd.GeoDataFrame, mode="w"):
+        df_merged: gpd.GeoDataFrame = points_gdf.sjoin(patches_gdf)
 
         for index, patch_df in df_merged.groupby("index_right"):
             patch_path = self._patch_path(index)
             patch_path.parent.mkdir(parents=True, exist_ok=True)
             patch_df = patch_df.drop(columns=["index_right", "geometry"])
-            patch_df.to_csv(patch_path, mode="a", header=False, index=False)
+            patch_df.to_csv(patch_path, mode=mode, header=mode == "w", index=False)
 
-    def _check_min_lines(self, path: str, n: int) -> bool:
-        with open(path, "r") as f:
-            for count, _ in enumerate(f):
-                if count + 1 >= n:
-                    return True
-            return False
+
+def _check_min_lines(path: str, n: int) -> bool:
+    with open(path, "r") as f:
+        for count, _ in enumerate(f):
+            if count + 1 >= n:
+                return True
+        return False
 
 
 def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int = 0) -> pd.Series:

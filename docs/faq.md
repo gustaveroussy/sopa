@@ -98,17 +98,7 @@ Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../c
 
 ## How to fix an "out-of-memory" issue on MERSCOPE data?
 
-If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, to use `rioxarray` as a backend, do the following:
-
-- for the CLI: `sopa read merscope ... --kwargs "{'backend': 'rioxarray'}"`
-- for the API: `sdata = sopa.io.merscope(..., backend="rioxarray")`
-- for the Snakemake pipeline, update the config file as below:
-```yaml
-read:
-  technology: merscope
-  kwargs:
-    backend: rioxarray
-```
+If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, the `rioxarray` will be used by default by the reader (no change needed, it will be detected automatically).
 
 ## Can I use Nextflow instead of Snakemake?
 

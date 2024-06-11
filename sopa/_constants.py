@@ -1,6 +1,7 @@
 class SopaKeys:
     CELLPOSE_BOUNDARIES = "cellpose_boundaries"
     BAYSOR_BOUNDARIES = "baysor_boundaries"
+    COMSEG_BOUNDARIES = "comseg_boundaries"
     PATCHES = "sopa_patches"
     TABLE = "table"
     OLD_TABLE = "old_table"
@@ -20,8 +21,8 @@ class SopaKeys:
     REGION_KEY = "region"
     SLIDE_KEY = "slide"
     INSTANCE_KEY = "cell_id"
-    BAYSOR_DEFAULT_CELL_KEY = "cell"
-    BAYSOR_AREA_OBS = "baysor_area"
+    DEFAULT_CELL_KEY = "cell"
+    ORIGINAL_AREA_OBS = "baysor_area"
     AREA_OBS = "area"
 
     Z_SCORES = "z_scores"
@@ -50,5 +51,7 @@ class SopaFiles:
     SOPA_CACHE_DIR = ".sopa_cache"
     PATCHES_FILE_IMAGE = "patches_file_image"
     PATCHES_DIRS_BAYSOR = "patches_file_baysor"
-    BAYSOR_TRANSCRIPTS = "transcripts.csv"
-    BAYSOR_CONFIG = "config.toml"
+    TRANSCRIPTS_FILE = "transcripts.csv"
+    CENTROIDS_FILE = "centroids.csv"
+    JSON_CONFIG_FILE = "config.json"
+    TOML_CONFIG_FILE = "config.toml"

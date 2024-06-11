@@ -73,7 +73,7 @@ rule patch_segmentation_cellpose:
         paths.smk_patches_file_image,
         paths.smk_patches,
     output:
-        f"{paths.smk_cellpose_temp_dir}/{{index}}.parquet",
+        paths.smk_cellpose_temp_dir / "{index}.parquet",
     conda:
         "sopa"
     params:
@@ -86,10 +86,10 @@ rule patch_segmentation_cellpose:
 rule patch_segmentation_baysor:
     input:
         patches_file = paths.smk_patches_file_baysor,
-        baysor_patch = f"{paths.smk_baysor_temp_dir}/{{index}}",
+        baysor_patch = paths.smk_baysor_temp_dir / "{index}",
     output:
-        f"{paths.smk_baysor_temp_dir}/{{index}}/segmentation_polygons.json",
-        f"{paths.smk_baysor_temp_dir}/{{index}}/segmentation_counts.loom",
+        paths.smk_baysor_temp_dir / "{index}" / "segmentation_polygons.json",
+        paths.smk_baysor_temp_dir / "{index}" / "segmentation_counts.loom",
     params:
         args_baysor_prior_seg = args.baysor_prior_seg,
     resources:

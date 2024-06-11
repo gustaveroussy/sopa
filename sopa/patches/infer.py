@@ -92,6 +92,8 @@ class Inference:
     ):
         self.image = image
         self.patch_width = patch_width
+        self.level = level
+        self.magnification = magnification
 
         if isinstance(model, str):
             assert hasattr(
@@ -104,58 +106,62 @@ class Inference:
             self.model: torch.nn.Module = model
 
         self.device = device
+        if device:
+            self.model.to(device)
 
         self.cs = get_intrinsic_cs(None, image)
 
-        slide_metadata = image.attrs.get("metadata", {})
+        self._get_extraction_parameters()
+
+        if isinstance(self.image, MultiscaleSpatialImage):
+            self.image = next(iter(self.image[f"scale{self.level}"].values()))
+
+    def _get_extraction_parameters(self):
+        if isinstance(self.image, SpatialImage):
+            self.resize_factor, self.patch_width_scale0, self.downsample = 1, self.patch_width, 1
+            return
+
+        slide_metadata = self.image.attrs.get("metadata", {})
         self.level, self.resize_factor, self.patch_width_scale0, self.downsample, success = (
             _get_extraction_parameters(
                 slide_metadata,
-                patch_width,
-                level,
-                magnification,
-                backend=image.attrs.get("backend"),
+                self.patch_width,
+                self.level,
+                self.magnification,
+                backend=self.image.attrs.get("backend"),
             )
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
             return False
 
-        if device:
-            self.model.to(device)
-
     def _torch_resize(self, tensor: torch.Tensor, resize_factor: float):
         from torchvision.transforms import Resize
 
-        dim = (
-            int(tensor.shape[-2] * resize_factor),
-            int(tensor.shape[-1] * resize_factor),
-        )
+        dim = (int(tensor.shape[-2] * resize_factor), int(tensor.shape[-1] * resize_factor))
         return Resize(dim)(tensor)
 
     def _numpy_patch(
         self,
         box: tuple[int, int, int, int],
+        patch_width: int,
     ) -> np.ndarray:
-        """Extract a numpy patch from the MultiscaleSpatialImage given a bounding box"""
-        image_patch = self.image[f"scale{self.level}"].image.sel(
-            x=slice(box[0], box[2]), y=slice(box[1], box[3])
-        )
-        return image_patch.values
+        """
+        Extract a numpy patch from the MultiscaleSpatialImage given a bounding box
+        and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
+        """
+        image_patch = self.image.sel(x=slice(box[0], box[2]), y=slice(box[1], box[3])).values
+
+        pad_x, pad_y = patch_width - image_patch.shape[1], patch_width - image_patch.shape[2]
+        return np.pad(image_patch, ((0, 0), (0, pad_x), (0, pad_y)))
 
     def _torch_batch(self, bboxes: np.ndarray):
-        """retrives a batch of patches using the bboxes"""
-
-        def _pad_to_width(patch: np.array, patch_width: int) -> np.array:
-            """pads a patch to a specific width since some patches might be smaller (e.g., on edges)"""
-            pad_x, pad_y = patch_width - patch.shape[1], patch_width - patch.shape[2]
-            return np.pad(patch, ((0, 0), (0, pad_x), (0, pad_y)))
-
-        patchlist = [self._numpy_patch(box) for box in bboxes]
+        """Retrives a batch of patches using the bboxes"""
         extraction_patch_width = int(
             np.round(self.patch_width_scale0 / self.downsample / self.resize_factor)
         )
-        batch = np.array([_pad_to_width(patch, extraction_patch_width) for patch in patchlist])
+
+        batch = np.array([self._numpy_patch(box, extraction_patch_width) for box in bboxes])
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
         if self.resize_factor != 1:
