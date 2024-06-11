@@ -77,7 +77,6 @@ def baysor(
 
     from .utils import _default_boundary_dir
 
-
     if baysor_temp_dir is None:
         baysor_temp_dir = _default_boundary_dir(sdata_path, SopaKeys.BAYSOR_BOUNDARIES)
     return _transcript_segmentation(
@@ -178,6 +177,7 @@ def _transcript_segmentation(
         unassigned_value (int): "If cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)"
 
     """
+    from sopa._constants import SopaFiles, SopaKeys
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
     from sopa.patches import Patches2D
@@ -193,7 +193,7 @@ def _transcript_segmentation(
 
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
-    if filename == SopaKeys.COMSEG_BOUNDARIES:
+    if filename == SopaFiles.PATCHES_DIRS_COMSEG:
         patches.patchify_centroids(temp_dir)
         assert (
             use_prior
