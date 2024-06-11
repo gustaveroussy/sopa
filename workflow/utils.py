@@ -121,8 +121,6 @@ class WorkflowPaths:
             ]
 
 
-
-
 class Args:
     """
     A convenient class to provide the YAML config arguments to Snakemake
@@ -138,7 +136,11 @@ class Args:
         # which segmentation method(s) is/are used
         self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
         self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
-        self.comseg = self.segmentation and "comseg" in self.config["segmentation"] and "cellpose" in self.config["segmentation"]
+        self.comseg = (
+            self.segmentation
+            and "comseg" in self.config["segmentation"]
+            and "cellpose" in self.config["segmentation"]
+        )
 
         # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
@@ -223,7 +225,6 @@ class Args:
     ### comseg related methods
     def dump_comseg_patchify(self):
         return f'--comseg-temp-dir {self.paths.smk_comseg_temp_dir} {self["segmentation"]["comseg"].where(keys=["cell_key", "unassigned_value", "config"])}'
-
 
 
 def stringify_for_cli(value) -> str:

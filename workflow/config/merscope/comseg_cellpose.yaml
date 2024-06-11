@@ -5,7 +5,7 @@ read:
 patchify:
   patch_width_pixel: 6000
   patch_overlap_pixel: 150
-  patch_width_microns: 8000
+  patch_width_microns: 1000
   patch_overlap_microns: 20
 
 segmentation:
@@ -27,7 +27,7 @@ segmentation:
       max_cell_radius: 50
       alpha: 0.5
       min_rna_per_cell: 5
-      gene_column: "genes",
+      gene_column: "genes"
       allow_disconnected_polygon : true
 
 

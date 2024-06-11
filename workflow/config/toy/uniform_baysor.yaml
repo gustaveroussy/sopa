@@ -9,6 +9,14 @@ patchify:
   patch_overlap_microns: 20
 
 segmentation:
+  cellpose:
+    diameter: 35
+    channels: [ "DAPI" ]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 2500
+
+
   baysor:
     min_area: 10
 
@@ -55,4 +63,4 @@ explorer:
   pixel_size: 0.1
 
 executables:
-  baysor: ~/.julia/bin/baysor
+  baysor: /home/tom/Bureau/phd/simulation/baysor/baysor_2023/baysor-x86_x64-linux-v0.6.2_build/bin/baysor/bin/baysor
