@@ -1,4 +1,6 @@
-## [1.x.x] - 2024-xx-xx
+## [1.1.0] - 2024-06-11
+
+First post-publication release
 
 ### Changed
 - Using `rioxarray` as a default backend for MERSCOPE data if installed
