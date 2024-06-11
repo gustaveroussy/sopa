@@ -63,4 +63,4 @@ explorer:
   pixel_size: 0.1
 
 executables:
-  baysor: /home/tom/Bureau/phd/simulation/baysor/baysor_2023/baysor-x86_x64-linux-v0.6.2_build/bin/baysor/bin/baysor
+  baysor: ~/.julia/bin/baysor
