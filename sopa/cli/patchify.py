@@ -177,12 +177,10 @@ def _transcript_segmentation(
         unassigned_value (int): "If cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)"
 
     """
-    from sopa._constants import SopaFiles, SopaKeys
+    from sopa._constants import SopaFiles
     from sopa._sdata import get_key
     from sopa.io.standardize import read_zarr_standardized, sanity_check
     from sopa.patches import Patches2D
-
-    from .utils import _default_boundary_dir
 
     sdata = read_zarr_standardized(sdata_path)
     sanity_check(sdata)

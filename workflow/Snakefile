@@ -82,7 +82,7 @@ checkpoint patchify_comseg:
         "sopa"
     shell:
         """
-        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg} 
+        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg}
         """
 
 rule patch_segmentation_cellpose:
@@ -132,7 +132,7 @@ rule patch_segmentation_comseg:
         mem_mb=128_000,
     shell:
         """
-        sopa segmentation comseg {paths.sdata_path} --patch-dir {paths.smk_comseg_temp_dir} --patch-index {wildcards.index} 
+        sopa segmentation comseg {paths.sdata_path} --patch-dir {paths.smk_comseg_temp_dir} --patch-index {wildcards.index}
         """
 
 def get_input_resolve(name, dirs=False):
