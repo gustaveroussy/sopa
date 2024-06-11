@@ -1,0 +1,1 @@
+::: sopa.segmentation.transcripts.resolve
