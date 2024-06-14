@@ -347,8 +347,8 @@ $ sopa patchify [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `baysor`: Prepare patches for transcript-based segmentation with Baysor
-* `comseg`: Prepare patches for transcript-based segmentation with ComSeg
+* `baysor`: Prepare patches for transcript-based...
+* `comseg`: Prepare patches for transcript-based...
 * `image`: Prepare patches for staining-based...
 
 #### `sopa patchify baysor`
@@ -371,8 +371,8 @@ $ sopa patchify baysor [OPTIONS] SDATA_PATH
 * `--patch-overlap-microns FLOAT`: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell  [required]
 * `--baysor-temp-dir TEXT`: Temporary directory where baysor inputs and outputs will be saved. By default, uses `.sopa_cache/baysor_boundaries`
 * `--config-path TEXT`: Path to the baysor config (you can also directly provide the argument via the `config` option)
-* `--config TEXT`: Dictionnary of baysor parameters  [default: {}]
-* `--cell-key TEXT`: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation
+* `--config TEXT`: Dictionnary of baysor parameters, overwrite the config_path argument if provided  [default: {}]
+* `--cell-key TEXT`: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation Default is 'cell' if cell_key=None
 * `--unassigned-value INTEGER`: If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)
 * `--use-prior / --no-use-prior`: Whether to use cellpose segmentation as a prior for baysor (if True, make sure to first run Cellpose)  [default: no-use-prior]
 * `--help`: Show this message and exit.
@@ -395,10 +395,10 @@ $ sopa patchify comseg [OPTIONS] SDATA_PATH
 
 * `--patch-width-microns FLOAT`: Width (and height) of each patch in microns  [required]
 * `--patch-overlap-microns FLOAT`: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell  [required]
-* `--baysor-temp-dir TEXT`: Temporary directory where ComSeg inputs and outputs will be saved. By default, uses `.sopa_cache/comseg_boundaries`
-* `--config-path TEXT`: Path to the baysor config (you can also directly provide the argument via the `config` option)
-* `--config TEXT`: Dictionnary of baysor parameters  [default: {}]
-* `--cell-key TEXT`: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation. Default is 'cell' if cell_key=None
+* `--comseg-temp-dir TEXT`: Temporary directory where baysor inputs and outputs will be saved. By default, uses `.sopa_cache/comseg_boundaries`
+* `--config-path TEXT`: Path to the ComSeg json config file (you can also directly provide the argument via the `config` option)
+* `--config TEXT`: Dictionnary of ComSeg parameters, overwrite the config_path argument if provided  [default: {}]
+* `--cell-key TEXT`: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation. Default is cell if cell_key=None
 * `--unassigned-value INTEGER`: If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)
 * `--help`: Show this message and exit.
 
@@ -483,6 +483,7 @@ $ sopa resolve [OPTIONS] COMMAND [ARGS]...
 
 * `baysor`: Resolve patches conflicts after baysor...
 * `cellpose`: Resolve patches conflicts after cellpose...
+* `comseg`: Resolve patches conflicts after comseg...
 * `generic`: Resolve patches conflicts after generic...
 
 #### `sopa resolve baysor`
@@ -528,7 +529,7 @@ $ sopa resolve cellpose [OPTIONS] SDATA_PATH
 
 #### `sopa resolve comseg`
 
-Resolve patches conflicts after comseg segmentation. Provide either `--baysor-temp-dir` or `--patches-dirs`
+Resolve patches conflicts after comseg segmentation. Provide either `--comseg-temp-dir` or `--patches-dirs`
 
 **Usage**:
 
@@ -585,7 +586,7 @@ $ sopa segmentation [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `cellpose`: Perform cellpose segmentation.
-* `comseg`:  Perform ComSeg segmentation.
+* `comseg`: Perform ComSeg segmentation.
 * `generic-staining`: Perform generic staining-based segmentation.
 
 #### `sopa segmentation cellpose`
@@ -628,12 +629,6 @@ $ sopa segmentation cellpose [OPTIONS] SDATA_PATH
 
 Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch.
 
-!!! note "Usage"
-
-    - [On one patch] Use this mode to run patches in parallel. Provide `--patch-index` to run one patch, and execute all patches in a parallel manner (you need to define your own parallelization, else, use the Snakemake pipeline).
-
-    - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
-
 **Usage**:
 
 ```console
@@ -646,8 +641,9 @@ $ sopa segmentation comseg [OPTIONS] SDATA_PATH
 
 **Options**:
 
-* `--patch-dir TEXT`: Path to the temporary comseg directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/comseg_boundaries` directory
-* `--patch-index INTEGER`: Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`
+* `--patch-index INTEGER`: Index of the patch on which the segmentation method should be run.`
+* `--patch-dir TEXT`: Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/comseg` directory
+* `--help`: Show this message and exit.
 
 #### `sopa segmentation generic-staining`
 

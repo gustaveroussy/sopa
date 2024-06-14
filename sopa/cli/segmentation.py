@@ -3,7 +3,6 @@ from __future__ import annotations
 import ast
 
 import typer
-from tqdm import tqdm
 
 from .utils import SDATA_HELPER
 
@@ -195,6 +194,8 @@ def comseg(
     import json
     import logging
     from pathlib import Path
+
+    from tqdm import tqdm
 
     from sopa._constants import SopaFiles, SopaKeys
     from sopa.segmentation.methods import comseg_patch

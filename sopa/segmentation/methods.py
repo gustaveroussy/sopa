@@ -88,7 +88,7 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
         from comseg import dictionary
     except ModuleNotFoundError:
         raise ModuleNotFoundError(
-            "Install the ComSeg package (`pip install comseg`) for this method to work"
+            "Install the comseg and alphashape packages (`pip install comseg alphashape`) for this method to work"
         )
 
     path_dataset_folder = Path(temp_dir) / str(patch_index)

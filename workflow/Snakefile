@@ -128,6 +128,8 @@ rule patch_segmentation_comseg:
     output:
         paths.smk_comseg_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_comseg_temp_dir / "{index}" / "segmentation_counts.h5ad",
+    conda:
+        "sopa"
     resources:
         mem_mb=128_000,
     shell:
