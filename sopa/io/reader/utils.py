@@ -8,10 +8,10 @@ from typing import Callable
 import dask.array as da
 import tifffile as tf
 from dask_image.imread import imread
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
+from xarray import DataArray
 
 log = logging.getLogger(__name__)
 
@@ -96,16 +96,16 @@ def _ome_channels_names(path: str):
     return [c.attrib["Name"] if "Name" in c.attrib else c.attrib["ID"] for c in channels]
 
 
-def ome_tif(path: Path, as_image: bool = False) -> SpatialImage | SpatialData:
+def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
     """Read an `.ome.tif` image. This image should be a 2D image (with possibly multiple channels).
     Typically, this function can be used to open Xenium IF images.
 
     Args:
         path: Path to the `.ome.tif` image
-        as_image: If `True`, will return a `SpatialImage` object
+        as_image: If `True`, will return a `DataArray` object
 
     Returns:
-        A `SpatialImage` or a `SpatialData` object
+        A `DataArray` or a `SpatialData` object
     """
     image_models_kwargs, _ = _default_image_kwargs()
     image_name = Path(path).absolute().name.split(".")[0]
@@ -125,7 +125,7 @@ def ome_tif(path: Path, as_image: bool = False) -> SpatialImage | SpatialData:
         channel_names = [str(i) for i in range(len(image))]
         log.warn(f"Channel names couldn't be read. Using {channel_names} instead.")
 
-    image = SpatialImage(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
+    image = DataArray(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
 
     if as_image:
         return image

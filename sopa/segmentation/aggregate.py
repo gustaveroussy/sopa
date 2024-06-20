@@ -14,9 +14,9 @@ from anndata import AnnData
 from dask.diagnostics import ProgressBar
 from scipy.sparse import coo_matrix, csr_matrix
 from shapely.geometry import Polygon, box
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
+from xarray import DataArray
 
 import sopa
 
@@ -328,12 +328,12 @@ def average_channels(
 
 
 def _average_channels_aligned(
-    image: SpatialImage, geo_df: gpd.GeoDataFrame | list[Polygon]
+    image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon]
 ) -> np.ndarray:
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
-        image: A `SpatialImage` of shape `(n_channels, y, x)`
+        image: A `DataArray` of shape `(n_channels, y, x)`
         geo_df: A `GeoDataFrame` whose geometries are cell boundaries (polygons)
 
     Returns:

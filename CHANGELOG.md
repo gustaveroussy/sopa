@@ -1,3 +1,8 @@
+## [1.1.1] - 2024-xx-xx
+
+### Changed
+- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage
+
 ## [1.1.0] - 2024-06-11
 
 First post-publication release

@@ -10,12 +10,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from dask.diagnostics import ProgressBar
-from multiscale_spatial_image import MultiscaleSpatialImage
+from datatree import DataTree
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
+from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
 from .._sdata import (
@@ -97,10 +97,10 @@ class Patches2D:
         self.element_name = element_name
         self.element = sdata[element_name]
 
-        if isinstance(self.element, MultiscaleSpatialImage):
+        if isinstance(self.element, DataTree):
             self.element = get_spatial_image(sdata, element_name)
 
-        if isinstance(self.element, SpatialImage):
+        if isinstance(self.element, DataArray):
             xmin, ymin = 0, 0
             xmax, ymax = len(self.element.coords["x"]), len(self.element.coords["y"])
             tight, int_coords = False, True

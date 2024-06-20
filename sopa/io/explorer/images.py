@@ -6,12 +6,12 @@ from math import ceil
 
 import numpy as np
 import tifffile as tf
-import xarray as xr
-from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
-from spatial_image import SpatialImage
+from datatree import DataTree
+from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
 from spatialdata.transformations import Affine, set_transformation
 from tqdm import tqdm
+from xarray import DataArray
 
 from ..._sdata import get_intrinsic_cs, get_spatial_image, save_image
 from ...utils.image import resize_numpy, scale_dtype
@@ -29,7 +29,7 @@ class MultiscaleImageWriter:
     resolutionunit = "CENTIMETER"
     dtype = np.uint8
 
-    def __init__(self, image: MultiscaleSpatialImage, tile_width: int, pixel_size: float):
+    def __init__(self, image: DataTree, tile_width: int, pixel_size: float):
         self.image = image
         self.tile_width = tile_width
         self.pixel_size = pixel_size
@@ -43,10 +43,10 @@ class MultiscaleImageWriter:
         self.lazy = True
         self.ram_threshold_gb = None
 
-    def _n_tiles_axis(self, xarr: xr.DataArray, axis: int) -> int:
+    def _n_tiles_axis(self, xarr: DataArray, axis: int) -> int:
         return ceil(xarr.shape[axis] / self.tile_width)
 
-    def _get_tiles(self, xarr: xr.DataArray):
+    def _get_tiles(self, xarr: DataArray):
         for c in range(xarr.shape[0]):
             for index_y in range(self._n_tiles_axis(xarr, 1)):
                 for index_x in range(self._n_tiles_axis(xarr, 2)):
@@ -73,7 +73,7 @@ class MultiscaleImageWriter:
         return scale_dtype(array, self.dtype)
 
     def _write_image_level(self, tif: tf.TiffWriter, scale_index: int, **kwargs):
-        xarr: xr.DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
+        xarr: DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
         resolution = 1e4 * 2**scale_index / self.pixel_size
 
         if not self._should_load_memory(xarr.shape, xarr.dtype):
@@ -157,24 +157,22 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     ]
 
 
-def _to_xenium_explorer_multiscale(
-    image: SpatialImage | MultiscaleSpatialImage, n_subscales: int
-) -> MultiscaleSpatialImage:
-    if isinstance(image, MultiscaleSpatialImage):
+def _to_xenium_explorer_multiscale(image: DataArray | DataTree, n_subscales: int) -> DataTree:
+    if isinstance(image, DataTree):
         shapes = np.array(
             [next(iter(data_tree.values())).shape[1:] for data_tree in image.values()]
         )
         if len(shapes) == n_subscales + 1 and (shapes[:-1] // shapes[1:] == 2).all():
             return image
 
-        image = SpatialImage(next(iter(image["scale0"].values())))
+        image = DataArray(next(iter(image["scale0"].values())))
 
     return to_multiscale(image, [2] * n_subscales, chunks=(1, TILE_SIZE, TILE_SIZE))
 
 
 def write_image(
     path: str,
-    image: MultiscaleSpatialImage | SpatialImage | np.ndarray,
+    image: DataTree | DataArray | np.ndarray,
     lazy: bool = True,
     tile_width: int = TILE_SIZE,
     n_subscales: int = 5,
@@ -198,8 +196,8 @@ def write_image(
 
     if isinstance(image, np.ndarray):
         assert len(image.shape) == 3, "Can only write channels with shape (C,Y,X)"
-        log.info(f"Converting image of shape {image.shape} into a SpatialImage (with dims: C,Y,X)")
-        image = SpatialImage(image, dims=["c", "y", "x"], name="image")
+        log.info(f"Converting image of shape {image.shape} into a DataArray (with dims: C,Y,X)")
+        image = DataArray(image, dims=["c", "y", "x"], name="image")
 
     image = _to_xenium_explorer_multiscale(image, n_subscales)
 
@@ -209,7 +207,7 @@ def write_image(
 
 def align(
     sdata: SpatialData,
-    image: SpatialImage,
+    image: DataArray,
     transformation_matrix_path: str,
     image_key: str = None,
     overwrite: bool = False,
@@ -218,7 +216,7 @@ def align(
 
     Args:
         sdata: A `SpatialData` object
-        image: A `SpatialImage` object. Note that `image.name` is used as the key for the aligned image.
+        image: A `DataArray` object. Note that `image.name` is used as the key for the aligned image.
         transformation_matrix_path: Path to the `.csv` transformation matrix exported from the Xenium Explorer
         image_key: Optional name of the image on which it has been aligned. Required if multiple images in the `SpatialData` object.
         overwrite: Whether to overwrite the image, if already existing.
