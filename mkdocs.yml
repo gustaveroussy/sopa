@@ -20,6 +20,8 @@ nav:
     - Spatial statistics: tutorials/spatial.ipynb
     - H&E usage: tutorials/he.ipynb
     - Advanced segmentation: tutorials/advanced_segmentation.md
+    - Other segmentation methods:
+      - ComSeg: tutorials/comseg.ipynb
   - CLI: cli.md
   - API:
     - sopa.spatial: api/spatial.md

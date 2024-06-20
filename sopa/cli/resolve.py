@@ -96,3 +96,42 @@ def baysor(
     sdata = read_zarr_standardized(sdata_path)
 
     resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area)
+
+
+@app_resolve.command()
+def comseg(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    gene_column: str = typer.Option(
+        help="Column of the transcripts dataframe containing the genes names"
+    ),
+    comseg_temp_dir: str = typer.Option(
+        None,
+        help="Path to the directory containing all the comseg patches (see `sopa patchify`). By default, uses the `.sopa_cache/comseg_boundaries` directory",
+    ),
+    min_area: float = typer.Option(
+        0, help="Cells with an area less than this value (in microns^2) will be filtered"
+    ),
+    patches_dirs: list[str] = typer.Option(
+        [], help="List of patches directories inside `comseg_temp_dir`"
+    ),
+):
+    """Resolve patches conflicts after comseg segmentation. Provide either `--comseg-temp-dir` or `--patches-dirs`"""
+    from sopa._constants import SopaKeys
+    from sopa.io.standardize import read_zarr_standardized
+    from sopa.segmentation.transcripts import resolve
+
+    from .utils import _default_boundary_dir
+
+    if not len(patches_dirs) and comseg_temp_dir is None:
+        comseg_temp_dir = _default_boundary_dir(sdata_path, SopaKeys.COMSEG_BOUNDARIES)
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    resolve(
+        sdata,
+        comseg_temp_dir,
+        gene_column,
+        patches_dirs,
+        min_area,
+        shapes_key=SopaKeys.COMSEG_BOUNDARIES,
+    )

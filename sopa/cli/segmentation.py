@@ -176,3 +176,52 @@ def _run_staining_segmentation(
         segmentation.write_patches_cells(patch_dir)
     else:
         segmentation.write_patch_cells(patch_dir, patch_index)
+
+
+@app_segmentation.command()
+def comseg(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    patch_index: int = typer.Option(
+        default=None,
+        help="Index of the patch on which the segmentation method should be run.`",
+    ),
+    patch_dir: str = typer.Option(
+        default=None,
+        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/comseg` directory",
+    ),
+):
+    """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
+    import json
+    import logging
+    from pathlib import Path
+
+    from tqdm import tqdm
+
+    from sopa._constants import SopaFiles, SopaKeys
+    from sopa.segmentation.methods import comseg_patch
+
+    from .utils import _default_boundary_dir
+
+    log = logging.getLogger(__name__)
+
+    config_name = SopaFiles.JSON_CONFIG_FILE
+
+    if patch_dir is None:
+        patch_dir = _default_boundary_dir(sdata_path, SopaKeys.COMSEG_BOUNDARIES)
+
+    if patch_index is None:
+        log.warn(
+            "Running segmentation in a sequential manner. This is not recommended on large images because it can be extremely slow (see https://github.com/gustaveroussy/sopa/discussions/36 for more details)"
+        )
+        for path_index_folder in tqdm(list(Path(patch_dir).glob("*")), desc="Run all patches"):
+            patch_index = int(path_index_folder.stem)
+            config_path = Path(patch_dir) / f"{patch_index}/{config_name}"
+            with open(config_path, "r") as f:
+                config = json.load(f)
+
+            comseg_patch(temp_dir=patch_dir, patch_index=int(path_index_folder.stem), config=config)
+    else:
+        config_path = Path(patch_dir) / f"{patch_index}/{config_name}"
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
