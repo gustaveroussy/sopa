@@ -101,6 +101,7 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
         image_csv_files=["transcripts.csv"],
         centroid_csv_files=["centroids.csv"],
         path_cell_centroid=path_dataset_folder,
+        min_nb_rna_patch=config.get("min_nb_rna_patch", 0),
     )
 
     dataset.compute_edge_weight(config=config)
@@ -108,7 +109,7 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
     Comsegdict = dictionary.ComSegDict(
         dataset=dataset,
         mean_cell_diameter=config["mean_cell_diameter"],
-        prior_name=SopaKeys.DEFAULT_CELL_KEY,
+        prior_name=config.get("prior_name", SopaKeys.DEFAULT_CELL_KEY),
     )
 
     Comsegdict.run_all(config=config)

@@ -123,6 +123,14 @@ def comseg(
         None,
         help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
     ),
+    min_transcripts_per_patch: int = typer.Option(
+        1000, help="Minimum number of transcripts per patch"
+    ),
+    min_cells_per_patch: int = typer.Option(1, help="Minimum number of cells per patch"),
+    shapes_key: str = typer.Option(
+        SopaKeys.CELLPOSE_BOUNDARIES,
+        help="Name of the nuclei boundaries shape use for the prior and centroid in the sdata object",
+    ),
 ):
     """Prepare patches for transcript-based segmentation with ComSeg"""
 
@@ -145,6 +153,9 @@ def comseg(
         cell_key=cell_key,
         unassigned_value=unassigned_value,
         use_prior=True,
+        min_transcripts_per_patch=min_transcripts_per_patch,
+        min_cells_per_patch=min_cells_per_patch,
+        shapes_key=shapes_key,
     )
 
 
@@ -160,6 +171,9 @@ def _transcript_segmentation(
     cell_key: str,
     use_prior: bool,
     unassigned_value: int,
+    min_transcripts_per_patch: int,
+    min_cells_per_patch: int,
+    shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
 ):
     """Prepare patches for transcript-based segmentation for the different available methods (baysor, comseg)
     args:
@@ -191,11 +205,6 @@ def _transcript_segmentation(
 
     df_key = get_key(sdata, "points")
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
-    if filename == SopaFiles.PATCHES_DIRS_COMSEG:
-        patches.patchify_centroids(temp_dir)
-        assert (
-            use_prior
-        ), "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
     valid_indices = patches.patchify_transcripts(
         temp_dir,
         cell_key,
@@ -204,7 +213,21 @@ def _transcript_segmentation(
         config,
         config_path,
         config_name=config_name,
+        min_transcripts_per_patch=min_transcripts_per_patch,
+        shapes_key=shapes_key,
     )
+
+    if filename == SopaFiles.PATCHES_DIRS_COMSEG:
+        assert (
+            use_prior
+        ), "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
+        valid_indices_centoid = patches.patchify_centroids(
+            temp_dir,
+            shapes_key=shapes_key,
+            min_cells_per_patch=min_cells_per_patch,
+        )
+        valid_indices = list(set(valid_indices_centoid).intersection(set(valid_indices)))
+
     _save_cache(sdata_path, filename, "\n".join(map(str, valid_indices)))
 
 
