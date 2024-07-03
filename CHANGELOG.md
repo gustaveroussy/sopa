@@ -3,14 +3,12 @@
 ### Added
 - Support Xenium multimodal segmentation as a prior for Baysor (#80)
 
-### Changed
-- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
-
 ### Fix
 - Fix Xenium reader issue for recent machine versions (#80)
 
 ### Changed
 - Fully depends on `spatialdata-io` for the MERSCOPE and the Xenium reader
+- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
 
 ## [1.1.0] - 2024-06-11
 
