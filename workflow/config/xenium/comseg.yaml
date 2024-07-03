@@ -26,6 +26,7 @@ segmentation:
       min_rna_per_cell: 10
       gene_column: "feature_name"
       allow_disconnected_polygon : true
+      norm_vector: true # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
 
 
 aggregate:
