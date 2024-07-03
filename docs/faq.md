@@ -90,6 +90,10 @@ If using the CLI, `--min-area` can be provided to `sopa segmentation cellpose` o
 You can use any existing [Cellpose model](https://cellpose.readthedocs.io/en/latest/models.html) with the `model_type` argument (via the API, CLI, or Snakemake pipeline). For the Snakemake pipeline, see [here](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) how to set this argument.
 If you have a custom pretrained model, use the `pretrained_model` argument instead of `model_type`, and give the path to your cellpose model.
 
+## How to use a prior cell segmentation?
+
+If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/xenium/baysor_multimodal.yaml) data. If using the API/CLI, consider using the `cell_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `cell_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `cell_key="cell_id"` and `unassigned_value="UNASSIGNED"`.
+
 ## How to provide dictionnaries to CLI arguments?
 
 Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../cli/#sopa-read) has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:

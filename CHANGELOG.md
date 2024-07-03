@@ -1,5 +1,8 @@
 ## [1.1.1] - 2024-xx-xx
 
+### Added
+- Support Xenium multimodal segmentation as a prior for Baysor (#80)
+
 ### Changed
 - Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
 
