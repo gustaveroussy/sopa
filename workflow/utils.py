@@ -222,7 +222,8 @@ class Args:
         else:
             raise ValueError("No gene column found in the config")
 
-    ### comseg related methods
+    ### ComSeg related methods
+
     def dump_comseg_patchify(self):
         return f'--comseg-temp-dir {self.paths.smk_comseg_temp_dir} {self["segmentation"]["comseg"].where(keys=["cell_key", "unassigned_value", "config"])}'
 

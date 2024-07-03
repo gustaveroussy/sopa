@@ -72,14 +72,14 @@ def baysor(
         help="Whether to use cellpose segmentation as a prior for baysor (if True, make sure to first run Cellpose)",
     ),
 ):
-    """Prepare patches for transcript-based segmentation with baysor"""
+    """Prepare patches for transcript-based segmentation with Baysor"""
     from sopa._constants import SopaFiles, SopaKeys
 
     from .utils import _default_boundary_dir
 
     if baysor_temp_dir is None:
         baysor_temp_dir = _default_boundary_dir(sdata_path, SopaKeys.BAYSOR_BOUNDARIES)
-    return _transcript_segmentation(
+    return _patchify_transcripts(
         sdata_path=sdata_path,
         patch_width_microns=patch_width_microns,
         patch_overlap_microns=patch_overlap_microns,
@@ -141,7 +141,7 @@ def comseg(
     if comseg_temp_dir is None:
         comseg_temp_dir = _default_boundary_dir(sdata_path, SopaKeys.COMSEG_BOUNDARIES)
 
-    return _transcript_segmentation(
+    return _patchify_transcripts(
         sdata_path=sdata_path,
         patch_width_microns=patch_width_microns,
         patch_overlap_microns=patch_overlap_microns,
@@ -159,7 +159,7 @@ def comseg(
     )
 
 
-def _transcript_segmentation(
+def _patchify_transcripts(
     sdata_path: str,
     patch_width_microns: float,
     patch_overlap_microns: float,
@@ -175,20 +175,20 @@ def _transcript_segmentation(
     min_cells_per_patch: int,
     shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
 ):
-    """Prepare patches for transcript-based segmentation for the different available methods (baysor, comseg)
-    args:
-        sdata_path (str) : Path to the SpatialData object
-        patch_width_microns (float) : Width (and height) of each patch in microns
-        patch_overlap_microns (str) : Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell
-        temp_dir (str) : Temporary directory where baysor inputs and outputs will be saved. By default, uses `.sopa_cache/baysor_boundaries`"
-        filename (str) : Name of the file to indicating the patch's index
-        config_name (str) : Name of the config file created for each patch
-        config_path (str): "Path to the config file (you can also directly provide the argument via the `config` option)"
-        config (str): "Dictionnary of parameters"
-        cell_key (str): "Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation.
-        " Default is cell if cell_key=None"
-        use_prior (bool): "Whether to use cellpose segmentation as a prior for baysor and comseg (if True, make sure to first run Cellpose)"
-        unassigned_value (int): "If cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)"
+    """Prepare patches for transcript-based segmentation for the different available methods (Baysor, ComSeg).
+
+    Args:
+        sdata_path: Path to the SpatialData object
+        patch_width_microns: Width (and height) of each patch in microns
+        patch_overlap_microns: Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell
+        temp_dir: Temporary directory where baysor inputs and outputs will be saved. By default, uses `.sopa_cache/baysor_boundaries`
+        filename: Name of the file to indicating the patch's index
+        config_name: Name of the config file created for each patch
+        config_path: Path to the config file (you can also directly provide the argument via the `config` option)
+        config: Dictionnary of parameters
+        cell_key: Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation.
+        use_prior: Whether to use cellpose segmentation as a prior for baysor and comseg (if True, make sure to first run Cellpose)
+        unassigned_value: If cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)
 
     """
     from sopa._constants import SopaFiles

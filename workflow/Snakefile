@@ -71,12 +71,17 @@ checkpoint patchify_baysor:
 checkpoint patchify_comseg:
     input:
         paths.sdata_zgroup,
-        paths.smk_cellpose_boundaries,
     output:
         patches_file = paths.smk_patches_file_comseg,
         smk_comseg_temp_dir = directory(paths.smk_comseg_temp_dir),
     params:
-        args_patchify = str(args["patchify"].where(contains="micron")),
+        args_patchify = str(args["patchify"].where([
+            "patch_width_microns",
+            "patch_overlap_microns",
+            'min_transcripts_per_patch',
+            'min_cells_per_patch',
+            'shapes_key',],
+        )),
         args_comseg = args.dump_comseg_patchify() if args.comseg else "",
     conda:
         "sopa"
@@ -128,6 +133,8 @@ rule patch_segmentation_comseg:
     output:
         paths.smk_comseg_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_comseg_temp_dir / "{index}" / "segmentation_counts.h5ad",
+    conda:
+        "sopa"
     resources:
         mem_mb=128_000,
     shell:
