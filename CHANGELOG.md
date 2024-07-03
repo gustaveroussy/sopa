@@ -3,6 +3,12 @@
 ### Changed
 - Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
 
+### Fix
+- Fix Xenium reader issue for recent machine versions (#80)
+
+### Changed
+- Fully depends on `spatialdata-io` for the MERSCOPE and the Xenium reader
+
 ## [1.1.0] - 2024-06-11
 
 First post-publication release
