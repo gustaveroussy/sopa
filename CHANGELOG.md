@@ -1,7 +1,7 @@
 ## [1.1.1] - 2024-xx-xx
 
 ### Changed
-- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage
+- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
 
 ## [1.1.0] - 2024-06-11
 
