@@ -228,6 +228,7 @@ class Patches2D:
         config_name: str = SopaFiles.TOML_CONFIG_FILE,
         csv_name: str = SopaFiles.TRANSCRIPTS_FILE,
         min_transcripts_per_patch: int = 4000,
+        shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
     ) -> list[int]:
         """Creation of patches for the transcripts.
 
@@ -253,7 +254,7 @@ class Patches2D:
         """
         return TranscriptPatches(
             self, self.element, config_name, csv_name, min_transcripts_per_patch
-        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path)
+        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path, shapes_key)
 
     def patchify_centroids(
         self,
@@ -271,7 +272,9 @@ class Patches2D:
         centroids["y"] = centroids.geometry.y
         centroids["z"] = 0
 
-        TranscriptPatches(self, centroids, None, csv_name, min_cells_per_patch).write(temp_dir)
+        return TranscriptPatches(self, centroids, None, csv_name, min_cells_per_patch).write(
+            temp_dir, shapes_key=shapes_key
+        )
 
 
 class TranscriptPatches:
@@ -299,6 +302,7 @@ class TranscriptPatches:
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,
+        shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
     ):
         from sopa.segmentation.transcripts import copy_segmentation_config
 
@@ -312,10 +316,8 @@ class TranscriptPatches:
             self.df[cell_key] = _assign_prior(self.df[cell_key], unassigned_value)
 
         if use_prior:
-            prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
-            _map_transcript_to_cell(
-                self.sdata, SopaKeys.DEFAULT_CELL_KEY, self.df, prior_boundaries
-            )
+            prior_boundaries = self.sdata[shapes_key]
+            _map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
 
         self._setup_patches_directory()
 
@@ -376,6 +378,8 @@ class TranscriptPatches:
 
 
 def _check_min_lines(path: str, n: int) -> bool:
+    if not Path(path).exists():  # empty file are not written at all
+        return False
     with open(path, "r") as f:
         for count, _ in enumerate(f):
             if count + 1 >= n:
