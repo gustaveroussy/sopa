@@ -84,10 +84,11 @@ def resolve(
     )
 
     sdata.shapes[shapes_key] = geo_df
-    sdata.write_element(shapes_key, overwrite=True)
-
     sdata.tables[SopaKeys.TABLE] = table
-    sdata.write_element(SopaKeys.TABLE, overwrite=True)
+
+    if sdata.is_backed():
+        sdata.write_element(shapes_key, overwrite=True)
+        sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
     log.info(
         f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']"

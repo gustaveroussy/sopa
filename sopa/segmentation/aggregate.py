@@ -163,7 +163,8 @@ class Aggregator:
 
         self.geo_df.index = list(self.table.obs_names)
         self.sdata.shapes[self.shapes_key] = self.geo_df
-        self.sdata.write_element(self.shapes_key, overwrite=True)
+        if self.sdata.is_backed():
+            self.sdata.write_element(self.shapes_key, overwrite=True)
 
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
@@ -190,7 +191,7 @@ class Aggregator:
 
         self.sdata.tables[SopaKeys.TABLE] = self.table
 
-        if save_table:
+        if save_table and self.sdata.is_backed():
             self.sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
     def filter_cells(self, where_filter: np.ndarray):

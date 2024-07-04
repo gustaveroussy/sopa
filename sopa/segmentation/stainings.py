@@ -181,6 +181,8 @@ class StainingSegmentation:
             geo_df, transformations=get_transformation(image, get_all=True).copy()
         )
         sdata.shapes[shapes_key] = geo_df
-        sdata.write_element(shapes_key, overwrite=True)
+
+        if sdata.is_backed():
+            sdata.write_element(shapes_key, overwrite=True)
 
         log.info(f"Added {len(geo_df)} cell boundaries in sdata['{shapes_key}']")

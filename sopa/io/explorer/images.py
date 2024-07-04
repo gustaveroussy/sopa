@@ -236,4 +236,6 @@ def align(
 
     log.info(f"Adding image {image_name}:\n{image}")
     sdata.images[image_name] = image
-    sdata.write_element(image_name, overwrite=overwrite)
+
+    if sdata.is_backed():
+        sdata.write_element(image_name, overwrite=overwrite)

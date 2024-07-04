@@ -208,7 +208,8 @@ class Patches2D:
         )
 
         self.sdata.shapes[shapes_key] = geo_df
-        self.sdata.write_element(shapes_key, overwrite=overwrite)
+        if self.sdata.is_backed():
+            self.sdata.write_element(shapes_key, overwrite=overwrite)
 
         log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 

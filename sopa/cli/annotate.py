@@ -30,7 +30,9 @@ def fluorescence(
     assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
 
     higher_z_score(sdata.tables[SopaKeys.TABLE], marker_cell_dict, cell_type_key)
-    sdata.write_element(SopaKeys.TABLE, overwrite=True)
+
+    if sdata.is_backed():
+        sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
 
 @app_annotate.command()
@@ -71,4 +73,5 @@ def tangram(
         bag_size=bag_size,
         max_obs_reference=max_obs_reference,
     )
-    sdata.write_element(SopaKeys.TABLE, overwrite=True)
+    if sdata.is_backed():
+        sdata.write_element(SopaKeys.TABLE, overwrite=True)

@@ -135,6 +135,7 @@ def polygon_selection(
         geo_df, transformations=get_transformation(sdata[image_key], get_all=True).copy()
     )
     sdata.shapes[ROI.KEY] = geo_df
-    sdata.write_element(ROI.KEY, overwrite=True)
+    if sdata.is_backed():
+        sdata.write_element(ROI.KEY, overwrite=True)
 
     log.info(f"Polygon saved in sdata['{ROI.KEY}']")
