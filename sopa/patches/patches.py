@@ -314,7 +314,7 @@ class TranscriptPatches:
 
         if use_prior:
             prior_boundaries = self.sdata[shapes_key]
-            _map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
+            _map_transcript_to_cell(self.sdata, shapes_key, self.df, prior_boundaries)
 
         self._setup_patches_directory()
 
@@ -365,6 +365,7 @@ class TranscriptPatches:
         self._write_points(patches_gdf, points_gdf, mode="a")
 
     def _write_points(self, patches_gdf: gpd.GeoDataFrame, points_gdf: gpd.GeoDataFrame, mode="w"):
+        patches_gdf.index.name = "index_right"  # to reuse the index name later
         df_merged: gpd.GeoDataFrame = points_gdf.sjoin(patches_gdf)
 
         for index, patch_df in df_merged.groupby("index_right"):
@@ -388,6 +389,7 @@ def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int =
     points_gdf = gpd.GeoDataFrame(
         partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
     )
+    gdf.index.name = "index_right"  # to reuse the index name later
     spatial_join = points_gdf.sjoin(gdf, how="left")
     spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
     cell_ids = (spatial_join["index_right"].fillna(-1) + 1 + na_cells).astype(int)

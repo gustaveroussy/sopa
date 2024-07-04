@@ -132,6 +132,7 @@ class Aggregator:
         old_geo_df = self.sdata[old_shapes_key]
         geo_df = to_intrinsic(self.sdata, self.geo_df, old_geo_df)
 
+        geo_df.index.name = "index_right"  # to reuse the index name later
         gdf_join = gpd.sjoin(old_geo_df, geo_df)
         gdf_join["geometry_right"] = gdf_join["index_right"].map(lambda i: geo_df.geometry.iloc[i])
         gdf_join["overlap_ratio"] = gdf_join.apply(_overlap_area_ratio, axis=1)
