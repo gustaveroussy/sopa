@@ -12,7 +12,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 
 from .._constants import ROI
-from .._sdata import get_intrinsic_cs, get_item, save_shapes
+from .._sdata import get_intrinsic_cs, get_item
 
 log = logging.getLogger(__name__)
 
@@ -114,6 +114,5 @@ def _save_tissue_segmentation(
     )
 
     sdata.shapes[ROI.KEY] = geo_df
-    save_shapes(sdata, ROI.KEY)
 
     log.info(f"Tissue segmentation saved in sdata['{ROI.KEY}']")

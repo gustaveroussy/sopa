@@ -16,7 +16,7 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from .._constants import SopaKeys
-from .._sdata import get_element, get_key, save_shapes, save_table
+from .._sdata import get_element, get_key
 from . import aggregate, shapes
 
 log = logging.getLogger(__name__)
@@ -84,10 +84,10 @@ def resolve(
     )
 
     sdata.shapes[shapes_key] = geo_df
-    save_shapes(sdata, shapes_key, overwrite=True)
+    sdata.write_element(shapes_key, overwrite=True)
 
     sdata.tables[SopaKeys.TABLE] = table
-    save_table(sdata, SopaKeys.TABLE)
+    sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
     log.info(
         f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']"

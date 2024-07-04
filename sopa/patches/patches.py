@@ -18,13 +18,7 @@ from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
-from .._sdata import (
-    get_boundaries,
-    get_item,
-    get_spatial_image,
-    save_shapes,
-    to_intrinsic,
-)
+from .._sdata import get_boundaries, get_item, get_spatial_image, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -211,7 +205,7 @@ class Patches2D:
         )
 
         self.sdata.shapes[shapes_key] = geo_df
-        save_shapes(self.sdata, shapes_key, overwrite=overwrite)
+        self.sdata.write_element(shapes_key, overwrite=overwrite)
 
         log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 

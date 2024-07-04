@@ -19,7 +19,7 @@ from spatialdata.transformations import Scale
 from xarray import DataArray
 
 from .._constants import SopaKeys
-from .._sdata import get_intrinsic_cs, get_key, save_image
+from .._sdata import get_intrinsic_cs, get_key
 from ..segmentation import Patches2D
 from . import models
 
@@ -242,7 +242,6 @@ def infer_wsi_patches(
 
     output_key = f"sopa_{infer.model_str}"
     sdata.images[output_key] = output_image
-    save_image(sdata, output_key)
 
     log.info(f"Patch predictions saved as an image in sdata['{output_key}']")
 

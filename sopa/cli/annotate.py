@@ -22,7 +22,6 @@ def fluorescence(
     For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
     """
     from sopa._constants import SopaKeys
-    from sopa._sdata import save_table
     from sopa.annotation.fluorescence import higher_z_score
     from sopa.io.standardize import read_zarr_standardized
 
@@ -31,7 +30,7 @@ def fluorescence(
     assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
 
     higher_z_score(sdata.tables[SopaKeys.TABLE], marker_cell_dict, cell_type_key)
-    save_table(sdata, SopaKeys.TABLE)
+    sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
 
 @app_annotate.command()
@@ -58,7 +57,6 @@ def tangram(
     import anndata
 
     from sopa._constants import SopaKeys
-    from sopa._sdata import save_table
     from sopa.annotation.tangram.run import tangram_annotate
     from sopa.io.standardize import read_zarr_standardized
 
@@ -73,4 +71,4 @@ def tangram(
         bag_size=bag_size,
         max_obs_reference=max_obs_reference,
     )
-    save_table(sdata, SopaKeys.TABLE)
+    sdata.write_element(SopaKeys.TABLE, overwrite=True)

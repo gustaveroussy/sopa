@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Iterator
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-import zarr
 from datatree import DataTree
-from ome_zarr.io import parse_url
 from spatialdata import SpatialData
-from spatialdata._io import write_image, write_shapes, write_table
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
 from xarray import DataArray
@@ -191,53 +187,3 @@ def get_spatial_image(
     if return_key:
         return key, image
     return image
-
-
-def save_shapes(
-    sdata: SpatialData,
-    name: str,
-    overwrite: bool = False,
-) -> None:
-    if not sdata.is_backed():
-        return
-
-    elem_group = sdata._init_add_element(name=name, element_type="shapes", overwrite=overwrite)
-    write_shapes(
-        shapes=sdata.shapes[name],
-        group=elem_group,
-        name=name,
-    )
-
-
-def save_image(
-    sdata: SpatialData,
-    name: str,
-    overwrite: bool = False,
-) -> None:
-    if not sdata.is_backed():
-        return
-
-    elem_group = sdata._init_add_element(name=name, element_type="images", overwrite=overwrite)
-    write_image(
-        image=sdata.images[name],
-        group=elem_group,
-        name=name,
-    )
-    from spatialdata._io.io_raster import _read_multiscale
-
-    # reload the image from the Zarr storage so that now the element is lazy loaded, and most importantly,
-    # from the correct storage
-    assert elem_group.path == "images"
-    path = Path(elem_group.store.path) / "images" / name
-    image = _read_multiscale(path, raster_type="image")
-    sdata.images[name] = image
-
-
-def save_table(sdata: SpatialData, name: str):
-    if not sdata.is_backed():
-        return
-
-    store = parse_url(sdata.path, mode="r+").store
-    root = zarr.group(store=store)
-    elem_group = root.require_group(name="tables")
-    write_table(table=sdata.tables[name], group=elem_group, name=name)

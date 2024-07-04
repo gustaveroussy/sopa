@@ -13,7 +13,7 @@ from spatialdata.transformations import Affine, set_transformation
 from tqdm import tqdm
 from xarray import DataArray
 
-from ..._sdata import get_intrinsic_cs, get_spatial_image, save_image
+from ..._sdata import get_intrinsic_cs, get_spatial_image
 from ...utils.image import resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
@@ -236,4 +236,4 @@ def align(
 
     log.info(f"Adding image {image_name}:\n{image}")
     sdata.images[image_name] = image
-    save_image(sdata, image_name, overwrite=overwrite)
+    sdata.write_element(image_name, overwrite=overwrite)

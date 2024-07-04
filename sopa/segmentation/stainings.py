@@ -16,7 +16,7 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from .._constants import SopaKeys
-from .._sdata import get_spatial_image, save_shapes
+from .._sdata import get_spatial_image
 from . import shapes
 
 log = logging.getLogger(__name__)
@@ -181,6 +181,6 @@ class StainingSegmentation:
             geo_df, transformations=get_transformation(image, get_all=True).copy()
         )
         sdata.shapes[shapes_key] = geo_df
-        save_shapes(sdata, shapes_key, overwrite=True)
+        sdata.write_element(shapes_key, overwrite=True)
 
         log.info(f"Added {len(geo_df)} cell boundaries in sdata['{shapes_key}']")

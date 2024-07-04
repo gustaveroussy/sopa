@@ -26,10 +26,8 @@ from .._sdata import (
     get_element,
     get_item,
     get_spatial_image,
-    save_shapes,
+    to_intrinsic,
 )
-from .._sdata import save_table as _save_table
-from .._sdata import to_intrinsic
 from ..io.explorer.utils import str_cell_id
 from . import shapes
 
@@ -162,7 +160,7 @@ class Aggregator:
 
         self.geo_df.index = list(self.table.obs_names)
         self.sdata.shapes[self.shapes_key] = self.geo_df
-        save_shapes(self.sdata, self.shapes_key, overwrite=True)
+        self.sdata.write_element(self.shapes_key, overwrite=True)
 
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
@@ -190,7 +188,7 @@ class Aggregator:
         self.sdata.tables[SopaKeys.TABLE] = self.table
 
         if save_table:
-            _save_table(self.sdata, SopaKeys.TABLE)
+            self.sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
