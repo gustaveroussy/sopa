@@ -304,7 +304,7 @@ class TranscriptPatches:
     ):
         from sopa.segmentation.transcripts import copy_segmentation_config
 
-        assert use_prior is None or cell_key is None, "Cannot use both `use_prior` and `cell_key`."
+        assert not use_prior or cell_key is None, "Cannot use both `use_prior` and `cell_key`."
 
         log.info("Writing sub-CSV for transcript segmentation")
 
