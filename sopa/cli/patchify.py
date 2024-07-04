@@ -63,7 +63,7 @@ def baysor(
         help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation"
         f" Default is '{SopaKeys.DEFAULT_CELL_KEY}' if cell_key=None",
     ),
-    unassigned_value: int = typer.Option(
+    unassigned_value: str = typer.Option(
         None,
         help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
     ),
@@ -119,7 +119,7 @@ def comseg(
         help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation."
         f" Default is {SopaKeys.DEFAULT_CELL_KEY} if cell_key=None",
     ),
-    unassigned_value: int = typer.Option(
+    unassigned_value: str = typer.Option(
         None,
         help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
     ),
@@ -170,7 +170,7 @@ def _patchify_transcripts(
     config: str,
     cell_key: str,
     use_prior: bool,
-    unassigned_value: int,
+    unassigned_value: str,
     min_transcripts_per_patch: int = 4000,
     min_cells_per_patch: int | None = None,
     shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
@@ -198,6 +198,9 @@ def _patchify_transcripts(
 
     sdata = read_zarr_standardized(sdata_path)
     sanity_check(sdata)
+
+    if isinstance(unassigned_value, str) and unassigned_value.isdigit():
+        unassigned_value = int(unassigned_value)
 
     assert (
         config or config_path is not None
