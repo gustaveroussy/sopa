@@ -3,6 +3,7 @@
 ### Added
 - Support Xenium multimodal segmentation as a prior for Baysor (#80)
 - For snakemake, you can set a `BAYSOR_EXECUTABLE_PATH` environment variable to indicate the path of the Baysor executable
+- Added [ComSeg](https://github.com/fish-quant/ComSeg) segmentation by @tdefa (#76)
 
 ### Fix
 - Fix Xenium reader issue for recent machine versions (#80)
