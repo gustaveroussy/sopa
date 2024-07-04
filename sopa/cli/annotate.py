@@ -32,7 +32,8 @@ def fluorescence(
     higher_z_score(sdata.tables[SopaKeys.TABLE], marker_cell_dict, cell_type_key)
 
     if sdata.is_backed():
-        sdata.write_element(SopaKeys.TABLE, overwrite=True)
+        sdata.delete_element_from_disk(SopaKeys.TABLE)
+        sdata.write_element(SopaKeys.TABLE)
 
 
 @app_annotate.command()
@@ -74,4 +75,5 @@ def tangram(
         max_obs_reference=max_obs_reference,
     )
     if sdata.is_backed():
+        sdata.delete_element_from_disk(SopaKeys.TABLE)
         sdata.write_element(SopaKeys.TABLE, overwrite=True)

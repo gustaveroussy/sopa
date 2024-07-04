@@ -103,11 +103,13 @@ class Aggregator:
             self.geo_df = self.sdata[shapes_key]
 
         self.table = None
+        self._had_table = False
         if SopaKeys.TABLE in self.sdata.tables:
             table = self.sdata.tables[SopaKeys.TABLE]
             if len(self.geo_df) == table.n_obs:
                 log.info("Using existing table for aggregation")
                 self.table = table
+                self._had_table = True
 
     def overlay_segmentation(
         self,
@@ -164,7 +166,8 @@ class Aggregator:
         self.geo_df.index = list(self.table.obs_names)
         self.sdata.shapes[self.shapes_key] = self.geo_df
         if self.sdata.is_backed():
-            self.sdata.write_element(self.shapes_key, overwrite=True)
+            self.sdata.delete_element_from_disk(self.shapes_key)
+            self.sdata.write_element(self.shapes_key)
 
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
@@ -192,7 +195,9 @@ class Aggregator:
         self.sdata.tables[SopaKeys.TABLE] = self.table
 
         if save_table and self.sdata.is_backed():
-            self.sdata.write_element(SopaKeys.TABLE, overwrite=True)
+            if self._had_table:
+                self.sdata.delete_element_from_disk(SopaKeys.TABLE)
+            self.sdata.write_element(SopaKeys.TABLE)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
