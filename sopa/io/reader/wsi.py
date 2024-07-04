@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import Any
 
 import xarray
-from multiscale_spatial_image import MultiscaleSpatialImage
-from spatial_image import SpatialImage
+from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
+from xarray import DataArray
 
 
 def wsi(
@@ -16,7 +16,7 @@ def wsi(
     chunks: tuple[int, int, int] = (3, 256, 256),
     as_image: bool = False,
     backend: str = "tiffslide",
-) -> SpatialData:
+) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
     Args:
@@ -26,7 +26,7 @@ def wsi(
         backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
 
     Returns:
-        A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`
+        A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`, or just the DataTree if `as_image=True`
     """
     image_name, img, slide, slide_metadata = _open_wsi(path, backend=backend)
 
@@ -34,7 +34,7 @@ def wsi(
     for level, key in enumerate(list(img.keys())):
         suffix = key if key != "0" else ""
 
-        scale_image = SpatialImage(
+        scale_image = DataArray(
             img[key].transpose("S", f"Y{suffix}", f"X{suffix}"),
             dims=("c", "y", "x"),
         ).chunk(chunks)
@@ -51,7 +51,7 @@ def wsi(
 
         images[f"scale{key}"] = scale_image
 
-    multiscale_image = MultiscaleSpatialImage.from_dict(images)
+    multiscale_image = DataTree.from_dict(images)
     sdata = SpatialData(images={image_name: multiscale_image})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
@@ -134,7 +134,7 @@ def _open_wsi(
         slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store
     else:
-        raise ValueError("Invalid backend. Supported options are 'openslide' and 'tiffslide'.")
+        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide' and 'tiffslide'")
 
     zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 

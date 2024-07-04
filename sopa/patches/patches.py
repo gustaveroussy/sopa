@@ -10,12 +10,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from dask.diagnostics import ProgressBar
-from multiscale_spatial_image import MultiscaleSpatialImage
+from datatree import DataTree
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
+from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
 from .._sdata import (
@@ -97,10 +97,10 @@ class Patches2D:
         self.element_name = element_name
         self.element = sdata[element_name]
 
-        if isinstance(self.element, MultiscaleSpatialImage):
+        if isinstance(self.element, DataTree):
             self.element = get_spatial_image(sdata, element_name)
 
-        if isinstance(self.element, SpatialImage):
+        if isinstance(self.element, DataArray):
             xmin, ymin = 0, 0
             xmax, ymax = len(self.element.coords["x"]), len(self.element.coords["y"])
             tight, int_coords = False, True
@@ -230,7 +230,13 @@ class Patches2D:
         min_transcripts_per_patch: int = 4000,
         shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
     ) -> list[int]:
-        """Patchification of the transcripts
+        """Creation of patches for the transcripts.
+
+        !!! info "Prior segmentation usage"
+            To save assign a prior segmentation to each transcript, you can either use `cell_key` or `use_prior`:
+
+            - If a segmentation has already been performed (for example an existing 10X-Genomics segmentation), use `cell_key` to denote the column of the transcript dataframe containing the cell IDs (and optionaly `unassigned_value`).
+            - If you have already run Cellpose with Sopa, use `use_prior` (no need to provide `cell_key` and `unassigned_value`).
 
         Args:
             temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
@@ -300,15 +306,14 @@ class TranscriptPatches:
     ):
         from sopa.segmentation.transcripts import copy_segmentation_config
 
+        assert use_prior is None or cell_key is None, "Cannot use both `use_prior` and `cell_key`."
+
         log.info("Writing sub-CSV for transcript segmentation")
 
         self.temp_dir = Path(temp_dir)
 
-        if cell_key is None:
-            cell_key = SopaKeys.DEFAULT_CELL_KEY
-
-        if unassigned_value is not None and unassigned_value != 0:
-            self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
+        if cell_key is not None:
+            self.df[cell_key] = _assign_prior(self.df[cell_key], unassigned_value)
 
         if use_prior:
             prior_boundaries = self.sdata[shapes_key]
@@ -414,3 +419,26 @@ def _map_transcript_to_cell(
         df[cell_key] = df.map_partitions(get_cell_id)
     else:
         raise ValueError(f"Invalid dataframe type: {type(df)}")
+
+
+def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.Series:
+    if series.dtype == "string":
+        series = series.astype("category")
+        series = series.cat.as_known()
+
+        categories = series.cat.categories
+        assert (
+            unassigned_value in categories
+        ), f"Unassigned value {unassigned_value} not in categories"
+        categories = categories.delete(categories.get_loc(unassigned_value))
+        categories = pd.Index([unassigned_value]).append(categories)
+
+        series = series.cat.reorder_categories(categories)
+        return series.cat.codes
+
+    if series.dtype == "int":
+        if unassigned_value is None or unassigned_value == 0:
+            return series
+        return series.replace(unassigned_value, 0)
+
+    raise ValueError(f"Invalid dtype {series.dtype} for prior cell ids. Must be int or string.")

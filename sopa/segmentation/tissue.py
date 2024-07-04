@@ -6,7 +6,7 @@ import geopandas as gpd
 import numpy as np
 import spatialdata
 import xarray as xr
-from multiscale_spatial_image import MultiscaleSpatialImage
+from datatree import DataTree
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
@@ -53,12 +53,10 @@ def hsv_otsu(
 
     image_key, image = get_item(sdata, "images", image_key)
 
-    if level == 0 or not isinstance(image, MultiscaleSpatialImage):
-        log.warn(
-            "Running hsv_otsu on the full image can be slow. We recommend using a MultiscaleSpatialImage"
-        )
+    if level == 0 or not isinstance(image, DataTree):
+        log.warn("Running hsv_otsu on the full image can be slow. We recommend using a DataTree")
 
-    if isinstance(image, MultiscaleSpatialImage):
+    if isinstance(image, DataTree):
         level_keys = list(image.keys())
         image: xr.DataArray = next(iter(image[level_keys[level]].values()))
 

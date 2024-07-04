@@ -94,18 +94,18 @@ import sopa
 For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
 
 # Cite us
-Our article is not published yet. In the meantime, you can cite our [preprint](https://www.biorxiv.org/content/10.1101/2023.12.22.571863v1):
+Our article is published in [Nature Communications](https://www.nature.com/articles/s41467-024-48981-z). You can cite our paper as below:
 
 ```txt
-@article {Blampey2023.12.22.571863,
-    author = {Quentin Blampey & Kevin Mulder et al.},
-    title = {Sopa: a technology-invariant pipeline for analyses of image-based spatial-omics},
-    elocation-id = {2023.12.22.571863},
-    year = {2023},
-    doi = {10.1101/2023.12.22.571863},
-    publisher = {Cold Spring Harbor Laboratory},
-    URL = {https://www.biorxiv.org/content/early/2023/12/23/2023.12.22.571863},
-    eprint = {https://www.biorxiv.org/content/early/2023/12/23/2023.12.22.571863.full.pdf},
-    journal = {bioRxiv}
+@article{blampey_sopa_2024,
+	title = {Sopa: a technology-invariant pipeline for analyses of image-based spatial omics},
+	volume = {15},
+	url = {https://www.nature.com/articles/s41467-024-48981-z},
+	doi = {10.1038/s41467-024-48981-z},
+	journal = {Nature Communications},
+	author = {Blampey, Quentin and Mulder, Kevin and Gardet, Margaux and Christodoulidis, Stergios and Dutertre, Charles-Antoine and André, Fabrice and Ginhoux, Florent and Cournède, Paul-Henry},
+	year = {2024},
+	note = {Publisher: Nature Publishing Group},
+	pages = {4981},
 }
 ```

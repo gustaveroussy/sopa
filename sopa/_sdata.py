@@ -8,13 +8,13 @@ import geopandas as gpd
 import pandas as pd
 import xarray as xr
 import zarr
-from multiscale_spatial_image import MultiscaleSpatialImage
+from datatree import DataTree
 from ome_zarr.io import parse_url
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata._io import write_image, write_shapes, write_table
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
+from xarray import DataArray
 
 from ._constants import SopaKeys
 
@@ -150,18 +150,18 @@ def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
     return adata.to_df()
 
 
-def iter_scales(image: MultiscaleSpatialImage) -> Iterator[xr.DataArray]:
-    """Iterates through all the scales of a `MultiscaleSpatialImage`
+def iter_scales(image: DataTree) -> Iterator[xr.DataArray]:
+    """Iterates through all the scales of a `DataTree`
 
     Args:
-        image: a `MultiscaleSpatialImage`
+        image: a `DataTree`
 
     Yields:
         Each scale (as a `xr.DataArray`)
     """
     assert isinstance(
-        image, MultiscaleSpatialImage
-    ), f"Multiscale iteration is reserved for type MultiscaleSpatialImage. Found {type(image)}"
+        image, DataTree
+    ), f"Multiscale iteration is reserved for type DataTree. Found {type(image)}"
 
     for scale in image:
         yield next(iter(image[scale].values()))
@@ -169,8 +169,8 @@ def iter_scales(image: MultiscaleSpatialImage) -> Iterator[xr.DataArray]:
 
 def get_spatial_image(
     sdata: SpatialData, key: str | None = None, return_key: bool = False
-) -> SpatialImage | tuple[str, SpatialImage]:
-    """Gets a SpatialImage from a SpatialData object (if the image has multiple scale, the `scale0` is returned)
+) -> DataArray | tuple[str, DataArray]:
+    """Gets a DataArray from a SpatialData object (if the image has multiple scale, the `scale0` is returned)
 
     Args:
         sdata: SpatialData object.
@@ -185,8 +185,8 @@ def get_spatial_image(
     assert key is not None, "One image in `sdata.images` is required"
 
     image = sdata.images[key]
-    if isinstance(image, MultiscaleSpatialImage):
-        image = SpatialImage(next(iter(image["scale0"].values())))
+    if isinstance(image, DataTree):
+        image = next(iter(image["scale0"].values()))
 
     if return_key:
         return key, image

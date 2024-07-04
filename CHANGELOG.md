@@ -1,4 +1,20 @@
-## [1.x.x] - 2024-xx-xx
+## [1.1.1] - 2024-xx-xx
+
+### Added
+- Support Xenium multimodal segmentation as a prior for Baysor (#80)
+- For snakemake, you can set a `BAYSOR_EXECUTABLE_PATH` environment variable to indicate the path of the Baysor executable
+
+### Fix
+- Fix Xenium reader issue for recent machine versions (#80)
+- Fix type issue (`DataTree` and `DataArray`) related to `spatialdata>=0.2.0` (#85)
+
+### Changed
+- Fully depends on `spatialdata-io` for the MERSCOPE and the Xenium reader
+- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
+
+## [1.1.0] - 2024-06-11
+
+First post-publication release
 
 ### Changed
 - Using `rioxarray` as a default backend for MERSCOPE data if installed

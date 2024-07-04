@@ -1,23 +1,18 @@
+# Using the 10X Genomics multimodal segmentation as a prior for Baysor.
+
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
   technology: xenium
 
 patchify:
-  patch_width_pixel: 6000
-  patch_overlap_pixel: 150
   patch_width_microns: 1000
   patch_overlap_microns: 20
 
 segmentation:
-  cellpose:
-    diameter: 30
-    channels: ["DAPI"] # among "DAPI", "ATP1A1/CD45/E-Cadherin", "18S", "AlphaSMA/Vimentin"
-    flow_threshold: 2
-    cellprob_threshold: -6
-    min_area: 400
-
   baysor:
     min_area: 20
+    cell_key: cell_id # this allows to use the prior segmentation performed by 10X Genomics
+    unassigned_value: UNASSIGNED
 
     config:
       data:
@@ -34,7 +29,7 @@ segmentation:
       segmentation:
         scale: 6.25 # typical cell radius
         scale_std: "25%" # cell radius standard deviation
-        prior_segmentation_confidence: 1 # confidence of the cellpose confidence (float in [0, 1])
+        prior_segmentation_confidence: 0
         estimate_scale_from_centers: false
         n_clusters: 4
         iters: 500

@@ -12,11 +12,11 @@ except ImportError:
 
 import numpy as np
 import tqdm
-from multiscale_spatial_image import MultiscaleSpatialImage
-from spatial_image import SpatialImage
+from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
+from xarray import DataArray
 
 from .._constants import SopaKeys
 from .._sdata import get_intrinsic_cs, get_key, save_image
@@ -83,7 +83,7 @@ def _get_extraction_parameters(
 class Inference:
     def __init__(
         self,
-        image: MultiscaleSpatialImage | SpatialImage,
+        image: DataTree | DataArray,
         model: Callable | str,
         patch_width: int,
         level: int | None = 0,
@@ -113,11 +113,11 @@ class Inference:
 
         self._get_extraction_parameters()
 
-        if isinstance(self.image, MultiscaleSpatialImage):
+        if isinstance(self.image, DataTree):
             self.image = next(iter(self.image[f"scale{self.level}"].values()))
 
     def _get_extraction_parameters(self):
-        if isinstance(self.image, SpatialImage):
+        if isinstance(self.image, DataArray):
             self.resize_factor, self.patch_width_scale0, self.downsample = 1, self.patch_width, 1
             return
 
@@ -147,7 +147,7 @@ class Inference:
         patch_width: int,
     ) -> np.ndarray:
         """
-        Extract a numpy patch from the MultiscaleSpatialImage given a bounding box
+        Extract a numpy patch from the image given a bounding box
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
         image_patch = self.image.sel(x=slice(box[0], box[2]), y=slice(box[1], box[3])).values
@@ -190,7 +190,7 @@ def infer_wsi_patches(
     image_key: str | None = None,
     batch_size: int = 32,
     device: str = None,
-) -> SpatialImage | bool:
+) -> DataArray | bool:
     """Create an image made of patch based predictions of a WSI image.
 
     !!! info
@@ -208,7 +208,7 @@ def infer_wsi_patches(
         device: Device used for the computer vision model.
 
     Returns:
-        If the processing was successful, returns the `SpatialImage` of shape `(C,Y,X)` containing the model predictions, else `False`
+        If the processing was successful, returns the `DataArray` of shape `(C,Y,X)` containing the model predictions, else `False`
     """
     image_key = get_key(sdata, "images", image_key)
     image = sdata.images[image_key]
@@ -234,7 +234,7 @@ def infer_wsi_patches(
         output_image[:, loc_y, loc_x] = pred
 
     patch_step = infer.patch_width_scale0 - infer.downsample * patch_overlap
-    output_image = SpatialImage(output_image, dims=("c", "y", "x"))
+    output_image = DataArray(output_image, dims=("c", "y", "x"))
     output_image = Image2DModel.parse(
         output_image,
         transformations={infer.cs: Scale([patch_step, patch_step], axes=("x", "y"))},

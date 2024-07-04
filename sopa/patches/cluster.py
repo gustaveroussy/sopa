@@ -6,8 +6,8 @@ import anndata
 import geopandas as gpd
 import numpy as np
 import scanpy as sc
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
+from xarray import DataArray
 
 from sopa._constants import SopaKeys
 
@@ -27,7 +27,7 @@ METHODS_DICT = {
 
 def cluster_embeddings(
     sdata: SpatialData,
-    element: SpatialImage | str,
+    element: DataArray | str,
     method: Callable | str = "leiden",
     key_added: str = "cluster",
     **method_kwargs: str,
@@ -36,7 +36,7 @@ def cluster_embeddings(
 
     Args:
         sdata: A `SpatialData` object
-        element: The `SpatialImage` containing the embeddings, or the name of the element
+        element: The `DataArray` containing the embeddings, or the name of the element
         method: Callable that takes as an input an array of size `(n_patches x embedding_size)` and returns an array of clusters of size `n_patches`, or an available method name (`leiden`)
         key_added: The key containing the clusters to be added to the patches `GeoDataFrame`
         method_kwargs: kwargs provided to the method callable
