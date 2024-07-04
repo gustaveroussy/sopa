@@ -6,6 +6,7 @@
 
 ### Fix
 - Fix Xenium reader issue for recent machine versions (#80)
+- Fix type issue (`DataTree` and `DataArray`) related to `spatialdata>=0.2.0` (#85)
 
 ### Changed
 - Fully depends on `spatialdata-io` for the MERSCOPE and the Xenium reader

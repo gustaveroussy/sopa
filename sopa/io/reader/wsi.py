@@ -5,7 +5,6 @@ from typing import Any
 
 import xarray
 from datatree import DataTree
-from multiscale_spatial_image import MultiscaleSpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
@@ -52,7 +51,7 @@ def wsi(
 
         images[f"scale{key}"] = scale_image
 
-    multiscale_image = MultiscaleSpatialImage.from_dict(images)
+    multiscale_image = DataTree.from_dict(images)
     sdata = SpatialData(images={image_name: multiscale_image})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
