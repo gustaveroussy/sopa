@@ -4,12 +4,15 @@ import logging
 from math import ceil
 from pathlib import Path
 
-import dask.dataframe as dd
+import dask
 import numpy as np
 import zarr
 
 from ._constants import ExplorerConstants, FileNames
 from .utils import explorer_file_path
+
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 

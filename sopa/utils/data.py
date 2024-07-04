@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 
+import dask
 import dask.array as da
-import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -15,6 +15,9 @@ from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 from spatialdata.transformations import Affine, Identity
 
 from .._constants import SopaKeys
+
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 

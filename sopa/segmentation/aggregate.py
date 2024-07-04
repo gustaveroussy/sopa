@@ -5,7 +5,6 @@ from functools import partial
 
 import anndata
 import dask
-import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -30,6 +29,9 @@ from .._sdata import (
 )
 from ..io.explorer.utils import str_cell_id
 from . import shapes
+
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 
