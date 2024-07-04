@@ -152,7 +152,7 @@ def comseg(
         config=config,
         cell_key=cell_key,
         unassigned_value=unassigned_value,
-        use_prior=True,
+        use_prior=cell_key is None,
         min_transcripts_per_patch=min_transcripts_per_patch,
         min_cells_per_patch=min_cells_per_patch,
         shapes_key=shapes_key,
@@ -171,8 +171,8 @@ def _patchify_transcripts(
     cell_key: str,
     use_prior: bool,
     unassigned_value: int,
-    min_transcripts_per_patch: int,
-    min_cells_per_patch: int,
+    min_transcripts_per_patch: int = 4000,
+    min_cells_per_patch: int | None = None,
     shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
 ):
     """Prepare patches for transcript-based segmentation for the different available methods (Baysor, ComSeg).
@@ -218,6 +218,7 @@ def _patchify_transcripts(
     )
 
     if filename == SopaFiles.PATCHES_DIRS_COMSEG:
+        assert min_cells_per_patch is not None, "For ComSeg, you must provide min_cells_per_patch"
         assert (
             use_prior
         ), "For ComSeg, you must use the prior segmentation of nuclei or from other staining"

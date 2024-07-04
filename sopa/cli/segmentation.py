@@ -208,20 +208,22 @@ def comseg(
 
     if patch_dir is None:
         patch_dir = _default_boundary_dir(sdata_path, SopaKeys.COMSEG_BOUNDARIES)
+    patch_dir = Path(patch_dir)
 
-    if patch_index is None:
+    if patch_index is not None:
+        with open(patch_dir / str(patch_index) / config_name, "r") as f:
+            config = json.load(f)
+        print(patch_dir, patch_index, config)
+        comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
+    else:
         log.warn(
             "Running segmentation in a sequential manner. This is not recommended on large images because it can be extremely slow (see https://github.com/gustaveroussy/sopa/discussions/36 for more details)"
         )
         for path_index_folder in tqdm(list(Path(patch_dir).glob("*")), desc="Run all patches"):
-            patch_index = int(path_index_folder.stem)
-            config_path = Path(patch_dir) / f"{patch_index}/{config_name}"
-            with open(config_path, "r") as f:
-                config = json.load(f)
+            if not path_index_folder.stem.isdigit():
+                continue
 
-            comseg_patch(temp_dir=patch_dir, patch_index=int(path_index_folder.stem), config=config)
-    else:
-        config_path = Path(patch_dir) / f"{patch_index}/{config_name}"
-        with open(config_path, "r") as f:
-            config = json.load(f)
-        comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
+            patch_index = int(path_index_folder.stem)
+            with open(patch_dir / str(patch_index) / config_name, "r") as f:
+                config = json.load(f)
+            comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
