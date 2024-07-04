@@ -2,6 +2,7 @@
 
 ### Added
 - Support Xenium multimodal segmentation as a prior for Baysor (#80)
+- For snakemake, you can set a `BAYSOR_EXECUTABLE_PATH` environment variable to indicate the path of the Baysor executable
 
 ### Fix
 - Fix Xenium reader issue for recent machine versions (#80)

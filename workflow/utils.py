@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -206,13 +207,17 @@ def stringify_for_cli(value) -> str:
 
 
 def check_baysor_executable_path(config: dict):
+    baysor_path = os.environ.get("BAYSOR_EXECUTABLE_PATH")
+
+    error_message = """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"], or set the BAYSOR_EXECUTABLE_PATH env variable."""
+
+    if baysor_path is None:
+        assert "executables" in config and "baysor" in config["executables"], error_message
+
+        baysor_path = Path(config["executables"]["baysor"]).expanduser()
+
     assert (
-        "executables" in config and "baysor" in config["executables"]
-    ), """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"]"""
-
-    baysor_path = Path(config["executables"]["baysor"]).expanduser()
-
-    assert baysor_path.exists(), f"""Baysor executable {baysor_path} does not exist.\
-        \nCheck that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor), or update config["executables"]["baysor"] to use the right executable location"""
+        baysor_path.exists()
+    ), f"""Baysor executable {baysor_path} does not exist. {error_message} Also check that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor)."""
 
     return baysor_path

@@ -9,7 +9,10 @@ Follow the ["Snakemake setup" instructions](../../getting_started/#snakemake-set
 !!! warning "Baysor usage"
     Even though `pip install -e '.[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
 
-    If your path to the baysor executable is not the default one (i.e. `~/.julia/bin/baysor`), update the config described below to provide the right path to the executable.
+    If your path to the baysor executable is not the default one (i.e. `~/.julia/bin/baysor`), you can do one of the following:
+
+    - set a `BAYSOR_EXECUTABLE_PATH` environment variable with the path to your Baysor executable.
+    - update the config described below to provide the right path to your Baysor executable.
 
 ## Choose a config
 
