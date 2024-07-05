@@ -1,3 +1,19 @@
+## [1.1.1] - 2024-xx-xx
+
+### Added
+- Support Xenium multimodal segmentation as a prior for Baysor (#80)
+- For snakemake, you can set a `BAYSOR_EXECUTABLE_PATH` environment variable to indicate the path of the Baysor executable
+- Added [ComSeg](https://github.com/fish-quant/ComSeg) segmentation by @tdefa (#76)
+
+### Fix
+- Fix Xenium reader issue for recent machine versions (#80)
+- Fix type issue (`DataTree` and `DataArray`) related to `spatialdata>=0.2.0` (#85)
+- Fix `sjoin` issue related to `geopandas>=1.0.0`
+
+### Changed
+- Fully depends on `spatialdata-io` for the MERSCOPE and the Xenium reader
+- Use `DataArray` and `DataTree` typing instead of (Multiscale)SpatialImage (as in `spatialdata>=0.2.0`)
+
 ## [1.1.0] - 2024-06-11
 
 First post-publication release

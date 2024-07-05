@@ -68,6 +68,31 @@ checkpoint patchify_baysor:
         sopa patchify baysor {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
         """
 
+checkpoint patchify_comseg:
+    input:
+        paths.sdata_zgroup,
+        paths.smk_cellpose_boundaries if args.cellpose else [],
+    output:
+        patches_file = paths.smk_patches_file_comseg,
+        smk_comseg_temp_dir = directory(paths.smk_comseg_temp_dir),
+    params:
+        args_patchify = str(
+            args["patchify"].where([
+                "patch_width_microns",
+                "patch_overlap_microns",
+                "min_transcripts_per_patch",
+                "min_cells_per_patch",
+            ],
+        )),
+        args_comseg = args.dump_comseg_patchify() if args.comseg else "",
+        arg_prior = "--use-prior" if args.cellpose else "",
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg} {params.arg_prior}
+        """
+
 rule patch_segmentation_cellpose:
     input:
         paths.smk_patches_file_image,
@@ -102,6 +127,22 @@ rule patch_segmentation_baysor:
 
         cd {input.baysor_patch}
         {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
+        """
+
+rule patch_segmentation_comseg:
+    input:
+        patches_file = paths.smk_patches_file_comseg,
+        baysor_patch = paths.smk_comseg_temp_dir / "{index}",
+    output:
+        paths.smk_comseg_temp_dir / "{index}" / "segmentation_polygons.json",
+        paths.smk_comseg_temp_dir / "{index}" / "segmentation_counts.h5ad",
+    conda:
+        "sopa"
+    resources:
+        mem_mb=128_000,
+    shell:
+        """
+        sopa segmentation comseg {paths.sdata_path} --patch-dir {paths.smk_comseg_temp_dir} --patch-index {wildcards.index}
         """
 
 def get_input_resolve(name, dirs=False):
@@ -141,9 +182,38 @@ rule resolve_baysor:
         rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
         """
 
+rule resolve_comseg:
+    input:
+        files = get_input_resolve("comseg"),
+        dirs = get_input_resolve("comseg",dirs=True),
+    output:
+        touch(paths.smk_comseg_boundaries),
+        touch(paths.smk_table),
+    conda:
+        "sopa"
+    params:
+        args_patches_dirs=lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
+        args_min_area=args.min_area("comseg"),
+    shell:
+        """
+        sopa resolve comseg {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
+
+        rm -r {paths.smk_comseg_temp_dir}    # cleanup large comseg files
+        """
+
+def get_smk_boundaries(args):
+    if args.baysor:
+        return paths.smk_baysor_boundaries
+    elif args.comseg:
+        return paths.smk_comseg_boundaries
+    elif args.cellpose:
+        return paths.smk_cellpose_boundaries
+    else:
+        raise ValueError("No segmentation method selected")
+
 rule aggregate:
     input:
-        paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
+        get_smk_boundaries(args),
     output:
         touch(paths.smk_aggregation),
     conda:
@@ -194,7 +264,7 @@ rule image_write:
 
 rule report:
     input:
-        paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
+        get_smk_boundaries(args),
         paths.smk_aggregation,
         paths.annotations if args.annotate else [],
     output:
@@ -208,7 +278,7 @@ rule report:
 
 rule explorer:
     input:
-        paths.smk_baysor_boundaries if args.baysor else paths.smk_cellpose_boundaries,
+        get_smk_boundaries(args),
         paths.smk_aggregation,
         paths.annotations if args.annotate else [],
     output:

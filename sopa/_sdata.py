@@ -1,20 +1,16 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Iterator
 
 import geopandas as gpd
 import pandas as pd
 import xarray as xr
-import zarr
-from multiscale_spatial_image import MultiscaleSpatialImage
-from ome_zarr.io import parse_url
-from spatial_image import SpatialImage
+from datatree import DataTree
 from spatialdata import SpatialData
-from spatialdata._io import write_image, write_shapes, write_table
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
+from xarray import DataArray
 
 from ._constants import SopaKeys
 
@@ -150,18 +146,18 @@ def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
     return adata.to_df()
 
 
-def iter_scales(image: MultiscaleSpatialImage) -> Iterator[xr.DataArray]:
-    """Iterates through all the scales of a `MultiscaleSpatialImage`
+def iter_scales(image: DataTree) -> Iterator[xr.DataArray]:
+    """Iterates through all the scales of a `DataTree`
 
     Args:
-        image: a `MultiscaleSpatialImage`
+        image: a `DataTree`
 
     Yields:
         Each scale (as a `xr.DataArray`)
     """
     assert isinstance(
-        image, MultiscaleSpatialImage
-    ), f"Multiscale iteration is reserved for type MultiscaleSpatialImage. Found {type(image)}"
+        image, DataTree
+    ), f"Multiscale iteration is reserved for type DataTree. Found {type(image)}"
 
     for scale in image:
         yield next(iter(image[scale].values()))
@@ -169,8 +165,8 @@ def iter_scales(image: MultiscaleSpatialImage) -> Iterator[xr.DataArray]:
 
 def get_spatial_image(
     sdata: SpatialData, key: str | None = None, return_key: bool = False
-) -> SpatialImage | tuple[str, SpatialImage]:
-    """Gets a SpatialImage from a SpatialData object (if the image has multiple scale, the `scale0` is returned)
+) -> DataArray | tuple[str, DataArray]:
+    """Gets a DataArray from a SpatialData object (if the image has multiple scale, the `scale0` is returned)
 
     Args:
         sdata: SpatialData object.
@@ -185,59 +181,9 @@ def get_spatial_image(
     assert key is not None, "One image in `sdata.images` is required"
 
     image = sdata.images[key]
-    if isinstance(image, MultiscaleSpatialImage):
-        image = SpatialImage(next(iter(image["scale0"].values())))
+    if isinstance(image, DataTree):
+        image = next(iter(image["scale0"].values()))
 
     if return_key:
         return key, image
     return image
-
-
-def save_shapes(
-    sdata: SpatialData,
-    name: str,
-    overwrite: bool = False,
-) -> None:
-    if not sdata.is_backed():
-        return
-
-    elem_group = sdata._init_add_element(name=name, element_type="shapes", overwrite=overwrite)
-    write_shapes(
-        shapes=sdata.shapes[name],
-        group=elem_group,
-        name=name,
-    )
-
-
-def save_image(
-    sdata: SpatialData,
-    name: str,
-    overwrite: bool = False,
-) -> None:
-    if not sdata.is_backed():
-        return
-
-    elem_group = sdata._init_add_element(name=name, element_type="images", overwrite=overwrite)
-    write_image(
-        image=sdata.images[name],
-        group=elem_group,
-        name=name,
-    )
-    from spatialdata._io.io_raster import _read_multiscale
-
-    # reload the image from the Zarr storage so that now the element is lazy loaded, and most importantly,
-    # from the correct storage
-    assert elem_group.path == "images"
-    path = Path(elem_group.store.path) / "images" / name
-    image = _read_multiscale(path, raster_type="image")
-    sdata.images[name] = image
-
-
-def save_table(sdata: SpatialData, name: str):
-    if not sdata.is_backed():
-        return
-
-    store = parse_url(sdata.path, mode="r+").store
-    root = zarr.group(store=store)
-    elem_group = root.require_group(name="tables")
-    write_table(table=sdata.tables[name], group=elem_group, name=name)

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -60,10 +61,13 @@ class WorkflowPaths:
         self.smk_patches = self.sopa_cache / "patches"
         self.smk_patches_file_image = self.sopa_cache / "patches_file_image"
         self.smk_patches_file_baysor = self.sopa_cache / "patches_file_baysor"
+        self.smk_patches_file_comseg = self.sopa_cache / "patches_file_comseg"
         self.smk_cellpose_temp_dir = self.sopa_cache / "cellpose_boundaries"
         self.smk_baysor_temp_dir = self.sopa_cache / "baysor_boundaries"
+        self.smk_comseg_temp_dir = self.sopa_cache / "comseg_boundaries"
         self.smk_cellpose_boundaries = self.sopa_cache / "cellpose_boundaries_done"
         self.smk_baysor_boundaries = self.sopa_cache / "baysor_boundaries_done"
+        self.smk_comseg_boundaries = self.sopa_cache / "comseg_boundaries_done"
         self.smk_aggregation = self.sopa_cache / "aggregation"
 
         # annotation files
@@ -105,6 +109,17 @@ class WorkflowPaths:
                 for i in indices
                 for file in BAYSOR_FILES
             ]
+        if name == "comseg":
+            indices = map(int, file_content.split())
+            COMSEG_FILES = ["segmentation_polygons.json", "segmentation_counts.h5ad"]
+
+            if dirs:
+                return [str(self.smk_comseg_temp_dir / str(i)) for i in indices]
+            return [
+                str(self.smk_comseg_temp_dir / str(i) / file)
+                for i in indices
+                for file in COMSEG_FILES
+            ]
 
 
 class Args:
@@ -122,6 +137,7 @@ class Args:
         # which segmentation method(s) is/are used
         self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
         self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
+        self.comseg = self.segmentation and "comseg" in self.config["segmentation"]
 
         # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
@@ -196,7 +212,17 @@ class Args:
 
     @property
     def gene_column(self):
-        return self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
+        if "baysor" in self.config["segmentation"]:
+            return self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
+        elif "comseg" in self.config["segmentation"]:
+            return self.config["segmentation"]["comseg"]["config"]["gene_column"]
+        else:
+            raise ValueError("No gene column found in the config")
+
+    ### ComSeg related methods
+
+    def dump_comseg_patchify(self):
+        return f'--comseg-temp-dir {self.paths.smk_comseg_temp_dir} {self["segmentation"]["comseg"].where(keys=["cell_key", "unassigned_value", "config", "shapes_key"])}'
 
 
 def stringify_for_cli(value) -> str:
@@ -206,13 +232,17 @@ def stringify_for_cli(value) -> str:
 
 
 def check_baysor_executable_path(config: dict):
+    baysor_path = os.environ.get("BAYSOR_EXECUTABLE_PATH")
+
+    error_message = """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"], or set the BAYSOR_EXECUTABLE_PATH env variable."""
+
+    if baysor_path is None:
+        assert "executables" in config and "baysor" in config["executables"], error_message
+
+        baysor_path = Path(config["executables"]["baysor"]).expanduser()
+
     assert (
-        "executables" in config and "baysor" in config["executables"]
-    ), """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"]"""
-
-    baysor_path = Path(config["executables"]["baysor"]).expanduser()
-
-    assert baysor_path.exists(), f"""Baysor executable {baysor_path} does not exist.\
-        \nCheck that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor), or update config["executables"]["baysor"] to use the right executable location"""
+        baysor_path.exists()
+    ), f"""Baysor executable {baysor_path} does not exist. {error_message} Also check that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor)."""
 
     return baysor_path

@@ -5,26 +5,23 @@ from functools import partial
 from math import ceil
 from pathlib import Path
 
-import dask.dataframe as dd
+import dask
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from dask.diagnostics import ProgressBar
-from multiscale_spatial_image import MultiscaleSpatialImage
+from datatree import DataTree
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
+from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
-from .._sdata import (
-    get_boundaries,
-    get_item,
-    get_spatial_image,
-    save_shapes,
-    to_intrinsic,
-)
+from .._sdata import get_boundaries, get_item, get_spatial_image, to_intrinsic
+
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -97,10 +94,10 @@ class Patches2D:
         self.element_name = element_name
         self.element = sdata[element_name]
 
-        if isinstance(self.element, MultiscaleSpatialImage):
+        if isinstance(self.element, DataTree):
             self.element = get_spatial_image(sdata, element_name)
 
-        if isinstance(self.element, SpatialImage):
+        if isinstance(self.element, DataArray):
             xmin, ymin = 0, 0
             xmax, ymax = len(self.element.coords["x"]), len(self.element.coords["y"])
             tight, int_coords = False, True
@@ -211,7 +208,8 @@ class Patches2D:
         )
 
         self.sdata.shapes[shapes_key] = geo_df
-        save_shapes(self.sdata, shapes_key, overwrite=overwrite)
+        if self.sdata.is_backed():
+            self.sdata.write_element(shapes_key, overwrite=overwrite)
 
         log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 
@@ -228,8 +226,15 @@ class Patches2D:
         config_name: str = SopaFiles.TOML_CONFIG_FILE,
         csv_name: str = SopaFiles.TRANSCRIPTS_FILE,
         min_transcripts_per_patch: int = 4000,
+        shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
     ) -> list[int]:
-        """Patchification of the transcripts
+        """Creation of patches for the transcripts.
+
+        !!! info "Prior segmentation usage"
+            To save assign a prior segmentation to each transcript, you can either use `cell_key` or `use_prior`:
+
+            - If a segmentation has already been performed (for example an existing 10X-Genomics segmentation), use `cell_key` to denote the column of the transcript dataframe containing the cell IDs (and optionaly `unassigned_value`).
+            - If you have already run Cellpose with Sopa, use `use_prior` (no need to provide `cell_key` and `unassigned_value`).
 
         Args:
             temp_dir: Temporary directory where each patch will be stored. Note that each patch will have its own subdirectory.
@@ -247,25 +252,28 @@ class Patches2D:
         """
         return TranscriptPatches(
             self, self.element, config_name, csv_name, min_transcripts_per_patch
-        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path)
+        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path, shapes_key)
 
     def patchify_centroids(
         self,
         temp_dir: str,
         shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
         csv_name: str = SopaFiles.CENTROIDS_FILE,
+        cell_key: str | None = None,
         min_cells_per_patch: int = 1,
     ) -> list[int]:
         assert isinstance(self.element, dd.DataFrame)
 
         centroids = to_intrinsic(self.sdata, shapes_key, self.element).geometry.centroid
         centroids = gpd.GeoDataFrame(geometry=centroids)
-        centroids[SopaKeys.DEFAULT_CELL_KEY] = range(1, len(centroids) + 1)
+        centroids[cell_key or SopaKeys.DEFAULT_CELL_KEY] = range(1, len(centroids) + 1)
         centroids["x"] = centroids.geometry.x
         centroids["y"] = centroids.geometry.y
         centroids["z"] = 0
 
-        TranscriptPatches(self, centroids, None, csv_name, min_cells_per_patch).write(temp_dir)
+        return TranscriptPatches(self, centroids, None, csv_name, min_cells_per_patch).write(
+            temp_dir, shapes_key=shapes_key
+        )
 
 
 class TranscriptPatches:
@@ -293,6 +301,7 @@ class TranscriptPatches:
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,
+        shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
     ):
         from sopa.segmentation.transcripts import copy_segmentation_config
 
@@ -300,15 +309,16 @@ class TranscriptPatches:
 
         self.temp_dir = Path(temp_dir)
 
-        if cell_key is None:
-            cell_key = SopaKeys.DEFAULT_CELL_KEY
+        assert (cell_key is None) or not use_prior, "Cannot use both cell_key and use_prior"
 
-        if unassigned_value is not None and unassigned_value != 0:
-            self.df[cell_key] = self.df[cell_key].replace(unassigned_value, 0)
+        if cell_key is not None:
+            self.df[cell_key] = _assign_prior(self.df[cell_key], unassigned_value)
 
         if use_prior:
-            prior_boundaries = self.sdata[SopaKeys.CELLPOSE_BOUNDARIES]
-            _map_transcript_to_cell(self.sdata, cell_key, self.df, prior_boundaries)
+            prior_boundaries = self.sdata[shapes_key]
+            _map_transcript_to_cell(
+                self.sdata, SopaKeys.DEFAULT_CELL_KEY, self.df, prior_boundaries
+            )
 
         self._setup_patches_directory()
 
@@ -359,6 +369,7 @@ class TranscriptPatches:
         self._write_points(patches_gdf, points_gdf, mode="a")
 
     def _write_points(self, patches_gdf: gpd.GeoDataFrame, points_gdf: gpd.GeoDataFrame, mode="w"):
+        patches_gdf.index.name = "index_right"  # to reuse the index name later
         df_merged: gpd.GeoDataFrame = points_gdf.sjoin(patches_gdf)
 
         for index, patch_df in df_merged.groupby("index_right"):
@@ -369,6 +380,8 @@ class TranscriptPatches:
 
 
 def _check_min_lines(path: str, n: int) -> bool:
+    if not Path(path).exists():  # empty file are not written at all
+        return False
     with open(path, "r") as f:
         for count, _ in enumerate(f):
             if count + 1 >= n:
@@ -380,6 +393,7 @@ def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int =
     points_gdf = gpd.GeoDataFrame(
         partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
     )
+    gdf.index.name = "index_right"  # to reuse the index name later
     spatial_join = points_gdf.sjoin(gdf, how="left")
     spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
     cell_ids = (spatial_join["index_right"].fillna(-1) + 1 + na_cells).astype(int)
@@ -408,3 +422,26 @@ def _map_transcript_to_cell(
         df[cell_key] = df.map_partitions(get_cell_id)
     else:
         raise ValueError(f"Invalid dataframe type: {type(df)}")
+
+
+def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.Series:
+    if series.dtype == "string":
+        series = series.astype("category")
+        series = series.cat.as_known()
+
+        categories = series.cat.categories
+        assert (
+            unassigned_value in categories
+        ), f"Unassigned value {unassigned_value} not in categories"
+        categories = categories.delete(categories.get_loc(unassigned_value))
+        categories = pd.Index([unassigned_value]).append(categories)
+
+        series = series.cat.reorder_categories(categories)
+        return series.cat.codes
+
+    if series.dtype == "int":
+        if unassigned_value is None or unassigned_value == 0:
+            return series
+        return series.replace(unassigned_value, 0)
+
+    raise ValueError(f"Invalid dtype {series.dtype} for prior cell ids. Must be int or string.")

@@ -1,0 +1,39 @@
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
+read:
+  technology: uniform
+
+patchify:
+  patch_width_microns: 400
+  patch_overlap_microns: 50
+  min_transcripts_per_patch : 4000
+  min_cells_per_patch: 3
+
+segmentation:
+  comseg:
+    min_area: 10
+    shapes_key: "cell_boundaries"
+
+    config:
+      dict_scale:
+        x: 1
+        y: 1
+        z: 1
+      mean_cell_diameter: 15
+      max_cell_radius: 15
+      k_nearest_neighbors: 5
+      alpha: 0.5
+      min_rna_per_cell: 10
+      gene_column: "feature_name"
+      allow_disconnected_polygon : true
+      norm_vector: false # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
+
+
+aggregate:
+  average_intensities: true
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
+
+
+explorer:
+  gene_column: "feature_name"
+  ram_threshold_gb: 4
+  pixel_size: 0.108

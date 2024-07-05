@@ -5,7 +5,6 @@ from functools import partial
 
 import anndata
 import dask
-import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -14,9 +13,9 @@ from anndata import AnnData
 from dask.diagnostics import ProgressBar
 from scipy.sparse import coo_matrix, csr_matrix
 from shapely.geometry import Polygon, box
-from spatial_image import SpatialImage
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
+from xarray import DataArray
 
 import sopa
 
@@ -26,12 +25,13 @@ from .._sdata import (
     get_element,
     get_item,
     get_spatial_image,
-    save_shapes,
+    to_intrinsic,
 )
-from .._sdata import save_table as _save_table
-from .._sdata import to_intrinsic
 from ..io.explorer.utils import str_cell_id
 from . import shapes
+
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -103,11 +103,13 @@ class Aggregator:
             self.geo_df = self.sdata[shapes_key]
 
         self.table = None
+        self._had_table = False
         if SopaKeys.TABLE in self.sdata.tables:
             table = self.sdata.tables[SopaKeys.TABLE]
             if len(self.geo_df) == table.n_obs:
                 log.info("Using existing table for aggregation")
                 self.table = table
+                self._had_table = True
 
     def overlay_segmentation(
         self,
@@ -132,6 +134,7 @@ class Aggregator:
         old_geo_df = self.sdata[old_shapes_key]
         geo_df = to_intrinsic(self.sdata, self.geo_df, old_geo_df)
 
+        geo_df.index.name = "index_right"  # to reuse the index name later
         gdf_join = gpd.sjoin(old_geo_df, geo_df)
         gdf_join["geometry_right"] = gdf_join["index_right"].map(lambda i: geo_df.geometry.iloc[i])
         gdf_join["overlap_ratio"] = gdf_join.apply(_overlap_area_ratio, axis=1)
@@ -162,7 +165,9 @@ class Aggregator:
 
         self.geo_df.index = list(self.table.obs_names)
         self.sdata.shapes[self.shapes_key] = self.geo_df
-        save_shapes(self.sdata, self.shapes_key, overwrite=True)
+        if self.sdata.is_backed():
+            self.sdata.delete_element_from_disk(self.shapes_key)
+            self.sdata.write_element(self.shapes_key)
 
         self.table.obsm["spatial"] = np.array(
             [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
@@ -189,8 +194,10 @@ class Aggregator:
 
         self.sdata.tables[SopaKeys.TABLE] = self.table
 
-        if save_table:
-            _save_table(self.sdata, SopaKeys.TABLE)
+        if save_table and self.sdata.is_backed():
+            if self._had_table:
+                self.sdata.delete_element_from_disk(SopaKeys.TABLE)
+            self.sdata.write_element(SopaKeys.TABLE)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
@@ -328,12 +335,12 @@ def average_channels(
 
 
 def _average_channels_aligned(
-    image: SpatialImage, geo_df: gpd.GeoDataFrame | list[Polygon]
+    image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon]
 ) -> np.ndarray:
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
-        image: A `SpatialImage` of shape `(n_channels, y, x)`
+        image: A `DataArray` of shape `(n_channels, y, x)`
         geo_df: A `GeoDataFrame` whose geometries are cell boundaries (polygons)
 
     Returns:
