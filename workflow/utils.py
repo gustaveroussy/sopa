@@ -226,7 +226,7 @@ class Args:
     ### ComSeg related methods
 
     def dump_comseg_patchify(self):
-        return f'--comseg-temp-dir {self.paths.smk_comseg_temp_dir} {self["segmentation"]["comseg"].where(keys=["cell_key", "unassigned_value", "config"])}'
+        return f'--comseg-temp-dir {self.paths.smk_comseg_temp_dir} {self["segmentation"]["comseg"].where(keys=["cell_key", "unassigned_value", "config", "shapes_key"])}'
 
 
 def stringify_for_cli(value) -> str:

@@ -23,11 +23,13 @@ segmentation:
         x: 1
         y: 1
         z: 1
-      mean_cell_diameter: 8
-      max_cell_radius: 15
+      mean_cell_diameter: 15
+      max_cell_radius: 25
+      allow_disconnected_polygon: false
       alpha: 0.5
       min_rna_per_cell: 5
       gene_column: "genes"
+      norm_vector: false # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
 
 
 aggregate:

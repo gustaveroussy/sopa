@@ -152,7 +152,7 @@ def comseg(
         config=config,
         cell_key=cell_key,
         unassigned_value=unassigned_value,
-        use_prior=cell_key is None,
+        use_prior=True,
         min_transcripts_per_patch=min_transcripts_per_patch,
         min_cells_per_patch=min_cells_per_patch,
         shapes_key=shapes_key,

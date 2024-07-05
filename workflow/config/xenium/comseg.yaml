@@ -7,13 +7,11 @@ patchify:
   patch_overlap_microns: 50
   min_transcripts_per_patch : 4000
   min_cells_per_patch: 3
-  shapes_key: "cell_boundaries"
-
-
 
 segmentation:
   comseg:
     min_area: 10
+    shapes_key: "cell_boundaries"
     config:
       dict_scale:
         x: 1
@@ -26,7 +24,7 @@ segmentation:
       min_rna_per_cell: 10
       gene_column: "feature_name"
       allow_disconnected_polygon : true
-      norm_vector: true # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
+      norm_vector: false # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
 
 
 aggregate:

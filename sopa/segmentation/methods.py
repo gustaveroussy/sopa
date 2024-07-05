@@ -84,10 +84,13 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
     import json
 
     try:
+        import comseg
         from comseg import dataset as ds
         from comseg import dictionary
     except ModuleNotFoundError:
         raise ModuleNotFoundError("Install comseg (`pip install comseg`) for this method to work")
+
+    assert comseg.__version__ >= "1.2", "comseg version should be >= 1.2"
 
     path_dataset_folder = Path(temp_dir) / str(patch_index)
 

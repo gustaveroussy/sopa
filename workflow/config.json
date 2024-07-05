@@ -1,0 +1,14 @@
+{
+    "dict_scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+    },
+    "mean_cell_diameter": 15,
+    "max_cell_radius": 20,
+    "allow_disconnected_polygon" : true,
+    "alpha": 0.5,
+    "min_rna_per_cell": 5,
+    "gene_column": "genes",
+    "norm_vector": false
+}

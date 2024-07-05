@@ -304,8 +304,6 @@ class TranscriptPatches:
     ):
         from sopa.segmentation.transcripts import copy_segmentation_config
 
-        assert not use_prior or cell_key is None, "Cannot use both `use_prior` and `cell_key`."
-
         log.info("Writing sub-CSV for transcript segmentation")
 
         self.temp_dir = Path(temp_dir)
@@ -315,7 +313,9 @@ class TranscriptPatches:
 
         if use_prior:
             prior_boundaries = self.sdata[shapes_key]
-            _map_transcript_to_cell(self.sdata, shapes_key, self.df, prior_boundaries)
+            _map_transcript_to_cell(
+                self.sdata, SopaKeys.DEFAULT_CELL_KEY, self.df, prior_boundaries
+            )
 
         self._setup_patches_directory()
 

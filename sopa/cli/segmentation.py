@@ -213,7 +213,6 @@ def comseg(
     if patch_index is not None:
         with open(patch_dir / str(patch_index) / config_name, "r") as f:
             config = json.load(f)
-        print(patch_dir, patch_index, config)
         comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
     else:
         log.warn(
