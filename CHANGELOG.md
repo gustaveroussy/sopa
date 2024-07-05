@@ -1,4 +1,4 @@
-## [1.1.1] - 2024-xx-xx
+## [1.1.1] - 2024-07-05
 
 ### Added
 - Support Xenium multimodal segmentation as a prior for Baysor (#80)
