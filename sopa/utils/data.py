@@ -15,6 +15,7 @@ from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 from spatialdata.transformations import Affine, Identity
 
 from .._constants import SopaKeys
+from ..patches.patches import _map_transcript_to_cell
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa
@@ -149,6 +150,9 @@ def uniform(
         points["vertices"] = PointsModel.parse(vertices)
 
     sdata = SpatialData(images=images, points=points, shapes=shapes)
+
+    _map_transcript_to_cell(sdata, "cell_id", sdata["transcripts"], sdata["cells"])
+    sdata["transcripts"]["cell_id"] = sdata["transcripts"]["cell_id"].astype(int)
 
     if as_output:
         _add_table(sdata)

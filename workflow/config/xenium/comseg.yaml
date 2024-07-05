@@ -12,6 +12,7 @@ segmentation:
   comseg:
     min_area: 10
     shapes_key: "cell_boundaries"
+
     config:
       dict_scale:
         x: 1

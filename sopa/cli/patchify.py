@@ -60,8 +60,7 @@ def baysor(
     ),
     cell_key: str = typer.Option(
         None,
-        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation"
-        f" Default is '{SopaKeys.DEFAULT_CELL_KEY}' if cell_key=None",
+        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation",
     ),
     unassigned_value: str = typer.Option(
         None,
@@ -116,8 +115,7 @@ def comseg(
     ),
     cell_key: str = typer.Option(
         None,
-        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation."
-        f" Default is {SopaKeys.DEFAULT_CELL_KEY} if cell_key=None",
+        help="Optional column of the transcripts dataframe that indicates in which cell-id each transcript is, in order to use prior segmentation.",
     ),
     unassigned_value: str = typer.Option(
         None,
@@ -130,6 +128,10 @@ def comseg(
     shapes_key: str = typer.Option(
         SopaKeys.CELLPOSE_BOUNDARIES,
         help="Name of the nuclei boundaries shape use for the prior and centroid in the sdata object",
+    ),
+    use_prior: bool = typer.Option(
+        False,
+        help="Whether to use cellpose segmentation as a prior for baysor (if True, make sure to first run Cellpose)",
     ),
 ):
     """Prepare patches for transcript-based segmentation with ComSeg"""
@@ -152,7 +154,7 @@ def comseg(
         config=config,
         cell_key=cell_key,
         unassigned_value=unassigned_value,
-        use_prior=True,
+        use_prior=use_prior or cell_key is None,
         min_transcripts_per_patch=min_transcripts_per_patch,
         min_cells_per_patch=min_cells_per_patch,
         shapes_key=shapes_key,
@@ -222,13 +224,12 @@ def _patchify_transcripts(
 
     if filename == SopaFiles.PATCHES_DIRS_COMSEG:
         assert min_cells_per_patch is not None, "For ComSeg, you must provide min_cells_per_patch"
-        assert (
-            use_prior
-        ), "For ComSeg, you must use the prior segmentation of nuclei or from other staining"
+
         valid_indices_centoid = patches.patchify_centroids(
             temp_dir,
             shapes_key=shapes_key,
             min_cells_per_patch=min_cells_per_patch,
+            cell_key=cell_key,
         )
         valid_indices = list(set(valid_indices_centoid).intersection(set(valid_indices)))
 

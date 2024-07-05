@@ -9,9 +9,15 @@ patchify:
   patch_overlap_microns: 40
 
 segmentation:
+  cellpose:
+    diameter: 35
+    channels: ["DAPI"]
+    flow_threshold: 2
+    cellprob_threshold: -6
+    min_area: 2500
+
   comseg:
     min_area: 10
-    shapes_key: cells
 
     config:
       dict_scale:

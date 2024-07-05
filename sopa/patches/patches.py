@@ -259,13 +259,14 @@ class Patches2D:
         temp_dir: str,
         shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
         csv_name: str = SopaFiles.CENTROIDS_FILE,
+        cell_key: str | None = None,
         min_cells_per_patch: int = 1,
     ) -> list[int]:
         assert isinstance(self.element, dd.DataFrame)
 
         centroids = to_intrinsic(self.sdata, shapes_key, self.element).geometry.centroid
         centroids = gpd.GeoDataFrame(geometry=centroids)
-        centroids[SopaKeys.DEFAULT_CELL_KEY] = range(1, len(centroids) + 1)
+        centroids[cell_key or SopaKeys.DEFAULT_CELL_KEY] = range(1, len(centroids) + 1)
         centroids["x"] = centroids.geometry.x
         centroids["y"] = centroids.geometry.y
         centroids["z"] = 0
@@ -307,6 +308,8 @@ class TranscriptPatches:
         log.info("Writing sub-CSV for transcript segmentation")
 
         self.temp_dir = Path(temp_dir)
+
+        assert (cell_key is None) or not use_prior, "Cannot use both cell_key and use_prior"
 
         if cell_key is not None:
             self.df[cell_key] = _assign_prior(self.df[cell_key], unassigned_value)

@@ -137,11 +137,7 @@ class Args:
         # which segmentation method(s) is/are used
         self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
         self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
-        self.comseg = (
-            self.segmentation
-            and "comseg" in self.config["segmentation"]
-            and "cellpose" in self.config["segmentation"]
-        )
+        self.comseg = self.segmentation and "comseg" in self.config["segmentation"]
 
         # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]

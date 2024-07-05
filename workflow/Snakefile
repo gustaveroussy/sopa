@@ -85,11 +85,12 @@ checkpoint patchify_comseg:
             ],
         )),
         args_comseg = args.dump_comseg_patchify() if args.comseg else "",
+        arg_prior = "--use-prior" if args.cellpose else "",
     conda:
         "sopa"
     shell:
         """
-        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg}
+        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg} {params.arg_prior}
         """
 
 rule patch_segmentation_cellpose:

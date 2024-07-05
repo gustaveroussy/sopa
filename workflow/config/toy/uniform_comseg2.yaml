@@ -11,9 +11,11 @@ patchify:
 segmentation:
   comseg:
     min_area: 10
+    cell_key: cell_id
     shapes_key: cells
 
     config:
+      prior_name: cell_id
       dict_scale:
         x: 1
         y: 1
