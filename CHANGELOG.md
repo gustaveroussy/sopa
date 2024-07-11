@@ -1,3 +1,8 @@
+## [1.x.x] - 2024-xx-xx
+
+### Fix
+- Convert intensities values in integer for the `ome_tif` and `aicsimageio` readers
+
 ## [1.1.1] - 2024-07-05
 
 ### Added
