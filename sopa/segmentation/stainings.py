@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable, Optional, Union
 
 import geopandas as gpd
 import numpy as np
@@ -31,6 +31,7 @@ class StainingSegmentation:
         image_key: str | None = None,
         min_area: float = 0,
         clip_limit: float = 0.2,
+        clahe_kernel_size: Optional[Union[int, Iterable[int]]] = None,
         gaussian_sigma: float = 1,
     ):
         """Generalized staining-based segmentation
@@ -79,6 +80,7 @@ class StainingSegmentation:
 
         self.min_area = min_area
         self.clip_limit = clip_limit
+        self.clahe_kernel_size = clahe_kernel_size
         self.gaussian_sigma = gaussian_sigma
 
         self.image_key, self.image = get_spatial_image(sdata, key=image_key, return_key=True)
@@ -105,8 +107,18 @@ class StainingSegmentation:
             y=slice(bounds[1], bounds[3]),
         ).values
 
-        image = gaussian_filter(image, sigma=self.gaussian_sigma)
-        image = exposure.equalize_adapthist(image, clip_limit=self.clip_limit)
+        if len(self.channels) == 1:
+            if self.gaussian_sigma > 0:
+                image = gaussian_filter(image, sigma=self.gaussian_sigma)
+            if self.clip_limit > 0:
+                image = exposure.equalize_adapthist(image, clip_limit=self.clip_limit)
+        else:
+            if self.gaussian_sigma > 0:
+                image = np.stack([gaussian_filter(c, sigma=self.gaussian_sigma) for c in image])
+            if self.clip_limit > 0:
+                image = np.stack(
+                    [exposure.equalize_adapthist(c, clip_limit=self.clip_limit) for c in image]
+                )
 
         if patch.area < box(*bounds).area:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
