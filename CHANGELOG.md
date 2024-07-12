@@ -2,6 +2,12 @@
 
 ### Fix
 - Convert intensities values in integer for the `ome_tif` and `aicsimageio` readers
+- Fix cellpose `pretrained_model` weights unused (@pakiessling, #90)
+- Prevent spillover during image preprocessing before segmentation (@pakiessling, #90)
+
+### Added
+- Blur and CLAHE can be disabled by setting the parameter to 0 (@pakiessling, #90)
+- Added an optional parameter clahe_kernel_size for skimage.exposure.equalize_adapthist (@pakiessling, #90)
 
 ## [1.1.1] - 2024-07-05
 
