@@ -111,7 +111,11 @@ class StainingSegmentation:
             if self.gaussian_sigma > 0:
                 image = gaussian_filter(image, sigma=self.gaussian_sigma)
             if self.clip_limit > 0:
-                image = exposure.equalize_adapthist(image, clip_limit=self.clip_limit)
+                image = exposure.equalize_adapthist(
+                    image,
+                    clip_limit=self.clip_limit,
+                    kernel_size=self.clahe_kernel_size,
+                )
         else:
             if self.gaussian_sigma > 0:
                 image = np.stack([gaussian_filter(c, sigma=self.gaussian_sigma) for c in image])
