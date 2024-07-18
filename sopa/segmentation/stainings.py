@@ -108,6 +108,10 @@ class StainingSegmentation:
             y=slice(bounds[1], bounds[3]),
         ).values
 
+        assert np.issubdtype(
+            image.dtype, np.integer
+        ), f"Invalid image type {image.dtype}. Transform it to an integer dtype, e.g. `np.uint8`."
+
         if self.gaussian_sigma > 0:
             image = np.stack([gaussian_filter(c, sigma=self.gaussian_sigma) for c in image])
         if self.clip_limit > 0:

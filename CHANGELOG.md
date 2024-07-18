@@ -8,6 +8,7 @@
 ### Added
 - Blur and CLAHE can be disabled by setting the parameter to 0 (@pakiessling, #90)
 - Added an optional parameter clahe_kernel_size for skimage.exposure.equalize_adapthist (@pakiessling, #90)
+- Check that the image has an integer dtype before segmentation (better error log #92)
 
 ## [1.1.1] - 2024-07-05
 
