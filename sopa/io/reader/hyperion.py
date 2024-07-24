@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 
 import dask.array as da
-import numpy as np
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
+from xarray import DataArray
 
-from .utils import _default_image_kwargs
+from .utils import _clip_intensity_values, _default_image_kwargs
 
 log = logging.getLogger(__name__)
 
@@ -37,17 +38,22 @@ def hyperion(
         [imread(file, **imread_kwargs) for file in files],
         axis=0,
     )
-    image = (image / image.max(axis=(1, 2)).compute()[:, None, None] * 255).astype(np.uint8)
+
     image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
     log.info(f"Found channel names {names}")
 
     image_name = Path(path).absolute().stem
+
+    image = DataArray(image, dims=["c", "y", "x"], name=image_name, coords={"c": names})
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        image = _clip_intensity_values(image)
+
     image = Image2DModel.parse(
         image,
-        dims=("c", "y", "x"),
         transformations={"pixels": Identity()},
-        c_coords=names,
+        c_coords=image.coords["c"].values,
         **image_models_kwargs,
     )
 

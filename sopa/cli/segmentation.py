@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from typing import Iterable
 
 import typer
 
@@ -25,6 +26,10 @@ def cellpose(
     ),
     clip_limit: float = typer.Option(
         0.2,
+        help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
+    ),
+    clahe_kernel_size: int = typer.Option(
+        None,
         help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
     ),
     gaussian_sigma: float = typer.Option(
@@ -72,6 +77,7 @@ def cellpose(
         channels,
         min_area,
         clip_limit,
+        clahe_kernel_size,
         gaussian_sigma,
         patch_index,
         patch_dir,
@@ -96,6 +102,10 @@ def generic_staining(
     clip_limit: float = typer.Option(
         0.2,
         help="Parameter for skimage.exposure.equalize_adapthist (applied before running the segmentation method)",
+    ),
+    clahe_kernel_size: int = typer.Option(
+        None,
+        help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
     ),
     gaussian_sigma: float = typer.Option(
         1,
@@ -136,6 +146,7 @@ def generic_staining(
         channels,
         min_area,
         clip_limit,
+        clahe_kernel_size,
         gaussian_sigma,
         patch_index,
         patch_dir,
@@ -149,6 +160,7 @@ def _run_staining_segmentation(
     channels: list[str],
     min_area: float,
     clip_limit: float,
+    clahe_kernel_size: int | Iterable[int] | None,
     gaussian_sigma: float,
     patch_index: int | None,
     patch_dir: str,
@@ -166,6 +178,7 @@ def _run_staining_segmentation(
         channels,
         min_area=min_area,
         clip_limit=clip_limit,
+        clahe_kernel_size=clahe_kernel_size,
         gaussian_sigma=gaussian_sigma,
     )
 

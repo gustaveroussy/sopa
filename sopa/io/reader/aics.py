@@ -7,7 +7,7 @@ import xarray as xr
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 
-from .utils import _default_image_kwargs
+from .utils import _default_image_kwargs, _image_int_dtype
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ def aicsimageio(
         log.info(f"3D image found, only reading {z_stack:=}")
 
     xarr = xarr.isel(T=0, Z=z_stack).rename({"C": "c", "Y": "y", "X": "x"})
+    xarr = _image_int_dtype(xarr)
 
     image = Image2DModel.parse(xarr, c_coords=xarr.coords["c"].values, **image_models_kwargs)
 

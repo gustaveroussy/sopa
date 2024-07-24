@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Callable
 
 import dask.array as da
+import numpy as np
 import tifffile as tf
+import xarray as xr
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
@@ -84,6 +86,31 @@ def _general_tif_directory_reader(
     return SpatialData(images={image_name: image})
 
 
+def _clip_intensity_values(
+    image: xr.DataArray, clip_quantile: bool | None = None, quantile: float = 0.99
+) -> xr.DataArray:
+    if clip_quantile is False or image.shape[1] * image.shape[2] > 2**28:
+        denominator = image.max(dim=("y", "x"))
+    else:
+        denominator = image.chunk({"y": -1, "x": -1}).quantile(quantile, dim=("y", "x"))
+
+    return ((image / denominator.data.compute()[:, None, None]).clip(0, 1) * 255).astype(np.uint8)
+
+
+def _image_int_dtype(
+    image: xr.DataArray, clip_quantile: bool | None = None, quantile: float = 0.99
+) -> xr.DataArray:
+    image = image.transpose("c", "y", "x")
+
+    if np.issubdtype(image.dtype, np.integer):
+        return image
+
+    if not np.issubdtype(image.dtype, np.floating):
+        raise ValueError(f"Invalid image type {image.dtype}")
+
+    return _clip_intensity_values(image, clip_quantile=clip_quantile, quantile=quantile)
+
+
 def _ome_channels_names(path: str):
     import xml.etree.ElementTree as ET
 
@@ -126,13 +153,13 @@ def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
         log.warn(f"Channel names couldn't be read. Using {channel_names} instead.")
 
     image = DataArray(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
+    image = _image_int_dtype(image)
 
     if as_image:
         return image
 
     image = Image2DModel.parse(
         image,
-        dims=("c", "y", "x"),
         c_coords=channel_names,
         transformations={"pixels": Identity()},
         **image_models_kwargs,
