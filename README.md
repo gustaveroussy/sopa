@@ -17,7 +17,7 @@ The pipeline outputs contain: (i) Xenium Explorer files for interactive visualiz
 
 # Documentation
 
-The easiest way to start with `sopa` is to check [our documentation](https://gustaveroussy.github.io/sopa). It contains installation explanations, CLI/API details, and tutorials.
+Check [Sopa's documentation](https://gustaveroussy.github.io/sopa) to get started. It contains installation explanations, CLI/API details, and tutorials.
 
 # Overview
 
@@ -26,6 +26,8 @@ The following illustration describes the main steps of `sopa`:
 <p align="center">
   <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/overview_white.png" alt="sopa_overview" width="100%"/>
 </p>
+
+> *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
 
 # Installation
 
