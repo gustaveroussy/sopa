@@ -1,3 +1,8 @@
+## [1.x.x] - 2024-xx-xx
+
+### Fix
+- Fixed aggregation issue when gene names are `NaN` or `None` (#101)
+
 ## [1.1.2] - 2024-07-24
 
 ### Fix
