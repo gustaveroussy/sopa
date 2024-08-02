@@ -40,6 +40,9 @@ def test_count_transcripts():
             "gene": ["a", "a", "b", "c", "a", "c", "b", "b"],
         }
     )
+    df_pandas["gene"] = df_pandas["gene"].astype(object)
+    df_pandas["gene"].loc[0] = np.nan
+
     points = dd.from_pandas(df_pandas, npartitions=2)
     polygons = [
         Polygon(((1, 2), (3, 2), (3, 4), (1, 4))),
@@ -50,6 +53,6 @@ def test_count_transcripts():
     gdf = gpd.GeoDataFrame(geometry=polygons)
 
     adata = aggregate._count_transcripts_aligned(gdf, points, "gene")
-    expected = np.array([[0, 3, 1], [2, 0, 1], [2, 3, 1]])
+    expected = np.array([[0, 3, 1], [1, 0, 1], [1, 3, 1]])
 
     assert (adata.X.toarray() == expected).all()

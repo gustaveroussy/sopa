@@ -471,6 +471,9 @@ def _add_coo(
     joined = geo_df.sjoin(points_gdf)
     cells_indices, column_indices = joined.index, joined[gene_column].cat.codes
 
+    cells_indices = cells_indices[column_indices >= 0]
+    column_indices = column_indices[column_indices >= 0]
+
     X_partition = coo_matrix(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
         shape=(len(geo_df), len(gene_names)),

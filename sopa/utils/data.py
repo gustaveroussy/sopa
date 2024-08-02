@@ -125,6 +125,9 @@ def uniform(
     else:
         gene_names = np.random.choice(genes, size=n_genes)
 
+    gene_names = gene_names.astype(object)
+    gene_names[3] = np.nan  # Add a nan value for tests
+
     df = pd.DataFrame(
         {
             "x": points_coords[:, 0],
