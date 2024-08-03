@@ -179,7 +179,7 @@ def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int
 
 
 def rasterize(
-    cell: Polygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
+    cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
 ) -> np.ndarray:
     """Transform a cell polygon into a numpy array with value 1 where the polygon touches a pixel, else 0.
 
@@ -196,6 +196,14 @@ def rasterize(
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
+    geoms = (
+        cell_translated.geoms if isinstance(cell_translated, MultiPolygon) else [cell_translated]
+    )
 
-    coords = np.array(cell_translated.exterior.coords)[None, :].astype(np.int32)
-    return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
+    rasterized_image = np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8)
+
+    for geom in geoms:
+        coords = np.array(geom.exterior.coords)[None, :].astype(np.int32)
+        cv2.fillPoly(rasterized_image, coords, color=1)
+
+    return rasterized_image

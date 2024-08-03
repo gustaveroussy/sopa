@@ -3,6 +3,9 @@
 ### Fix
 - Fixed aggregation issue when gene names are `NaN` or `None` (#101)
 
+### Added
+- Support multipolygons in ROI rasterization
+
 ## [1.1.2] - 2024-07-24
 
 ### Fix
