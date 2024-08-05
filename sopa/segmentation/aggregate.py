@@ -480,3 +480,30 @@ def _add_coo(
     )
 
     X_partitions.append(X_partition)
+
+
+def aggregate_bins(sdata: SpatialData, table_key: str, shapes_key: str, bins_key: str) -> AnnData:
+    """Aggregate bins (for instance, from Visium HD data) into cells.
+
+    Args:
+        sdata: The `SpatialData` object
+        table_key: Key of the table containing the bin-by-gene counts
+        shapes_key: Key of the shapes containing the cell boundaries
+        bins_key: Key of the shapes containing the bins boundaries
+
+    Returns:
+        An `AnnData` object of shape with the cell-by-gene count matrix
+    """
+    bins = sdata[bins_key][["geometry"]].reset_index(drop=True)  # bins as points
+    cells = to_intrinsic(sdata, shapes_key, bins_key).reset_index(drop=True)
+
+    bin_within_cell = gpd.sjoin(bins, cells)
+
+    indices_matrix = coo_matrix(
+        (np.full(len(bin_within_cell), 1), (bin_within_cell["index_right"], bin_within_cell.index)),
+        shape=(len(cells), len(bins)),
+    )
+
+    adata = AnnData(indices_matrix @ sdata[table_key].X, obs=cells[[]], var=sdata[table_key].var)
+    adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
+    return adata
