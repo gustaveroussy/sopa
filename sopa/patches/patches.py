@@ -297,7 +297,7 @@ class TranscriptPatches:
         self,
         temp_dir: str,
         cell_key: str = None,
-        unassigned_value: int | str = None,
+        unassigned_value: int | str | None = None,
         use_prior: bool = False,
         config: dict = {},
         config_path: str | None = None,

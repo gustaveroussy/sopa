@@ -301,6 +301,15 @@ def _fillna(df: pd.DataFrame):
             df[key] = df[key].fillna(0)
 
 
+def expand_radius(geo_df: gpd.GeoDataFrame, expand_radius_ratio: float | None) -> gpd.GeoDataFrame:
+    if not expand_radius_ratio:
+        return geo_df
+
+    expand_radius_ = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
+    geo_df.geometry = geo_df.buffer(expand_radius_)
+    return geo_df
+
+
 def average_channels(
     sdata: SpatialData,
     image_key: str = None,
@@ -322,11 +331,7 @@ def average_channels(
 
     geo_df = get_element(sdata, "shapes", shapes_key)
     geo_df = to_intrinsic(sdata, geo_df, image)
-
-    expand_radius = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
-
-    if expand_radius > 0:
-        geo_df = geo_df.buffer(expand_radius)
+    geo_df = expand_radius(geo_df, expand_radius_ratio)
 
     log.info(
         f"Averaging channels intensity over {len(geo_df)} cells with expansion {expand_radius}"
@@ -397,7 +402,7 @@ def count_transcripts(
     gene_column: str,
     shapes_key: str = None,
     points_key: str = None,
-    geo_df: gpd.GeoDataFrame = None,
+    geo_df: gpd.GeoDataFrame | None = None,
 ) -> AnnData:
     """Counts transcripts per cell.
 
@@ -482,7 +487,13 @@ def _add_coo(
     X_partitions.append(X_partition)
 
 
-def aggregate_bins(sdata: SpatialData, table_key: str, shapes_key: str, bins_key: str) -> AnnData:
+def aggregate_bins(
+    sdata: SpatialData,
+    table_key: str,
+    shapes_key: str,
+    bins_key: str,
+    expand_radius_ratio: float = 0,
+) -> AnnData:
     """Aggregate bins (for instance, from Visium HD data) into cells.
 
     Args:
@@ -490,12 +501,15 @@ def aggregate_bins(sdata: SpatialData, table_key: str, shapes_key: str, bins_key
         table_key: Key of the table containing the bin-by-gene counts
         shapes_key: Key of the shapes containing the cell boundaries
         bins_key: Key of the shapes containing the bins boundaries
+        expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate bins from the cytoplasm.
 
     Returns:
         An `AnnData` object of shape with the cell-by-gene count matrix
     """
-    bins = sdata[bins_key][["geometry"]].reset_index(drop=True)  # bins as points
+    bins = sdata.shapes[bins_key][["geometry"]].reset_index(drop=True)  # bins as points
+
     cells = to_intrinsic(sdata, shapes_key, bins_key).reset_index(drop=True)
+    cells = expand_radius(cells, expand_radius_ratio)
 
     bin_within_cell = gpd.sjoin(bins, cells)
 
