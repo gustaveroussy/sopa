@@ -9,6 +9,9 @@
 - Added bins aggregation
 - Added Visium HD reader (tutorial comming soon)
 
+### Changed
+- Import submodules in init (segmentation, io, utils)
+
 ## [1.1.2] - 2024-07-24
 
 ### Fix
