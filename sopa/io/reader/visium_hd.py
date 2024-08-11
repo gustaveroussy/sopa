@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from spatialdata import SpatialData
-from spatialdata_io.readers.xenium import xenium as xenium_spatialdata_io
+from spatialdata_io.readers.visium_hd import visium_hd as visium_hd_spatialdata_io
 
 from ...utils import string_channel_names
 from .utils import _default_image_kwargs
@@ -12,22 +12,17 @@ from .utils import _default_image_kwargs
 log = logging.getLogger(__name__)
 
 
-def xenium(
+def visium_hd(
     path: str | Path,
+    bin_size: int | list[int] | None = 2,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
     **kwargs: int,
 ) -> SpatialData:
-    """Read Xenium data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.xenium.html).
-
-    This function reads the following files:
-        - `transcripts.parquet`: transcripts locations and names
-        - `experiment.xenium`: metadata file
-        - `morphology_focus.ome.tif`: morphology image (or a directory, for recent versions of the Xenium)
-
+    """Read Visium HD data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.visium_hd.html).
 
     Args:
-        path: Path to the Xenium directory containing all the experiment files
+        path: Path to the Visium HD directory containing all the experiment files
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
 
@@ -36,16 +31,11 @@ def xenium(
     """
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
-    sdata = xenium_spatialdata_io(
+    del image_models_kwargs["scale_factors"]  # already set in the spatialdata_io reader
+
+    sdata = visium_hd_spatialdata_io(
         path,
-        cells_table=False,
-        aligned_images=False,
-        morphology_mip=False,
-        nucleus_labels=False,
-        cells_labels=False,
-        cells_as_circles=False,
-        nucleus_boundaries=False,
-        cells_boundaries=False,
+        bin_size=bin_size,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
         **kwargs,

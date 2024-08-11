@@ -3,10 +3,12 @@ from __future__ import annotations
 import dask.array as da
 import dask_image.ndinterp
 import numpy as np
-import xarray as xr
+from datatree import DataTree
+from spatialdata import SpatialData
+from xarray import DataArray
 
 
-def resize(xarr: xr.DataArray, scale_factor: float) -> da.Array:
+def resize(xarr: DataArray, scale_factor: float) -> da.Array:
     """Resize a xarray image
 
     Args:
@@ -77,3 +79,27 @@ def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:
 
     factor = np.iinfo(dtype).max / np.iinfo(arr.dtype).max
     return (arr * factor).astype(dtype)
+
+
+def get_channel_names(image: DataArray | DataTree) -> np.ndarray:
+    if isinstance(image, DataArray):
+        return image.coords["c"].values
+    if isinstance(image, DataTree):
+        return image["scale0"].coords["c"].values
+    raise ValueError(f"Image must be a DataTree or a DataArray. Found: {type(image)}")
+
+
+def string_channel_names(sdata: SpatialData, default_single_channel: str = "DAPI"):
+    for key, image in list(sdata.images.items()):
+        c_coords = get_channel_names(image)
+
+        if c_coords.dtype.kind in {"U", "S"}:
+            continue
+
+        c_coords = [str(i) for i in range(len(c_coords))]
+        if len(c_coords) == 1:
+            c_coords = [default_single_channel]
+
+        new_image = image.assign_coords(c=c_coords)
+        del sdata.images[key]
+        sdata.images[key] = new_image
