@@ -506,7 +506,7 @@ def aggregate_bins(
     Returns:
         An `AnnData` object of shape with the cell-by-gene count matrix
     """
-    bins = sdata.shapes[bins_key][["geometry"]].reset_index(drop=True)  # bins as points
+    bins = sdata.shapes[bins_key].centroid.reset_index(drop=True)  # bins as points
 
     cells = to_intrinsic(sdata, shapes_key, bins_key).reset_index(drop=True)
     cells = expand_radius(cells, expand_radius_ratio)
