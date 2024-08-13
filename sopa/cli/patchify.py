@@ -24,11 +24,10 @@ def image(
     """Prepare patches for staining-based segmentation (including Cellpose)"""
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
-    from sopa.io.standardize import read_zarr_standardized, sanity_check
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.patches import Patches2D
 
     sdata = read_zarr_standardized(sdata_path)
-    sanity_check(sdata)
 
     image_key = get_key(sdata, "images")
 
@@ -195,11 +194,10 @@ def _patchify_transcripts(
     """
     from sopa._constants import SopaFiles
     from sopa._sdata import get_key
-    from sopa.io.standardize import read_zarr_standardized, sanity_check
+    from sopa.io.standardize import read_zarr_standardized
     from sopa.patches import Patches2D
 
     sdata = read_zarr_standardized(sdata_path)
-    sanity_check(sdata)
 
     if isinstance(unassigned_value, str) and unassigned_value.isdigit():
         unassigned_value = int(unassigned_value)
