@@ -1,5 +1,9 @@
 ## [1.x.x] - 2024-xx-xx
 
+
+
+## [1.1.3] - 2024-08-18
+
 ### Fix
 - Fixed aggregation issue when gene names are `NaN` or `None` (#101)
 - Fix Xenium reader for old Xenium data format (#105)
@@ -7,11 +11,11 @@
 ### Added
 - Support multipolygons in ROI rasterization
 - Added bins aggregation
-- Added Visium HD reader (tutorial comming soon)
+- Added Visium HD reader (tutorial coming soon)
 
 ### Changed
 - Import submodules in init (segmentation, io, utils)
-- API simplification in progress (new API + tutorial comming soon)
+- API simplification in progress (new API + tutorial coming soon)
 
 ## [1.1.2] - 2024-07-24
 
