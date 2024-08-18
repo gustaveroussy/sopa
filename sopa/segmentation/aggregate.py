@@ -397,7 +397,7 @@ def count_transcripts(
     Returns:
         An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
     """
-    points_key, points = get_spatial_element(sdata.points, key=points_key)
+    points_key, points = get_spatial_element(sdata.points, key=points_key, return_key=True)
 
     if geo_df is None:
         geo_df = get_spatial_element(sdata.shapes, key=shapes_key)

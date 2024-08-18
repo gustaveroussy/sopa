@@ -34,9 +34,11 @@ class SopaKeys:
 
 
 class SopaAttrs:
-    CELL_SEGMENTATION = "for_cell_segmentation"
-    TISSUE_SEGMENTATION = "for_tissue_segmentation"
-    BINS_AGGREGATION = "for_bins_aggregation"
+    CELL_SEGMENTATION = "cell_segmentation_image"
+    TISSUE_SEGMENTATION = "tissue_segmentation_image"
+    BINS_AGGREGATION = "bins_aggregation_shapes"
+    BINS_TABLE = "bins_table"
+    TRANSCRIPTS = "transcripts_dataframe"
     GENE_COLUMN = "feature_key"
 
 
