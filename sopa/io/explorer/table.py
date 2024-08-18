@@ -14,9 +14,7 @@ from .utils import explorer_file_path
 log = logging.getLogger(__name__)
 
 
-def write_gene_counts(
-    path: str, adata: AnnData, layer: str | None = None, is_dir: bool = True
-) -> None:
+def write_gene_counts(path: str, adata: AnnData, layer: str | None = None, is_dir: bool = True) -> None:
     """Write a `cell_feature_matrix.zarr.zip` file containing the cell-by-gene transcript counts (i.e., from `adata.X`)
 
     Args:
@@ -67,9 +65,7 @@ def write_gene_counts(
         cells_group.array("indptr", indptr, dtype="uint32", chunks=indptr.shape)
 
 
-def _write_categorical_column(
-    root: zarr.Group, index: int, values: np.ndarray, categories: list[str]
-) -> None:
+def _write_categorical_column(root: zarr.Group, index: int, values: np.ndarray, categories: list[str]) -> None:
     group = root.create_group(index)
     values_indices = [np.where(values == cat)[0] for cat in categories]
     values_cum_len = np.cumsum([len(indices) for indices in values_indices])

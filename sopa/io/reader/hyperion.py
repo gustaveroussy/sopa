@@ -16,9 +16,7 @@ from .utils import _clip_intensity_values, _default_image_kwargs
 log = logging.getLogger(__name__)
 
 
-def hyperion(
-    path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None
-) -> SpatialData:
+def hyperion(path: Path, image_models_kwargs: dict | None = None, imread_kwargs: dict | None = None) -> SpatialData:
     """Read Hyperion data as a `SpatialData` object
 
     Args:

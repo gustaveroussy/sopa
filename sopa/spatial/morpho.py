@@ -78,9 +78,7 @@ def geometrize_niches(
 
     gdf[SopaKeys.GEOMETRY_LENGTH] = gdf.length
     gdf[SopaKeys.GEOMETRY_AREA] = gdf.area
-    gdf[SopaKeys.GEOMETRY_ROUNDNESS] = (
-        4 * np.pi * gdf[SopaKeys.GEOMETRY_AREA] / gdf[SopaKeys.GEOMETRY_LENGTH] ** 2
-    )
+    gdf[SopaKeys.GEOMETRY_ROUNDNESS] = 4 * np.pi * gdf[SopaKeys.GEOMETRY_AREA] / gdf[SopaKeys.GEOMETRY_LENGTH] ** 2
 
     # Remove minor components (compared to the largest component of its corresponding niche)
     gdf = gdf[gdf.area >= gdf[niche_key].map(gdf.groupby(niche_key).area.max() * perc_area_th)]
@@ -88,9 +86,7 @@ def geometrize_niches(
     return gdf
 
 
-def _clean_components(
-    adata: AnnData, gdf: gpd.GeoDataFrame, niche_key: str, buffer: int | str
-) -> gpd.GeoDataFrame:
+def _clean_components(adata: AnnData, gdf: gpd.GeoDataFrame, niche_key: str, buffer: int | str) -> gpd.GeoDataFrame:
     data = {"geometry": [], niche_key: []}
 
     if buffer == "auto":

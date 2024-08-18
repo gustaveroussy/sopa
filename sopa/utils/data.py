@@ -119,11 +119,12 @@ def uniform(
             where_cell_type = np.where(cell_types_index[point_cell_index] == i)[0]
             probabilities = np.full(len(genes), 0.2 / (len(genes) - 1))
             probabilities[i] = 0.8
-            gene_names[where_cell_type] = np.random.choice(
-                genes, len(where_cell_type), p=probabilities
-            )
+            gene_names[where_cell_type] = np.random.choice(genes, len(where_cell_type), p=probabilities)
     else:
         gene_names = np.random.choice(genes, size=n_genes)
+
+    gene_names = gene_names.astype(object)
+    gene_names[3] = np.nan  # Add a nan value for tests
 
     df = pd.DataFrame(
         {
@@ -141,11 +142,7 @@ def uniform(
 
     df = dd.from_pandas(df, chunksize=2_000_000)
 
-    points = {
-        "transcripts": PointsModel.parse(
-            df, transformations={"global": affine, "microns": Identity()}
-        )
-    }
+    points = {"transcripts": PointsModel.parse(df, transformations={"global": affine, "microns": Identity()})}
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 
@@ -161,7 +158,7 @@ def uniform(
 
 
 def _add_table(sdata: SpatialData):
-    from ..segmentation.aggregate import Aggregator
+    from ..segmentation import Aggregator
 
     aggregator = Aggregator(sdata, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES)
 
@@ -195,9 +192,7 @@ def blobs(
     **kwargs,
 ) -> SpatialData:
     """Adapts the blobs dataset from SpatialData for sopa. Please refer to the SpatialData documentation"""
-    _blobs = BlobsDataset(
-        length=length, n_points=n_points, c_coords=c_coords, n_channels=len(c_coords), **kwargs
-    )
+    _blobs = BlobsDataset(length=length, n_points=n_points, c_coords=c_coords, n_channels=len(c_coords), **kwargs)
 
     image = _blobs._image_blobs(
         _blobs.transformations,

@@ -73,9 +73,7 @@ def _draw_polygon(image: np.ndarray, scale_factor: float, margin_ratio: float):
     return Polygon(selector.vertices * scale_factor)
 
 
-def intermediate_selection(
-    intermediate_image: str, intermediate_polygon: str, margin_ratio: float = 0.1
-):
+def intermediate_selection(intermediate_image: str, intermediate_polygon: str, margin_ratio: float = 0.1):
     log.info(f"Reading intermediate image {intermediate_image}")
 
     z = zarr.open(intermediate_image, mode="r")
@@ -131,9 +129,7 @@ def polygon_selection(
 
     geo_df = gpd.GeoDataFrame(geometry=[polygon])
 
-    geo_df = ShapesModel.parse(
-        geo_df, transformations=get_transformation(sdata[image_key], get_all=True).copy()
-    )
+    geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(sdata[image_key], get_all=True).copy())
     sdata.shapes[ROI.KEY] = geo_df
     if sdata.is_backed():
         sdata.write_element(ROI.KEY, overwrite=True)

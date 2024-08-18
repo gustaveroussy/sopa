@@ -111,9 +111,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
-def _open_wsi(
-    path: str | Path, backend: str = "openslide"
-) -> tuple[str, xarray.Dataset, Any, dict]:
+def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
     if backend == "tiffslide":

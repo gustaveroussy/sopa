@@ -76,9 +76,7 @@ def _contours(cell_mask: np.ndarray) -> MultiPolygon:
     import cv2
 
     contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    return MultiPolygon(
-        [Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4]
-    )
+    return MultiPolygon([Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4])
 
 
 def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygon:
@@ -138,9 +136,7 @@ def _default_tolerance(mean_radius: float) -> float:
     return 2
 
 
-def geometrize(
-    mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1
-) -> list[Polygon]:
+def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1) -> list[Polygon]:
     """Convert a cells mask to multiple `shapely` geometries. Inspired from https://github.com/Vizgen/vizgen-postprocessing
 
     Args:
@@ -178,9 +174,7 @@ def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
 
 
-def rasterize(
-    cell: Polygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]
-) -> np.ndarray:
+def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]) -> np.ndarray:
     """Transform a cell polygon into a numpy array with value 1 where the polygon touches a pixel, else 0.
 
     Args:
@@ -196,6 +190,12 @@ def rasterize(
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
+    geoms = cell_translated.geoms if isinstance(cell_translated, MultiPolygon) else [cell_translated]
 
-    coords = np.array(cell_translated.exterior.coords)[None, :].astype(np.int32)
-    return cv2.fillPoly(np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8), coords, color=1)
+    rasterized_image = np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8)
+
+    for geom in geoms:
+        coords = np.array(geom.exterior.coords)[None, :].astype(np.int32)
+        cv2.fillPoly(rasterized_image, coords, color=1)
+
+    return rasterized_image

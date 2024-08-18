@@ -6,7 +6,7 @@ import pytest
 from shapely.geometry import box
 from spatialdata import SpatialData
 
-from sopa._sdata import get_key
+from sopa._sdata import get_spatial_element
 from sopa.patches import Patches2D, _get_cell_id
 from sopa.utils.data import uniform
 
@@ -18,7 +18,7 @@ def sdata() -> SpatialData:
 
 
 def test_patchify_image(sdata: SpatialData):
-    image_key = get_key(sdata, "images")
+    image_key, _ = get_spatial_element(sdata.images, return_key=True)
 
     patches = Patches2D(sdata, image_key, 300, 100)
     assert len(patches) == 9
@@ -44,9 +44,7 @@ def test_patchify_baysor(sdata: SpatialData):
 def test_get_cell_id():
     polygons = [box(10, 10, 20, 28), box(15, 18, 25, 22), box(30, 35, 34, 42)]
     gdf = gpd.GeoDataFrame(geometry=polygons)
-    df = pd.DataFrame(
-        {"x": [1.5, 16, 23, 67, 33, 19, 22, 10], "y": [15, 21, 34, 5, 40, 20, 21, 10]}
-    )
+    df = pd.DataFrame({"x": [1.5, 16, 23, 67, 33, 19, 22, 10], "y": [15, 21, 34, 5, 40, 20, 21, 10]})
 
     cell_id = _get_cell_id(gdf, df)
 

@@ -16,9 +16,7 @@ def _open_config(path: str) -> dict:
         with open(path, "r") as f:
             return yaml.safe_load(f)
     except:
-        log.warn(
-            f"Config file '{path}' could't be read. Make sure that the file exist and that it is a YAML file"
-        )
+        log.warn(f"Config file '{path}' could't be read. Make sure that the file exist and that it is a YAML file")
         return
 
 
@@ -99,8 +97,7 @@ def _check_dict(config: dict, d: dict, log, prefix: str = "config"):
                     break
             else:
                 display = "\n  - ".join(
-                    element if isinstance(element, str) else " AND ".join(element)
-                    for element in values
+                    element if isinstance(element, str) else " AND ".join(element) for element in values
                 )
                 log.warn(f"One of these element must be in {prefix}['{key}']:\n  - {display}")
 

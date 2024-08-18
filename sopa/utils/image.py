@@ -3,10 +3,12 @@ from __future__ import annotations
 import dask.array as da
 import dask_image.ndinterp
 import numpy as np
-import xarray as xr
+from datatree import DataTree
+from spatialdata import SpatialData
+from xarray import DataArray
 
 
-def resize(xarr: xr.DataArray, scale_factor: float) -> da.Array:
+def resize(xarr: DataArray, scale_factor: float) -> da.Array:
     """Resize a xarray image
 
     Args:
@@ -18,19 +20,12 @@ def resize(xarr: xr.DataArray, scale_factor: float) -> da.Array:
     """
     resize_dims = [dim in ["x", "y"] for dim in xarr.dims]
     transform = np.diag([scale_factor if resize_dim else 1 for resize_dim in resize_dims])
-    output_shape = [
-        size // scale_factor if resize_dim else size
-        for size, resize_dim in zip(xarr.shape, resize_dims)
-    ]
+    output_shape = [size // scale_factor if resize_dim else size for size, resize_dim in zip(xarr.shape, resize_dims)]
 
-    return dask_image.ndinterp.affine_transform(
-        xarr.data, matrix=transform, output_shape=output_shape
-    )
+    return dask_image.ndinterp.affine_transform(xarr.data, matrix=transform, output_shape=output_shape)
 
 
-def resize_numpy(
-    arr: np.ndarray, scale_factor: float, dims: list[str], output_shape: list[int]
-) -> np.ndarray:
+def resize_numpy(arr: np.ndarray, scale_factor: float, dims: list[str], output_shape: list[int]) -> np.ndarray:
     """Resize a numpy image
 
     Args:
@@ -45,15 +40,11 @@ def resize_numpy(
     resize_dims = [dim in ["x", "y"] for dim in dims]
     transform = np.diag([scale_factor if resize_dim else 1 for resize_dim in resize_dims])
 
-    return dask_image.ndinterp.affine_transform(
-        arr, matrix=transform, output_shape=output_shape
-    ).compute()
+    return dask_image.ndinterp.affine_transform(arr, matrix=transform, output_shape=output_shape).compute()
 
 
 def _check_integer_dtype(dtype: np.dtype):
-    assert np.issubdtype(
-        dtype, np.integer
-    ), f"Expecting image to have an intenger dtype, but found {dtype}"
+    assert np.issubdtype(dtype, np.integer), f"Expecting image to have an intenger dtype, but found {dtype}"
 
 
 def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:
@@ -77,3 +68,31 @@ def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:
 
     factor = np.iinfo(dtype).max / np.iinfo(arr.dtype).max
     return (arr * factor).astype(dtype)
+
+
+def get_channel_names(image: DataArray | DataTree) -> np.ndarray:
+    if isinstance(image, DataArray):
+        return image.coords["c"].values
+    if isinstance(image, DataTree):
+        return image["scale0"].coords["c"].values
+    raise ValueError(f"Image must be a DataTree or a DataArray. Found: {type(image)}")
+
+
+def is_string_dtype(c_coords: np.ndarray) -> bool:
+    return c_coords.dtype.kind in {"U", "S"}
+
+
+def string_channel_names(sdata: SpatialData, default_single_channel: str = "DAPI"):
+    for key, image in list(sdata.images.items()):
+        c_coords = get_channel_names(image)
+
+        if is_string_dtype(c_coords):
+            continue
+
+        c_coords = [str(i) for i in range(len(c_coords))]
+        if len(c_coords) == 1:
+            c_coords = [default_single_channel]
+
+        new_image = image.assign_coords(c=c_coords)
+        del sdata.images[key]
+        sdata.images[key] = new_image

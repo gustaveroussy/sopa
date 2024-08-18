@@ -25,9 +25,7 @@ def macsima(path: Path, **kwargs: int) -> SpatialData:
     Returns:
         A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
     """
-    return _general_tif_directory_reader(
-        path, files_to_channels=_get_channel_names_macsima, **kwargs
-    )
+    return _general_tif_directory_reader(path, files_to_channels=_get_channel_names_macsima, **kwargs)
 
 
 def _parse_name_macsima(file):

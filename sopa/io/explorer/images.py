@@ -141,9 +141,7 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     But some channels colors are set to white by default. This functions allows to color these
     channels with an available wavelength color (e.g., `550`).
     """
-    existing_wavelength = [
-        bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", c)) for c in channel_names
-    ]
+    existing_wavelength = [bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", c)) for c in channel_names]
     valid_colors = [c for c in ExplorerConstants.COLORS if c != ExplorerConstants.NUCLEUS_COLOR]
     n_missing = sum(
         not is_wavelength and c not in ExplorerConstants.KNOWN_CHANNELS
@@ -152,16 +150,13 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     colors_iterator: list = np.repeat(valid_colors, ceil(n_missing / len(valid_colors))).tolist()
 
     return [
-        _to_color(c, is_wavelength, colors_iterator)
-        for c, is_wavelength in zip(channel_names, existing_wavelength)
+        _to_color(c, is_wavelength, colors_iterator) for c, is_wavelength in zip(channel_names, existing_wavelength)
     ]
 
 
 def _to_xenium_explorer_multiscale(image: DataArray | DataTree, n_subscales: int) -> DataTree:
     if isinstance(image, DataTree):
-        shapes = np.array(
-            [next(iter(data_tree.values())).shape[1:] for data_tree in image.values()]
-        )
+        shapes = np.array([next(iter(data_tree.values())).shape[1:] for data_tree in image.values()])
         if len(shapes) == n_subscales + 1 and (shapes[:-1] // shapes[1:] == 2).all():
             return image
 

@@ -95,31 +95,21 @@ class WorkflowPaths:
             A list of temporary boundary directories or files
         """
         if name == "cellpose":
-            return [
-                str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))
-            ]
+            return [str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))]
         if name == "baysor":
             indices = map(int, file_content.split())
             BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]
 
             if dirs:
                 return [str(self.smk_baysor_temp_dir / str(i)) for i in indices]
-            return [
-                str(self.smk_baysor_temp_dir / str(i) / file)
-                for i in indices
-                for file in BAYSOR_FILES
-            ]
+            return [str(self.smk_baysor_temp_dir / str(i) / file) for i in indices for file in BAYSOR_FILES]
         if name == "comseg":
             indices = map(int, file_content.split())
             COMSEG_FILES = ["segmentation_polygons.json", "segmentation_counts.h5ad"]
 
             if dirs:
                 return [str(self.smk_comseg_temp_dir / str(i)) for i in indices]
-            return [
-                str(self.smk_comseg_temp_dir / str(i) / file)
-                for i in indices
-                for file in COMSEG_FILES
-            ]
+            return [str(self.smk_comseg_temp_dir / str(i) / file) for i in indices for file in COMSEG_FILES]
 
 
 class Args:
@@ -150,9 +140,7 @@ class Args:
         return self.dump()
 
     def dump(self, prefix=""):
-        return " ".join(
-            (res for item in self.config.items() for res in self.dump_arg(*item, prefix))
-        )
+        return " ".join((res for item in self.config.items() for res in self.dump_arg(*item, prefix)))
 
     @classmethod
     def dump_arg(cls, key: str, value, prefix: str = ""):

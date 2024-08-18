@@ -19,16 +19,14 @@ from spatialdata.transformations import Scale
 from xarray import DataArray
 
 from .._constants import SopaKeys
-from .._sdata import get_intrinsic_cs, get_key
+from .._sdata import get_intrinsic_cs, get_spatial_image
 from ..segmentation import Patches2D
 from . import models
 
 log = logging.getLogger(__name__)
 
 
-def _get_best_level_for_downsample(
-    level_downsamples: list[float], downsample: float, epsilon: float = 0.01
-) -> int:
+def _get_best_level_for_downsample(level_downsamples: list[float], downsample: float, epsilon: float = 0.01) -> int:
     """Return the best level for a given downsampling factor"""
     if downsample <= 1.0:
         return 0
@@ -122,14 +120,12 @@ class Inference:
             return
 
         slide_metadata = self.image.attrs.get("metadata", {})
-        self.level, self.resize_factor, self.patch_width_scale0, self.downsample, success = (
-            _get_extraction_parameters(
-                slide_metadata,
-                self.patch_width,
-                self.level,
-                self.magnification,
-                backend=self.image.attrs.get("backend"),
-            )
+        self.level, self.resize_factor, self.patch_width_scale0, self.downsample, success = _get_extraction_parameters(
+            slide_metadata,
+            self.patch_width,
+            self.level,
+            self.magnification,
+            backend=self.image.attrs.get("backend"),
         )
         if not success:
             log.error("Error retrieving the image mpp, skipping tile embedding.")
@@ -157,9 +153,7 @@ class Inference:
 
     def _torch_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
-        extraction_patch_width = int(
-            np.round(self.patch_width_scale0 / self.downsample / self.resize_factor)
-        )
+        extraction_patch_width = int(np.round(self.patch_width_scale0 / self.downsample / self.resize_factor))
 
         batch = np.array([self._numpy_patch(box, extraction_patch_width) for box in bboxes])
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
@@ -210,13 +204,11 @@ def infer_wsi_patches(
     Returns:
         If the processing was successful, returns the `DataArray` of shape `(C,Y,X)` containing the model predictions, else `False`
     """
-    image_key = get_key(sdata, "images", image_key)
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
     image = sdata.images[image_key]
 
     infer = Inference(image, model, patch_width, level, magnification, device)
-    patches = Patches2D(
-        sdata, image_key, infer.patch_width_scale0, infer.downsample * patch_overlap
-    )
+    patches = Patches2D(sdata, image_key, infer.patch_width_scale0, infer.downsample * patch_overlap)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 

@@ -8,7 +8,12 @@ import geopandas as gpd
 from spatialdata import SpatialData
 
 from ..._constants import SopaKeys
-from ..._sdata import get_boundaries, get_element, get_spatial_image, to_intrinsic
+from ..._sdata import (
+    get_boundaries,
+    get_spatial_element,
+    get_spatial_image,
+    to_intrinsic,
+)
 from . import (
     write_cell_categories,
     write_gene_counts,
@@ -98,7 +103,7 @@ def write(
     path: Path = Path(path)
     _check_explorer_directory(path)
 
-    image_key, image = get_spatial_image(sdata, image_key, return_key=True)
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
 
     ### Saving cell categories and gene counts
     if SopaKeys.TABLE in sdata.tables:
@@ -127,7 +132,9 @@ def write(
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 
     ### Saving transcripts
-    df = get_element(sdata, "points", points_key)
+    df = None
+    if len(sdata.points):
+        df = get_spatial_element(sdata.points, key=points_key)
 
     if _should_save(mode, "t") and df is not None:
         if gene_column is not None:

@@ -1,4 +1,5 @@
-from . import shapes, aggregate, methods, stainings
+from . import aggregation, shapes, methods, stainings
 from ..patches import Patches2D
-from .aggregate import Aggregator, overlay_segmentation
+from .aggregation import Aggregator, overlay_segmentation
 from .stainings import StainingSegmentation
+from .tissue import tissue_segmentation

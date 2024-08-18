@@ -120,9 +120,7 @@ class SectionBuilder:
         subsections = [
             SubSection(
                 "Names",
-                Paragraph(
-                    f"Channels names:<br>{Message(', '.join(map(str, list(image.coords['c'].values))))}"
-                ),
+                Paragraph(f"Channels names:<br>{Message(', '.join(map(str, list(image.coords['c'].values))))}"),
             )
         ]
 
@@ -166,9 +164,7 @@ class SectionBuilder:
                     f"{low_average.sum()} genes have a low count (less than {LOW_AVERAGE_COUNT} per cell, on average):"
                 )
             )
-            QC_subsubsections.append(
-                Message(", ".join(self.adata.var_names[low_average]), color="danger")
-            )
+            QC_subsubsections.append(Message(", ".join(self.adata.var_names[low_average]), color="danger"))
 
         fig1 = plt.figure()
         _kdeplot_vmax_quantile(mean_transcript_count)

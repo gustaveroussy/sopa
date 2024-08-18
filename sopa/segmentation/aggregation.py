@@ -22,8 +22,7 @@ import sopa
 from .._constants import SopaKeys
 from .._sdata import (
     get_boundaries,
-    get_element,
-    get_item,
+    get_spatial_element,
     get_spatial_image,
     to_intrinsic,
 )
@@ -71,6 +70,24 @@ def overlay_segmentation(
         average_intensities=average_intensities,
         area_ratio_threshold=area_ratio_threshold,
         save_table=save_table,
+    )
+
+
+def aggregate(
+    sdata: SpatialData,
+    average_intensities: bool = True,
+    expand_radius_ratio: float = 0,
+    min_transcripts: int = 0,
+    min_intensity_ratio: float = 0,
+    **kwargs: int,
+):
+    aggr = Aggregator(sdata, **kwargs)
+
+    aggr.compute_table(
+        average_intensities=average_intensities,
+        expand_radius_ratio=expand_radius_ratio,
+        min_transcripts=min_transcripts,
+        min_intensity_ratio=min_intensity_ratio,
     )
 
 
@@ -126,9 +143,7 @@ class Aggregator:
         instance_key = old_table.uns["spatialdata_attrs"]["instance_key"]
 
         if isinstance(old_shapes_key, list):
-            assert (
-                len(old_shapes_key) == 1
-            ), "Can't overlap segmentation on multi-region SpatialData object"
+            assert len(old_shapes_key) == 1, "Can't overlap segmentation on multi-region SpatialData object"
             old_shapes_key = old_shapes_key[0]
 
         old_geo_df = self.sdata[old_shapes_key]
@@ -143,14 +158,10 @@ class Aggregator:
         table_crop = old_table[~np.isin(old_table.obs[instance_key], gdf_join.index)].copy()
         table_crop.obs[SopaKeys.CELL_OVERLAY_KEY] = False
 
-        self.compute_table(
-            gene_column=gene_column, average_intensities=average_intensities, save_table=False
-        )
+        self.compute_table(gene_column=gene_column, average_intensities=average_intensities, save_table=False)
         self.table.obs[SopaKeys.CELL_OVERLAY_KEY] = True
 
-        self.table = anndata.concat(
-            [table_crop, self.table], uns_merge="first", join="outer", fill_value=0
-        )
+        self.table = anndata.concat([table_crop, self.table], uns_merge="first", join="outer", fill_value=0)
         _fillna(self.table.obs)
 
         self.shapes_key = f"{old_shapes_key}+{self.shapes_key}"
@@ -158,9 +169,9 @@ class Aggregator:
         self.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
         self.geo_df.attrs = old_geo_df.attrs
 
-        self.standardized_table(save_table=save_table)
+        self.add_standardized_table(save_table=save_table)
 
-    def standardized_table(self, save_table: bool = True):
+    def add_standardized_table(self, save_table: bool = True):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
         self.geo_df.index = list(self.table.obs_names)
@@ -169,15 +180,9 @@ class Aggregator:
             self.sdata.delete_element_from_disk(self.shapes_key)
             self.sdata.write_element(self.shapes_key)
 
-        self.table.obsm["spatial"] = np.array(
-            [[centroid.x, centroid.y] for centroid in self.geo_df.centroid]
-        )
-        self.table.obs[SopaKeys.REGION_KEY] = pd.Series(
-            self.shapes_key, index=self.table.obs_names, dtype="category"
-        )
-        self.table.obs[SopaKeys.SLIDE_KEY] = pd.Series(
-            self.image_key, index=self.table.obs_names, dtype="category"
-        )
+        self.table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in self.geo_df.centroid])
+        self.table.obs[SopaKeys.REGION_KEY] = pd.Series(self.shapes_key, index=self.table.obs_names, dtype="category")
+        self.table.obs[SopaKeys.SLIDE_KEY] = pd.Series(self.image_key, index=self.table.obs_names, dtype="category")
         self.table.obs[SopaKeys.INSTANCE_KEY] = self.geo_df.index
 
         self.table.obs[SopaKeys.AREA_OBS] = self.geo_df.area.values
@@ -232,9 +237,7 @@ class Aggregator:
             min_intensity_ratio: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
             save_table: Whether the table should be saved on disk or not
         """
-        does_count = (
-            self.table is not None and isinstance(self.table.X, csr_matrix)
-        ) or gene_column is not None
+        does_count = (self.table is not None and isinstance(self.table.X, csr_matrix)) or gene_column is not None
 
         assert (
             average_intensities or does_count
@@ -284,7 +287,7 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
         }
 
-        self.standardized_table(save_table=save_table)
+        self.add_standardized_table(save_table=save_table)
 
 
 def _overlap_area_ratio(row) -> float:
@@ -299,6 +302,15 @@ def _fillna(df: pd.DataFrame):
             df[key] = df[key].cat.add_categories("NA").fillna("NA")
         else:
             df[key] = df[key].fillna(0)
+
+
+def expand_radius(geo_df: gpd.GeoDataFrame, expand_radius_ratio: float | None) -> gpd.GeoDataFrame:
+    if not expand_radius_ratio:
+        return geo_df
+
+    expand_radius_ = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
+    geo_df.geometry = geo_df.buffer(expand_radius_)
+    return geo_df
 
 
 def average_channels(
@@ -320,23 +332,15 @@ def average_channels(
     """
     image = get_spatial_image(sdata, image_key)
 
-    geo_df = get_element(sdata, "shapes", shapes_key)
+    geo_df = get_spatial_element(sdata.shapes, key=shapes_key)
     geo_df = to_intrinsic(sdata, geo_df, image)
+    geo_df = expand_radius(geo_df, expand_radius_ratio)
 
-    expand_radius = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
-
-    if expand_radius > 0:
-        geo_df = geo_df.buffer(expand_radius)
-
-    log.info(
-        f"Averaging channels intensity over {len(geo_df)} cells with expansion {expand_radius}"
-    )
+    log.info(f"Averaging channels intensity over {len(geo_df)} cells with expansion {expand_radius}")
     return _average_channels_aligned(image, geo_df)
 
 
-def _average_channels_aligned(
-    image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon]
-) -> np.ndarray:
+def _average_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon]) -> np.ndarray:
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
@@ -397,7 +401,7 @@ def count_transcripts(
     gene_column: str,
     shapes_key: str = None,
     points_key: str = None,
-    geo_df: gpd.GeoDataFrame = None,
+    geo_df: gpd.GeoDataFrame | None = None,
 ) -> AnnData:
     """Counts transcripts per cell.
 
@@ -411,19 +415,17 @@ def count_transcripts(
     Returns:
         An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
     """
-    points_key, points = get_item(sdata, "points", points_key)
+    points_key, points = get_spatial_element(sdata.points, key=points_key, return_key=True)
 
     if geo_df is None:
-        geo_df = get_element(sdata, "shapes", shapes_key)
+        geo_df = get_spatial_element(sdata.shapes, key=shapes_key)
         geo_df = to_intrinsic(sdata, geo_df, points_key)
 
     log.info(f"Aggregating transcripts over {len(geo_df)} cells")
     return _count_transcripts_aligned(geo_df, points, gene_column)
 
 
-def _count_transcripts_aligned(
-    geo_df: gpd.GeoDataFrame, points: dd.DataFrame, value_key: str
-) -> AnnData:
+def _count_transcripts_aligned(geo_df: gpd.GeoDataFrame, points: dd.DataFrame, value_key: str) -> AnnData:
     """Count transcripts per cell. The cells and points have to be aligned (i.e., in the same coordinate system)
 
     Args:
@@ -465,11 +467,12 @@ def _add_coo(
     gene_column: list[str],
     gene_names: list[str],
 ) -> None:
-    points_gdf = gpd.GeoDataFrame(
-        partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
-    )
+    points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
     joined = geo_df.sjoin(points_gdf)
     cells_indices, column_indices = joined.index, joined[gene_column].cat.codes
+
+    cells_indices = cells_indices[column_indices >= 0]
+    column_indices = column_indices[column_indices >= 0]
 
     X_partition = coo_matrix(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
@@ -477,3 +480,39 @@ def _add_coo(
     )
 
     X_partitions.append(X_partition)
+
+
+def aggregate_bins(
+    sdata: SpatialData,
+    table_key: str,
+    shapes_key: str,
+    bins_key: str,
+    expand_radius_ratio: float = 0,
+) -> AnnData:
+    """Aggregate bins (for instance, from Visium HD data) into cells.
+
+    Args:
+        sdata: The `SpatialData` object
+        table_key: Key of the table containing the bin-by-gene counts
+        shapes_key: Key of the shapes containing the cell boundaries
+        bins_key: Key of the shapes containing the bins boundaries
+        expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate bins from the cytoplasm.
+
+    Returns:
+        An `AnnData` object of shape with the cell-by-gene count matrix
+    """
+    bins = sdata.shapes[bins_key].centroid.reset_index(drop=True)  # bins as points
+
+    cells = to_intrinsic(sdata, shapes_key, bins_key).reset_index(drop=True)
+    cells = expand_radius(cells, expand_radius_ratio)
+
+    bin_within_cell = gpd.sjoin(bins, cells)
+
+    indices_matrix = coo_matrix(
+        (np.full(len(bin_within_cell), 1), (bin_within_cell["index_right"], bin_within_cell.index)),
+        shape=(len(cells), len(bins)),
+    )
+
+    adata = AnnData(indices_matrix @ sdata[table_key].X, obs=cells[[]], var=sdata[table_key].var)
+    adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
+    return adata

@@ -20,6 +20,7 @@ def merscope(
     slide_name: str | None = None,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
+    **kwargs: int,
 ) -> SpatialData:
     """Read MERSCOPE data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.merscope.html).
 
@@ -52,4 +53,5 @@ def merscope(
         imread_kwargs=imread_kwargs,
         cells_boundaries=False,
         cells_table=False,
+        **kwargs,
     )

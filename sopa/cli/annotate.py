@@ -13,9 +13,7 @@ app_annotate = typer.Typer()
 def fluorescence(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     marker_cell_dict: str = typer.Option(callback=ast.literal_eval),
-    cell_type_key: str = typer.Option(
-        "cell_type", help="Key added in `adata.obs` corresponding to the cell type"
-    ),
+    cell_type_key: str = typer.Option("cell_type", help="Key added in `adata.obs` corresponding to the cell type"),
 ):
     """Simple annotation based on fluorescence, where each provided channel corresponds to one cell type.
 
@@ -39,9 +37,7 @@ def fluorescence(
 @app_annotate.command()
 def tangram(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    sc_reference_path: str = typer.Option(
-        help="Path to the scRNAseq annotated reference, as a `.h5ad` file"
-    ),
+    sc_reference_path: str = typer.Option(help="Path to the scRNAseq annotated reference, as a `.h5ad` file"),
     cell_type_key: str = typer.Option(help="Key of `adata_ref.obs` containing the cell-types"),
     reference_preprocessing: str = typer.Option(
         None,
