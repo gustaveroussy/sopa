@@ -37,11 +37,7 @@ def sjoin(
     if target_coordinate_system is None:
         target_coordinate_system = get_intrinsic_cs(sdata, left_element)
 
-    left_element = sdata.transform_element_to_coordinate_system(
-        left_element, target_coordinate_system
-    )
-    right_element = sdata.transform_element_to_coordinate_system(
-        right_element, target_coordinate_system
-    )
+    left_element = sdata.transform_element_to_coordinate_system(left_element, target_coordinate_system)
+    right_element = sdata.transform_element_to_coordinate_system(right_element, target_coordinate_system)
 
     return gpd.sjoin(left_element, right_element, how=how, **kwargs)

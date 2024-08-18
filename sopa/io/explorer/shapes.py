@@ -17,9 +17,7 @@ log = logging.getLogger(__name__)
 TOLERANCE_STEP = 0.5
 
 
-def pad_polygon(
-    polygon: Polygon, max_vertices: int, tolerance: float = TOLERANCE_STEP
-) -> np.ndarray:
+def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = TOLERANCE_STEP) -> np.ndarray:
     """Transform the polygon to have the desired number of vertices
 
     Args:

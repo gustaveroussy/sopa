@@ -124,9 +124,7 @@ class MultiLevelAnnotation:
         )
 
     def get_hard_labels(self, df: pd.DataFrame) -> pd.Series:
-        df = df.clip(
-            df.quantile(1 - self.clip_percentile), df.quantile(self.clip_percentile), axis=1
-        )
+        df = df.clip(df.quantile(1 - self.clip_percentile), df.quantile(self.clip_percentile), axis=1)
         df = (df - df.min()) / (df.max() - df.min())
         return df.idxmax(1)
 
@@ -138,9 +136,7 @@ class MultiLevelAnnotation:
         sc.pp.filter_genes(ad_sp_split, min_cells=1)
 
         # Calculate uniform density prior as 1/number_of_spots
-        ad_sp_split.obs["uniform_density"] = (
-            np.ones(ad_sp_split.X.shape[0]) / ad_sp_split.X.shape[0]
-        )
+        ad_sp_split.obs["uniform_density"] = np.ones(ad_sp_split.X.shape[0]) / ad_sp_split.X.shape[0]
 
         # Calculate rna_count_based density prior as % of rna molecule count
         rna_count_per_spot = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
@@ -157,8 +153,7 @@ class MultiLevelAnnotation:
         )
 
         selection = list(
-            set(ad_sp_split.var_names[ad_sp_split.var.counts > 0])
-            & set(ad_sc_.var_names[ad_sc_.var.counts > 0])
+            set(ad_sp_split.var_names[ad_sp_split.var.counts > 0]) & set(ad_sc_.var_names[ad_sc_.var.counts > 0])
         )
 
         assert len(

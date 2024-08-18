@@ -6,9 +6,7 @@ from .utils import SDATA_HELPER
 
 app_explorer = typer.Typer()
 
-PIXELSIZE_DEPRECATED = (
-    "`pixelsize` is deprecated and will be removed in future versions. Use `pixel_size` instead."
-)
+PIXELSIZE_DEPRECATED = "`pixelsize` is deprecated and will be removed in future versions. Use `pixel_size` instead."
 
 
 @app_explorer.command()
@@ -18,9 +16,7 @@ def write(
         None,
         help="Path to a directory where Xenium Explorer's outputs will be saved. By default, writes to the same path as `sdata_path` but with the `.explorer` suffix",
     ),
-    gene_column: str = typer.Option(
-        None, help="Column name of the points dataframe containing the gene names"
-    ),
+    gene_column: str = typer.Option(None, help="Column name of the points dataframe containing the gene names"),
     shapes_key: str = typer.Option(
         None,
         help="Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries",
@@ -134,6 +130,4 @@ def add_aligned(
     sdata = spatialdata.read_zarr(sdata_path)
     image = io.ome_tif(image_path, as_image=True)
 
-    align(
-        sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=original_image_key
-    )
+    align(sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=original_image_key)

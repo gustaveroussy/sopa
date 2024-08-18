@@ -11,6 +11,7 @@
 
 ### Changed
 - Import submodules in init (segmentation, io, utils)
+- API simplification in progress (new API + tutorial comming soon)
 
 ## [1.1.2] - 2024-07-24
 

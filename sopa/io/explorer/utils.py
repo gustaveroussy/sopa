@@ -9,7 +9,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
-from ..._sdata import get_element
+from ..._sdata import get_spatial_element
 
 
 def explorer_file_path(path: str, filename: str, is_dir: bool):
@@ -45,9 +45,7 @@ def _selection_to_polygon(df, pixel_size):
     return Polygon(df[["X", "Y"]].values / pixel_size)
 
 
-def xenium_explorer_selection(
-    path: str | Path, pixel_size: float = 0.2125, return_list: bool = False
-) -> Polygon:
+def xenium_explorer_selection(path: str | Path, pixel_size: float = 0.2125, return_list: bool = False) -> Polygon:
     df = pd.read_csv(path, skiprows=2)
 
     if "Selection" not in df:
@@ -74,10 +72,8 @@ def add_explorer_selection(
         pixel_size: Number of microns in a pixel. It must be the same value as the one used in `sopa.io.write`
     """
     polys = xenium_explorer_selection(path, pixel_size=pixel_size, return_list=True)
-    image = get_element(sdata, "images", image_key)
+    image = get_spatial_element(sdata.images, key=image_key)
 
     transformations = get_transformation(image, get_all=True).copy()
 
-    sdata.shapes[shapes_key] = ShapesModel.parse(
-        gpd.GeoDataFrame(geometry=polys), transformations=transformations
-    )
+    sdata.shapes[shapes_key] = ShapesModel.parse(gpd.GeoDataFrame(geometry=polys), transformations=transformations)

@@ -28,9 +28,7 @@ app.add_typer(
     name="segmentation",
     help="Perform cell segmentation on patches. NB: for `baysor`, use directly the `baysor` command line.",
 )
-app.add_typer(
-    app_resolve, name="resolve", help="Resolve the segmentation conflicts over patches overlaps"
-)
+app.add_typer(app_resolve, name="resolve", help="Resolve the segmentation conflicts over patches overlaps")
 app.add_typer(
     app_patchify,
     name="patchify",
@@ -77,9 +75,7 @@ def read(
 
     io.standardize._check_can_write_zarr(sdata_path)
 
-    assert (
-        technology is not None or config_path is not None
-    ), "Provide the argument `--technology` or `--config-path`"
+    assert technology is not None or config_path is not None, "Provide the argument `--technology` or `--config-path`"
 
     if config_path is not None:
         assert not kwargs, "Provide either a path to a config, or some kwargs, but not both"
@@ -114,9 +110,7 @@ def crop(
         None,
         help="List of channel names to be displayed. Optional if there are already only 1 or 3 channels",
     ),
-    scale_factor: float = typer.Option(
-        10, help="Resize the image by this value (high value for a lower memory usage)"
-    ),
+    scale_factor: float = typer.Option(10, help="Resize the image by this value (high value for a lower memory usage)"),
     margin_ratio: float = typer.Option(
         0.1, help="Ratio of the image margin on the display (compared to the image size)"
     ),
@@ -163,16 +157,12 @@ def aggregate(
         None,
         help="Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count",
     ),
-    average_intensities: bool = typer.Option(
-        False, help="Whether to average the channel intensities inside each cell"
-    ),
+    average_intensities: bool = typer.Option(False, help="Whether to average the channel intensities inside each cell"),
     expand_radius_ratio: float = typer.Option(
         default=0,
         help="Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings",
     ),
-    min_transcripts: int = typer.Option(
-        0, help="Cells with less transcript than this integer will be filtered"
-    ),
+    min_transcripts: int = typer.Option(0, help="Cells with less transcript than this integer will be filtered"),
     min_intensity_ratio: float = typer.Option(
         0,
         help="Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered",

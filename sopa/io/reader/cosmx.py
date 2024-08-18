@@ -59,8 +59,7 @@ def cosmx(
     protein_dir_dict = {}
     if read_proteins:
         protein_dir_dict = {
-            int(protein_dir.parent.name[3:]): protein_dir
-            for protein_dir in list(path.rglob("**/FOV*/ProteinImages"))
+            int(protein_dir.parent.name[3:]): protein_dir for protein_dir in list(path.rglob("**/FOV*/ProteinImages"))
         }
         assert len(protein_dir_dict), f"No directory called 'ProteinImages' was found under {path}"
 
@@ -82,18 +81,12 @@ def cosmx(
         fov_files = list(images_dir.rglob(pattern))
 
         assert len(fov_files), f"No file matches the pattern {pattern} inside {images_dir}"
-        assert (
-            len(fov_files) == 1
-        ), f"Multiple files match the pattern {pattern}: {', '.join(fov_files)}"
+        assert len(fov_files) == 1, f"Multiple files match the pattern {pattern}: {', '.join(fov_files)}"
 
-        image, c_coords = _read_fov_image(
-            fov_files[0], protein_dir_dict.get(fov), morphology_coords, **imread_kwargs
-        )
+        image, c_coords = _read_fov_image(fov_files[0], protein_dir_dict.get(fov), morphology_coords, **imread_kwargs)
         image_name = f"{fov}_image"
 
-    parsed_image = Image2DModel.parse(
-        image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs
-    )
+    parsed_image = Image2DModel.parse(image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs)
 
     if read_proteins:
         return SpatialData(images={image_name: parsed_image})
@@ -132,9 +125,7 @@ def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
             if found:
                 return found.group(1)
 
-    raise ValueError(
-        "Could not infer `dataset_id` from the name of the transcript file. Please specify it manually."
-    )
+    raise ValueError("Could not infer `dataset_id` from the name of the transcript file. Please specify it manually.")
 
 
 def _read_fov_image(
@@ -194,9 +185,7 @@ def _read_stitched_image(
         if image_path.suffix == ".TIF":
             fov = int(pattern.findall(image_path.name)[0])
 
-            image, c_coords = _read_fov_image(
-                image_path, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs
-            )
+            image, c_coords = _read_fov_image(image_path, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs)
 
             c_coords_dict[fov] = c_coords
 
@@ -212,17 +201,13 @@ def _read_stitched_image(
 
     c_coords = list(set.union(*[set(names) for names in c_coords_dict.values()]))
 
-    stitched_image = da.zeros(
-        shape=(len(c_coords), fov_locs["y1"].max(), fov_locs["x1"].max()), dtype=image.dtype
-    )
+    stitched_image = da.zeros(shape=(len(c_coords), fov_locs["y1"].max(), fov_locs["x1"].max()), dtype=image.dtype)
     stitched_image = xr.DataArray(stitched_image, dims=("c", "y", "x"), coords={"c": c_coords})
 
     for fov, im in fov_images.items():
         xmin, xmax = fov_locs.loc[fov, "x0"], fov_locs.loc[fov, "x1"]
         ymin, ymax = fov_locs.loc[fov, "y0"], fov_locs.loc[fov, "y1"]
-        stitched_image.loc[
-            {"c": c_coords_dict[fov], "y": slice(ymin, ymax), "x": slice(xmin, xmax)}
-        ] = im
+        stitched_image.loc[{"c": c_coords_dict[fov], "y": slice(ymin, ymax), "x": slice(xmin, xmax)}] = im
 
         if len(c_coords_dict[fov]) < len(c_coords):
             log.warn(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")

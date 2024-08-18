@@ -97,9 +97,7 @@ def _clip_intensity_values(
     return ((image / denominator.data.compute()[:, None, None]).clip(0, 1) * 255).astype(np.uint8)
 
 
-def _image_int_dtype(
-    image: xr.DataArray, clip_quantile: bool | None = None, quantile: float = 0.99
-) -> xr.DataArray:
+def _image_int_dtype(image: xr.DataArray, clip_quantile: bool | None = None, quantile: float = 0.99) -> xr.DataArray:
     image = image.transpose("c", "y", "x")
 
     if np.issubdtype(image.dtype, np.integer):

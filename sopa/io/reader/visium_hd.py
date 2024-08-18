@@ -6,6 +6,7 @@ from pathlib import Path
 from spatialdata import SpatialData
 from spatialdata_io.readers.visium_hd import visium_hd as visium_hd_spatialdata_io
 
+from ..._constants import SopaAttrs
 from ...utils import string_channel_names
 from .utils import _default_image_kwargs
 
@@ -33,7 +34,7 @@ def visium_hd(
 
     del image_models_kwargs["scale_factors"]  # already set in the spatialdata_io reader
 
-    sdata = visium_hd_spatialdata_io(
+    sdata: SpatialData = visium_hd_spatialdata_io(
         path,
         bin_size=bin_size,
         image_models_kwargs=image_models_kwargs,
@@ -42,5 +43,15 @@ def visium_hd(
     )
 
     string_channel_names(sdata)  # Ensure that channel names are strings
+
+    for key, image in sdata.images.items():
+        if key.endswith("_full_image"):
+            image.attrs[SopaAttrs.CELL_SEGMENTATION] = True
+        elif key.endswith("_hires_image"):
+            image.attrs[SopaAttrs.TISSUE_SEGMENTATION] = True
+
+    for key, geo_df in sdata.shapes.items():
+        if key.endswith("_002um"):
+            geo_df.attrs[SopaAttrs.BINS_AGGREGATION] = True
 
     return sdata

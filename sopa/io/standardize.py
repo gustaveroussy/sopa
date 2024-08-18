@@ -14,22 +14,13 @@ log = logging.getLogger(__name__)
 
 
 def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = False):
-    assert (
-        len(sdata.images) > 0
-    ), "The spatialdata object has no image. Sopa is not designed for this."
+    assert len(sdata.images) > 0, "The spatialdata object has no image. Sopa is not designed for this."
 
-    if len(sdata.images) != 1:
-        message = f"The spatialdata object has {len(sdata.images)} images. We advise to run sopa on one image (which can have multiple channels and multiple scales)"
-        if warn:
-            log.warn(message)
-        else:
-            raise ValueError(message)
-    else:
-        image = get_spatial_image(sdata)
-        assert (
-            image.dims == VALID_DIMENSIONS
-        ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
-        _check_integer_dtype(image.dtype)
+    image = get_spatial_image(sdata)
+    assert (
+        image.dims == VALID_DIMENSIONS
+    ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
+    _check_integer_dtype(image.dtype)
 
     if len(sdata.points) > 1:
         log.warn(
@@ -72,9 +63,6 @@ def write_standardized(sdata: SpatialData, sdata_path: str, delete_table: bool =
     assert (
         SopaKeys.TABLE not in sdata.tables
     ), f"sdata.tables['{SopaKeys.TABLE}'] exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
-
-    if len(sdata.points) == 0:
-        log.warn("No transcripts found. Some tools from sopa will not be available.")
 
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
 

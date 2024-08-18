@@ -16,7 +16,7 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from .._constants import SopaKeys
-from .._sdata import get_element, get_key
+from .._sdata import get_spatial_element, get_spatial_image
 from . import aggregate, shapes
 
 log = logging.getLogger(__name__)
@@ -45,8 +45,8 @@ def resolve(
     patches_cells, adatas = _read_all_segmented_patches(temp_dir, min_area, patches_dirs)
     geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
 
-    image_key = get_key(sdata, "images")
-    points = get_element(sdata, "points")
+    image_key, _ = get_spatial_image(sdata, return_key=True)
+    points = get_spatial_element(sdata.points)
     transformations = get_transformation(points, get_all=True).copy()
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
@@ -90,9 +90,7 @@ def resolve(
         sdata.write_element(shapes_key, overwrite=True)
         sdata.write_element(SopaKeys.TABLE, overwrite=True)
 
-    log.info(
-        f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']"
-    )
+    log.info(f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']")
 
 
 def _read_one_segmented_patch(
@@ -102,9 +100,7 @@ def _read_one_segmented_patch(
 
     loom_file = directory / "segmentation_counts.loom"
     if loom_file.exists():
-        adata = anndata.read_loom(
-            directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
-        )
+        adata = anndata.read_loom(directory / "segmentation_counts.loom", obs_names="Name", var_names="Name")
     else:
         adata = anndata.read_h5ad(directory / "segmentation_counts.h5ad")
 
@@ -117,13 +113,9 @@ def _read_one_segmented_patch(
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
-    cells_num = cells_num[
-        cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)
-    ]
+    cells_num = cells_num[cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)]
 
-    gdf = gpd.GeoDataFrame(
-        index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num]
-    )
+    gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
     gdf = gdf[~gdf.geometry.isna()]
@@ -173,9 +165,7 @@ def _resolve_patches(
     cells = [cell for cells in patches_cells for cell in cells]
     segmentation_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
-    cells_resolved, cells_indices = shapes.solve_conflicts(
-        cells, patch_indices=patch_indices, return_indices=True
-    )
+    cells_resolved, cells_indices = shapes.solve_conflicts(cells, patch_indices=patch_indices, return_indices=True)
 
     existing_ids = segmentation_ids[cells_indices[cells_indices >= 0]]
     new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))

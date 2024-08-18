@@ -33,6 +33,13 @@ class SopaKeys:
     GEOMETRY_COUNT = "n_components"
 
 
+class SopaAttrs:
+    CELL_SEGMENTATION = "for_cell_segmentation"
+    TISSUE_SEGMENTATION = "for_tissue_segmentation"
+    BINS_AGGREGATION = "for_bins_aggregation"
+    GENE_COLUMN = "feature_key"
+
+
 VALID_DIMENSIONS = ("c", "y", "x")
 LOW_AVERAGE_COUNT = 0.01
 EPS = 1e-5

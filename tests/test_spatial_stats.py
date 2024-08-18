@@ -76,9 +76,7 @@ def test_geometrize_niches(adata: AnnData):
 
 
 def test_niches_geometry_stats(adata: AnnData):
-    df_geometries_stats = niches_geometry_stats(
-        adata, NICHE_KEY, aggregation=["min", "mean"], buffer=0
-    )
+    df_geometries_stats = niches_geometry_stats(adata, NICHE_KEY, aggregation=["min", "mean"], buffer=0)
 
     expected_a = [0, 1, 1, np.sqrt(18)] * 2  # sqrt(3**2 + 3**2)
     assert (df_geometries_stats.iloc[0, 4:] == np.array(expected_a)).all()

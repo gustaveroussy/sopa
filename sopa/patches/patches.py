@@ -18,7 +18,12 @@ from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
-from .._sdata import get_boundaries, get_item, get_spatial_image, to_intrinsic
+from .._sdata import (
+    get_boundaries,
+    get_spatial_element,
+    get_spatial_image,
+    to_intrinsic,
+)
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa
@@ -203,9 +208,7 @@ class Patches2D:
                 SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
             }
         )
-        geo_df = ShapesModel.parse(
-            geo_df, transformations=get_transformation(self.element, get_all=True).copy()
-        )
+        geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
 
         self.sdata.shapes[shapes_key] = geo_df
         if self.sdata.is_backed():
@@ -250,9 +253,9 @@ class Patches2D:
         Returns:
             A list of patches indices. Each index correspond to the name of a subdirectory inside `temp_dir`
         """
-        return TranscriptPatches(
-            self, self.element, config_name, csv_name, min_transcripts_per_patch
-        ).write(temp_dir, cell_key, unassigned_value, use_prior, config, config_path, shapes_key)
+        return TranscriptPatches(self, self.element, config_name, csv_name, min_transcripts_per_patch).write(
+            temp_dir, cell_key, unassigned_value, use_prior, config, config_path, shapes_key
+        )
 
     def patchify_centroids(
         self,
@@ -316,9 +319,7 @@ class TranscriptPatches:
 
         if use_prior:
             prior_boundaries = self.sdata[shapes_key]
-            _map_transcript_to_cell(
-                self.sdata, SopaKeys.DEFAULT_CELL_KEY, self.df, prior_boundaries
-            )
+            _map_transcript_to_cell(self.sdata, SopaKeys.DEFAULT_CELL_KEY, self.df, prior_boundaries)
 
         self._setup_patches_directory()
 
@@ -326,9 +327,7 @@ class TranscriptPatches:
 
         if isinstance(self.df, dd.DataFrame):
             with ProgressBar():
-                self.df.map_partitions(
-                    partial(self._query_points_partition, patches_gdf), meta=()
-                ).compute()
+                self.df.map_partitions(partial(self._query_points_partition, patches_gdf), meta=()).compute()
         else:
             self._write_points(patches_gdf, self.df)
 
@@ -362,9 +361,7 @@ class TranscriptPatches:
                     f"Patch {index} has < {self.min_transcripts_per_patch} transcripts. Segmentation will not be run on this patch."
                 )
 
-    def _query_points_partition(
-        self, patches_gdf: gpd.GeoDataFrame, df: pd.DataFrame
-    ) -> pd.DataFrame:
+    def _query_points_partition(self, patches_gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
         self._write_points(patches_gdf, points_gdf, mode="a")
 
@@ -390,9 +387,7 @@ def _check_min_lines(path: str, n: int) -> bool:
 
 
 def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int = 0) -> pd.Series:
-    points_gdf = gpd.GeoDataFrame(
-        partition, geometry=gpd.points_from_xy(partition["x"], partition["y"])
-    )
+    points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
     gdf.index.name = "index_right"  # to reuse the index name later
     spatial_join = points_gdf.sjoin(gdf, how="left")
     spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
@@ -408,7 +403,7 @@ def _map_transcript_to_cell(
     geo_df: gpd.GeoDataFrame | None = None,
 ):
     if df is None:
-        df = get_item(sdata, "points")
+        df = get_spatial_element(sdata.points)
 
     if geo_df is None:
         geo_df = get_boundaries(sdata)
@@ -430,9 +425,7 @@ def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.S
         series = series.cat.as_known()
 
         categories = series.cat.categories
-        assert (
-            unassigned_value in categories
-        ), f"Unassigned value {unassigned_value} not in categories"
+        assert unassigned_value in categories, f"Unassigned value {unassigned_value} not in categories"
         categories = categories.delete(categories.get_loc(unassigned_value))
         categories = pd.Index([unassigned_value]).append(categories)
 

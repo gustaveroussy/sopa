@@ -21,9 +21,7 @@ def cellpose(
     cellprob_threshold: float = typer.Option(-6, help="Cellpose `cellprob_threshold` parameter"),
     model_type: str = typer.Option("cyto3", help="Name of the cellpose model"),
     pretrained_model: str = typer.Option(None, help="Path to the pretrained model to be loaded"),
-    min_area: int = typer.Option(
-        0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
-    ),
+    min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
     clip_limit: float = typer.Option(
         0.2,
         help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
@@ -96,9 +94,7 @@ def generic_staining(
         help="Kwargs for the method. This should be a dictionnary, in inline string format.",
     ),
     channels: list[str] = typer.Option(help="Names of the channels used for segmentation."),
-    min_area: int = typer.Option(
-        0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
-    ),
+    min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
     clip_limit: float = typer.Option(
         0.2,
         help="Parameter for skimage.exposure.equalize_adapthist (applied before running the segmentation method)",

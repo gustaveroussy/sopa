@@ -48,9 +48,7 @@ def cluster_embeddings(
         element = sdata.images[element]
 
     if isinstance(method, str):
-        assert (
-            method in METHODS_DICT
-        ), f"Method {method} is not available. Use one of: {', '.join(METHODS_DICT.keys())}"
+        assert method in METHODS_DICT, f"Method {method} is not available. Use one of: {', '.join(METHODS_DICT.keys())}"
         method = METHODS_DICT[method]
 
     gdf_patches = sdata[SopaKeys.PATCHES_INFERENCE_KEY]

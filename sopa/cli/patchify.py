@@ -13,9 +13,7 @@ app_patchify = typer.Typer()
 @app_patchify.command()
 def image(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    patch_width_pixel: float = typer.Option(
-        5000, help="Width (and height) of each patch in pixels"
-    ),
+    patch_width_pixel: float = typer.Option(5000, help="Width (and height) of each patch in pixels"),
     patch_overlap_pixel: float = typer.Option(
         100,
         help="Number of overlapping pixels between the patches. We advise to choose approximately twice the diameter of a cell",
@@ -23,13 +21,13 @@ def image(
 ):
     """Prepare patches for staining-based segmentation (including Cellpose)"""
     from sopa._constants import SopaFiles
-    from sopa._sdata import get_key
+    from sopa._sdata import get_spatial_image
     from sopa.io.standardize import read_zarr_standardized
     from sopa.patches import Patches2D
 
     sdata = read_zarr_standardized(sdata_path)
 
-    image_key = get_key(sdata, "images")
+    image_key, _ = get_spatial_image(sdata, return_key=True)
 
     patches = Patches2D(sdata, image_key, patch_width_pixel, patch_overlap_pixel)
     patches.write()
@@ -120,9 +118,7 @@ def comseg(
         None,
         help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
     ),
-    min_transcripts_per_patch: int = typer.Option(
-        1000, help="Minimum number of transcripts per patch"
-    ),
+    min_transcripts_per_patch: int = typer.Option(1000, help="Minimum number of transcripts per patch"),
     min_cells_per_patch: int = typer.Option(1, help="Minimum number of cells per patch"),
     shapes_key: str = typer.Option(
         SopaKeys.CELLPOSE_BOUNDARIES,
@@ -193,7 +189,7 @@ def _patchify_transcripts(
 
     """
     from sopa._constants import SopaFiles
-    from sopa._sdata import get_key
+    from sopa._sdata import get_spatial_element
     from sopa.io.standardize import read_zarr_standardized
     from sopa.patches import Patches2D
 
@@ -206,7 +202,7 @@ def _patchify_transcripts(
         config or config_path is not None
     ), "Provide '--config-path', the path to a Baysor config file (toml) or comseg file (jsons)"
 
-    df_key = get_key(sdata, "points")
+    df_key = get_spatial_element(sdata.points)
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
     valid_indices = patches.patchify_transcripts(
         temp_dir,

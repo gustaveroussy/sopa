@@ -12,7 +12,7 @@ from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
 from xarray import DataArray
 
-from ._constants import SopaKeys
+from ._constants import SopaAttrs, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -40,9 +40,7 @@ def get_boundaries(
         if res is not None:
             return res
 
-    error_message = (
-        "sdata object has no valid segmentation boundary. Consider running Sopa segmentation first."
-    )
+    error_message = "sdata object has no valid segmentation boundary. Consider running Sopa segmentation first."
 
     if not warn:
         raise ValueError(error_message)
@@ -51,17 +49,13 @@ def get_boundaries(
     return (None, None) if return_key else None
 
 
-def _try_get_boundaries(
-    sdata: SpatialData, shapes_key: str, return_key: bool
-) -> gpd.GeoDataFrame | None:
+def _try_get_boundaries(sdata: SpatialData, shapes_key: str, return_key: bool) -> gpd.GeoDataFrame | None:
     """Try to get a cell boundaries for a given `shapes_key`"""
     if shapes_key in sdata.shapes:
         return (shapes_key, sdata[shapes_key]) if return_key else sdata[shapes_key]
 
 
-def get_intrinsic_cs(
-    sdata: SpatialData, element: SpatialElement | str, name: str | None = None
-) -> str:
+def get_intrinsic_cs(sdata: SpatialData, element: SpatialElement | str, name: str | None = None) -> str:
     """Gets the name of the intrinsic coordinate system of an element
 
     Args:
@@ -86,9 +80,7 @@ def get_intrinsic_cs(
     return name
 
 
-def to_intrinsic(
-    sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str
-) -> SpatialElement:
+def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str) -> SpatialElement:
     """Transforms a `SpatialElement` into the intrinsic coordinate system of another `SpatialElement`
 
     Args:
@@ -103,32 +95,6 @@ def to_intrinsic(
         element = sdata[element]
     cs = get_intrinsic_cs(sdata, element_cs)
     return sdata.transform_element_to_coordinate_system(element, cs)
-
-
-def get_key(sdata: SpatialData, attr: str, key: str | None = None):
-    if key is not None:
-        return key
-
-    elements = getattr(sdata, attr)
-
-    if not len(elements):
-        return None
-
-    assert (
-        len(elements) == 1
-    ), f"Trying to get an element key of `sdata.{attr}`, but it contains multiple values and no dict key was provided"
-
-    return next(iter(elements.keys()))
-
-
-def get_element(sdata: SpatialData, attr: str, key: str | None = None):
-    key = get_key(sdata, attr, key)
-    return sdata[key] if key is not None else None
-
-
-def get_item(sdata: SpatialData, attr: str, key: str | None = None):
-    key = get_key(sdata, attr, key)
-    return key, sdata[key] if key is not None else None
 
 
 def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
@@ -155,35 +121,87 @@ def iter_scales(image: DataTree) -> Iterator[xr.DataArray]:
     Yields:
         Each scale (as a `xr.DataArray`)
     """
-    assert isinstance(
-        image, DataTree
-    ), f"Multiscale iteration is reserved for type DataTree. Found {type(image)}"
+    assert isinstance(image, DataTree), f"Multiscale iteration is reserved for type DataTree. Found {type(image)}"
 
     for scale in image:
         yield next(iter(image[scale].values()))
 
 
+def get_spatial_element(
+    element_dict: dict[str, SpatialElement],
+    key: str | None = None,
+    valid_attr: str | None = None,
+    return_key: bool = False,
+    as_spatial_image: bool = False,
+) -> SpatialElement | tuple[str, SpatialElement]:
+    """Gets an element from a SpatialData object.
+
+    Args:
+        sdata: SpatialData object.
+        key: Optional element key. If `None`, returns the only element (if only one), or tries to find an element with `valid_attr`.
+        return_key: Whether to also return the key of the element.
+        valid_attr: Attribute that the element must have to be considered valid.
+        as_spatial_image: Whether to return the element as a `SpatialImage` (if it is a `DataTree`)
+
+    Returns:
+        If `return_key` is False, only the element is returned, else a tuple `(element_key, element)`
+    """
+    assert len(element_dict), "No spatial element was found in the dict."
+
+    if key is not None:
+        return _return_element(element_dict, key, return_key, as_spatial_image)
+
+    if len(element_dict) == 1:
+        key = next(iter(element_dict.keys()))
+
+        assert valid_attr is None or element_dict[key].attrs.get(
+            valid_attr, True
+        ), f"Element {key} is not valid for the attribute {valid_attr}."
+
+        return _return_element(element_dict, key, return_key, as_spatial_image)
+
+    assert valid_attr is not None, "Multiple elements found. Provide an element key."
+
+    keys = [key for key, element in element_dict.items() if element.attrs.get(valid_attr)]
+
+    assert len(keys) > 0, f"No element with the attribute {valid_attr}. Provide an element key."
+    assert len(keys) == 1, f"Multiple valid elements found: {keys}. Provide an element key."
+
+    return _return_element(element_dict, keys[0], return_key, as_spatial_image)
+
+
 def get_spatial_image(
-    sdata: SpatialData, key: str | None = None, return_key: bool = False
+    sdata: SpatialData,
+    key: str | None = None,
+    return_key: bool = False,
+    valid_attr: str = SopaAttrs.CELL_SEGMENTATION,
 ) -> DataArray | tuple[str, DataArray]:
     """Gets a DataArray from a SpatialData object (if the image has multiple scale, the `scale0` is returned)
 
     Args:
         sdata: SpatialData object.
-        key: Optional image key. If `None`, returns the only image (if only one), or raises an error.
+        key: Optional image key. If `None`, returns the only image (if only one), or tries to find an image with `valid_attr`.
         return_key: Whether to also return the key of the image.
+        valid_attr: Attribute that the image must have to be considered valid.
 
     Returns:
         If `return_key` is False, only the image is returned, else a tuple `(image_key, image)`
     """
-    key = get_key(sdata, "images", key)
+    return get_spatial_element(
+        sdata.images,
+        key=key,
+        valid_attr=valid_attr,
+        return_key=return_key,
+        as_spatial_image=True,
+    )
 
-    assert key is not None, "One image in `sdata.images` is required"
 
-    image = sdata.images[key]
-    if isinstance(image, DataTree):
-        image = next(iter(image["scale0"].values()))
+def _return_element(
+    element_dict: dict[str, SpatialElement], key: str, return_key: bool, as_spatial_image: bool
+) -> SpatialElement | tuple[str, SpatialElement]:
+    element = element_dict[key]
 
-    if return_key:
-        return key, image
-    return image
+    if as_spatial_image and isinstance(element, DataTree):
+        element = next(iter(element["scale0"].values()))
+
+    return (key, element) if return_key else element

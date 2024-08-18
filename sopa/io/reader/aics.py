@@ -38,15 +38,11 @@ def aicsimageio(
     try:
         from aicsimageio import AICSImage
     except ImportError:
-        raise ImportError(
-            "You need to install aicsimageio, e.g. by running `pip install aicsimageio`"
-        )
+        raise ImportError("You need to install aicsimageio, e.g. by running `pip install aicsimageio`")
 
     xarr: xr.DataArray = AICSImage(path, **aics_kwargs).xarray_dask_data
 
-    assert (
-        len(xarr.coords["T"]) == 1
-    ), f"Only one time dimension is supported, found {len(xarr.coords['T'])}."
+    assert len(xarr.coords["T"]) == 1, f"Only one time dimension is supported, found {len(xarr.coords['T'])}."
 
     if len(xarr.coords["Z"]) > 1:
         log.info(f"3D image found, only reading {z_stack:=}")

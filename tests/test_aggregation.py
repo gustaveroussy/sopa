@@ -25,9 +25,7 @@ def test_average_channels_aligned():
 
     means = aggregate._average_channels_aligned(xarr, cells)
 
-    true_means = np.stack(
-        [image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start]
-    )
+    true_means = np.stack([image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start])
 
     assert (means == true_means).all()
 
