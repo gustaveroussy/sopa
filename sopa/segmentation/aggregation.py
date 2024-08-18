@@ -73,6 +73,24 @@ def overlay_segmentation(
     )
 
 
+def aggregate(
+    sdata: SpatialData,
+    average_intensities: bool = True,
+    expand_radius_ratio: float = 0,
+    min_transcripts: int = 0,
+    min_intensity_ratio: float = 0,
+    **kwargs: int,
+):
+    aggr = Aggregator(sdata, **kwargs)
+
+    aggr.compute_table(
+        average_intensities=average_intensities,
+        expand_radius_ratio=expand_radius_ratio,
+        min_transcripts=min_transcripts,
+        min_intensity_ratio=min_intensity_ratio,
+    )
+
+
 class Aggregator:
     """Perform transcript count and channel averaging over a `SpatialData` object"""
 
@@ -151,9 +169,9 @@ class Aggregator:
         self.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
         self.geo_df.attrs = old_geo_df.attrs
 
-        self.standardized_table(save_table=save_table)
+        self.add_standardized_table(save_table=save_table)
 
-    def standardized_table(self, save_table: bool = True):
+    def add_standardized_table(self, save_table: bool = True):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
         self.geo_df.index = list(self.table.obs_names)
@@ -269,7 +287,7 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
         }
 
-        self.standardized_table(save_table=save_table)
+        self.add_standardized_table(save_table=save_table)
 
 
 def _overlap_area_ratio(row) -> float:

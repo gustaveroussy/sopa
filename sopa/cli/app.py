@@ -178,7 +178,7 @@ def aggregate(
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.aggregate import Aggregator
+    from sopa.segmentation import Aggregator
 
     sdata = read_zarr_standardized(sdata_path, warn=True)
 

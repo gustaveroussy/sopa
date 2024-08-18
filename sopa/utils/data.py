@@ -158,7 +158,7 @@ def uniform(
 
 
 def _add_table(sdata: SpatialData):
-    from ..segmentation.aggregate import Aggregator
+    from ..segmentation import Aggregator
 
     aggregator = Aggregator(sdata, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES)
 

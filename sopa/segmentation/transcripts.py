@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from .._constants import SopaKeys
 from .._sdata import get_spatial_element, get_spatial_image
-from . import aggregate, shapes
+from . import aggregation, shapes
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
-        table_conflicts = aggregate.count_transcripts(sdata, gene_column, geo_df=geo_df_new)
+        table_conflicts = aggregation.count_transcripts(sdata, gene_column, geo_df=geo_df_new)
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 
