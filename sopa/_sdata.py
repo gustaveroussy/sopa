@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterator
+from pathlib import Path
+from typing import Any, Iterator
 
 import geopandas as gpd
 import pandas as pd
-import xarray as xr
+from anndata import AnnData
 from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
 from xarray import DataArray
 
-from ._constants import SopaAttrs, SopaKeys
+from ._constants import SopaAttrs, SopaFiles, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -112,14 +113,14 @@ def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
     return adata.to_df()
 
 
-def iter_scales(image: DataTree) -> Iterator[xr.DataArray]:
+def iter_scales(image: DataTree) -> Iterator[DataArray]:
     """Iterates through all the scales of a `DataTree`
 
     Args:
         image: a `DataTree`
 
     Yields:
-        Each scale (as a `xr.DataArray`)
+        Each scale (as a `DataArray`)
     """
     assert isinstance(image, DataTree), f"Multiscale iteration is reserved for type DataTree. Found {type(image)}"
 
@@ -154,7 +155,7 @@ def get_spatial_element(
     if len(element_dict) == 1:
         key = next(iter(element_dict.keys()))
 
-        assert valid_attr is None or element_dict[key].attrs.get(
+        assert valid_attr is None or _get_spatialdata_attrs(element_dict[key]).get(
             valid_attr, True
         ), f"Element {key} is not valid for the attribute {valid_attr}."
 
@@ -162,12 +163,32 @@ def get_spatial_element(
 
     assert valid_attr is not None, "Multiple elements found. Provide an element key."
 
-    keys = [key for key, element in element_dict.items() if element.attrs.get(valid_attr)]
+    keys = [key for key, element in element_dict.items() if _get_spatialdata_attrs(element).get(valid_attr)]
 
     assert len(keys) > 0, f"No element with the attribute {valid_attr}. Provide an element key."
     assert len(keys) == 1, f"Multiple valid elements found: {keys}. Provide an element key."
 
     return _return_element(element_dict, keys[0], return_key, as_spatial_image)
+
+
+def _get_spatialdata_attrs(element: SpatialElement) -> dict[str, Any]:
+    if isinstance(element, DataTree):
+        element = next(iter(element["scale0"].values()))
+    return element.attrs.get("spatialdata_attrs", {})
+
+
+def _update_spatialdata_attrs(element: SpatialElement, attrs: dict):
+    if isinstance(element, DataTree):
+        for image_scale in iter_scales(element):
+            _update_spatialdata_attrs(image_scale, attrs)
+        return
+
+    old_attrs = element.uns if isinstance(element, AnnData) else element.attrs
+
+    if "spatialdata_attrs" not in old_attrs:
+        old_attrs["spatialdata_attrs"] = {}
+
+    old_attrs["spatialdata_attrs"].update(attrs)
 
 
 def get_spatial_image(
@@ -205,3 +226,9 @@ def _return_element(
         element = next(iter(element["scale0"].values()))
 
     return (key, element) if return_key else element
+
+
+def get_cache_dir(sdata: SpatialData) -> Path:
+    assert sdata.is_backed(), "SpatialData not saved on-disk. Save the object, or provide a cache directory."
+
+    return sdata.path / SopaFiles.SOPA_CACHE_DIR

@@ -37,6 +37,7 @@ def uniform(
     include_image: bool = True,
     apply_blur: bool = True,
     as_output: bool = False,
+    transcript_cell_id_as_merscope: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -149,7 +150,7 @@ def uniform(
     sdata = SpatialData(images=images, points=points, shapes=shapes)
 
     _map_transcript_to_cell(sdata, "cell_id", sdata["transcripts"], sdata["cells"])
-    sdata["transcripts"]["cell_id"] = sdata["transcripts"]["cell_id"].astype(int)
+    sdata["transcripts"]["cell_id"] = sdata["transcripts"]["cell_id"].astype(int) - int(transcript_cell_id_as_merscope)
 
     if as_output:
         _add_table(sdata)

@@ -1,5 +1,10 @@
 ## [1.x.x] - 2024-xx-xx
 
+## [1.1.4] - 2024-08-21
+
+### Hotfix
+- Fixed Baysor issue on MERSCOPE data with the Vizgen prior
+- Fix patch-maker issue due to new API temporary implementation
 
 
 ## [1.1.3] - 2024-08-18

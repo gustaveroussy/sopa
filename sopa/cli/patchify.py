@@ -202,7 +202,7 @@ def _patchify_transcripts(
         config or config_path is not None
     ), "Provide '--config-path', the path to a Baysor config file (toml) or comseg file (jsons)"
 
-    df_key = get_spatial_element(sdata.points)
+    df_key, _ = get_spatial_element(sdata.points, return_key=True)
     patches = Patches2D(sdata, df_key, patch_width_microns, patch_overlap_microns)
     valid_indices = patches.patchify_transcripts(
         temp_dir,
