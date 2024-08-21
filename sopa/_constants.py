@@ -58,6 +58,7 @@ class ROI:
 
 class SopaFiles:
     SOPA_CACHE_DIR = ".sopa_cache"
+    TRANSCRIPT_TEMP_DIR = "transcript_patches"
     PATCHES_FILE_IMAGE = "patches_file_image"
     PATCHES_DIRS_BAYSOR = "patches_file_baysor"
     PATCHES_DIRS_COMSEG = "patches_file_comseg"

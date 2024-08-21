@@ -7,6 +7,7 @@ from spatialdata import SpatialData
 from spatialdata_io.readers.visium_hd import visium_hd as visium_hd_spatialdata_io
 
 from ..._constants import SopaAttrs
+from ..._sdata import _update_spatialdata_attrs
 from ...utils import string_channel_names
 from .utils import _default_image_kwargs
 
@@ -44,14 +45,19 @@ def visium_hd(
 
     string_channel_names(sdata)  # Ensure that channel names are strings
 
+    ### Add Sopa attributes to detect the spatial elements
     for key, image in sdata.images.items():
         if key.endswith("_full_image"):
-            image.attrs[SopaAttrs.CELL_SEGMENTATION] = True
+            _update_spatialdata_attrs(image, {SopaAttrs.CELL_SEGMENTATION: True})
         elif key.endswith("_hires_image"):
-            image.attrs[SopaAttrs.TISSUE_SEGMENTATION] = True
+            _update_spatialdata_attrs(image, {SopaAttrs.TISSUE_SEGMENTATION: True})
 
     for key, geo_df in sdata.shapes.items():
         if key.endswith("_002um"):
-            geo_df.attrs[SopaAttrs.BINS_AGGREGATION] = True
+            _update_spatialdata_attrs(geo_df, {SopaAttrs.BINS_AGGREGATION: True})
+
+    for key, table in sdata.tables.items():
+        if key.endswith("_002um"):
+            _update_spatialdata_attrs(table, {SopaAttrs.BINS_TABLE: True})
 
     return sdata
