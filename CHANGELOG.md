@@ -1,5 +1,8 @@
 ## [1.x.x] - 2024-xx-xx
 
+### Fix
+- Accept `object` dtype for channel names (#114)
+
 ## [1.1.4] - 2024-08-21
 
 ### Hotfix

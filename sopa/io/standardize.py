@@ -8,7 +8,7 @@ from spatialdata import SpatialData
 
 from .._constants import VALID_DIMENSIONS, SopaKeys
 from .._sdata import get_spatial_image
-from ..utils import _check_integer_dtype, get_channel_names, is_string_dtype
+from ..utils import _check_integer_dtype, get_channel_names, valid_c_coords
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
         )
 
     c_coords = get_channel_names(image)
-    assert is_string_dtype(c_coords), f"Channel names must be strings, not {c_coords.dtype}"
+    assert valid_c_coords(c_coords), f"Channel names must be strings, not {c_coords.dtype}"
 
     if SopaKeys.TABLE in sdata.tables:
         if delete_table:

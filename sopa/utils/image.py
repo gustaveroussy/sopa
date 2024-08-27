@@ -78,15 +78,15 @@ def get_channel_names(image: DataArray | DataTree) -> np.ndarray:
     raise ValueError(f"Image must be a DataTree or a DataArray. Found: {type(image)}")
 
 
-def is_string_dtype(c_coords: np.ndarray) -> bool:
-    return c_coords.dtype.kind in {"U", "S"}
+def valid_c_coords(c_coords: np.ndarray) -> bool:
+    return c_coords.dtype.kind in {"U", "S", "O"}
 
 
 def string_channel_names(sdata: SpatialData, default_single_channel: str = "DAPI"):
     for key, image in list(sdata.images.items()):
         c_coords = get_channel_names(image)
 
-        if is_string_dtype(c_coords):
+        if valid_c_coords(c_coords):
             continue
 
         c_coords = [str(i) for i in range(len(c_coords))]
