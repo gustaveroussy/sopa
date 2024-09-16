@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from pathlib import Path
 from typing import Callable
 
 import dask.array as da
 import numpy as np
+import pandas as pd
 import tifffile as tf
 import xarray as xr
 from dask_image.imread import imread
@@ -33,30 +33,24 @@ def _default_image_kwargs(
     return image_models_kwargs, imread_kwargs
 
 
-def _deduplicate_names(df):
-    is_duplicated = df[0].duplicated(keep=False)
-    df.loc[is_duplicated, 0] += " (" + df.loc[is_duplicated, 1] + ")"
-    return df[0].values
+def _deduplicate_names(names: pd.Series | np.ndarray | list[str]) -> np.ndarray:
+    if not isinstance(names, pd.Series):
+        names = pd.Series(names)
+    names = names.astype(str)
+
+    duplicates = names.duplicated()
+    names[duplicates] += " (" + names.groupby(by=names).cumcount().astype(str)[duplicates] + ")"
+
+    return names.values
 
 
-def _deduplicate_c_coords(c_coords: list[str]) -> list[str]:
-    counter, res = defaultdict(int), []
-    for channel in c_coords:
-        if channel not in counter:
-            res.append(channel)
-        else:
-            res.append(f"{channel} ({counter[channel]})")
-        counter[channel] += 1
-    return res
-
-
-def _get_files_stem(files: list[Path]):
-    return [file.stem for file in files]
+def _get_ome_channel_names(files):
+    return _deduplicate_names([_ome_channels_names(file)[0] for file in files])
 
 
 def _general_tif_directory_reader(
     path: str,
-    files_to_channels: Callable = _get_files_stem,
+    files_to_channels: Callable = _get_ome_channel_names,
     suffix: str = ".tif",
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,

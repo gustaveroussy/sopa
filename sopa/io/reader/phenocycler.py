@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 
 import dask.array as da
-import pandas as pd
 import tifffile as tf
 from dask.delayed import delayed
 from dask_image.imread import imread
@@ -39,7 +38,7 @@ def phenocycler(
     if path.suffix == ".qptiff":
         with tf.TiffFile(path) as tif:
             series = tif.series[0]
-            names = _get_channel_names_qptiff(series)
+            names = _deduplicate_names([_get_channel_name_qptiff(page.description) for page in series])
 
             delayed_image = delayed(lambda series: series.asarray())(tif)
             image = da.from_delayed(delayed_image, dtype=series.dtype, shape=series.shape)
@@ -74,13 +73,6 @@ def _get_channel_name_qptiff(description):
             return field.text
 
     return re.search(r"<Name>(.*?)</Name>", description).group(1)
-
-
-def _get_channel_names_qptiff(page_series):
-    df_names = pd.DataFrame(
-        [[_get_channel_name_qptiff(page.description), str(i)] for i, page in enumerate(page_series)]
-    )
-    return _deduplicate_names(df_names)
 
 
 def _get_IJ_channel_names(path: str) -> list[str]:

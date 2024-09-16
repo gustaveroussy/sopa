@@ -2,6 +2,7 @@
 
 ### Fix
 - Accept `object` dtype for channel names (#114)
+- Update MACSima reader to support the latest file format
 
 ## [1.1.4] - 2024-08-21
 
