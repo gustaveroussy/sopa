@@ -1,8 +1,10 @@
-## [1.x.x] - 2024-xx-xx
+## [1.1.5] - 2024-09-17
 
 ### Fix
 - Accept `object` dtype for channel names (#114)
-- Update MACSima reader to support the latest file format
+
+### Changed
+- Update MACSima reader to read the channel names of the latest file format
 
 ## [1.1.4] - 2024-08-21
 
