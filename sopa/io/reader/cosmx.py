@@ -15,7 +15,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
 from spatialdata_io._constants._constants import CosmxKeys
 
-from .utils import _deduplicate_c_coords, _default_image_kwargs
+from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)
 
@@ -138,7 +138,7 @@ def _read_fov_image(
         protein_image, protein_names = _read_protein_fov(protein_path)
         image = da.concatenate([image, protein_image], axis=0)
 
-    return image, _deduplicate_c_coords(morphology_coords + protein_names)
+    return image, _deduplicate_names(morphology_coords + protein_names)
 
 
 def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:

@@ -9,7 +9,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 35
-    channels: ["DAPI (000)"]
+    channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 400
