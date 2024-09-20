@@ -19,6 +19,7 @@ from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
 from .._sdata import (
+    add_spatial_element,
     get_boundaries,
     get_cache_dir,
     get_spatial_element,
@@ -210,10 +211,7 @@ class Patches2D:
             }
         )
         geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
-
-        self.sdata.shapes[shapes_key] = geo_df
-        if self.sdata.is_backed():
-            self.sdata.write_element(shapes_key, overwrite=overwrite)
+        add_spatial_element(self.sdata, shapes_key, geo_df, overwrite=overwrite)
 
         log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 

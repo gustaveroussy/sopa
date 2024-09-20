@@ -21,6 +21,7 @@ import sopa
 
 from .._constants import SopaKeys
 from .._sdata import (
+    add_spatial_element,
     get_boundaries,
     get_spatial_element,
     get_spatial_image,
@@ -41,7 +42,6 @@ def overlay_segmentation(
     gene_column: str | None = None,
     area_ratio_threshold: float = 0.25,
     image_key: str | None = None,
-    save_table: bool = False,
 ):
     """Overlay a segmentation on top of an existing segmentation
 
@@ -51,7 +51,6 @@ def overlay_segmentation(
         gene_column: Key of the points dataframe containing the genes names
         area_ratio_threshold: Threshold between 0 and 1. For each original cell overlapping with a new cell, we compute the overlap-area/cell-area, if above the threshold the cell is removed.
         image_key: Optional key of the original image
-        save_table: Whether to save the new table on-disk or not
     """
     average_intensities = False
 
@@ -69,7 +68,6 @@ def overlay_segmentation(
         gene_column=gene_column,
         average_intensities=average_intensities,
         area_ratio_threshold=area_ratio_threshold,
-        save_table=save_table,
     )
 
 
@@ -100,18 +98,21 @@ class Aggregator:
         overwrite: bool = True,
         image_key: str | None = None,
         shapes_key: str | None = None,
+        bins_key: str | None = None,
     ):
         """
         Args:
             sdata: A `SpatialData` object
             overwrite: If `True`, will overwrite `sdata.table` if already existing
-            image_key: Key of `sdata` with the image to be averaged. If only one image, this does not have to be provided.
+            image_key: Key of `sdata` with the image to be averaged. If only one image, this does not have to be provided
             shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries
+            bins_key: Key of `sdata` with the table corresponding to the bins table of gene counts (e.g., for Visium HD data)
         """
         self.sdata = sdata
         self.overwrite = overwrite
 
         self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
+        self.bins_key = bins_key
 
         if shapes_key is None:
             self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
@@ -133,7 +134,6 @@ class Aggregator:
         gene_column: str | None = None,
         average_intensities: bool = True,
         area_ratio_threshold: float = 0.25,
-        save_table: bool = True,
     ):
         old_table: AnnData = self.sdata.tables[SopaKeys.TABLE]
         self.sdata.tables[SopaKeys.OLD_TABLE] = old_table
@@ -158,7 +158,7 @@ class Aggregator:
         table_crop = old_table[~np.isin(old_table.obs[instance_key], gdf_join.index)].copy()
         table_crop.obs[SopaKeys.CELL_OVERLAY_KEY] = False
 
-        self.compute_table(gene_column=gene_column, average_intensities=average_intensities, save_table=False)
+        self.compute_table(gene_column=gene_column, average_intensities=average_intensities)
         self.table.obs[SopaKeys.CELL_OVERLAY_KEY] = True
 
         self.table = anndata.concat([table_crop, self.table], uns_merge="first", join="outer", fill_value=0)
@@ -169,16 +169,13 @@ class Aggregator:
         self.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
         self.geo_df.attrs = old_geo_df.attrs
 
-        self.add_standardized_table(save_table=save_table)
+        self.add_standardized_table()
 
-    def add_standardized_table(self, save_table: bool = True):
+    def add_standardized_table(self):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
 
         self.geo_df.index = list(self.table.obs_names)
-        self.sdata.shapes[self.shapes_key] = self.geo_df
-        if self.sdata.is_backed():
-            self.sdata.delete_element_from_disk(self.shapes_key)
-            self.sdata.write_element(self.shapes_key)
+        add_spatial_element(self.sdata, self.shapes_key, self.geo_df)
 
         self.table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in self.geo_df.centroid])
         self.table.obs[SopaKeys.REGION_KEY] = pd.Series(self.shapes_key, index=self.table.obs_names, dtype="category")
@@ -197,12 +194,7 @@ class Aggregator:
             instance_key=SopaKeys.INSTANCE_KEY,
         )
 
-        self.sdata.tables[SopaKeys.TABLE] = self.table
-
-        if save_table and self.sdata.is_backed():
-            if self._had_table:
-                self.sdata.delete_element_from_disk(SopaKeys.TABLE)
-            self.sdata.write_element(SopaKeys.TABLE)
+        add_spatial_element(self.sdata, SopaKeys.TABLE, self.table)
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
@@ -215,17 +207,16 @@ class Aggregator:
             self.table = self.table[~where_filter]
 
     def update_table(self, *args, **kwargs):
-        log.warn("'update_table' is deprecated, use 'compute_table' instead")
+        log.warning("'update_table' is deprecated, use 'compute_table' instead")
         self.compute_table(*args, **kwargs)
 
     def compute_table(
         self,
         gene_column: str | None = None,
         average_intensities: bool = True,
-        expand_radius_ratio: float = 0,
+        expand_radius_ratio: float | None = None,
         min_transcripts: int = 0,
         min_intensity_ratio: float = 0,
-        save_table: bool = True,
     ):
         """Perform aggregation and update the spatialdata table
 
@@ -235,19 +226,29 @@ class Aggregator:
             expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
             min_transcripts: Minimum amount of transcript to keep a cell
             min_intensity_ratio: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
-            save_table: Whether the table should be saved on disk or not
         """
-        does_count = (self.table is not None and isinstance(self.table.X, csr_matrix)) or gene_column is not None
+        does_count = (
+            (self.table is not None and isinstance(self.table.X, csr_matrix))
+            or gene_column is not None
+            or self.bins_key is not None
+        )
 
         assert (
             average_intensities or does_count
         ), "You must choose at least one aggregation: transcripts or fluorescence intensities"
+        assert (
+            gene_column is None or self.bins_key is None
+        ), "Can't count transcripts and aggregate bins at the same time"
 
         if gene_column is not None:
             if self.table is not None:
-                log.warn("sdata.table is already existing. Transcripts are not count again.")
+                log.warning("sdata.table is already existing. Transcripts are not count again.")
             else:
                 self.table = count_transcripts(self.sdata, gene_column, shapes_key=self.shapes_key)
+        elif self.bins_key is not None:
+            self.table = aggregate_bins(
+                self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 0.2
+            )
 
         if does_count and min_transcripts > 0:
             self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
@@ -257,7 +258,7 @@ class Aggregator:
                 self.sdata,
                 image_key=self.image_key,
                 shapes_key=self.shapes_key,
-                expand_radius_ratio=expand_radius_ratio,
+                expand_radius_ratio=expand_radius_ratio or 0,
             )
 
             if min_intensity_ratio > 0:
@@ -287,7 +288,7 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
         }
 
-        self.add_standardized_table(save_table=save_table)
+        self.add_standardized_table()
 
 
 def _overlap_area_ratio(row) -> float:
@@ -484,7 +485,6 @@ def _add_coo(
 
 def aggregate_bins(
     sdata: SpatialData,
-    table_key: str,
     shapes_key: str,
     bins_key: str,
     expand_radius_ratio: float = 0,
@@ -493,17 +493,20 @@ def aggregate_bins(
 
     Args:
         sdata: The `SpatialData` object
-        table_key: Key of the table containing the bin-by-gene counts
         shapes_key: Key of the shapes containing the cell boundaries
-        bins_key: Key of the shapes containing the bins boundaries
+        bins_key: Key of the table containing the bin-by-gene counts
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate bins from the cytoplasm.
 
     Returns:
         An `AnnData` object of shape with the cell-by-gene count matrix
     """
-    bins = sdata.shapes[bins_key].centroid.reset_index(drop=True)  # bins as points
+    bins_table: AnnData = sdata.tables[bins_key]
 
-    cells = to_intrinsic(sdata, shapes_key, bins_key).reset_index(drop=True)
+    bins_shapes_key = sdata.get_annotated_regions(bins_table)[0]
+    bins = sdata.shapes[bins_shapes_key].loc[sdata.get_instance_key_column(bins_table).values]
+    bins = gpd.GeoDataFrame(geometry=bins.centroid.values)  # bins as points
+
+    cells = to_intrinsic(sdata, shapes_key, bins_shapes_key).reset_index(drop=True)
     cells = expand_radius(cells, expand_radius_ratio)
 
     bin_within_cell = gpd.sjoin(bins, cells)
@@ -513,6 +516,6 @@ def aggregate_bins(
         shape=(len(cells), len(bins)),
     )
 
-    adata = AnnData(indices_matrix @ sdata[table_key].X, obs=cells[[]], var=sdata[table_key].var)
+    adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)
     adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
     return adata

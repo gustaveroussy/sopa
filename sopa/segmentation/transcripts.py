@@ -16,7 +16,7 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from .._constants import SopaKeys
-from .._sdata import get_spatial_element, get_spatial_image
+from .._sdata import add_spatial_element, get_spatial_element, get_spatial_image
 from . import aggregation, shapes
 
 log = logging.getLogger(__name__)
@@ -83,12 +83,8 @@ def resolve(
         instance_key=SopaKeys.INSTANCE_KEY,
     )
 
-    sdata.shapes[shapes_key] = geo_df
-    sdata.tables[SopaKeys.TABLE] = table
-
-    if sdata.is_backed():
-        sdata.write_element(shapes_key, overwrite=True)
-        sdata.write_element(SopaKeys.TABLE, overwrite=True)
+    add_spatial_element(sdata, shapes_key, geo_df)
+    add_spatial_element(sdata, SopaKeys.TABLE, table)
 
     log.info(f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']")
 

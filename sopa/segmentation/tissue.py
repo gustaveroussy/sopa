@@ -5,7 +5,6 @@ import warnings
 
 import geopandas as gpd
 import numpy as np
-import spatialdata
 from datatree import DataTree
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
@@ -13,7 +12,11 @@ from spatialdata.models import ShapesModel
 from xarray import DataArray
 
 from .._constants import ROI, SopaAttrs
-from .._sdata import get_intrinsic_cs, get_spatial_element
+from .._sdata import (
+    add_spatial_element,
+    get_minimal_transformations,
+    get_spatial_element,
+)
 
 log = logging.getLogger(__name__)
 
@@ -59,9 +62,8 @@ def tissue_segmentation(
     Returns:
         `True` if tissue segmentation was successful, else `False` if no polygon was output.
     """
-    assert (
-        ROI.KEY not in sdata.shapes
-    ), f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top. Delete the shape(s) first."
+    if ROI.KEY in sdata.shapes:
+        log.warning(f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top")
 
     image_key, image = get_spatial_element(
         sdata.images,
@@ -77,12 +79,16 @@ def tissue_segmentation(
     polygons = _get_polygons(image, blur_k, open_k, close_k, drop_threshold)
 
     if not len(polygons):
-        log.warn(
+        log.warning(
             "No polygon has been found after tissue segmentation. Check that there is some tissue in the image, or consider updating the segmentation parameters."
         )
         return False
 
-    _save_tissue_segmentation(sdata, polygons, image_key, image)
+    geo_df = gpd.GeoDataFrame(geometry=polygons)
+    geo_df = ShapesModel.parse(geo_df, transformations=get_minimal_transformations(image))
+
+    add_spatial_element(sdata, ROI.KEY, geo_df)
+
     return True
 
 
@@ -121,20 +127,3 @@ def _get_polygons(image: DataArray, blur_k: int, open_k: int, close_k: int, drop
             contours.extend([c_closed.squeeze()])
 
     return [Polygon(contour) for contour in contours]
-
-
-def _save_tissue_segmentation(sdata: SpatialData, polygons: list[Polygon], image_key: str, image_scale: DataArray):
-    geo_df = gpd.GeoDataFrame(geometry=polygons)
-    geo_df = ShapesModel.parse(
-        geo_df,
-        transformations=image_scale.attrs["transform"],
-    )
-
-    image_cs = get_intrinsic_cs(sdata, sdata[image_key])
-    geo_df = spatialdata.transform(geo_df, image_scale.attrs["transform"][image_cs], maintain_positioning=True)
-
-    sdata.shapes[ROI.KEY] = geo_df
-    if sdata.is_backed():
-        sdata.write_element(ROI.KEY, overwrite=True)
-
-    log.info(f"Tissue segmentation added in sdata['{ROI.KEY}']")

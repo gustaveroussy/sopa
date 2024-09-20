@@ -1,3 +1,9 @@
+## [x.x.x] - 2024-xx-xx
+
+### Added
+- command `sopa.settings.auto_save_on_disk = False` to not save on disk by default (API only)
+- Visium HD bins aggregation (via the `bins_key` argument)
+
 ## [1.1.5] - 2024-09-17
 
 ### Fix

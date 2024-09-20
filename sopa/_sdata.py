@@ -6,13 +6,21 @@ from typing import Any, Iterator
 
 import geopandas as gpd
 import pandas as pd
+import spatialdata
 from anndata import AnnData
 from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
-from spatialdata.transformations import Identity, get_transformation, set_transformation
+from spatialdata.transformations import (
+    BaseTransformation,
+    Identity,
+    get_transformation,
+    get_transformation_between_coordinate_systems,
+    set_transformation,
+)
 from xarray import DataArray
 
+from . import settings
 from ._constants import SopaAttrs, SopaFiles, SopaKeys
 
 log = logging.getLogger(__name__)
@@ -94,8 +102,13 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
     """
     if isinstance(element, str):
         element = sdata[element]
-    cs = get_intrinsic_cs(sdata, element_cs)
-    return sdata.transform_element_to_coordinate_system(element, cs)
+    if isinstance(element_cs, str):
+        element_cs = sdata[element_cs]
+
+    transformation = get_transformation_between_coordinate_systems(
+        sdata, element, element_cs, intermediate_coordinate_systems=element_cs
+    )
+    return spatialdata.transform(element, transformation=transformation, maintain_positioning=True)
 
 
 def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
@@ -232,3 +245,32 @@ def get_cache_dir(sdata: SpatialData) -> Path:
     assert sdata.is_backed(), "SpatialData not saved on-disk. Save the object, or provide a cache directory."
 
     return sdata.path / SopaFiles.SOPA_CACHE_DIR
+
+
+def get_minimal_transformations(element: SpatialElement) -> dict[str, BaseTransformation]:
+    transformations = get_transformation(element, get_all=True).copy()
+    if "global" in transformations:
+        return {"global": transformations["global"]}
+    for cs, transform in transformations.items():
+        if isinstance(transform, Identity):
+            return {cs: Identity()}
+    return transformations
+
+
+def add_spatial_element(
+    sdata: SpatialData,
+    element_name: str,
+    element: SpatialElement,
+    overwrite: bool = True,
+):
+    sdata[element_name] = element
+
+    if sdata.is_backed() and settings.auto_save_on_disk:
+        try:
+            sdata.write_element(element_name, overwrite=overwrite)
+        except Exception as e:
+            if overwrite:  # force writing the element
+                sdata.delete_element_from_disk(element_name)
+                sdata.write_element(element_name, overwrite=overwrite)
+            else:
+                log.error(f"Error while saving {element_name} on disk: {e}")
