@@ -142,7 +142,7 @@ def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
     channel_names = _ome_channels_names(path)
     if len(channel_names) != len(image):
         channel_names = [str(i) for i in range(len(image))]
-        log.warn(f"Channel names couldn't be read. Using {channel_names} instead.")
+        log.warning(f"Channel names couldn't be read. Using {channel_names} instead.")
 
     image = DataArray(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
     image = _image_int_dtype(image)

@@ -102,7 +102,7 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
         for i, name in enumerate(cat_columns):
             if adata.obs[name].isna().any():
                 NA = "NA"
-                log.warn(f"Column {name} has nan values. They will be displayed as '{NA}'")
+                log.warning(f"Column {name} has nan values. They will be displayed as '{NA}'")
                 adata.obs[name] = adata.obs[name].cat.add_categories(NA).fillna(NA)
 
             categories = list(adata.obs[name].cat.categories)

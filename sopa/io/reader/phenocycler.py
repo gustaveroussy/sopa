@@ -85,10 +85,10 @@ def _get_IJ_channel_names(path: str) -> list[str]:
             if ij_metadata_tag and "Labels" in ij_metadata_tag.value:
                 return ij_metadata_tag.value["Labels"]
 
-            log.warn("Could not find channel names in IJMetadata.")
+            log.warning("Could not find channel names in IJMetadata.")
             return default_names
 
-        log.warn("The TIF file does not have multiple channels.")
+        log.warning("The TIF file does not have multiple channels.")
         return default_names
 
 

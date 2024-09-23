@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 
-import dask
 import dask.array as da
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -16,9 +16,6 @@ from spatialdata.transformations import Affine, Identity
 
 from .._constants import SopaKeys
 from ..patches.patches import _map_transcript_to_cell
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -143,7 +140,11 @@ def uniform(
 
     df = dd.from_pandas(df, chunksize=2_000_000)
 
-    points = {"transcripts": PointsModel.parse(df, transformations={"global": affine, "microns": Identity()})}
+    points = {
+        "transcripts": PointsModel.parse(
+            df, transformations={"global": affine, "microns": Identity()}, feature_key="genes"
+        )
+    }
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 

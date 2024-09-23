@@ -3,6 +3,7 @@
 ### Added
 - command `sopa.settings.auto_save_on_disk = False` to not save on disk by default (API only)
 - Visium HD bins aggregation (via the `bins_key` argument)
+- Experimental parallelization backend for the API: `sopa.settings.parallelization_backend = 'dask'`
 
 ## [1.1.5] - 2024-09-17
 

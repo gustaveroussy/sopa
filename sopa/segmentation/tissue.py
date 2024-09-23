@@ -63,7 +63,7 @@ def tissue_segmentation(
         `True` if tissue segmentation was successful, else `False` if no polygon was output.
     """
     if ROI.KEY in sdata.shapes:
-        log.warning(f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top")
+        log.warninging(f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top")
 
     image_key, image = get_spatial_element(
         sdata.images,
@@ -79,7 +79,7 @@ def tissue_segmentation(
     polygons = _get_polygons(image, blur_k, open_k, close_k, drop_threshold)
 
     if not len(polygons):
-        log.warning(
+        log.warninging(
             "No polygon has been found after tissue segmentation. Check that there is some tissue in the image, or consider updating the segmentation parameters."
         )
         return False
@@ -100,7 +100,7 @@ def _get_polygons(image: DataArray, blur_k: int, open_k: int, close_k: int, drop
     assert thumbnail.shape[2] == 3, "The image should be in RGB color space"
 
     if thumbnail.shape[0] * thumbnail.shape[1] > 1e8:
-        log.warning(
+        log.warninging(
             "Tissue segmentation is computationally expensive for large images. Consider using a smaller image, or set the `level` parameter."
         )
 

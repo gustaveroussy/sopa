@@ -23,7 +23,7 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
     _check_integer_dtype(image.dtype)
 
     if len(sdata.points) > 1:
-        log.warn(
+        log.warning(
             f"The spatialdata object has {len(sdata.points)} points objects. It's easier to have only one (corresponding to transcripts), since sopa will use it directly without providing a key argument"
         )
 

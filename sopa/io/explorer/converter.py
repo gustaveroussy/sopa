@@ -141,7 +141,7 @@ def write(
             df = to_intrinsic(sdata, df, image_key)
             write_transcripts(path, df, gene_column, pixel_size=pixel_size)
         else:
-            log.warn("The argument 'gene_column' has to be provided to save the transcripts")
+            log.warning("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
     if _should_save(mode, "i"):

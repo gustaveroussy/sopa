@@ -5,7 +5,7 @@ from functools import partial
 from math import ceil
 from pathlib import Path
 
-import dask
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -26,9 +26,6 @@ from .._sdata import (
     get_spatial_image,
     to_intrinsic,
 )
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 

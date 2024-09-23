@@ -1,5 +1,5 @@
-import dask
 import dask.array as da
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -7,9 +7,6 @@ import xarray as xr
 from shapely.geometry import Polygon, box
 
 from sopa.segmentation import aggregation
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa
 
 
 def test_average_channels_aligned():

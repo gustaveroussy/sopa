@@ -224,7 +224,7 @@ def comseg(
             config = json.load(f)
         comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
     else:
-        log.warn(
+        log.warning(
             "Running segmentation in a sequential manner. This is not recommended on large images because it can be extremely slow (see https://github.com/gustaveroussy/sopa/discussions/36 for more details)"
         )
         for path_index_folder in tqdm(list(Path(patch_dir).glob("*")), desc="Run all patches"):

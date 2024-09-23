@@ -118,7 +118,7 @@ def _read_one_segmented_patch(
 
     ratio_filtered = (gdf.area <= min_area).mean()
     if ratio_filtered > 0.2:
-        log.warn(f"{ratio_filtered:.2%} of cells will be filtered due to {min_area=}")
+        log.warning(f"{ratio_filtered:.2%} of cells will be filtered due to {min_area=}")
 
     gdf = gdf[gdf.area > min_area]
 

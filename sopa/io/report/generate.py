@@ -211,6 +211,6 @@ class SectionBuilder:
                 section = getattr(self, name)()
                 sections.append(section)
             except Exception as e:
-                log.warn(f"Section {name} failed with error {e}")
+                log.warning(f"Section {name} failed with error {e}")
 
         return [section for section in sections if section is not None]

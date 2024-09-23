@@ -102,12 +102,12 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
         geoms = [geom for geom in cell.geoms if isinstance(geom, Polygon)]
 
         if not geoms:
-            log.warn(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
+            log.warning(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
             return None
 
         return max(geoms, key=lambda polygon: polygon.area)
 
-    log.warn(f"Removing cell of unknown type {type(cell)}")
+    log.warning(f"Removing cell of unknown type {type(cell)}")
     return None
 
 
@@ -149,7 +149,7 @@ def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_r
     max_cells = mask.max()
 
     if max_cells == 0:
-        log.warn("No cell was returned by the segmentation")
+        log.warning("No cell was returned by the segmentation")
         return []
 
     cells = [_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]

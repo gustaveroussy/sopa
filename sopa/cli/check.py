@@ -16,7 +16,7 @@ def _open_config(path: str) -> dict:
         with open(path, "r") as f:
             return yaml.safe_load(f)
     except:
-        log.warn(f"Config file '{path}' could't be read. Make sure that the file exist and that it is a YAML file")
+        log.warning(f"Config file '{path}' could't be read. Make sure that the file exist and that it is a YAML file")
         return
 
 
@@ -35,7 +35,7 @@ def reference(
     try:
         adata = anndata.read_h5ad(reference_path)
     except:
-        log.warn(
+        log.warning(
             f"scRNAseq reference at '{reference_path}' could't be read. Make sure that the file exist and that it can be open by `anndata.read_h5ad`"
         )
         return
@@ -44,13 +44,13 @@ def reference(
     MIN_CELLS = 1_000
 
     if adata.n_vars >= MIN_GENES:
-        log.warn(f"The reference must have at least {MIN_GENES} genes. Found {adata.n_vars}.")
+        log.warning(f"The reference must have at least {MIN_GENES} genes. Found {adata.n_vars}.")
 
     if adata.n_obs >= MIN_CELLS:
-        log.warn(f"The reference must have at least {MIN_CELLS} cells. Found {adata.n_obs}.")
+        log.warning(f"The reference must have at least {MIN_CELLS} cells. Found {adata.n_obs}.")
 
     if not (cell_type_key in adata.obs):
-        log.warn(
+        log.warning(
             f"Column adata.obs['{cell_type_key}'] not found. Update your anndata object, or provide another --cell-type-key argument"
         )
 
@@ -61,7 +61,7 @@ def reference(
         counts = adata.obs.groupby(next_key, observed=True)[current_key].value_counts().unstack()
         n_parents = (counts > 0).sum(1)
         if (n_parents == 1).all():
-            log.warn(
+            log.warning(
                 f"All populations on {next_key} must have one and only one parent in {current_key}. The number of parents is the following:\n{n_parents}"
             )
 
@@ -86,7 +86,7 @@ def _get(config, *args):
 def _check_dict(config: dict, d: dict, log, prefix: str = "config"):
     for key, values in d.items():
         if key not in config:
-            log.warn(f"Required config key {prefix}['{key}'] not found")
+            log.warning(f"Required config key {prefix}['{key}'] not found")
         elif isinstance(values, dict):
             _check_dict(config[key], values, log, f"{prefix}['{key}']")
         elif isinstance(values, list):
@@ -99,7 +99,7 @@ def _check_dict(config: dict, d: dict, log, prefix: str = "config"):
                 display = "\n  - ".join(
                     element if isinstance(element, str) else " AND ".join(element) for element in values
                 )
-                log.warn(f"One of these element must be in {prefix}['{key}']:\n  - {display}")
+                log.warning(f"One of these element must be in {prefix}['{key}']:\n  - {display}")
 
 
 CONFIG_REQUIREMENTS = {
@@ -126,7 +126,7 @@ def config(path: str = typer.Argument(help="Path to the YAML config")):
     if _get(config, "annotation", "method") == "tangram":
         sc_reference_path = _get(config, "annotation", "args", "sc_reference_path")
         if not sc_reference_path:
-            log.warn("Tangram used but no config['annotation']['args']['sc_reference_path'] found")
+            log.warning("Tangram used but no config['annotation']['args']['sc_reference_path'] found")
         else:
             cell_type_key = _get(config, "annotation", "args", "cell_type_key") or "cell_type"
             reference(sc_reference_path, cell_type_key=cell_type_key)

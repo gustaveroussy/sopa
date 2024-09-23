@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -13,8 +14,8 @@ from skimage import exposure
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
-from tqdm import tqdm
 
+from .. import settings
 from .._constants import SopaKeys
 from .._sdata import add_spatial_element, get_spatial_image
 from . import shapes
@@ -155,11 +156,11 @@ class StainingSegmentation:
         gdf.to_parquet(patch_file)
 
     def write_patches_cells(self, patch_dir: str):
-        log.warn(
-            "Running segmentation in a sequential manner. This is not recommended on large images because it can be extremely slow (see https://github.com/gustaveroussy/sopa/discussions/36 for more details)"
-        )
-        for patch_index in tqdm(range(len(self.sdata[SopaKeys.PATCHES])), desc="Run all patches"):
-            self.write_patch_cells(patch_dir, patch_index)
+        functions = [
+            partial(self.write_patch_cells, patch_dir, patch_index)
+            for patch_index in range(len(self.sdata[SopaKeys.PATCHES]))
+        ]
+        settings._run_with_backend(functions)
 
     @classmethod
     def read_patches_cells(cls, patch_dir: str | list[str]) -> list[Polygon]:
@@ -174,7 +175,7 @@ class StainingSegmentation:
         cells = []
 
         files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".parquet"]
-        for file in tqdm(files, desc="Reading patches"):
+        for file in files:
             cells += list(gpd.read_parquet(file).geometry)
 
         log.info(f"Found {len(cells)} total cells")

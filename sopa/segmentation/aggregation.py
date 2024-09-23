@@ -5,6 +5,7 @@ from functools import partial
 
 import anndata
 import dask
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -29,9 +30,6 @@ from .._sdata import (
 )
 from ..io.explorer.utils import str_cell_id
 from . import shapes
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -207,7 +205,7 @@ class Aggregator:
             self.table = self.table[~where_filter]
 
     def update_table(self, *args, **kwargs):
-        log.warning("'update_table' is deprecated, use 'compute_table' instead")
+        log.warninging("'update_table' is deprecated, use 'compute_table' instead")
         self.compute_table(*args, **kwargs)
 
     def compute_table(
@@ -242,7 +240,7 @@ class Aggregator:
 
         if gene_column is not None:
             if self.table is not None:
-                log.warning("sdata.table is already existing. Transcripts are not count again.")
+                log.warninging("sdata.table is already existing. Transcripts are not count again.")
             else:
                 self.table = count_transcripts(self.sdata, gene_column, shapes_key=self.shapes_key)
         elif self.bins_key is not None:
