@@ -500,7 +500,8 @@ def aggregate_bins(
     """
     bins_table: AnnData = sdata.tables[bins_key]
 
-    bins_shapes_key = sdata.get_annotated_regions(bins_table)[0]
+    bins_shapes_key = sdata.get_annotated_regions(bins_table)
+    bins_shapes_key = bins_shapes_key[0] if isinstance(bins_shapes_key, list) else bins_shapes_key
     bins = sdata.shapes[bins_shapes_key].loc[sdata.get_instance_key_column(bins_table).values]
     bins = gpd.GeoDataFrame(geometry=bins.centroid.values)  # bins as points
 
