@@ -12,15 +12,9 @@ from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
 
-from .. import __version__
 from .._constants import SopaKeys
-from .._sdata import (
-    add_spatial_element,
-    get_boundaries,
-    get_spatial_image,
-    to_intrinsic,
-)
 from ..io.explorer.utils import str_cell_id
+from ..utils import add_spatial_element, get_boundaries, get_spatial_image, to_intrinsic
 from . import aggregate_bins, average_channels, count_transcripts
 
 log = logging.getLogger(__name__)
@@ -273,7 +267,6 @@ class Aggregator:
                 )
 
         self.table.uns[SopaKeys.UNS_KEY] = {
-            "version": __version__,
             SopaKeys.UNS_HAS_TRANSCRIPTS: does_count,
             SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
         }

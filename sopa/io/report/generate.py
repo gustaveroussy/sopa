@@ -10,7 +10,7 @@ import seaborn as sns
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
-from ..._sdata import (
+from ...utils import (
     get_boundaries,
     get_intensities,
     get_intrinsic_cs,

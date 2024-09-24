@@ -8,7 +8,7 @@ import geopandas as gpd
 from spatialdata import SpatialData
 
 from ..._constants import SopaKeys
-from ..._sdata import (
+from ...utils import (
     get_boundaries,
     get_spatial_element,
     get_spatial_image,

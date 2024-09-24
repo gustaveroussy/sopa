@@ -12,7 +12,7 @@ from spatialdata.models import ShapesModel
 from xarray import DataArray
 
 from .._constants import ROI, SopaAttrs
-from .._sdata import (
+from ..utils import (
     add_spatial_element,
     get_minimal_transformations,
     get_spatial_element,

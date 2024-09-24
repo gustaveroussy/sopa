@@ -19,8 +19,8 @@ from spatialdata.transformations import Scale
 from xarray import DataArray
 
 from .._constants import SopaKeys
-from .._sdata import get_intrinsic_cs, get_spatial_image
 from ..segmentation import Patches2D
+from ..utils import get_intrinsic_cs, get_spatial_image
 from . import models
 
 log = logging.getLogger(__name__)

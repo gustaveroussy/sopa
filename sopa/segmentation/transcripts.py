@@ -16,7 +16,7 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from .._constants import SopaKeys
-from .._sdata import add_spatial_element, get_spatial_element, get_spatial_image
+from ..utils import add_spatial_element, get_spatial_element, get_spatial_image
 from . import aggregation, shapes
 
 log = logging.getLogger(__name__)

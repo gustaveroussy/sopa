@@ -8,8 +8,8 @@ from anndata import AnnData
 from scipy.sparse import coo_matrix
 from spatialdata import SpatialData
 
-from .._sdata import to_intrinsic
 from ..segmentation.shapes import expand_radius
+from ..utils import to_intrinsic
 
 log = logging.getLogger(__name__)
 

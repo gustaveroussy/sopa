@@ -18,7 +18,7 @@ from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
-from .._sdata import (
+from ..utils import (
     add_spatial_element,
     get_boundaries,
     get_cache_dir,

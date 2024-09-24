@@ -6,8 +6,6 @@ from pathlib import Path
 from spatialdata import SpatialData
 from spatialdata_io.readers.xenium import xenium as xenium_spatialdata_io
 
-from ..._constants import SopaAttrs
-from ..._sdata import _update_spatialdata_attrs
 from ...utils import string_channel_names
 from .utils import _default_image_kwargs
 
@@ -55,8 +53,8 @@ def xenium(
 
     string_channel_names(sdata)  # Ensure that channel names are strings
 
-    for key, image in sdata.images.items():
-        if key.startswith("morphology"):
-            _update_spatialdata_attrs(image, {SopaAttrs.CELL_SEGMENTATION: True})
+    # for key, image in sdata.images.items():
+    #     if key.startswith("morphology"):
+    #         _update_spatialdata_attrs(image, {SopaAttrs.CELL_SEGMENTATION: True})
 
     return sdata

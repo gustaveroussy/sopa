@@ -9,7 +9,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
-from ..._sdata import get_spatial_element
+from ...utils import get_spatial_element
 
 
 def explorer_file_path(path: str, filename: str, is_dir: bool):

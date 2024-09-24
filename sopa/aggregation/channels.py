@@ -11,8 +11,8 @@ from shapely.geometry import Polygon, box
 from spatialdata import SpatialData
 from xarray import DataArray
 
-from .._sdata import get_spatial_element, get_spatial_image, to_intrinsic
 from ..segmentation.shapes import expand_radius, pixel_outer_bounds, rasterize
+from ..utils import get_spatial_element, get_spatial_image, to_intrinsic
 
 log = logging.getLogger(__name__)
 

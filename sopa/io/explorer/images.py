@@ -13,8 +13,13 @@ from spatialdata.transformations import Affine, set_transformation
 from tqdm import tqdm
 from xarray import DataArray
 
-from ..._sdata import add_spatial_element, get_intrinsic_cs, get_spatial_image
-from ...utils.image import resize_numpy, scale_dtype
+from ...utils import (
+    add_spatial_element,
+    get_intrinsic_cs,
+    get_spatial_image,
+    resize_numpy,
+    scale_dtype,
+)
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
 

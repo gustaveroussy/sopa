@@ -12,7 +12,7 @@ from dask.diagnostics import ProgressBar
 from scipy.sparse import coo_matrix
 from spatialdata import SpatialData
 
-from .._sdata import get_spatial_element, to_intrinsic
+from ..utils import get_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
 

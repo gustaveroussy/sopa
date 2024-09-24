@@ -13,8 +13,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
 from .._constants import ROI
-from .._sdata import add_spatial_element, get_spatial_image
-from .image import resize
+from . import add_spatial_element, get_spatial_image, resize
 
 log = logging.getLogger(__name__)
 

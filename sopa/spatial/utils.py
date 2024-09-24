@@ -3,7 +3,7 @@ from __future__ import annotations
 import geopandas as gpd
 from spatialdata import SpatialData
 
-from .._sdata import get_intrinsic_cs
+from ..utils import get_intrinsic_cs
 
 
 def sjoin(

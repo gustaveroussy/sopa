@@ -7,7 +7,6 @@ from typing import Any, Iterator
 import geopandas as gpd
 import pandas as pd
 import spatialdata
-from anndata import AnnData
 from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
@@ -20,8 +19,8 @@ from spatialdata.transformations import (
 )
 from xarray import DataArray
 
-from . import settings
-from ._constants import SopaAttrs, SopaFiles, SopaKeys
+from .. import settings
+from .._constants import SopaAttrs, SopaFiles, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -188,20 +187,6 @@ def _get_spatialdata_attrs(element: SpatialElement) -> dict[str, Any]:
     if isinstance(element, DataTree):
         element = next(iter(element["scale0"].values()))
     return element.attrs.get("spatialdata_attrs", {})
-
-
-def _update_spatialdata_attrs(element: SpatialElement, attrs: dict):
-    if isinstance(element, DataTree):
-        for image_scale in iter_scales(element):
-            _update_spatialdata_attrs(image_scale, attrs)
-        return
-
-    old_attrs = element.uns if isinstance(element, AnnData) else element.attrs
-
-    if "spatialdata_attrs" not in old_attrs:
-        old_attrs["spatialdata_attrs"] = {}
-
-    old_attrs["spatialdata_attrs"].update(attrs)
 
 
 def get_spatial_image(

@@ -7,8 +7,12 @@ import spatialdata
 from spatialdata import SpatialData
 
 from .._constants import VALID_DIMENSIONS, SopaKeys
-from .._sdata import get_spatial_image
-from ..utils import _check_integer_dtype, get_channel_names, valid_c_coords
+from ..utils import (
+    _check_integer_dtype,
+    get_channel_names,
+    get_spatial_image,
+    valid_c_coords,
+)
 
 log = logging.getLogger(__name__)
 
