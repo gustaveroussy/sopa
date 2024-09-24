@@ -3,7 +3,7 @@ from typing import Callable
 
 import dask
 import dask.delayed
-from dask.distributed import Client
+from dask.distributed import Client, progress
 from tqdm import tqdm
 
 dask.config.set({"dataframe.query-planning": False})  # SpatialData issue with dask-expr
@@ -41,16 +41,15 @@ class Settings:
 
     ### Dask backend
     def _run_dask_backend(self, functions: list[Callable]):
-        client = Client()
-
         @dask.delayed
         def run(f):
             return f()
 
-        res = dask.compute(*[run(f) for f in functions])
-        client.close()
+        with Client() as client:
+            _ = dask.persist(*[run(f) for f in functions])
+            progress(_, notebook=False)
 
-        return res
+            return client.gather(client.compute(_))
 
 
 settings = Settings()
