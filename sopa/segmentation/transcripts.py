@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import glob
 import json
 import logging
 from pathlib import Path
@@ -121,7 +120,7 @@ def _read_one_segmented_patch(
     cells_num = pd.Series(adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
 
-    with open(glob.glob(directory / "segmentation_polygons*.json")[0]) as f:
+    with open(list(directory.glob("segmentation_polygons*.json"))[0]) as f:
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
@@ -141,7 +140,9 @@ def _read_one_segmented_patch(
 
     ratio_filtered = (gdf.area <= min_area).mean()
     if ratio_filtered > 0.2:
-        log.warning(f"{ratio_filtered:.2%} of cells will be filtered due to {min_area=}")
+        log.warning(
+            f"{ratio_filtered:.2%} of cells will be filtered due to {min_area=}"
+        )
 
     gdf = gdf[gdf.area > min_area]
 
