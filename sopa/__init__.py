@@ -13,7 +13,7 @@ if "--help" not in sys.argv:
     from . import utils
     from . import io
     from . import segmentation
-
     from .segmentation import tissue_segmentation
+    from .aggregation import aggregate, overlay_segmentation
     from .patches import make_transcript_patches, make_image_patches
     from ._sdata import get_spatial_image, get_spatial_element, to_intrinsic

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from math import ceil, floor
 
+import geopandas as gpd
 import numpy as np
 import shapely
 import shapely.affinity
@@ -163,10 +164,6 @@ def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_r
     cells = [_smoothen_cell(cell, smooth_radius, tolerance) for cell in cells]
     cells = [cell for cell in cells if cell is not None]
 
-    log.info(
-        f"Percentage of non-geometrized cells: {(max_cells - len(cells)) / max_cells:.2%} (usually due to segmentation artefacts)"
-    )
-
     return cells
 
 
@@ -199,3 +196,12 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
         cv2.fillPoly(rasterized_image, coords, color=1)
 
     return rasterized_image
+
+
+def expand_radius(geo_df: gpd.GeoDataFrame, expand_radius_ratio: float | None) -> gpd.GeoDataFrame:
+    if not expand_radius_ratio:
+        return geo_df
+
+    expand_radius_ = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
+    geo_df.geometry = geo_df.buffer(expand_radius_)
+    return geo_df

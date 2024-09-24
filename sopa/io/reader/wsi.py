@@ -127,7 +127,7 @@ def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray
     elif backend == "openslide":
         import openslide
 
-        from ...utils.io import OpenSlideStore
+        from ._openslide import OpenSlideStore
 
         slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store
