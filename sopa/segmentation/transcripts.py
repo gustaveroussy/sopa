@@ -122,7 +122,7 @@ def _read_one_segmented_patch(
 
     with open(list(directory.glob("segmentation_polygons*.json"))[0]) as f:
         polygons_dict = json.load(f)
-        polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
+        polygons_dict = {cells_num[c["cell"]]: c for c in polygons_dict["geometries"]}
 
     cells_num = cells_num[
         cells_num.map(
