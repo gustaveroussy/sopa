@@ -191,7 +191,7 @@ class Aggregator:
             self.table = self.table[~where_filter]
 
     def update_table(self, *args, **kwargs):
-        log.warninging("'update_table' is deprecated, use 'compute_table' instead")
+        log.warning("'update_table' is deprecated, use 'compute_table' instead")
         self.compute_table(*args, **kwargs)
 
     def compute_table(
@@ -226,7 +226,7 @@ class Aggregator:
 
         if gene_column is not None:
             if self.table is not None:
-                log.warninging("sdata.table is already existing. Transcripts are not count again.")
+                log.warning("sdata.table is already existing. Transcripts are not count again.")
             else:
                 self.table = count_transcripts(self.sdata, gene_column, shapes_key=self.shapes_key)
         elif self.bins_key is not None:

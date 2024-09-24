@@ -227,9 +227,14 @@ def _return_element(
 
 
 def get_cache_dir(sdata: SpatialData) -> Path:
-    assert sdata.is_backed(), "SpatialData not saved on-disk. Save the object, or provide a cache directory."
+    if sdata.is_backed():
+        cache_dir = sdata.path / SopaFiles.SOPA_CACHE_DIR
+    else:
+        cache_dir = Path.home() / SopaFiles.SOPA_CACHE_DIR / str(id(sdata))
 
-    return sdata.path / SopaFiles.SOPA_CACHE_DIR
+    cache_dir.mkdir(exist_ok=True, parents=True)
+
+    return cache_dir
 
 
 def get_minimal_transformations(element: SpatialElement) -> dict[str, BaseTransformation]:
