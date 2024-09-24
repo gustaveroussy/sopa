@@ -235,3 +235,14 @@ def comseg(
             with open(patch_dir / str(patch_index) / config_name, "r") as f:
                 config = json.load(f)
             comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
+
+
+@app_segmentation.command()
+def tissue(sdata_path: str = typer.Argument(help=SDATA_HELPER)):
+    """Perform tissue segmentation. This can be done only on objects with H&E staining."""
+    import sopa
+    from sopa.io.standardize import read_zarr_standardized
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    sopa.tissue_segmentation(sdata)

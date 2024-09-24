@@ -30,6 +30,32 @@ from ..utils import (
 log = logging.getLogger(__name__)
 
 
+def make_image_patches(
+    sdata: SpatialData, patch_width: int = 2000, patch_overlap: int = 50, image_key: str | None = None
+):
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
+    patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
+
+    patches.write()
+
+
+def make_transcript_patches(
+    sdata: SpatialData,
+    config: dict = {},
+    patch_width: int = 2000,
+    patch_overlap: int = 50,
+    points_key: str | None = None,
+) -> list[int]:
+    points_key, _ = get_spatial_element(sdata, key=points_key, return_key=True)
+    patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
+
+    cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_TEMP_DIR
+
+    valid_indices = patches.patchify_transcripts(cache_dir, config=config)
+
+    return valid_indices
+
+
 class Patches1D:
     def __init__(self, xmin, xmax, patch_width, patch_overlap, tight, int_coords):
         self.xmin, self.xmax = xmin, xmax
@@ -434,30 +460,3 @@ def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.S
         return series.replace(int(unassigned_value), 0)
 
     raise ValueError(f"Invalid dtype {series.dtype} for prior cell ids. Must be int or string.")
-
-
-def make_image_patches(
-    sdata: SpatialData, patch_width: int = 2000, patch_overlap: int = 50, image_key: str | None = None
-):
-    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
-    patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
-
-    patches.write()
-
-
-def make_transcript_patches(
-    sdata: SpatialData,
-    config: dict = {},
-    patch_width: int = 2000,
-    patch_overlap: int = 50,
-    points_key: str | None = None,
-    cache_dir: str | Path | None = None,
-) -> list[int]:
-    points_key, _ = get_spatial_element(sdata, key=points_key, return_key=True)
-    patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
-
-    cache_dir = Path(cache_dir or get_cache_dir(sdata)) / SopaFiles.TRANSCRIPT_TEMP_DIR
-
-    valid_indices = patches.patchify_transcripts(cache_dir, config=config)
-
-    return valid_indices
