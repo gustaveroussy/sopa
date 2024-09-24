@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import glob
 import json
 import logging
 from pathlib import Path
@@ -42,7 +43,9 @@ def resolve(
     if min_area > 0:
         log.info(f"Cells whose area is less than {min_area} microns^2 will be removed")
 
-    patches_cells, adatas = _read_all_segmented_patches(temp_dir, min_area, patches_dirs)
+    patches_cells, adatas = _read_all_segmented_patches(
+        temp_dir, min_area, patches_dirs
+    )
     geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
 
     image_key, _ = get_spatial_image(sdata, return_key=True)
@@ -58,22 +61,31 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
-        table_conflicts = aggregation.count_transcripts(sdata, gene_column, geo_df=geo_df_new)
+        table_conflicts = aggregation.count_transcripts(
+            sdata, gene_column, geo_df=geo_df_new
+        )
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 
     valid_ids = set(list(geo_df.index))
     table = anndata.concat(
-        [adata[list(valid_ids & set(list(adata.obs_names)))] for adata in adatas] + table_conflicts,
+        [adata[list(valid_ids & set(list(adata.obs_names)))] for adata in adatas]
+        + table_conflicts,
         join="outer",
     )
     table.obs.dropna(axis="columns", inplace=True)
 
     geo_df = geo_df.loc[table.obs_names]
 
-    table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
-    table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
-    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(image_key, index=table.obs_names, dtype="category")
+    table.obsm["spatial"] = np.array(
+        [[centroid.x, centroid.y] for centroid in geo_df.centroid]
+    )
+    table.obs[SopaKeys.REGION_KEY] = pd.Series(
+        shapes_key, index=table.obs_names, dtype="category"
+    )
+    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(
+        image_key, index=table.obs_names, dtype="category"
+    )
     table.obs[SopaKeys.INSTANCE_KEY] = geo_df.index
 
     table = TableModel.parse(
@@ -86,7 +98,9 @@ def resolve(
     add_spatial_element(sdata, shapes_key, geo_df)
     add_spatial_element(sdata, SopaKeys.TABLE, table)
 
-    log.info(f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']")
+    log.info(
+        f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']"
+    )
 
 
 def _read_one_segmented_patch(
@@ -96,7 +110,9 @@ def _read_one_segmented_patch(
 
     loom_file = directory / "segmentation_counts.loom"
     if loom_file.exists():
-        adata = anndata.read_loom(directory / "segmentation_counts.loom", obs_names="Name", var_names="Name")
+        adata = anndata.read_loom(
+            directory / "segmentation_counts.loom", obs_names="Name", var_names="Name"
+        )
     else:
         adata = anndata.read_h5ad(directory / "segmentation_counts.h5ad")
 
@@ -105,13 +121,20 @@ def _read_one_segmented_patch(
     cells_num = pd.Series(adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
 
-    with open(directory / "segmentation_polygons.json") as f:
+    with open(glob.glob(directory / "segmentation_polygons*.json")[0]) as f:
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
-    cells_num = cells_num[cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)]
+    cells_num = cells_num[
+        cells_num.map(
+            lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices
+        )
+    ]
 
-    gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
+    gdf = gpd.GeoDataFrame(
+        index=cells_num.index,
+        geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num],
+    )
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
     gdf = gdf[~gdf.geometry.isna()]
@@ -131,7 +154,9 @@ def _read_all_segmented_patches(
     patches_dirs: list[str] | None = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
     if patches_dirs is None or not len(patches_dirs):
-        patches_dirs = [subdir for subdir in Path(temp_dir).iterdir() if subdir.is_dir()]
+        patches_dirs = [
+            subdir for subdir in Path(temp_dir).iterdir() if subdir.is_dir()
+        ]
 
     outs = [
         _read_one_segmented_patch(path, min_area)
@@ -157,14 +182,20 @@ def _resolve_patches(
     """
     patch_ids = [adata.obs_names for adata in adatas]
 
-    patch_indices = np.arange(len(patches_cells)).repeat([len(cells) for cells in patches_cells])
+    patch_indices = np.arange(len(patches_cells)).repeat(
+        [len(cells) for cells in patches_cells]
+    )
     cells = [cell for cells in patches_cells for cell in cells]
     segmentation_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
-    cells_resolved, cells_indices = shapes.solve_conflicts(cells, patch_indices=patch_indices, return_indices=True)
+    cells_resolved, cells_indices = shapes.solve_conflicts(
+        cells, patch_indices=patch_indices, return_indices=True
+    )
 
     existing_ids = segmentation_ids[cells_indices[cells_indices >= 0]]
-    new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))
+    new_ids = np.char.add(
+        "merged_cell_", np.arange((cells_indices == -1).sum()).astype(str)
+    )
     index = np.concatenate([existing_ids, new_ids])
 
     return (
@@ -206,4 +237,6 @@ def copy_segmentation_config(path: Path, config: dict, config_path: str | None):
             toml.dump(config, f)
             return
 
-    raise ValueError(f"Config file must be either a .json or a .toml file. Found: {path.suffix}")
+    raise ValueError(
+        f"Config file must be either a .json or a .toml file. Found: {path.suffix}"
+    )
