@@ -109,13 +109,16 @@ def _read_one_segmented_patch(
     cells_num = pd.Series(adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
 
-    with open(directory / "segmentation_polygons.json") as f:
+    with open(list(directory.glob("segmentation_polygons*.json"))[0]) as f:
         polygons_dict = json.load(f)
-        polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
+        polygons_dict = {cells_num[c["cell"]]: c for c in polygons_dict["geometries"]}
 
     cells_num = cells_num[cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)]
 
-    gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
+    gdf = gpd.GeoDataFrame(
+        index=cells_num.index,
+        geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num],
+    )
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
     gdf = gdf[~gdf.geometry.isna()]
