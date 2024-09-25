@@ -98,7 +98,7 @@ class WorkflowPaths:
             return [str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))]
         if name == "baysor":
             indices = map(int, file_content.split())
-            BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]
+            BAYSOR_FILES = ["segmentation_counts.loom"]
 
             if dirs:
                 return [str(self.smk_baysor_temp_dir / str(i)) for i in indices]

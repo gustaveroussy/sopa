@@ -1,3 +1,9 @@
+## [1.x.x] - 2024-xx-xx
+
+### Fix
+- Support `baysor>=0.7.0` (#125, @lguerard).
+  - NB: For Snakemake, please remove the `new_component_*` arguments from the Baysor config.
+
 ## [1.1.5] - 2024-09-17
 
 ### Fix
