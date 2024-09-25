@@ -364,7 +364,7 @@ class TranscriptPatches:
                 copy_segmentation_config(path, config, config_path)
 
         valid_indices = list(self.valid_indices())
-        log.info(f"{valid_indices} patche(s) saved in directory {temp_dir}")
+        log.info(f"{len(valid_indices)} patche(s) saved in directory {temp_dir}")
         return valid_indices
 
     def _patch_path(self, index: int) -> Path:

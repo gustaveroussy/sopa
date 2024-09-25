@@ -11,7 +11,13 @@ from ..transcripts import copy_segmentation_config, resolve
 log = logging.getLogger(__name__)
 
 
-def baysor(sdata: SpatialData, config: dict | None = None, config_path: str | None = None, min_area: int = 0):
+def baysor(
+    sdata: SpatialData,
+    config: dict | None = None,
+    config_path: str | None = None,
+    min_area: int = 0,
+    force: bool = False,
+):
     import shutil
 
     baysor_executable_path = _get_baysor_executable_path()
@@ -31,11 +37,16 @@ def baysor(sdata: SpatialData, config: dict | None = None, config_path: str | No
         SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
     ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
 
-    patches_dirs = sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY].values
+    patches_dirs = [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
 
     for patch_dir in patches_dirs:
-        copy_segmentation_config(Path(patch_dir) / SopaFiles.TOML_CONFIG_FILE, config, config_path)
-        baysor_patch(patch_dir, baysor_executable_path, use_polygons_format_argument)
+        copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config, config_path)
+        baysor_patch(patch_dir, baysor_executable_path, use_polygons_format_argument, force=force)
+
+    if force:
+        assert any(
+            (patch_dir / "segmentation_counts.loom").exists() for patch_dir in patches_dirs
+        ), "Baysor failed on all patches"
 
     resolve(sdata, None, gene_column, min_area=min_area, patches_dirs=patches_dirs)
 
@@ -43,18 +54,31 @@ def baysor(sdata: SpatialData, config: dict | None = None, config_path: str | No
         shutil.rmtree(patch_dir)
 
 
-def baysor_patch(patch_dir: str, baysor_executable_path: str, use_polygons_format_argument: bool):
+def baysor_patch(patch_dir: str, baysor_executable_path: str, use_polygons_format_argument: bool, force: bool = False):
     import subprocess
 
     polygon_substring = (
         "--polygon-format GeometryCollection" if use_polygons_format_argument else "--save-polygons GeoJSON"
     )
 
-    command = f"""
+    baysor_command = f"{baysor_executable_path} run {polygon_substring} -c config.toml transcripts.csv"
+
+    result = subprocess.run(
+        f"""
         cd {patch_dir}
-        {baysor_executable_path} run {polygon_substring} -c config.toml transcripts.csv
-        """
-    subprocess.run(command, shell=True)
+        {baysor_command}
+        """,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    if result.returncode != 0:
+        message = f"Baysor error on patch {patch_dir} with command `{baysor_command}`"
+        if force:
+            log.warning(message)
+            return
+        raise RuntimeError(f"{message}:\n{result.stdout.decode()}")
 
 
 def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
