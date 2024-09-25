@@ -14,11 +14,11 @@ log = logging.getLogger(__name__)
 
 
 def solve_conflicts(
-    cells: list[Polygon],
+    cells: list[Polygon] | gpd.GeoDataFrame,
     threshold: float = 0.5,
     patch_indices: np.ndarray | None = None,
     return_indices: bool = False,
-) -> np.ndarray[Polygon] | tuple[np.ndarray[Polygon], np.ndarray]:
+) -> gpd.GeoDataFrame | tuple[gpd.GeoDataFrame, np.ndarray]:
     """Resolve segmentation conflicts (i.e. overlap) after running segmentation on patches
 
     Args:
@@ -30,7 +30,7 @@ def solve_conflicts(
     Returns:
         Array of resolved cells polygons. If `return_indices`, it also returns an array of cell indices.
     """
-    cells = list(cells)
+    cells = list(cells.geometry) if isinstance(cells, gpd.GeoDataFrame) else list(cells)
     n_cells = len(cells)
     resolved_indices = np.arange(n_cells)
 
@@ -52,12 +52,13 @@ def solve_conflicts(
         intersection = cell1.intersection(cell2).area
         if intersection >= threshold * min(cell1.area, cell2.area):
             cell = _ensure_polygon(cell1.union(cell2))
+            assert not cell.is_empty, "Merged cell is empty"
 
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
             cells.append(cell)
 
     unique_indices = np.unique(resolved_indices)
-    unique_cells = np.array(cells)[unique_indices]
+    unique_cells = gpd.GeoDataFrame(geometry=cells).iloc[unique_indices]
 
     if return_indices:
         return unique_cells, np.where(unique_indices < n_cells, unique_indices, -1)
@@ -87,7 +88,7 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
         cell: A shapely Polygon or MultiPolygon or GeometryCollection
 
     Returns:
-        The shape as a Polygon
+        The shape as a Polygon, or an empty Polygon if the cell was invalid
     """
     cell = shapely.make_valid(cell)
 
@@ -109,10 +110,10 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
         return max(geoms, key=lambda polygon: polygon.area)
 
     log.warning(f"Removing cell of unknown type {type(cell)}")
-    return None
+    return Polygon()
 
 
-def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -> Polygon | None:
+def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -> Polygon:
     """Smoothen a cell polygon
 
     Args:
@@ -121,12 +122,12 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
         tolerance: tolerance used to simplify the cell polygon
 
     Returns:
-        Shapely polygon representing the cell, or `None` if the cell was empty after smoothing
+        Shapely polygon representing the cell, or an empty Polygon if the cell was empty after smoothing
     """
     cell = cell.buffer(-smooth_radius).buffer(2 * smooth_radius).buffer(-smooth_radius)
     cell = cell.simplify(tolerance)
 
-    return None if cell.is_empty else _ensure_polygon(cell)
+    return _ensure_polygon(cell)
 
 
 def _default_tolerance(mean_radius: float) -> float:
@@ -137,7 +138,7 @@ def _default_tolerance(mean_radius: float) -> float:
     return 2
 
 
-def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1) -> list[Polygon]:
+def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1) -> gpd.GeoDataFrame:
     """Convert a cells mask to multiple `shapely` geometries. Inspired from https://github.com/Vizgen/vizgen-postprocessing
 
     Args:
@@ -145,7 +146,7 @@ def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_r
         tolerance: Tolerance parameter used by `shapely` during simplification. By default, define the tolerance automatically.
 
     Returns:
-        List of `shapely` polygons representing each cell ID of the mask
+        GeoDataFrame of polygons representing each cell ID of the mask
     """
     max_cells = mask.max()
 
@@ -153,16 +154,18 @@ def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_r
         log.warning("No cell was returned by the segmentation")
         return []
 
-    cells = [_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
+    cells = gpd.GeoDataFrame(
+        geometry=[_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
+    )
 
-    mean_radius = np.sqrt(np.array([cell.area for cell in cells]) / np.pi).mean()
+    mean_radius = np.sqrt(cells.area / np.pi).mean()
     smooth_radius = mean_radius * smooth_radius_ratio
 
     if tolerance is None:
         tolerance = _default_tolerance(mean_radius)
 
-    cells = [_smoothen_cell(cell, smooth_radius, tolerance) for cell in cells]
-    cells = [cell for cell in cells if cell is not None]
+    cells.geometry = cells.geometry.map(lambda cell: _smoothen_cell(cell, smooth_radius, tolerance))
+    cells = cells[~cells.is_empty]
 
     return cells
 

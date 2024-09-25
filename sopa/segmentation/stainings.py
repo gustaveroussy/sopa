@@ -7,8 +7,8 @@ from typing import Callable, Iterable
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 from scipy.ndimage import gaussian_filter
-from shapely import affinity
 from shapely.geometry import Polygon, box
 from skimage import exposure
 from spatialdata import SpatialData
@@ -92,7 +92,7 @@ class StainingSegmentation:
             channels, image_channels
         ).all(), f"Channel names must be a subset of: {', '.join(image_channels)}"
 
-    def _run_patch(self, patch: Polygon) -> list[Polygon]:
+    def _run_patch(self, patch: Polygon) -> gpd.GeoDataFrame:
         """Run segmentation on one patch
 
         Args:
@@ -131,11 +131,9 @@ class StainingSegmentation:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
 
         cells = shapes.geometrize(self.method(image))
+        cells.geometry = cells.translate(*bounds[:2])
 
-        if self.min_area > 0:
-            cells = [cell for cell in cells if cell.area >= self.min_area]
-
-        return [affinity.translate(cell, *bounds[:2]) for cell in cells]
+        return cells[cells.area >= self.min_area] if self.min_area > 0 else cells
 
     def write_patch_cells(self, patch_dir: str, patch_index: int):
         """Run segmentation on one patch, and save the result in a dedicated directory
@@ -147,15 +145,18 @@ class StainingSegmentation:
         patch = self.sdata[SopaKeys.PATCHES].geometry[patch_index]
 
         cells = self._run_patch(patch)
-        gdf = gpd.GeoDataFrame(geometry=cells)
 
         patch_dir: Path = Path(patch_dir)
         patch_dir.mkdir(parents=True, exist_ok=True)
-        patch_file = patch_dir / f"{patch_index}.parquet"
 
-        gdf.to_parquet(patch_file)
+        cells.to_parquet(patch_dir / f"{patch_index}.parquet")
 
     def write_patches_cells(self, patch_dir: str):
+        """Run segmentation on all patches, and save the result in a dedicated directory
+
+        Args:
+            patch_dir: Directory inside which segmentation results will be saved
+        """
         functions = [
             partial(self.write_patch_cells, patch_dir, patch_index)
             for patch_index in range(len(self.sdata[SopaKeys.PATCHES]))
@@ -163,7 +164,7 @@ class StainingSegmentation:
         settings._run_with_backend(functions)
 
     @classmethod
-    def read_patches_cells(cls, patch_dir: str | list[str]) -> list[Polygon]:
+    def read_patches_cells(cls, patch_dir: str | list[str]) -> gpd.GeoDataFrame:
         """Read all patch segmentation results after running `write_patch_cells` on all patches
 
         Args:
@@ -172,31 +173,29 @@ class StainingSegmentation:
         Returns:
             A list of cells represented as `shapely` polygons
         """
-        cells = []
+        patch_dirs = patch_dir if isinstance(patch_dir, list) else [patch_dir]
+        files = [f for patch_dir in patch_dirs for f in Path(patch_dir).iterdir() if f.suffix == ".parquet"]
 
-        files = [f for f in Path(patch_dir).iterdir() if f.suffix == ".parquet"]
-        for file in files:
-            cells += list(gpd.read_parquet(file).geometry)
+        cells = pd.concat([gpd.read_parquet(file) for file in files]).reset_index(drop=True)
 
         log.info(f"Found {len(cells)} total cells")
         return cells
 
     @classmethod
-    def add_shapes(cls, sdata: SpatialData, cells: list[Polygon], image_key: str, shapes_key: str):
+    def add_shapes(cls, sdata: SpatialData, cells: gpd.GeoDataFrame, image_key: str, shapes_key: str):
         """Adding `shapely` polygon to the `SpatialData` object
 
         Args:
             sdata: A `SpatialData` object
-            cells: List of polygons after segmentation
+            cells: `GeoDataFrame` containing the cell boundaries after segmentation
             image_key: Key of the image on which segmentation has been run
             shapes_key: Name to provide to the geodataframe to be created
         """
         image = get_spatial_image(sdata, image_key)
 
-        geo_df = gpd.GeoDataFrame({"geometry": cells})
-        geo_df.index = image_key + geo_df.index.astype(str)
+        cells.index = image_key + cells.index.astype(str)
 
-        geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
-        add_spatial_element(sdata, shapes_key, geo_df)
+        cells = ShapesModel.parse(cells, transformations=get_transformation(image, get_all=True).copy())
+        add_spatial_element(sdata, shapes_key, cells)
 
-        log.info(f"Added {len(geo_df)} cell boundaries in sdata['{shapes_key}']")
+        log.info(f"Added {len(cells)} cell boundaries in sdata['{shapes_key}']")

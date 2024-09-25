@@ -113,8 +113,8 @@ def _read_one_segmented_patch(
 
     gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
 
-    gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
-    gdf = gdf[~gdf.geometry.isna()]
+    gdf.geometry = gdf.geometry.map(shapes._ensure_polygon)
+    gdf = gdf[~gdf.is_empty]
 
     ratio_filtered = (gdf.area <= min_area).mean()
     if ratio_filtered > 0.2:
@@ -165,13 +165,9 @@ def _resolve_patches(
 
     existing_ids = segmentation_ids[cells_indices[cells_indices >= 0]]
     new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))
-    index = np.concatenate([existing_ids, new_ids])
+    cells_resolved.index = np.concatenate([existing_ids, new_ids])
 
-    return (
-        gpd.GeoDataFrame({"geometry": cells_resolved}, index=index),
-        cells_indices,
-        new_ids,
-    )
+    return cells_resolved, cells_indices, new_ids
 
 
 def copy_segmentation_config(path: Path, config: dict, config_path: str | None):

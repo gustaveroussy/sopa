@@ -23,7 +23,7 @@ def test_rasterize():
 def test_raster_and_geometrize():
     mask = shapes.rasterize(cell, image_shape)
 
-    new_cell = shapes.geometrize(mask, 0, 0)[0]
+    new_cell = shapes.geometrize(mask, 0, 0).geometry[0]
     new_mask = shapes.rasterize(new_cell, image_shape)
 
     assert (mask == new_mask).all(), "Applying geometrize and then rasterize shouldn't change the mask"

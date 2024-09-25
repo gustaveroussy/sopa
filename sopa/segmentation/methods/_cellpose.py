@@ -68,11 +68,18 @@ def cellpose(
     min_area: int | None = None,
     flow_threshold: float = 2,
     cellprob_threshold: float = -6,
+    cellpose_model_kwargs: dict | None = None,
+    **cellpose_eval_kwargs: int,
 ):
     channels = channels if isinstance(channels, list) else [channels]
 
     method = cellpose_patch(
-        diameter=diameter, channels=channels, flow_threshold=flow_threshold, cellprob_threshold=cellprob_threshold
+        diameter=diameter,
+        channels=channels,
+        flow_threshold=flow_threshold,
+        cellprob_threshold=cellprob_threshold,
+        cellpose_model_kwargs=cellpose_model_kwargs,
+        **cellpose_eval_kwargs,
     )
 
     cellpose_temp_dir = get_cache_dir(sdata) / SopaKeys.CELLPOSE_BOUNDARIES
