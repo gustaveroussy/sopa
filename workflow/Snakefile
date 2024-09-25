@@ -113,7 +113,6 @@ rule patch_segmentation_baysor:
         patches_file = paths.smk_patches_file_baysor,
         baysor_patch = paths.smk_baysor_temp_dir / "{index}",
     output:
-        paths.smk_baysor_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_baysor_temp_dir / "{index}" / "segmentation_counts.loom",
     params:
         args_baysor_prior_seg = args.baysor_prior_seg,
@@ -126,7 +125,13 @@ rule patch_segmentation_baysor:
         fi
 
         cd {input.baysor_patch}
-        {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
+
+        help_output=$({config[executables][baysor]} run --help 2>&1) # check if the polygon-format option is available
+        if [[ $help_output == *"polygon-format"* ]]; then
+            {config[executables][baysor]} run --polygon-format GeometryCollection -c config.toml transcripts.csv {params.args_baysor_prior_seg}
+        else
+            {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
+        fi
         """
 
 rule patch_segmentation_comseg:

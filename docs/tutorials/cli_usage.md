@@ -165,8 +165,6 @@ iters = 500
 n_cells_init = 0
 nuclei_genes = ""
 cyto_genes = ""
-new_component_weight = 0.2
-new_component_fraction = 0.3
 ```
 
 Then, we generate the bounding boxes of the patches on which Baysor will be run. Here, the patches have a width and height of 1200 microns and an overlap of 50 microns. We advise bigger sizes for real datasets (see our default parameters in one of our [config files](https://github.com/gustaveroussy/sopa/tree/master/workflow/config)). On the toy dataset, this will generate **4** patches.

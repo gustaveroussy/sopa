@@ -97,6 +97,7 @@ def _read_one_segmented_patch(
     directory: str, min_area: float = 0, min_vertices: int = 4
 ) -> tuple[list[Polygon], AnnData]:
     directory: Path = Path(directory)
+    id_as_string, polygon_file = _find_polygon_file(directory)
 
     loom_file = directory / "segmentation_counts.loom"
     if loom_file.exists():
@@ -106,16 +107,19 @@ def _read_one_segmented_patch(
 
     adata.obs.rename(columns={"area": SopaKeys.ORIGINAL_AREA_OBS}, inplace=True)
 
-    cells_num = pd.Series(adata.obs["CellID"].astype(int), index=adata.obs_names)
+    cells_num = pd.Series(adata.obs_names if id_as_string else adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
 
-    with open(directory / "segmentation_polygons.json") as f:
+    with open(polygon_file) as f:
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
     cells_num = cells_num[cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)]
 
-    gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
+    gdf = gpd.GeoDataFrame(
+        index=cells_num.index,
+        geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num],
+    )
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
     gdf = gdf[~gdf.geometry.isna()]
@@ -127,6 +131,15 @@ def _read_one_segmented_patch(
     gdf = gdf[gdf.area > min_area]
 
     return gdf.geometry.values, adata[gdf.index].copy()
+
+
+def _find_polygon_file(directory: Path) -> tuple[bool, Path]:
+    old_baysor_path = directory / "segmentation_polygons.json"
+    if old_baysor_path.exists():
+        return False, old_baysor_path
+    new_baysor_path = directory / "segmentation_polygons_2d.json"
+    assert new_baysor_path.exists(), f"Could not find the segmentation polygons file in {directory}"
+    return True, new_baysor_path
 
 
 def _read_all_segmented_patches(
