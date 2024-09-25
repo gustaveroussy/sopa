@@ -14,8 +14,8 @@ from ._spatialdata import (
     get_intrinsic_cs,
     to_intrinsic,
     get_spatial_image,
-    get_cache_dir,
     get_minimal_transformations,
     add_spatial_element,
     get_intensities,
 )
+from .utils import get_cache_dir, clear_cache

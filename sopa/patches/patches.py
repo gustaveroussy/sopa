@@ -41,19 +41,21 @@ def make_image_patches(
 
 def make_transcript_patches(
     sdata: SpatialData,
-    config: dict = {},
     patch_width: int = 2000,
     patch_overlap: int = 50,
     points_key: str | None = None,
 ) -> list[int]:
-    points_key, _ = get_spatial_element(sdata, key=points_key, return_key=True)
+    points_key, _ = get_spatial_element(sdata.points, key=points_key, return_key=True)
     patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
 
     cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_TEMP_DIR
 
-    valid_indices = patches.patchify_transcripts(cache_dir, config=config)
+    valid_indices = patches.patchify_transcripts(cache_dir)
 
-    return valid_indices
+    geo_df = patches.to_shapes().iloc[valid_indices]
+    geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(cache_dir / str(index)))
+
+    add_spatial_element(sdata, SopaKeys.TRANSCRIPT_PATCHES, geo_df)
 
 
 class Patches1D:
@@ -225,7 +227,15 @@ class Patches2D:
             The saved GeoDataFrame
         """
         shapes_key = SopaKeys.PATCHES if shapes_key is None else shapes_key
+        geo_df = self.to_shapes()
 
+        add_spatial_element(self.sdata, shapes_key, geo_df, overwrite=overwrite)
+
+        log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
+
+        return geo_df
+
+    def to_shapes(self) -> gpd.GeoDataFrame:
         geo_df = gpd.GeoDataFrame(
             {
                 "geometry": self.polygons,
@@ -233,12 +243,7 @@ class Patches2D:
                 SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
             }
         )
-        geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
-        add_spatial_element(self.sdata, shapes_key, geo_df, overwrite=overwrite)
-
-        log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
-
-        return geo_df
+        return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
 
     def patchify_transcripts(
         self,
@@ -358,8 +363,9 @@ class TranscriptPatches:
                 path = self.temp_dir / str(i) / self.config_name
                 copy_segmentation_config(path, config, config_path)
 
-        log.info(f"Patches saved in directory {temp_dir}")
-        return list(self.valid_indices())
+        valid_indices = list(self.valid_indices())
+        log.info(f"{valid_indices} patche(s) saved in directory {temp_dir}")
+        return valid_indices
 
     def _patch_path(self, index: int) -> Path:
         return self.temp_dir / str(index) / self.csv_name

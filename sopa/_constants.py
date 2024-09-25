@@ -1,32 +1,37 @@
 class SopaKeys:
+    # Segmentation keys
     CELLPOSE_BOUNDARIES = "cellpose_boundaries"
     BAYSOR_BOUNDARIES = "baysor_boundaries"
     COMSEG_BOUNDARIES = "comseg_boundaries"
-    PATCHES = "sopa_patches"
-    TABLE = "table"
-    OLD_TABLE = "old_table"
-    CELL_OVERLAY_KEY = "is_overlay"
 
+    # Patches keys
+    PATCHES = "sopa_patches"
+    TRANSCRIPT_PATCHES = "sopa_patches_transcripts"
+    PATCHES_INFERENCE_KEY = "sopa_patches_inference"
+    CACHE_PATH_KEY = "cache_path"
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"
-    PATCHES_INFERENCE_KEY = "sopa_patches_inference"
 
+    # Other SpatialData keys
+    TABLE = "table"
+    OLD_TABLE = "old_table"
+
+    # Table keys
     UNS_KEY = "sopa_attrs"
     UNS_HAS_TRANSCRIPTS = "transcripts"
     UNS_HAS_INTENSITIES = "intensities"
     UNS_CELL_TYPES = "cell_types"
-
     INTENSITIES_OBSM = "intensities"
-
     REGION_KEY = "region"
     SLIDE_KEY = "slide"
     INSTANCE_KEY = "cell_id"
     DEFAULT_CELL_KEY = "cell"
     ORIGINAL_AREA_OBS = "baysor_area"
+    CELL_OVERLAY_KEY = "is_overlay"
     AREA_OBS = "area"
-
     Z_SCORES = "z_scores"
 
+    # Geometry keys
     GEOMETRY_AREA = "area"
     GEOMETRY_LENGTH = "length"
     GEOMETRY_ROUNDNESS = "roundness"
@@ -36,15 +41,9 @@ class SopaKeys:
 class SopaAttrs:
     CELL_SEGMENTATION = "cell_segmentation_image"
     TISSUE_SEGMENTATION = "tissue_segmentation_image"
-    BINS_AGGREGATION = "bins_aggregation_shapes"
     BINS_TABLE = "bins_table"
     TRANSCRIPTS = "transcripts_dataframe"
     GENE_COLUMN = "feature_key"
-
-
-VALID_DIMENSIONS = ("c", "y", "x")
-LOW_AVERAGE_COUNT = 0.01
-EPS = 1e-5
 
 
 class ROI:
@@ -66,3 +65,8 @@ class SopaFiles:
     CENTROIDS_FILE = "centroids.csv"
     JSON_CONFIG_FILE = "config.json"
     TOML_CONFIG_FILE = "config.toml"
+
+
+VALID_DIMENSIONS = ("c", "y", "x")
+LOW_AVERAGE_COUNT = 0.01
+EPS = 1e-5

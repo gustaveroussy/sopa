@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any, Iterator
 
 import geopandas as gpd
@@ -20,7 +19,7 @@ from spatialdata.transformations import (
 from xarray import DataArray
 
 from .. import settings
-from .._constants import SopaAttrs, SopaFiles, SopaKeys
+from .._constants import SopaAttrs, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -224,17 +223,6 @@ def _return_element(
         element = next(iter(element["scale0"].values()))
 
     return (key, element) if return_key else element
-
-
-def get_cache_dir(sdata: SpatialData) -> Path:
-    if sdata.is_backed():
-        cache_dir = sdata.path / SopaFiles.SOPA_CACHE_DIR
-    else:
-        cache_dir = Path.home() / SopaFiles.SOPA_CACHE_DIR / str(id(sdata))
-
-    cache_dir.mkdir(exist_ok=True, parents=True)
-
-    return cache_dir
 
 
 def get_minimal_transformations(element: SpatialElement) -> dict[str, BaseTransformation]:
