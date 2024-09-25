@@ -5,7 +5,7 @@ from functools import partial
 from math import ceil
 from pathlib import Path
 
-import dask.dataframe as dd
+import dask
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -18,8 +18,7 @@ from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
-from ..utils import (
-    add_spatial_element,
+from .._sdata import (
     get_boundaries,
     get_cache_dir,
     get_spatial_element,
@@ -27,33 +26,10 @@ from ..utils import (
     to_intrinsic,
 )
 
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa
+
 log = logging.getLogger(__name__)
-
-
-def make_image_patches(
-    sdata: SpatialData, patch_width: int = 2000, patch_overlap: int = 50, image_key: str | None = None
-):
-    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
-    patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
-
-    patches.write()
-
-
-def make_transcript_patches(
-    sdata: SpatialData,
-    config: dict = {},
-    patch_width: int = 2000,
-    patch_overlap: int = 50,
-    points_key: str | None = None,
-) -> list[int]:
-    points_key, _ = get_spatial_element(sdata, key=points_key, return_key=True)
-    patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
-
-    cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_TEMP_DIR
-
-    valid_indices = patches.patchify_transcripts(cache_dir, config=config)
-
-    return valid_indices
 
 
 class Patches1D:
@@ -234,7 +210,10 @@ class Patches2D:
             }
         )
         geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
-        add_spatial_element(self.sdata, shapes_key, geo_df, overwrite=overwrite)
+
+        self.sdata.shapes[shapes_key] = geo_df
+        if self.sdata.is_backed():
+            self.sdata.write_element(shapes_key, overwrite=overwrite)
 
         log.info(f"{len(geo_df)} patches were saved in sdata['{shapes_key}']")
 
@@ -460,3 +439,30 @@ def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.S
         return series.replace(int(unassigned_value), 0)
 
     raise ValueError(f"Invalid dtype {series.dtype} for prior cell ids. Must be int or string.")
+
+
+def make_image_patches(
+    sdata: SpatialData, patch_width: int = 2000, patch_overlap: int = 50, image_key: str | None = None
+):
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
+    patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
+
+    patches.write()
+
+
+def make_transcript_patches(
+    sdata: SpatialData,
+    config: dict = {},
+    patch_width: int = 2000,
+    patch_overlap: int = 50,
+    points_key: str | None = None,
+    cache_dir: str | Path | None = None,
+) -> list[int]:
+    points_key, _ = get_spatial_element(sdata, key=points_key, return_key=True)
+    patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
+
+    cache_dir = Path(cache_dir or get_cache_dir(sdata)) / SopaFiles.TRANSCRIPT_TEMP_DIR
+
+    valid_indices = patches.patchify_transcripts(cache_dir, config=config)
+
+    return valid_indices

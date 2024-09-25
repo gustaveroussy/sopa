@@ -19,8 +19,8 @@ from spatialdata.transformations import Scale
 from xarray import DataArray
 
 from .._constants import SopaKeys
+from .._sdata import get_intrinsic_cs, get_spatial_image
 from ..segmentation import Patches2D
-from ..utils import get_intrinsic_cs, get_spatial_image
 from . import models
 
 log = logging.getLogger(__name__)
@@ -50,11 +50,11 @@ def _get_extraction_parameters(
     scale0 and extraction level.
     """
     if level is None and magnification is None:
-        log.warning("Both level and magnification arguments are None. Using level=0 by default.")
+        log.warn("Both level and magnification arguments are None. Using level=0 by default.")
         level = 0
 
     if backend is None:
-        log.warning("No backend found, using downsample=1")
+        log.warn("No backend found, using downsample=1")
 
     if magnification is None or backend is None:
         return level, 1, patch_width * 2**level, 1.0, True  # TODO: what if scaling != 2?

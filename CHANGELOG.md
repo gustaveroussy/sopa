@@ -1,14 +1,3 @@
-## [x.x.x] - 2024-xx-xx
-
-### Breaking changes
-- All functions from `sopa.annotate` are now in `sopa.utils`
-
-### Added
-- Visium HD tutorial
-- Visium HD bins aggregation (via the `bins_key` argument)
-- New API settings (`sopa.settings.auto_save_on_disk = False`) to not save on disk by default
-- Experimental API parallelization backend: `sopa.settings.parallelization_backend = 'dask'`
-
 ## [1.1.5] - 2024-09-17
 
 ### Fix

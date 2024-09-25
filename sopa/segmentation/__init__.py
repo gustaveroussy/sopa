@@ -1,7 +1,5 @@
-from . import aggregation, shapes, stainings
-from ..patches import Patches2D  # TODO: remove import in sopa>=2.0.0
+from . import aggregation, shapes, methods, stainings
+from ..patches import Patches2D
 from .aggregation import Aggregator, overlay_segmentation
 from .stainings import StainingSegmentation
 from .tissue import tissue_segmentation
-from .methods import cellpose
-from . import methods

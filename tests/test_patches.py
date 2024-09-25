@@ -6,8 +6,8 @@ import pytest
 from shapely.geometry import box
 from spatialdata import SpatialData
 
+from sopa._sdata import get_spatial_element
 from sopa.patches import Patches2D, _get_cell_id
-from sopa.utils import get_spatial_element
 from sopa.utils.data import uniform
 
 

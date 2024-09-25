@@ -14,11 +14,10 @@ nav:
   - Tutorials:
     - Snakemake pipeline: tutorials/snakemake.md
     - CLI usage: tutorials/cli_usage.md
-    - API usage: tutorials/old_api_usage.ipynb
+    - API usage: tutorials/api_usage.ipynb
     - Explorer usage: tutorials/xenium_explorer/explorer.ipynb
     - Align images (e.g. H&E): tutorials/align.md
     - Spatial statistics: tutorials/spatial.ipynb
-    - Visium HD usage: tutorials/visium_hd.ipynb
     - H&E usage: tutorials/he.ipynb
     - Advanced segmentation: tutorials/advanced_segmentation.md
     - Other segmentation methods:

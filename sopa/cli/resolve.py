@@ -47,10 +47,10 @@ def generic(
 
 
 def _resolve_generic(sdata_path: str, patch_dirs: list[str], shapes_key: str):
+    from sopa._sdata import get_spatial_image
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import shapes
     from sopa.segmentation.stainings import StainingSegmentation
-    from sopa.utils import get_spatial_image
 
     sdata = read_zarr_standardized(sdata_path)
 

@@ -176,7 +176,7 @@ def _read_stitched_image(
     morphology_coords: list[str],
     **imread_kwargs,
 ) -> tuple[da.Array, list[str] | None]:
-    log.warning("Image stitching is currently experimental")
+    log.warn("Image stitching is currently experimental")
 
     fov_images = {}
     c_coords_dict = {}
@@ -210,7 +210,7 @@ def _read_stitched_image(
         stitched_image.loc[{"c": c_coords_dict[fov], "y": slice(ymin, ymax), "x": slice(xmin, xmax)}] = im
 
         if len(c_coords_dict[fov]) < len(c_coords):
-            log.warning(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
+            log.warn(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
 
     return stitched_image.data, c_coords
 

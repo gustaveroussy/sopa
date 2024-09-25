@@ -7,12 +7,8 @@ import spatialdata
 from spatialdata import SpatialData
 
 from .._constants import VALID_DIMENSIONS, SopaKeys
-from ..utils import (
-    _check_integer_dtype,
-    get_channel_names,
-    get_spatial_image,
-    valid_c_coords,
-)
+from .._sdata import get_spatial_image
+from ..utils import _check_integer_dtype, get_channel_names, valid_c_coords
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +23,7 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
     _check_integer_dtype(image.dtype)
 
     if len(sdata.points) > 1:
-        log.warning(
+        log.warn(
             f"The spatialdata object has {len(sdata.points)} points objects. It's easier to have only one (corresponding to transcripts), since sopa will use it directly without providing a key argument"
         )
 

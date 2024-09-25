@@ -21,9 +21,9 @@ def image(
 ):
     """Prepare patches for staining-based segmentation (including Cellpose)"""
     from sopa._constants import SopaFiles
+    from sopa._sdata import get_spatial_image
     from sopa.io.standardize import read_zarr_standardized
     from sopa.patches import Patches2D
-    from sopa.utils import get_spatial_image
 
     sdata = read_zarr_standardized(sdata_path)
 
@@ -189,9 +189,9 @@ def _patchify_transcripts(
 
     """
     from sopa._constants import SopaFiles
+    from sopa._sdata import get_spatial_element
     from sopa.io.standardize import read_zarr_standardized
     from sopa.patches import Patches2D
-    from sopa.utils import get_spatial_element
 
     sdata = read_zarr_standardized(sdata_path)
 

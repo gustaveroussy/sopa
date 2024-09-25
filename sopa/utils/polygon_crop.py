@@ -13,7 +13,8 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
 from .._constants import ROI
-from . import add_spatial_element, get_spatial_image, resize
+from .._sdata import get_spatial_image
+from .image import resize
 
 log = logging.getLogger(__name__)
 
@@ -129,6 +130,8 @@ def polygon_selection(
     geo_df = gpd.GeoDataFrame(geometry=[polygon])
 
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(sdata[image_key], get_all=True).copy())
-    add_spatial_element(sdata, ROI.KEY, geo_df)
+    sdata.shapes[ROI.KEY] = geo_df
+    if sdata.is_backed():
+        sdata.write_element(ROI.KEY, overwrite=True)
 
     log.info(f"Polygon saved in sdata['{ROI.KEY}']")

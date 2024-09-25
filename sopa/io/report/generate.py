@@ -10,7 +10,7 @@ import seaborn as sns
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
-from ...utils import (
+from ..._sdata import (
     get_boundaries,
     get_intensities,
     get_intrinsic_cs,
@@ -211,6 +211,6 @@ class SectionBuilder:
                 section = getattr(self, name)()
                 sections.append(section)
             except Exception as e:
-                log.warning(f"Section {name} failed with error {e}")
+                log.warn(f"Section {name} failed with error {e}")
 
         return [section for section in sections if section is not None]

@@ -6,21 +6,14 @@ from typing import Any, Iterator
 
 import geopandas as gpd
 import pandas as pd
-import spatialdata
+from anndata import AnnData
 from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
-from spatialdata.transformations import (
-    BaseTransformation,
-    Identity,
-    get_transformation,
-    get_transformation_between_coordinate_systems,
-    set_transformation,
-)
+from spatialdata.transformations import Identity, get_transformation, set_transformation
 from xarray import DataArray
 
-from .. import settings
-from .._constants import SopaAttrs, SopaFiles, SopaKeys
+from ._constants import SopaAttrs, SopaFiles, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +46,7 @@ def get_boundaries(
     if not warn:
         raise ValueError(error_message)
 
-    log.warning(error_message)
+    log.warn(error_message)
     return (None, None) if return_key else None
 
 
@@ -101,13 +94,8 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
     """
     if isinstance(element, str):
         element = sdata[element]
-    if isinstance(element_cs, str):
-        element_cs = sdata[element_cs]
-
-    transformation = get_transformation_between_coordinate_systems(
-        sdata, element, element_cs, intermediate_coordinate_systems=element_cs
-    )
-    return spatialdata.transform(element, transformation=transformation, maintain_positioning=True)
+    cs = get_intrinsic_cs(sdata, element_cs)
+    return sdata.transform_element_to_coordinate_system(element, cs)
 
 
 def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
@@ -189,6 +177,20 @@ def _get_spatialdata_attrs(element: SpatialElement) -> dict[str, Any]:
     return element.attrs.get("spatialdata_attrs", {})
 
 
+def _update_spatialdata_attrs(element: SpatialElement, attrs: dict):
+    if isinstance(element, DataTree):
+        for image_scale in iter_scales(element):
+            _update_spatialdata_attrs(image_scale, attrs)
+        return
+
+    old_attrs = element.uns if isinstance(element, AnnData) else element.attrs
+
+    if "spatialdata_attrs" not in old_attrs:
+        old_attrs["spatialdata_attrs"] = {}
+
+    old_attrs["spatialdata_attrs"].update(attrs)
+
+
 def get_spatial_image(
     sdata: SpatialData,
     key: str | None = None,
@@ -227,40 +229,6 @@ def _return_element(
 
 
 def get_cache_dir(sdata: SpatialData) -> Path:
-    if sdata.is_backed():
-        cache_dir = sdata.path / SopaFiles.SOPA_CACHE_DIR
-    else:
-        cache_dir = Path.home() / SopaFiles.SOPA_CACHE_DIR / str(id(sdata))
+    assert sdata.is_backed(), "SpatialData not saved on-disk. Save the object, or provide a cache directory."
 
-    cache_dir.mkdir(exist_ok=True, parents=True)
-
-    return cache_dir
-
-
-def get_minimal_transformations(element: SpatialElement) -> dict[str, BaseTransformation]:
-    transformations = get_transformation(element, get_all=True).copy()
-    if "global" in transformations:
-        return {"global": transformations["global"]}
-    for cs, transform in transformations.items():
-        if isinstance(transform, Identity):
-            return {cs: Identity()}
-    return transformations
-
-
-def add_spatial_element(
-    sdata: SpatialData,
-    element_name: str,
-    element: SpatialElement,
-    overwrite: bool = True,
-):
-    sdata[element_name] = element
-
-    if sdata.is_backed() and settings.auto_save_on_disk:
-        try:
-            sdata.write_element(element_name, overwrite=overwrite)
-        except Exception as e:
-            if overwrite:  # force writing the element
-                sdata.delete_element_from_disk(element_name)
-                sdata.write_element(element_name, overwrite=overwrite)
-            else:
-                log.error(f"Error while saving {element_name} on disk: {e}")
+    return sdata.path / SopaFiles.SOPA_CACHE_DIR
