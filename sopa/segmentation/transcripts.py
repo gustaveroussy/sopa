@@ -104,32 +104,30 @@ def _read_one_segmented_patch(
 
     adata.obs.rename(columns={"area": SopaKeys.ORIGINAL_AREA_OBS}, inplace=True)
 
-    cells_num = pd.Series(adata.obs_names if id_as_string else adata.obs["CellID"].astype(int), index=adata.obs_names)
+    cells_ids = pd.Series(adata.obs_names if id_as_string else adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
 
     with open(polygon_file) as f:
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
-    def _keep_cell(cell_id: str | int):
-        if cell_id not in polygons_dict:
+    def _keep_cell(ID: str | int):
+        if ID not in polygons_dict:
             return False
-        return len(polygons_dict[cell_id]["coordinates"][0]) >= min_vertices
+        return len(polygons_dict[ID]["coordinates"][0]) >= min_vertices
 
-    cells_num = cells_num[cells_num.map(_keep_cell)]
+    cells_ids = cells_ids[cells_ids.map(_keep_cell)]
 
-    gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
+    geo_df = gpd.GeoDataFrame(index=cells_ids.index, geometry=[shape(polygons_dict[ID]) for ID in cells_ids])
+    geo_df = shapes.to_valid_polygons(geo_df)
 
-    gdf.geometry = gdf.geometry.map(shapes._ensure_polygon)
-    gdf = gdf[~gdf.is_empty]
-
-    ratio_filtered = (gdf.area <= min_area).mean()
+    ratio_filtered = (geo_df.area <= min_area).mean()
     if ratio_filtered > 0.2:
         log.warning(f"{ratio_filtered:.2%} of cells will be filtered due to {min_area=}")
 
-    gdf = gdf[gdf.area > min_area]
+    geo_df = geo_df[geo_df.area > min_area]
 
-    return gdf.geometry.values, adata[gdf.index].copy()
+    return geo_df.geometry.values, adata[geo_df.index].copy()
 
 
 def _find_polygon_file(directory: Path) -> tuple[bool, Path]:

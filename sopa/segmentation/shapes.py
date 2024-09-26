@@ -103,14 +103,25 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
     if isinstance(cell, GeometryCollection):
         geoms = [geom for geom in cell.geoms if isinstance(geom, Polygon)]
 
-        if not geoms:
-            log.warning(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
-            return None
+        if geoms:
+            return max(geoms, key=lambda polygon: polygon.area)
 
-        return max(geoms, key=lambda polygon: polygon.area)
+        geoms = [geom for geom in cell.geoms if isinstance(geom, MultiPolygon)]
+        geoms = [polygon for multi_polygon in geoms for polygon in multi_polygon.geoms]
+
+        if geoms:
+            return max(geoms, key=lambda polygon: polygon.area)
+
+        log.warning(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
+        return Polygon()
 
     log.warning(f"Removing cell of unknown type {type(cell)}")
     return Polygon()
+
+
+def to_valid_polygons(geo_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    geo_df.geometry = geo_df.geometry.map(_ensure_polygon)
+    return geo_df[~geo_df.is_empty]
 
 
 def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -> Polygon:

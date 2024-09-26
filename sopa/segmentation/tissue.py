@@ -14,6 +14,7 @@ from xarray import DataArray
 
 from .._constants import ROI, SopaAttrs
 from ..utils import add_spatial_element, get_spatial_element
+from .shapes import to_valid_polygons
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ def tissue_segmentation(
     open_k: int = 5,
     close_k: int = 5,
     drop_threshold: int = 0.01,
-) -> bool:
+):
     """Perform WSI tissue segmentation. The resulting regions-of-interests (ROI) are saved as shapes.
 
     !!! info
@@ -55,9 +56,6 @@ def tissue_segmentation(
         open_k: The kernel size of the morphological openning operation
         close_k: The kernel size of the morphological closing operation
         drop_threshold: Segments that cover less area than `drop_threshold`*100% of the number of pixels of the image will be removed
-
-    Returns:
-        `True` if tissue segmentation was successful, else `False` if no polygon was output.
     """
     if ROI.KEY in sdata.shapes:
         log.warning(f"sdata['{ROI.KEY}'] was already existing, but tissue segmentation is run on top")
@@ -73,23 +71,19 @@ def tissue_segmentation(
         level_keys = list(image.keys())
         image: DataArray = next(iter(image[level_keys[level]].values()))
 
-    polygons = _get_polygons(image, blur_k, open_k, close_k, drop_threshold)
+    geo_df = _get_polygons(image, blur_k, open_k, close_k, drop_threshold)
 
-    if not len(polygons):
-        log.warning(
-            "No polygon has been found after tissue segmentation. Check that there is some tissue in the image, or consider updating the segmentation parameters."
-        )
-        return False
+    assert len(
+        geo_df
+    ), "No polygon has been found after tissue segmentation. Check that there is some tissue in the image, or consider updating the segmentation parameters."
 
-    geo_df = gpd.GeoDataFrame(geometry=polygons)
+    geo_df = to_valid_polygons(geo_df)
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
 
     add_spatial_element(sdata, ROI.KEY, geo_df)
 
-    return True
 
-
-def _get_polygons(image: DataArray, blur_k: int, open_k: int, close_k: int, drop_threshold: int) -> list[Polygon]:
+def _get_polygons(image: DataArray, blur_k: int, open_k: int, close_k: int, drop_threshold: int) -> gpd.GeoDataFrame:
     import cv2
 
     thumbnail = np.array(image.transpose("y", "x", "c"))
@@ -123,4 +117,4 @@ def _get_polygons(image: DataArray, blur_k: int, open_k: int, close_k: int, drop
             c_closed = np.array(list(cc) + [cc[0]])
             contours.extend([c_closed.squeeze()])
 
-    return [Polygon(contour) for contour in contours]
+    return gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
