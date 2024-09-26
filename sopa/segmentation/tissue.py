@@ -9,14 +9,11 @@ from datatree import DataTree
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
+from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import ROI, SopaAttrs
-from ..utils import (
-    add_spatial_element,
-    get_minimal_transformations,
-    get_spatial_element,
-)
+from ..utils import add_spatial_element, get_spatial_element
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +82,7 @@ def tissue_segmentation(
         return False
 
     geo_df = gpd.GeoDataFrame(geometry=polygons)
-    geo_df = ShapesModel.parse(geo_df, transformations=get_minimal_transformations(image))
+    geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
 
     add_spatial_element(sdata, ROI.KEY, geo_df)
 

@@ -6,7 +6,6 @@ import math
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import torch
 from anndata import AnnData
 from spatialdata import SpatialData
 
@@ -120,6 +119,8 @@ class MultiLevelAnnotation:
 
         if self.ad_sc.raw is not None:
             del self.ad_sc.raw
+
+        import torch
 
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         log.info(f"Using device: {self.device}")

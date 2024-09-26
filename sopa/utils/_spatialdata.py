@@ -10,7 +10,6 @@ from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import (
-    BaseTransformation,
     Identity,
     get_transformation,
     get_transformation_between_coordinate_systems,
@@ -223,16 +222,6 @@ def _return_element(
         element = next(iter(element["scale0"].values()))
 
     return (key, element) if return_key else element
-
-
-def get_minimal_transformations(element: SpatialElement) -> dict[str, BaseTransformation]:
-    transformations = get_transformation(element, get_all=True).copy()
-    if "global" in transformations:
-        return {"global": transformations["global"]}
-    for cs, transform in transformations.items():
-        if isinstance(transform, Identity):
-            return {cs: Identity()}
-    return transformations
 
 
 def add_spatial_element(

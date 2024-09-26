@@ -14,7 +14,6 @@ from ._spatialdata import (
     get_intrinsic_cs,
     to_intrinsic,
     get_spatial_image,
-    get_minimal_transformations,
     add_spatial_element,
     get_intensities,
 )

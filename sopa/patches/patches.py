@@ -44,13 +44,14 @@ def make_transcript_patches(
     patch_width: int = 2000,
     patch_overlap: int = 50,
     points_key: str | None = None,
+    **kwargs: int,
 ) -> list[int]:
     points_key, _ = get_spatial_element(sdata.points, key=points_key, return_key=True)
     patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
 
     cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_TEMP_DIR
 
-    valid_indices = patches.patchify_transcripts(cache_dir)
+    valid_indices = patches.patchify_transcripts(cache_dir, **kwargs)
 
     geo_df = patches.to_shapes().iloc[valid_indices]
     geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(cache_dir / str(index)))
