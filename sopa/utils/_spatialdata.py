@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Iterator
+from typing import Any
 
 import geopandas as gpd
 import pandas as pd
@@ -9,12 +9,7 @@ import spatialdata
 from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
-from spatialdata.transformations import (
-    Identity,
-    get_transformation,
-    get_transformation_between_coordinate_systems,
-    set_transformation,
-)
+from spatialdata.transformations import get_transformation_between_coordinate_systems
 from xarray import DataArray
 
 from .. import settings
@@ -61,31 +56,6 @@ def _try_get_boundaries(sdata: SpatialData, shapes_key: str, return_key: bool) -
         return (shapes_key, sdata[shapes_key]) if return_key else sdata[shapes_key]
 
 
-def get_intrinsic_cs(sdata: SpatialData, element: SpatialElement | str, name: str | None = None) -> str:
-    """Gets the name of the intrinsic coordinate system of an element
-
-    Args:
-        sdata: A SpatialData object
-        element: `SpatialElement`, or its key
-        name: Name to provide to the intrinsic coordinate system if not existing. By default, uses the element id.
-
-    Returns:
-        Name of the intrinsic coordinate system
-    """
-    if name is None:
-        name = f"_{element if isinstance(element, str) else id(element)}_intrinsic"
-
-    if isinstance(element, str):
-        element = sdata[element]
-
-    for cs, transform in get_transformation(element, get_all=True).items():
-        if isinstance(transform, Identity):
-            return cs
-
-    set_transformation(element, Identity(), name)
-    return name
-
-
 def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str) -> SpatialElement:
     """Transforms a `SpatialElement` into the intrinsic coordinate system of another `SpatialElement`
 
@@ -121,21 +91,6 @@ def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
         return adata.obsm[SopaKeys.INTENSITIES_OBSM]
 
     return adata.to_df()
-
-
-def iter_scales(image: DataTree) -> Iterator[DataArray]:
-    """Iterates through all the scales of a `DataTree`
-
-    Args:
-        image: a `DataTree`
-
-    Yields:
-        Each scale (as a `DataArray`)
-    """
-    assert isinstance(image, DataTree), f"Multiscale iteration is reserved for type DataTree. Found {type(image)}"
-
-    for scale in image:
-        yield next(iter(image[scale].values()))
 
 
 def get_spatial_element(

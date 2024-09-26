@@ -1,23 +1,32 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Callable
 
 import numpy as np
 import tqdm
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from spatialdata.transformations import Scale
 from xarray import DataArray
 
 from .._constants import SopaKeys
 from ..segmentation import Patches2D
-from ..utils import get_spatial_image
+from ..utils import add_spatial_element, get_spatial_image
 
 log = logging.getLogger(__name__)
 
 
-def infer_wsi_patches(
+def infer_wsi_patches(*args, **kwargs):
+    warnings.warn(
+        "`infer_wsi_patches` is deprecated, use `sopa.patches.compute_embeddings` instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    compute_embeddings(*args, **kwargs)
+
+
+def compute_embeddings(
     sdata: SpatialData,
     model: Callable | str,
     patch_width: int,
@@ -28,7 +37,7 @@ def infer_wsi_patches(
     batch_size: int = 32,
     device: str = None,
 ) -> DataArray:
-    """Create an image made of patch based predictions of a WSI image.
+    """Create an image made of patch based predictions of an image (useful for WSI images notably).
 
     !!! info
         The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below).
@@ -40,7 +49,7 @@ def infer_wsi_patches(
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
         magnification: The target magnification on which the processing is performed. If `magnification` is provided, the `level` argument will be automatically computed.
-        image_key: Optional image key of the WSI image, unecessary if there is only one image.
+        image_key: Optional image key of the image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
 
@@ -77,17 +86,11 @@ def infer_wsi_patches(
     for (loc_x, loc_y), pred in zip(patches.ilocs, predictions):
         output_image[:, loc_y, loc_x] = pred
 
-    patch_step = infer.patch_width_scale0 - infer.downsample * patch_overlap
     output_image = DataArray(output_image, dims=("c", "y", "x"))
-    output_image = Image2DModel.parse(
-        output_image,
-        transformations={infer.cs: Scale([patch_step, patch_step], axes=("x", "y"))},
-    )
+    output_image = Image2DModel.parse(output_image, transformations=infer.get_patches_transformations(patch_overlap))
 
     output_key = f"sopa_{infer.model_str}"
-    sdata.images[output_key] = output_image
-
-    log.info(f"Patch predictions saved as an image in sdata['{output_key}']")
+    add_spatial_element(sdata, output_key, output_image)
 
     patches.write(shapes_key=SopaKeys.PATCHES_INFERENCE_KEY)
 

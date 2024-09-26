@@ -4,14 +4,13 @@ from .image import (
     scale_dtype,
     string_channel_names,
     valid_c_coords,
-    _check_integer_dtype,
+    check_integer_dtype,
     resize,
     resize_numpy,
 )
 from ._spatialdata import (
     get_boundaries,
     get_spatial_element,
-    get_intrinsic_cs,
     to_intrinsic,
     get_spatial_image,
     add_spatial_element,

@@ -43,7 +43,7 @@ def resize_numpy(arr: np.ndarray, scale_factor: float, dims: list[str], output_s
     return dask_image.ndinterp.affine_transform(arr, matrix=transform, output_shape=output_shape).compute()
 
 
-def _check_integer_dtype(dtype: np.dtype):
+def check_integer_dtype(dtype: np.dtype):
     assert np.issubdtype(dtype, np.integer), f"Expecting image to have an integer dtype, but found {dtype}"
 
 
@@ -60,8 +60,8 @@ def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:
     Returns:
         A scaled `numpy` array with the dtype provided.
     """
-    _check_integer_dtype(arr.dtype)
-    _check_integer_dtype(dtype)
+    check_integer_dtype(arr.dtype)
+    check_integer_dtype(dtype)
 
     if arr.dtype == dtype:
         return arr

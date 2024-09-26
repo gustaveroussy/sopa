@@ -6,9 +6,9 @@ from typing import Callable
 import numpy as np
 import torch
 from datatree import DataTree
+from spatialdata.transformations import Scale, Sequence, get_transformation
 from xarray import DataArray
 
-from ..utils import get_intrinsic_cs
 from . import models
 
 log = logging.getLogger(__name__)
@@ -95,8 +95,6 @@ class Inference:
         if device:
             self.model.to(device)
 
-        self.cs = get_intrinsic_cs(None, image)
-
         self._get_extraction_parameters()
 
         if isinstance(self.image, DataTree):
@@ -160,3 +158,9 @@ class Inference:
 
         embedding = self.model(patches.to(self.device)).squeeze()
         return embedding.cpu()  # shape (B * output_dim)
+
+    def get_patches_transformations(self, patch_overlap: float) -> dict[str, Sequence]:
+        patch_step = self.patch_width_scale0 - self.downsample * patch_overlap
+        to_image = Sequence([Scale([patch_step, patch_step], axes=("x", "y"))])
+        image_transformations = get_transformation(self.image, get_all=True)
+        return {cs: to_image.compose_with(t) for cs, t in image_transformations.items()}

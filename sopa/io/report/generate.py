@@ -10,12 +10,7 @@ import seaborn as sns
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
-from ...utils import (
-    get_boundaries,
-    get_intensities,
-    get_intrinsic_cs,
-    get_spatial_image,
-)
+from ...utils import get_boundaries, get_intensities, get_spatial_image
 from .engine import (
     CodeBlock,
     Columns,
@@ -89,7 +84,6 @@ class SectionBuilder:
 
     def cell_section(self):
         shapes_key, _ = get_boundaries(self.sdata, return_key=True)
-        coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
         _kdeplot_vmax_quantile(self.adata.obs[SopaKeys.AREA_OBS])
@@ -106,7 +100,7 @@ class SectionBuilder:
                     "Areas",
                     [
                         Paragraph(
-                            f"The cells areas are obtained based on the coordinate system '{coord_system}' for the '{shapes_key}' boundaries"
+                            f"The cells areas are obtained based on the '{shapes_key}' boundaries (and its intrinsic coordinate system)."
                         ),
                         Columns([Image(fig)]),
                     ],

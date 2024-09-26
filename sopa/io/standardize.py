@@ -8,7 +8,7 @@ from spatialdata import SpatialData
 
 from .._constants import VALID_DIMENSIONS, SopaKeys
 from ..utils import (
-    _check_integer_dtype,
+    check_integer_dtype,
     get_channel_names,
     get_spatial_image,
     valid_c_coords,
@@ -24,7 +24,7 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
     assert (
         image.dims == VALID_DIMENSIONS
     ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
-    _check_integer_dtype(image.dtype)
+    check_integer_dtype(image.dtype)
 
     if len(sdata.points) > 1:
         log.warning(

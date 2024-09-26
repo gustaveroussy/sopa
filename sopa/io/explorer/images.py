@@ -9,17 +9,16 @@ import tifffile as tf
 from datatree import DataTree
 from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
-from spatialdata.transformations import Affine, set_transformation
+from spatialdata.transformations import (
+    Affine,
+    Sequence,
+    get_transformation,
+    set_transformation,
+)
 from tqdm import tqdm
 from xarray import DataArray
 
-from ...utils import (
-    add_spatial_element,
-    get_intrinsic_cs,
-    get_spatial_image,
-    resize_numpy,
-    scale_dtype,
-)
+from ...utils import add_spatial_element, get_spatial_image, resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
 
@@ -223,16 +222,22 @@ def align(
     """
     image_name = image.name
 
-    to_pixel = Affine(
-        np.genfromtxt(transformation_matrix_path, delimiter=","),
-        input_axes=("x", "y"),
-        output_axes=("x", "y"),
+    to_pixel = Sequence(
+        [
+            Affine(
+                np.genfromtxt(transformation_matrix_path, delimiter=","),
+                input_axes=("x", "y"),
+                output_axes=("x", "y"),
+            )
+        ]
     )
 
     default_image = get_spatial_image(sdata, image_key)
-    pixel_cs = get_intrinsic_cs(sdata, default_image)
 
-    set_transformation(image, {pixel_cs: to_pixel}, set_all=True)
+    original_transformations = get_transformation(default_image, get_all=True)
+    transformations = {cs: to_pixel.compose_with(t) for cs, t in original_transformations.items()}
+
+    set_transformation(image, transformations, set_all=True)
 
     log.info(f"Adding image {image_name}:\n{image}")
     add_spatial_element(sdata, image_name, image, overwrite=overwrite)
