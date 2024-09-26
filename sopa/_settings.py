@@ -12,11 +12,13 @@ log = logging.getLogger(__name__)
 
 
 class Settings:
+    ### General
     auto_save_on_disk: bool = True
-    AVAILABLE_PARALLELIZATION_BACKENDS = [None, "dask"]
 
-    def __init__(self) -> None:
-        self._parallelization_backend = None
+    ### Parallelization
+    _parallelization_backend: str | None = None
+    available_parallelization_backends = [None, "dask"]
+    dask_client_kwargs: dict = {}
 
     @property
     def parallelization_backend(self):
@@ -25,8 +27,8 @@ class Settings:
     @parallelization_backend.setter
     def parallelization_backend(self, value):
         assert (
-            value in self.AVAILABLE_PARALLELIZATION_BACKENDS
-        ), f"Invalid parallelization backend. Available options are: {self.AVAILABLE_PARALLELIZATION_BACKENDS}"
+            value in self.available_parallelization_backends
+        ), f"Invalid parallelization backend. Available options are: {self.available_parallelization_backends}"
         self._parallelization_backend = value
 
     def _run_with_backend(self, functions: list[Callable]):
@@ -35,20 +37,32 @@ class Settings:
                 "Running without parallelization backend can be slow. Consider using a backend, e.g. `sopa.settings.parallelization_backend = 'dask'`."
             )
             return [f() for f in tqdm(functions)]
-        else:
-            log.info(f"Using {self.parallelization_backend} backend")
-            return getattr(self, f"_run_{self.parallelization_backend}_backend")(functions)
+
+        log.info(f"Using {self.parallelization_backend} backend")
+        return getattr(self, f"_run_{self.parallelization_backend}_backend")(functions)
 
     ### Dask backend
     def _run_dask_backend(self, functions: list[Callable]):
+        assert len(functions) > 0, "No function to run"
+
+        if len(functions) == 1:
+            log.info("Only one function to run. No parallelization will be used.")
+            functions[0]()
+
+        import os
+
         @dask.delayed
         def run(f):
             return f()
 
-        with Client() as client:
+        n_cpus = os.cpu_count()
+        dask_client_kwargs = self.dask_client_kwargs.copy()
+        if "n_workers" not in dask_client_kwargs and len(functions) < n_cpus:
+            dask_client_kwargs["n_workers"] = n_cpus
+
+        with Client(**dask_client_kwargs) as client:
             _ = dask.persist(*[run(f) for f in functions])
             progress(_, notebook=False)
-
             return client.gather(client.compute(_))
 
 

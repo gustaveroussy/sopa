@@ -16,8 +16,9 @@ from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from .._constants import SopaKeys
+from ..aggregation import count_transcripts
 from ..utils import add_spatial_element, get_spatial_element, get_spatial_image
-from . import aggregation, shapes
+from . import shapes
 
 log = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
-        table_conflicts = aggregation.count_transcripts(sdata, gene_column, geo_df=geo_df_new)
+        table_conflicts = count_transcripts(sdata, gene_column, geo_df=geo_df_new)
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 
@@ -110,7 +111,12 @@ def _read_one_segmented_patch(
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
-    cells_num = cells_num[cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)]
+    def _keep_cell(cell_id: str | int):
+        if cell_id not in polygons_dict:
+            return False
+        return len(polygons_dict[cell_id]["coordinates"][0]) >= min_vertices
+
+    cells_num = cells_num[cells_num.map(_keep_cell)]
 
     gdf = gpd.GeoDataFrame(index=cells_num.index, geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num])
 

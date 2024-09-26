@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 from pathlib import Path
 
 from spatialdata import SpatialData
 
+from ... import settings
 from ..._constants import SopaFiles, SopaKeys
 from ..transcripts import copy_segmentation_config, resolve
 
@@ -41,7 +43,13 @@ def baysor(
 
     for patch_dir in patches_dirs:
         copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config, config_path)
-        baysor_patch(patch_dir, baysor_executable_path, use_polygons_format_argument, force=force)
+
+    functions = [
+        partial(baysor_patch, patch_dir, baysor_executable_path, use_polygons_format_argument, force)
+        for patch_dir in patches_dirs
+    ]
+
+    settings._run_with_backend(functions)
 
     if force:
         assert any(
