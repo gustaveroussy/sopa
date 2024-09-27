@@ -12,7 +12,7 @@ The command below will generate and save it on disk (you can change the path `tu
 === "Tutorial"
     ```sh
     # it will generate a 'tuto.zarr' directory
-    sopa read . --sdata-path tuto.zarr --technology uniform
+    sopa read . --sdata-path tuto.zarr --technology toy_dataset
     ```
 === "Xenium"
     ```sh

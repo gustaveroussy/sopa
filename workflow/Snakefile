@@ -21,7 +21,7 @@ rule all:
 
 rule to_spatialdata:
     input:
-        paths.data_path if config["read"]["technology"] != "uniform" else [],
+        paths.data_path if config["read"]["technology"] not in ["uniform", "toy_dataset"] else [],
     output:
         paths.sdata_zgroup if paths.data_path else [],
     conda:

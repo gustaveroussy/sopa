@@ -9,12 +9,12 @@ from spatialdata import SpatialData
 from sopa.patches import Patches2D
 from sopa.patches.patches import _get_cell_id
 from sopa.utils import get_spatial_element
-from sopa.utils.data import uniform
+from sopa.utils.data import toy_dataset
 
 
 @pytest.fixture
 def sdata() -> SpatialData:
-    sdata = uniform(length=512, cell_density=1e-3)
+    sdata = toy_dataset(length=512, cell_density=1e-3)
     return sdata
 
 

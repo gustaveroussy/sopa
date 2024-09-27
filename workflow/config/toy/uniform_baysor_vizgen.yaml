@@ -1,6 +1,6 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
-  technology: uniform
+  technology: toy_dataset
   kwargs:
     transcript_cell_id_as_merscope: true
 

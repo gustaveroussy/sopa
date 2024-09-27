@@ -1,6 +1,6 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
-  technology: uniform
+  technology: toy_dataset
 
 patchify:
   patch_width_pixel: 1200
@@ -31,7 +31,6 @@ segmentation:
       min_rna_per_cell: 5
       gene_column: "genes"
       norm_vector: false # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
-
 
 aggregate:
   average_intensities: true

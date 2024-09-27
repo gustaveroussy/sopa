@@ -9,6 +9,9 @@
 - New API settings (`sopa.settings.auto_save_on_disk = False`) to not save on disk by default
 - Experimental API parallelization backend: `sopa.settings.parallelization_backend = 'dask'`
 
+### Changed
+- The `sopa.io.uniform` dataset is now deprecated (use `sopa.io.toy_dataset` instead)
+
 ## [1.1.5] - 2024-09-17
 
 ### Fix

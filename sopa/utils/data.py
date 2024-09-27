@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 
 import dask.array as da
 import dask.dataframe as dd
@@ -20,7 +21,7 @@ from ..patches.patches import _map_transcript_to_cell
 log = logging.getLogger(__name__)
 
 
-def uniform(
+def toy_dataset(
     *_,
     length: int = 2_048,
     cell_density: float = 1e-4,
@@ -184,6 +185,11 @@ def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
 
     x_circle, y_circle = np.where(mask)
     return x_circle - radius, y_circle - radius
+
+
+def uniform(**kwargs):
+    warnings.warn("The `uniform` function is deprecated, use `toy_dataset` instead", DeprecationWarning, stacklevel=2)
+    return toy_dataset(**kwargs)
 
 
 def blobs(

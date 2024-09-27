@@ -26,7 +26,7 @@
 
 ::: sopa.io.wsi
 
-::: sopa.io.uniform
+::: sopa.io.toy_dataset
 
 ::: sopa.io.blobs
 

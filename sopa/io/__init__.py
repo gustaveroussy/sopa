@@ -25,4 +25,4 @@ from .reader.aics import aicsimageio
 from .reader.visium_hd import visium_hd
 from .report import write_report
 
-from ..utils.data import blobs, uniform
+from ..utils.data import blobs, uniform, toy_dataset

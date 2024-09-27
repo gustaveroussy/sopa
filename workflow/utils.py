@@ -8,7 +8,7 @@ def sanity_check_config(config: dict):
         "read" in config and "technology" in config["read"]
     ), "The `config['read']['technology'] parameter is mandatory"
 
-    if config["read"]["technology"] == "uniform":
+    if config["read"]["technology"] in ["uniform", "toy_dataset"]:
         config["data_path"] = "."
 
     assert (
