@@ -11,8 +11,8 @@ from spatialdata.models import Image2DModel
 from xarray import DataArray
 
 from .._constants import SopaKeys
-from ..segmentation import Patches2D
 from ..utils import add_spatial_element, get_spatial_image
+from . import Patches2D
 
 log = logging.getLogger(__name__)
 

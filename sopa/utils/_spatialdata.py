@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 
 
 def get_boundaries(
-    sdata: SpatialData, return_key: bool = False, warn: bool = False
+    sdata: SpatialData, return_key: bool = False, warn: bool = False, shapes_key: str | None = None
 ) -> gpd.GeoDataFrame | tuple[str, gpd.GeoDataFrame] | None:
     """Gets the baysor boundaries or cellpose boundaries of a SpatialData object after running Sopa
 
@@ -31,6 +31,9 @@ def get_boundaries(
     Returns:
         A `GeoDataFrame` containing the boundaries, or a tuple `(shapes_key, geo_df)`
     """
+    if shapes_key is not None:
+        return get_spatial_element(sdata.shapes, key=shapes_key, return_key=return_key)
+
     VALID_BOUNDARIES = [
         SopaKeys.BAYSOR_BOUNDARIES,
         SopaKeys.COMSEG_BOUNDARIES,

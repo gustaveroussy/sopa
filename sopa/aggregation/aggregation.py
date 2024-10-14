@@ -31,7 +31,7 @@ def aggregate(
     bins_key: str | None = None,
     min_transcripts: int = 0,
     expand_radius_ratio: float = 0,
-    min_intensity_ratio: float = 0,
+    min_intensity_ratio: float = 0.1,
 ):
     aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key)
 

@@ -25,7 +25,7 @@ def cellpose_patch(
         diameter: Cellpose diameter parameter
         channels: List of channel names
         model_type: Cellpose model type
-        pretrained_model: Path to the pretrained model to be loaded
+        pretrained_model: Path to the pretrained model to be loaded, or `False`
         cellpose_model_kwargs: Kwargs to be provided to the `cellpose.models.CellposeModel` object
         **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
 
@@ -66,6 +66,8 @@ def cellpose(
     diameter: int,
     image_key: str | None = None,
     min_area: int | None = None,
+    delete_cache: bool = True,
+    recover: bool = False,
     flow_threshold: float = 2,
     cellprob_threshold: float = -6,
     cellpose_model_kwargs: dict | None = None,
@@ -88,7 +90,7 @@ def cellpose(
         min_area = (diameter / 2) ** 2  # by default, about 15% of the "normal cell" area
 
     segmentation = StainingSegmentation(sdata, method, channels, min_area=min_area, image_key=image_key)
-    segmentation.write_patches_cells(cellpose_temp_dir)
+    segmentation.write_patches_cells(cellpose_temp_dir, recover=recover)
 
     cells = StainingSegmentation.read_patches_cells(cellpose_temp_dir)
     cells = shapes.solve_conflicts(cells)
@@ -97,4 +99,5 @@ def cellpose(
         sdata, cells, image_key=segmentation.image_key, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES
     )
 
-    shutil.rmtree(cellpose_temp_dir)  # clean up cache
+    if delete_cache:
+        shutil.rmtree(cellpose_temp_dir)

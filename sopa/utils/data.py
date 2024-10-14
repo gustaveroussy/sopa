@@ -16,7 +16,6 @@ from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 from spatialdata.transformations import Affine, Identity
 
 from .._constants import SopaKeys
-from ..patches.patches import _map_transcript_to_cell
 
 log = logging.getLogger(__name__)
 
@@ -151,7 +150,10 @@ def toy_dataset(
 
     sdata = SpatialData(images=images, points=points, shapes=shapes)
 
-    _map_transcript_to_cell(sdata, "cell_id", sdata["transcripts"], sdata["cells"])
+    from ..spatial import assign_transcript_to_cell
+
+    assign_transcript_to_cell(sdata, "transcripts", "cells", "cell_id", unassigned_value=0)
+
     sdata["transcripts"]["cell_id"] = sdata["transcripts"]["cell_id"].astype(int) - int(transcript_cell_id_as_merscope)
 
     if as_output:

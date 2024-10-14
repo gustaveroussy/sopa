@@ -1,13 +1,18 @@
-## [x.x.x] - 2024-xx-xx
+## [2.0.0] - 2024-xx-xx
 
 ### Breaking changes
 - All functions from `sopa.annotate` are now in `sopa.utils`
+- `sopa.segmentation.Patches2D` is removed in favor of `sopa.make_image_patches`
 
-### Added
-- Visium HD tutorial
-- Visium HD bins aggregation (via the `bins_key` argument)
-- New API settings (`sopa.settings.auto_save_on_disk = False`) to not save on disk by default
+### Major
+- Visium HD bins aggregation (via the `bins_key` argument) and full tutorial
 - Experimental API parallelization backend: `sopa.settings.parallelization_backend = 'dask'`
+- Automatic cache handling in the API
+- One-line segmentation (e.g., `sopa.segmentation.cellpose(sdata, ...)`)
+- Capability to "recover" or "force" a failed/incomplete segmentation
+
+### Minor
+- New API settings (`sopa.settings.auto_save_on_disk = False`) to not save on disk by default
 
 ### Changed
 - The `sopa.io.uniform` dataset is now deprecated (use `sopa.io.toy_dataset` instead)

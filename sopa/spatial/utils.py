@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from functools import partial
+
+import dask.dataframe as dd
 import geopandas as gpd
+import pandas as pd
 from spatialdata import SpatialData
 
-from .. import to_intrinsic
+from ..utils import get_boundaries, get_spatial_element, to_intrinsic
 
 
 def sjoin(
@@ -41,3 +45,49 @@ def sjoin(
         right_element = sdata.transform_element_to_coordinate_system(right_element, target_coordinate_system)
 
     return gpd.sjoin(left_element, right_element, how=how, **kwargs)
+
+
+def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, unassigned_value: int | None) -> pd.Series:
+    points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
+    gdf.index.name = "index_right"  # to reuse the index name later
+    spatial_join = points_gdf.sjoin(gdf, how="left")
+    spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
+
+    cell_ids = spatial_join["index_right"]
+
+    if unassigned_value is not None:
+        cell_ids = (cell_ids.fillna(-1) + 1 + unassigned_value).astype(int)
+    else:
+        cell_ids = cell_ids.astype("Int64")  # integers with NaNs
+
+    return cell_ids
+
+
+def assign_transcript_to_cell(
+    sdata: SpatialData,
+    points_key: str | None = None,
+    shapes_key: str | None = None,
+    key_added: str = "cell_index",
+    unassigned_value: int | None = None,
+):
+    """Assign each transcript to a cell based on the cell boundaries. It updates the transcript dataframe by adding a new column.
+
+    Args:
+        sdata: A `SpatialData` object
+        key_added: Key that will be added to the transcript dataframe containing the cell ID
+        df: Dataframe containing the transcript data.
+        geo_df: GeoDataFrame containing the cell boundaries
+        unassigned_value: If `None`, transcripts that are not inside any cell will be assigned to NaN. If an integer, this value will be used as the unassigned value.
+    """
+    df = get_spatial_element(sdata.points, points_key)
+    geo_df = get_boundaries(sdata, shapes_key=shapes_key)
+
+    geo_df = to_intrinsic(sdata, geo_df, df)
+    geo_df = geo_df.reset_index()
+
+    get_cell_id = partial(_get_cell_id, geo_df, unassigned_value=unassigned_value)
+
+    if isinstance(df, dd.DataFrame):
+        df[key_added] = df.map_partitions(get_cell_id)
+    else:
+        raise ValueError(f"Invalid dataframe type: {type(df)}")

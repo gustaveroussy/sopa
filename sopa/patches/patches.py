@@ -18,9 +18,9 @@ from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
+from ..spatial import assign_transcript_to_cell
 from ..utils import (
     add_spatial_element,
-    get_boundaries,
     get_cache_dir,
     get_spatial_element,
     get_spatial_image,
@@ -346,8 +346,9 @@ class TranscriptPatches:
             self.df[cell_key] = _assign_prior(self.df[cell_key], unassigned_value)
 
         if use_prior:
-            prior_boundaries = self.sdata[shapes_key]
-            _map_transcript_to_cell(self.sdata, SopaKeys.DEFAULT_CELL_KEY, self.df, prior_boundaries)
+            assign_transcript_to_cell(
+                self.sdata, self.patches_2d.element_name, shapes_key, SopaKeys.DEFAULT_CELL_KEY, unassigned_value=0
+            )
 
         self._setup_patches_directory()
 
@@ -413,39 +414,6 @@ def _check_min_lines(path: str, n: int) -> bool:
             if count + 1 >= n:
                 return True
         return False
-
-
-def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, na_cells: int = 0) -> pd.Series:
-    points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
-    gdf.index.name = "index_right"  # to reuse the index name later
-    spatial_join = points_gdf.sjoin(gdf, how="left")
-    spatial_join = spatial_join[~spatial_join.index.duplicated(keep="first")]
-    cell_ids = (spatial_join["index_right"].fillna(-1) + 1 + na_cells).astype(int)
-
-    return cell_ids
-
-
-def _map_transcript_to_cell(
-    sdata: SpatialData,
-    cell_key: str,
-    df: dd.DataFrame | None = None,
-    geo_df: gpd.GeoDataFrame | None = None,
-):
-    if df is None:
-        df = get_spatial_element(sdata.points)
-
-    if geo_df is None:
-        geo_df = get_boundaries(sdata)
-
-    geo_df = to_intrinsic(sdata, geo_df, df)
-    geo_df = geo_df.reset_index()
-
-    get_cell_id = partial(_get_cell_id, geo_df)
-
-    if isinstance(df, dd.DataFrame):
-        df[cell_key] = df.map_partitions(get_cell_id)
-    else:
-        raise ValueError(f"Invalid dataframe type: {type(df)}")
 
 
 def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.Series:

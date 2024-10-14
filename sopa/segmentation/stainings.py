@@ -135,30 +135,35 @@ class StainingSegmentation:
 
         return cells[cells.area >= self.min_area] if self.min_area > 0 else cells
 
-    def write_patch_cells(self, patch_dir: str, patch_index: int):
+    def write_patch_cells(self, patch_dir: str, patch_index: int, recover: bool = False):
         """Run segmentation on one patch, and save the result in a dedicated directory
 
         Args:
             patch_dir: Directory inside which segmentation results will be saved
             patch_index: Index of the patch on which to run segmentation. NB: the number of patches is `len(sdata['sopa_patches'])`
+            recover: If `True`, the function will not run segmentation if the output file already exists
         """
+        patch_dir: Path = Path(patch_dir)
+        patch_dir.mkdir(parents=True, exist_ok=True)
+        output_path = patch_dir / f"{patch_index}.parquet"
+
+        if recover and output_path.exists():
+            return
+
         patch = self.sdata[SopaKeys.PATCHES].geometry[patch_index]
 
         cells = self._run_patch(patch)
+        cells.to_parquet(output_path)
 
-        patch_dir: Path = Path(patch_dir)
-        patch_dir.mkdir(parents=True, exist_ok=True)
-
-        cells.to_parquet(patch_dir / f"{patch_index}.parquet")
-
-    def write_patches_cells(self, patch_dir: str):
+    def write_patches_cells(self, patch_dir: str, recover: bool = False):
         """Run segmentation on all patches, and save the result in a dedicated directory
 
         Args:
             patch_dir: Directory inside which segmentation results will be saved
+            recover: If `True`, the function will not run segmentation on already-segmented patches
         """
         functions = [
-            partial(self.write_patch_cells, patch_dir, patch_index)
+            partial(self.write_patch_cells, patch_dir, patch_index, recover)
             for patch_index in range(len(self.sdata[SopaKeys.PATCHES]))
         ]
         settings._run_with_backend(functions)
