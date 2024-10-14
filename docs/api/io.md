@@ -32,11 +32,11 @@
 
 ## Xenium Explorer
 
-::: sopa.io.write
+::: sopa.io.write_xenium_explorer
 
 ::: sopa.io.align
 
-::: sopa.io.add_explorer_selection
+::: sopa.io.add_xenium_explorer_selection
 
 ::: sopa.io.int_cell_id
 

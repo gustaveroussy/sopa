@@ -70,10 +70,8 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
     Returns:
         The `SpatialElement` after transformation in the target coordinate system
     """
-    if isinstance(element, str):
-        element = sdata[element]
-    if isinstance(element_cs, str):
-        element_cs = sdata[element_cs]
+    element = sdata[element] if isinstance(element, str) else element
+    element_cs = sdata[element_cs] if isinstance(element_cs, str) else element_cs
 
     transformation = get_transformation_between_coordinate_systems(
         sdata, element, element_cs, intermediate_coordinate_systems=element_cs

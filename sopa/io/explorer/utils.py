@@ -55,7 +55,7 @@ def xenium_explorer_selection(path: str | Path, pixel_size: float = 0.2125, retu
     return [_selection_to_polygon(sub_df, pixel_size) for _, sub_df in df.groupby("Selection")]
 
 
-def add_explorer_selection(
+def add_xenium_explorer_selection(
     sdata: SpatialData,
     path: str,
     shapes_key: str,
