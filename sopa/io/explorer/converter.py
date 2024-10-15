@@ -8,7 +8,7 @@ from pathlib import Path
 import geopandas as gpd
 from spatialdata import SpatialData
 
-from ..._constants import SopaKeys
+from ..._constants import ATTRS_KEY, SopaKeys
 from ...utils import (
     get_boundaries,
     get_spatial_element,
@@ -117,7 +117,9 @@ def write_xenium_explorer(
     if SopaKeys.TABLE in sdata.tables:
         adata = sdata.tables[SopaKeys.TABLE]
 
-        shapes_key = adata.uns["spatialdata_attrs"]["region"]
+        shapes_key = adata.uns[ATTRS_KEY]["region"]
+        shapes_key = shapes_key[0] if isinstance(shapes_key, list) else shapes_key
+
         geo_df = sdata[shapes_key]
 
         if _should_save(mode, "c"):
@@ -135,7 +137,7 @@ def write_xenium_explorer(
         geo_df = to_intrinsic(sdata, geo_df, image_key)
 
         if SopaKeys.TABLE in sdata.tables:
-            geo_df = geo_df.loc[adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]]]
+            geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
 
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 
@@ -145,6 +147,7 @@ def write_xenium_explorer(
         df = get_spatial_element(sdata.points, key=points_key)
 
     if _should_save(mode, "t") and df is not None:
+        gene_column = gene_column or df.attrs[ATTRS_KEY].get("feature_key")
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
             write_transcripts(path, df, gene_column, pixel_size=pixel_size)

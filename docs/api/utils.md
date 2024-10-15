@@ -25,5 +25,3 @@
 ::: sopa.utils.higher_z_score
 
 ::: sopa.utils.preprocess_fluo
-
-::: sopa.utils.polygon_crop.polygon_selection

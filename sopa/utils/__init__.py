@@ -6,6 +6,7 @@ from .utils import (
     to_intrinsic,
     get_spatial_image,
     get_intensities,
+    add_spatial_element,
 )
 from .annotation import preprocess_fluo, higher_z_score, tangram_annotate
 from .image import (

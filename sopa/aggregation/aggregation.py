@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 from spatialdata.models import PointsModel, TableModel
 
-from .._constants import SopaAttrs, SopaKeys
+from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
 from ..utils import (
     add_spatial_element,
@@ -39,7 +39,7 @@ def aggregate(
     gene_column = None
     if aggregate_genes or (aggregate_genes is None and bins_key is None and sdata.points):
         points = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
-        gene_column = points.attrs.get("spatialdata_attrs", {}).get(PointsModel.FEATURE_KEY)
+        gene_column = points.attrs.get(ATTRS_KEY, {}).get(PointsModel.FEATURE_KEY)
         assert aggregate_genes is None or gene_column is not None, "No gene column found in points"
 
     aggr.compute_table(
@@ -191,8 +191,8 @@ class Aggregator:
         self.table.obs[SopaKeys.INSTANCE_KEY] = self.geo_df.index
         self.table.obs[SopaKeys.AREA_OBS] = self.geo_df.area.values
 
-        if "spatialdata_attrs" in self.table.uns:
-            del self.table.uns["spatialdata_attrs"]
+        if ATTRS_KEY in self.table.uns:
+            del self.table.uns[ATTRS_KEY]
 
         self.table = TableModel.parse(
             self.table,

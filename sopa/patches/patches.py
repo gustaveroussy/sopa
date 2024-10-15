@@ -17,7 +17,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
-from .._constants import EPS, ROI, SopaAttrs, SopaFiles, SopaKeys
+from .._constants import EPS, SopaAttrs, SopaFiles, SopaKeys
 from ..spatial import assign_transcript_to_cell
 from ..utils import (
     add_spatial_element,
@@ -147,12 +147,12 @@ class Patches2D:
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
         self.roi = None
-        if ROI.KEY in sdata.shapes:
-            geo_df = to_intrinsic(sdata, sdata[ROI.KEY], element_name)
+        if SopaKeys.ROI in sdata.shapes:
+            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], element_name)
 
             assert all(
                 isinstance(geom, Polygon) for geom in geo_df.geometry
-            ), f"All sdata['{ROI.KEY}'] geometries must be polygons"
+            ), f"All sdata['{SopaKeys.ROI}'] geometries must be polygons"
 
             if len(geo_df) == 1:
                 self.roi: Polygon = geo_df.geometry[0]

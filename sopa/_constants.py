@@ -11,6 +11,7 @@ class SopaKeys:
     CACHE_PATH_KEY = "cache_path"
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"
+    ROI = "region_of_interest"
 
     # Other SpatialData keys
     TABLE = "table"
@@ -43,18 +44,8 @@ class SopaAttrs:
     TISSUE_SEGMENTATION = "tissue_segmentation_image"
     BINS_TABLE = "bins_table"
     TRANSCRIPTS = "transcripts_dataframe"
-    GENE_COLUMN = "feature_key"
     BOUNDARIES = "boundaries_shapes"
     UID = "sopa_uid"
-
-
-class ROI:
-    KEY = "region_of_interest"
-    SCALE_FACTOR = "scale_factor"
-    IMAGE_ARRAY_KEY = "image"
-    POLYGON_ARRAY_KEY = "polygon"
-    IMAGE_KEY = "image_key"
-    ELEMENT_TYPE = "element_type"
 
 
 class SopaFiles:
@@ -72,3 +63,4 @@ class SopaFiles:
 VALID_DIMENSIONS = ("c", "y", "x")
 LOW_AVERAGE_COUNT = 0.01
 EPS = 1e-5
+ATTRS_KEY = "spatialdata_attrs"
