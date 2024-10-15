@@ -6,7 +6,7 @@ from typing import Callable
 import numpy as np
 from spatialdata import SpatialData
 
-from ..._constants import SopaKeys
+from ..._constants import SopaAttrs, SopaKeys
 from ...utils import get_cache_dir
 from .. import StainingSegmentation, shapes
 
@@ -98,6 +98,8 @@ def cellpose(
     StainingSegmentation.add_shapes(
         sdata, cells, image_key=segmentation.image_key, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES
     )
+
+    sdata.attrs[SopaAttrs.BOUNDARIES] = SopaKeys.CELLPOSE_BOUNDARIES
 
     if delete_cache:
         shutil.rmtree(cellpose_temp_dir)

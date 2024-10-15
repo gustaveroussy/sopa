@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 from spatialdata.models import PointsModel, TableModel
 
-from .._constants import SopaKeys
+from .._constants import SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
 from ..utils import (
     add_spatial_element,
@@ -27,6 +27,7 @@ def aggregate(
     aggregate_genes: bool | None = None,
     aggregate_channels: bool = True,
     image_key: str | None = None,
+    points_key: str | None = None,
     shapes_key: str | None = None,
     bins_key: str | None = None,
     min_transcripts: int = 0,
@@ -37,7 +38,7 @@ def aggregate(
 
     gene_column = None
     if aggregate_genes or (aggregate_genes is None and bins_key is None and sdata.points):
-        points = get_spatial_element(sdata.points)
+        points = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
         gene_column = points.attrs.get("spatialdata_attrs", {}).get(PointsModel.FEATURE_KEY)
         assert aggregate_genes is None or gene_column is not None, "No gene column found in points"
 

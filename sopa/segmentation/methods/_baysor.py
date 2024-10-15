@@ -7,7 +7,7 @@ from pathlib import Path
 from spatialdata import SpatialData
 
 from ... import settings
-from ..._constants import SopaFiles, SopaKeys
+from ..._constants import SopaAttrs, SopaFiles, SopaKeys
 from ..transcripts import copy_segmentation_config, resolve
 
 log = logging.getLogger(__name__)
@@ -57,6 +57,8 @@ def baysor(
         ), "Baysor failed on all patches"
 
     resolve(sdata, None, gene_column, min_area=min_area, patches_dirs=patches_dirs)
+
+    sdata.attrs[SopaAttrs.BOUNDARIES] = SopaKeys.BAYSOR_BOUNDARIES
 
     for patch_dir in patches_dirs:
         shutil.rmtree(patch_dir)

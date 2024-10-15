@@ -44,6 +44,8 @@ class SopaAttrs:
     BINS_TABLE = "bins_table"
     TRANSCRIPTS = "transcripts_dataframe"
     GENE_COLUMN = "feature_key"
+    BOUNDARIES = "boundaries_shapes"
+    UID = "sopa_uid"
 
 
 class ROI:

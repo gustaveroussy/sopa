@@ -62,8 +62,7 @@ def tissue_segmentation(
 
     image_key, image = get_spatial_element(
         sdata.images,
-        key=image_key,
-        valid_attr=SopaAttrs.TISSUE_SEGMENTATION,
+        key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION),
         return_key=True,
     )
 

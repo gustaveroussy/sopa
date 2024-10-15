@@ -15,7 +15,7 @@ from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 from spatialdata.transformations import Affine, Identity
 
-from .._constants import SopaKeys
+from .._constants import SopaAttrs, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -148,7 +148,12 @@ def toy_dataset(
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 
-    sdata = SpatialData(images=images, points=points, shapes=shapes)
+    sdata = SpatialData(
+        images=images,
+        points=points,
+        shapes=shapes,
+        attrs={SopaAttrs.CELL_SEGMENTATION: "image", SopaAttrs.TRANSCRIPTS: "transcripts"},
+    )
 
     from ..spatial import assign_transcript_to_cell
 

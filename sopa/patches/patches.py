@@ -17,7 +17,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
-from .._constants import EPS, ROI, SopaFiles, SopaKeys
+from .._constants import EPS, ROI, SopaAttrs, SopaFiles, SopaKeys
 from ..spatial import assign_transcript_to_cell
 from ..utils import (
     add_spatial_element,
@@ -46,7 +46,9 @@ def make_transcript_patches(
     points_key: str | None = None,
     **kwargs: int,
 ) -> list[int]:
-    points_key, _ = get_spatial_element(sdata.points, key=points_key, return_key=True)
+    points_key, _ = get_spatial_element(
+        sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
+    )
     patches = Patches2D(sdata, points_key, patch_width=patch_width, patch_overlap=patch_overlap)
 
     cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_TEMP_DIR

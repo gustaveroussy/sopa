@@ -7,6 +7,8 @@ from datatree import DataTree
 from spatialdata import SpatialData
 from xarray import DataArray
 
+from . import get_spatial_image
+
 
 def resize(xarr: DataArray, scale_factor: float) -> da.Array:
     """Resize a xarray image
@@ -70,7 +72,18 @@ def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:
     return (arr * factor).astype(dtype)
 
 
-def get_channel_names(image: DataArray | DataTree) -> np.ndarray:
+def get_channel_names(image: DataArray | DataTree | SpatialData, image_key: str | None = None) -> np.ndarray:
+    """Get the channel names of an image or a SpatialData object.
+
+    Args:
+        image: Either a `DataArray`, a `DataTree`, or a `SpatialData` object. If a `SpatialData` object, the `image_key` argument can be used.
+        image_key: If `image` is a SpatialData object, the key of the image to get the channel names from. If `None`, tries to get it automatically.
+
+    Returns:
+        An array of channel names.
+    """
+    if isinstance(image, SpatialData):
+        image = get_spatial_image(image, key=image_key)
     if isinstance(image, DataArray):
         return image.coords["c"].values
     if isinstance(image, DataTree):
