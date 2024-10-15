@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import warnings
 from pathlib import Path
 
 import geopandas as gpd
@@ -47,14 +46,7 @@ def _should_save(mode: str | None, character: str):
     return character in mode if mode[0] == "+" else character not in mode
 
 
-def write(*args, **kwargs):
-    warnings.warn(
-        "sopa.io.write is deprecated, use sopa.io.write_xenium_explorer instead", DeprecationWarning, stacklevel=2
-    )
-    write_xenium_explorer(*args, **kwargs)
-
-
-def write_xenium_explorer(
+def write(
     path: str,
     sdata: SpatialData,
     image_key: str | None = None,
@@ -166,7 +158,7 @@ def write_xenium_explorer(
 
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
-        write_xenium_explorer_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
+        write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
 
     if save_h5ad and SopaKeys.TABLE in sdata.tables:
         sdata.tables[SopaKeys.TABLE].write_h5ad(path / FileNames.H5AD)
@@ -181,7 +173,7 @@ def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
     return len(geo_df) if geo_df is not None else 0
 
 
-def write_xenium_explorer_metadata(
+def write_metadata(
     path: str,
     image_key: str = "NA",
     shapes_key: str = "NA",

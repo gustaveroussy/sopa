@@ -17,7 +17,7 @@ from ..utils import (
 log = logging.getLogger(__name__)
 
 
-def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = False):
+def sanity_check(sdata: SpatialData, delete_table: bool = False):
     assert len(sdata.images) > 0, "The spatialdata object has no image. Sopa is not designed for this."
 
     image = get_spatial_image(sdata)
@@ -25,11 +25,6 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
         image.dims == VALID_DIMENSIONS
     ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
     check_integer_dtype(image.dtype)
-
-    if len(sdata.points) > 1:
-        log.warning(
-            f"The spatialdata object has {len(sdata.points)} points objects. It's easier to have only one (corresponding to transcripts), since sopa will use it directly without providing a key argument"
-        )
 
     c_coords = get_channel_names(image)
     assert valid_c_coords(c_coords), f"Channel names must be strings, not {c_coords.dtype}"
@@ -42,9 +37,9 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False, warn: bool = Fa
             del sdata.tables[SopaKeys.TABLE]
 
 
-def read_zarr_standardized(path: str, warn: bool = False) -> SpatialData:
+def read_zarr_standardized(path: str) -> SpatialData:
     sdata = spatialdata.read_zarr(path)
-    sanity_check(sdata, warn=warn)
+    sanity_check(sdata)
     return sdata
 
 
