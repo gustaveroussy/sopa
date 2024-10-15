@@ -1,5 +1,6 @@
 from .explorer import (
     write,
+    write_xenium_explorer,
     align,
     add_xenium_explorer_selection,
     write_image,

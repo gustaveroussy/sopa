@@ -7,6 +7,7 @@ import geopandas as gpd
 import pandas as pd
 from spatialdata import SpatialData
 
+from .._constants import SopaAttrs
 from ..utils import get_boundaries, get_spatial_element, to_intrinsic
 
 
@@ -74,12 +75,12 @@ def assign_transcript_to_cell(
 
     Args:
         sdata: A `SpatialData` object
+        points_key: Key of the spatialdata object containing the transcript dataframe.
+        shapes_key: Key of the spatialdata object containing the cell boundaries.
         key_added: Key that will be added to the transcript dataframe containing the cell ID
-        df: Dataframe containing the transcript data.
-        geo_df: GeoDataFrame containing the cell boundaries
         unassigned_value: If `None`, transcripts that are not inside any cell will be assigned to NaN. If an integer, this value will be used as the unassigned value.
     """
-    df = get_spatial_element(sdata.points, points_key)
+    df = get_spatial_element(sdata.points, points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
     geo_df = get_boundaries(sdata, shapes_key=shapes_key)
 
     geo_df = to_intrinsic(sdata, geo_df, df)
