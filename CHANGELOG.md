@@ -17,6 +17,9 @@
 ### Changed
 - The `sopa.io.uniform` dataset is now deprecated (use `sopa.io.toy_dataset` instead)
 
+### New contributors
+- TODO
+
 ## [1.1.5] - 2024-09-17
 
 ### Fix

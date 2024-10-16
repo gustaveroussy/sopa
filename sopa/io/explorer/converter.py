@@ -60,6 +60,7 @@ def write(
     ram_threshold_gb: int | None = 4,
     mode: str = None,
     save_h5ad: bool = False,
+    run_name: str | None = None,
 ) -> None:
     """
     Transform a SpatialData object into inputs for the Xenium Explorer.
@@ -99,6 +100,7 @@ def write(
         ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
         mode: string that indicated which files should be created. "-ib" means everything except images and boundaries, while "+tocm" means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything.
         save_h5ad: Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)
+        run_name: Name of the run displayed in the Xenium Explorer. If `None`, uses the `image_key`.
     """
     path: Path = Path(path)
     _check_explorer_directory(path)
@@ -158,7 +160,7 @@ def write(
 
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
-        write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
+        write_metadata(path, run_name or image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
 
     if save_h5ad and SopaKeys.TABLE in sdata.tables:
         sdata.tables[SopaKeys.TABLE].write_h5ad(path / FileNames.H5AD)
@@ -175,7 +177,7 @@ def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
 
 def write_metadata(
     path: str,
-    image_key: str = "NA",
+    run_name: str = "NA",
     shapes_key: str = "NA",
     n_obs: int = 0,
     is_dir: bool = True,
@@ -188,7 +190,7 @@ def write_metadata(
 
     Args:
         path: Path to the Xenium Explorer directory where the metadata file will be written
-        image_key: Key of `SpatialData` object containing the primary image used on the explorer.
+        run_name: Key of `SpatialData` object containing the primary image used on the explorer.
         shapes_key: Key of `SpatialData` object containing the boundaries shown on the explorer.
         n_obs: Number of cells
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
@@ -197,5 +199,5 @@ def write_metadata(
     path = explorer_file_path(path, FileNames.METADATA, is_dir)
 
     with open(path, "w") as f:
-        metadata = experiment_dict(image_key, shapes_key, n_obs, pixel_size)
+        metadata = experiment_dict(run_name, shapes_key, n_obs, pixel_size)
         json.dump(metadata, f, indent=4)
