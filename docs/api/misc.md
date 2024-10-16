@@ -25,19 +25,19 @@ sopa.settings.parallelization_backend = None # no backend (i.e., sequential)
 
 ## Xenium Explorer
 
-::: sopa.io.write_xenium_explorer
+::: sopa.io.explorer.write
 
-::: sopa.io.align
+::: sopa.io.explorer.align
 
-::: sopa.io.add_xenium_explorer_selection
+::: sopa.io.explorer.add_explorer_selection
 
-::: sopa.io.int_cell_id
+::: sopa.io.explorer.int_cell_id
 
-::: sopa.io.str_cell_id
+::: sopa.io.explorer.str_cell_id
 
-::: sopa.io.write_image
+::: sopa.io.explorer.write_image
 
-::: sopa.io.save_column_csv
+::: sopa.io.explorer.save_column_csv
 
 ## Report
 

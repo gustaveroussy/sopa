@@ -18,14 +18,7 @@ from .shapes import to_valid_polygons
 
 log = logging.getLogger(__name__)
 
-
-def hsv_otsu(*args, **kwargs):
-    warnings.warn(
-        "This function is deprecated and will be removed in late 2024. Use `sopa.tissue_segmentation` instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    tissue_segmentation(*args, **kwargs)
+AVAILABLE_MODES = ["hsv_otsu", "staining"]
 
 
 def tissue_segmentation(
@@ -36,6 +29,7 @@ def tissue_segmentation(
     open_k: int = 5,
     close_k: int = 5,
     drop_threshold: int = 0.01,
+    mode: str | None = None,
     key_added: str = SopaKeys.ROI,
 ):
     """Perform WSI tissue segmentation. The resulting regions-of-interests (ROI) are saved as shapes.
@@ -57,8 +51,11 @@ def tissue_segmentation(
         open_k: The kernel size of the morphological openning operation
         close_k: The kernel size of the morphological closing operation
         drop_threshold: Segments that cover less area than `drop_threshold`*100% of the number of pixels of the image will be removed
+        mode: Two modes are available: `hsv_otsu` (for H&E data) and `staining`. By default, `hsv_otsu` is used only if there are exactly 3 channels.
         key_added: Name of the spatial element that will be added, containing the segmented tissue polygons.
     """
+    assert mode is None or mode in AVAILABLE_MODES, f"`mode` argument should be one of {AVAILABLE_MODES}"
+
     if key_added in sdata.shapes:
         log.warning(f"sdata['{key_added}'] was already existing, but tissue segmentation is run on top")
 
@@ -72,11 +69,14 @@ def tissue_segmentation(
         level_keys = list(image.keys())
         image: DataArray = next(iter(image[level_keys[level]].values()))
 
-    geo_df = _get_polygons(image, blur_k, open_k, close_k, drop_threshold)
+    geo_df = TissueSegmentation(image, blur_k, open_k, close_k, drop_threshold).get_polygons(mode)
 
-    assert len(
-        geo_df
-    ), "No polygon has been found after tissue segmentation. Check that there is some tissue in the image, or consider updating the segmentation parameters."
+    if not len(geo_df):
+        log.warning(
+            "No polygon has been found after tissue segmentation. "
+            "Check that there is some tissue in the image, or consider updating the function parameters."
+        )
+        return
 
     geo_df = to_valid_polygons(geo_df)
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
@@ -84,38 +84,64 @@ def tissue_segmentation(
     add_spatial_element(sdata, key_added, geo_df)
 
 
-def _get_polygons(image: DataArray, blur_k: int, open_k: int, close_k: int, drop_threshold: int) -> gpd.GeoDataFrame:
-    import cv2
+class TissueSegmentation:
+    def __init__(self, image: DataArray, blur_k: int, open_k: int, close_k: int, drop_threshold: int):
+        self.image = image
+        self.blur_k = blur_k
+        self.open_k = open_k
+        self.close_k = close_k
+        self.drop_threshold = drop_threshold
 
-    thumbnail = np.array(image.transpose("y", "x", "c"))
+    def _get_default_mode(self) -> str:
+        return "hsv_otsu" if self.image.sizes["c"] == 3 else "staining"
 
-    assert thumbnail.shape[2] == 3, "The image should be in RGB color space"
+    def get_polygons(self, mode: str | None) -> gpd.GeoDataFrame:
+        return getattr(self, mode or self._get_default_mode())()
 
-    if thumbnail.shape[0] * thumbnail.shape[1] > 1e8:
-        log.warning(
-            "Tissue segmentation is computationally expensive for large images. Consider using a smaller image, or set the `level` parameter."
-        )
+    def hsv_otsu(self) -> gpd.GeoDataFrame:
+        import cv2
 
-    thumbnail_hsv = cv2.cvtColor(thumbnail, cv2.COLOR_RGB2HSV)
-    thumbnail_hsv_blurred = cv2.medianBlur(thumbnail_hsv[:, :, 1], blur_k)
-    _, mask = cv2.threshold(thumbnail_hsv_blurred, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+        thumbnail = np.array(self.image.transpose("y", "x", "c"))
 
-    mask_open = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((open_k, open_k), np.uint8))
-    mask_open_close = cv2.morphologyEx(mask_open, cv2.MORPH_CLOSE, np.ones((close_k, close_k), np.uint8))
+        assert thumbnail.shape[2] == 3, "The image should be in RGB color space"
 
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask_open_close, 4, cv2.CV_32S)
+        if thumbnail.shape[0] * thumbnail.shape[1] > 1e8:
+            log.warning(
+                "Tissue segmentation is computationally expensive for large images. Consider using a smaller image, or set the `level` parameter."
+            )
 
-    contours = []
-    for i in range(1, num_labels):
-        if stats[i, 4] > drop_threshold * np.prod(mask_open_close.shape):
-            cc = cv2.findContours(
-                np.array(labels == i, dtype="uint8"),
-                cv2.RETR_TREE,
-                cv2.CHAIN_APPROX_NONE,
-            )[
-                0
-            ][0]
-            c_closed = np.array(list(cc) + [cc[0]])
-            contours.extend([c_closed.squeeze()])
+        thumbnail_hsv = cv2.cvtColor(thumbnail, cv2.COLOR_RGB2HSV)
+        thumbnail_hsv_blurred = cv2.medianBlur(thumbnail_hsv[:, :, 1], self.blur_k)
+        _, mask = cv2.threshold(thumbnail_hsv_blurred, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
 
-    return gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
+        mask_open = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((self.open_k, self.open_k), np.uint8))
+        mask_open_close = cv2.morphologyEx(mask_open, cv2.MORPH_CLOSE, np.ones((self.close_k, self.close_k), np.uint8))
+
+        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask_open_close, 4, cv2.CV_32S)
+
+        contours = []
+        for i in range(1, num_labels):
+            if stats[i, 4] > self.drop_threshold * np.prod(mask_open_close.shape):
+                cc = cv2.findContours(
+                    np.array(labels == i, dtype="uint8"),
+                    cv2.RETR_TREE,
+                    cv2.CHAIN_APPROX_NONE,
+                )[
+                    0
+                ][0]
+                c_closed = np.array(list(cc) + [cc[0]])
+                contours.extend([c_closed.squeeze()])
+
+        return gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
+
+    def staining(self) -> gpd.GeoDataFrame:
+        raise NotImplementedError
+
+
+def hsv_otsu(*args, **kwargs):
+    warnings.warn(
+        "This function is deprecated and will be removed in late 2024. Use `sopa.tissue_segmentation` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    tissue_segmentation(*args, **kwargs)

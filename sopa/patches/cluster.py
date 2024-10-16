@@ -32,7 +32,7 @@ def cluster_embeddings(
     key_added: str = "cluster",
     **method_kwargs: str,
 ) -> gpd.GeoDataFrame:
-    """Cluster the patches embeddings using a clustering method
+    """Create clusters of the patches embeddings (obtained from [sopa.patches.compute_embeddings][]).
 
     Args:
         sdata: A `SpatialData` object

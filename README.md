@@ -13,7 +13,7 @@
 
 Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Hyperion. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
-The pipeline outputs contain: (i) Xenium Explorer files for interactive visualization, (ii) an HTML report for quick quality controls, and (iii) a SpatialData `.zarr` directory for further analyses.
+🎉 `sopa==2.0.0` is out! It introduces many new API features; check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
 
 # Documentation
 
@@ -32,7 +32,7 @@ The following illustration describes the main steps of `sopa`:
 # Installation
 
 ### PyPI installation
-Sopa can be installed via `PyPI` on all operating systems. The preferred Python version is `python==3.10`, but we also support `3.9` to `3.11`. On a new environment, run the following command:
+Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.9` and `<=3.11`). On a new environment, run the following command:
 ```
 pip install sopa
 ```
@@ -42,21 +42,35 @@ To install extras (for example, if you want to use `snakemake`/`cellpose`/`bayso
 pip install 'sopa[snakemake,cellpose,baysor,tangram]'
 ```
 
-Important: even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
+**Important**: even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
 
 ### Other installation modes
 
 You can clone the repository and run one of these command lines at the root of `sopa`:
-```
-pip install -e . # dev mode installation
+```sh
+pip install -e .  # dev mode installation
 poetry install    # poetry installation
 ```
 
 # Features
 Sopa comes in three different flavours, each corresponding to a different use case:
+- `API`: use directly `sopa` as a Python package for complete flexibility and customization
 - `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes
 - `CLI`: use our command-line-interface for prototyping quickly your own pipeline
-- `API`: use directly `sopa` as a Python package for complete flexibility and customization
+
+### API
+
+Below is an example of a minimal API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
+
+```python
+import sopa
+
+sdata = sopa.io.xenium("path/to/data") # reading Xenium data
+
+sopa.make_image_patches(sdata) # creating overlapping patches
+sopa.segmentation.cellpose(sdata, "DAPI", diameter=30) # running cellpose segmentation
+sopa.aggregate(sdata) # counting the transcripts inside the cells
+```
 
 ### Snakemake pipeline
 
@@ -71,7 +85,7 @@ For more details on `snakemake` configuration and how to properly setup your env
 
 ### CLI
 
-Below are examples of commands that can be run with the `sopa` CLI:
+Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).
 
 ```bash
 > sopa --help # show command names and arguments
@@ -82,18 +96,6 @@ Below are examples of commands that can be run with the `sopa` CLI:
 > sopa aggregate merscope_directory.zarr --average-intensities # transcripts/channels aggregation
 > sopa explorer write merscope_directory.zarr # convert for interactive vizualisation
 ```
-
-For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).
-
-### API
-
-```python
-import sopa
-
-# use the 'sopa' python package
-```
-
-For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
 
 # Cite us
 Our article is published in [Nature Communications](https://www.nature.com/articles/s41467-024-48981-z). You can cite our paper as below:

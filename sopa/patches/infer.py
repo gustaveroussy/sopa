@@ -37,7 +37,7 @@ def compute_embeddings(
     batch_size: int = 32,
     device: str = None,
 ) -> DataArray:
-    """Create an image made of patch based predictions of an image (useful for WSI images notably).
+    """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
         The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below).
@@ -54,7 +54,7 @@ def compute_embeddings(
         device: Device used for the computer vision model.
 
     Returns:
-        The `DataArray` of shape `(C,Y,X)` containing the model predictions (they are also saved in the `SpatialData` object).
+        The `DataArray` of shape `(C,Y,X)` containing the model predictions (also added to the `SpatialData` object).
     """
     try:
         import torch

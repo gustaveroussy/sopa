@@ -33,6 +33,14 @@ log = logging.getLogger(__name__)
 def make_image_patches(
     sdata: SpatialData, patch_width: int = 2000, patch_overlap: int = 50, image_key: str | None = None
 ):
+    """Create overlapping patches on an image. This can be used for image-based segmentation methods such as Cellpose, which will run on each patch.
+
+    Args:
+        sdata: A `SpatialData` object.
+        patch_width: Width of the patches, in pixels.
+        patch_overlap: Number of pixels of overlap between patches.
+        image_key: Optional key of the image on which the patches will be made. If not provided, it is found automatically.
+    """
     image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
     patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
 
@@ -45,7 +53,15 @@ def make_transcript_patches(
     patch_overlap: int = 50,
     points_key: str | None = None,
     **kwargs: int,
-) -> list[int]:
+):
+    """Create overlapping patches on a transcripts dataframe, and save it in a cache. This can be used for trancript-based segmentation methods such as Baysor.
+
+    Args:
+        sdata: A `SpatialData` object.
+        patch_width: Width of the patches, in microns.
+        patch_overlap: Number of microns of overlap between patches.
+        points_key: Optional key of the points on which the patches will be made. If not provided, it is found automatically.
+    """
     points_key, _ = get_spatial_element(
         sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
     )
