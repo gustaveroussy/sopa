@@ -7,6 +7,7 @@ from typing import Literal
 from spatialdata import SpatialData
 from spatialdata_io.readers.merscope import merscope as merscope_spatialdata_io
 
+from ..._constants import SopaAttrs
 from .utils import _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def merscope(
     """
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
-    return merscope_spatialdata_io(
+    sdata = merscope_spatialdata_io(
         path,
         backend=backend,
         z_layers=z_layers,
@@ -55,3 +56,24 @@ def merscope(
         cells_table=False,
         **kwargs,
     )
+
+    ### Add Sopa attributes to detect the spatial elements
+    if z_layers is not None:
+        if not isinstance(z_layers, int) and len(z_layers) == 1:
+            z_layers = z_layers[0]
+        if isinstance(z_layers, int):
+            for key in sdata.images.keys():
+                if key.endswith(f"_z{z_layers}"):
+                    sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = key
+        else:
+            log.warning(
+                f"Multiple z-layers provided: {z_layers}. Not deciding which image should be used for cell segmentation."
+            )
+
+    for key in sdata.points.keys():
+        if key.endswith("_transcripts"):
+            sdata.attrs[SopaAttrs.TRANSCRIPTS] = key
+
+    sdata.attrs[SopaAttrs.GENE_EXCLUDE_PATTERN] = "blank"
+
+    return sdata

@@ -15,6 +15,8 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
 from xarray import DataArray
 
+from ..._constants import SopaAttrs
+
 log = logging.getLogger(__name__)
 
 
@@ -77,7 +79,7 @@ def _general_tif_directory_reader(
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
 
 def _clip_intensity_values(

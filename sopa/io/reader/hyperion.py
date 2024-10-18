@@ -11,6 +11,7 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
 from xarray import DataArray
 
+from ..._constants import SopaAttrs
 from .utils import _clip_intensity_values, _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ def hyperion(path: Path, image_models_kwargs: dict | None = None, imread_kwargs:
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
 
 def _get_channel_names_hyperion(files: list[Path]):

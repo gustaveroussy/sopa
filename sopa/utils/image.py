@@ -95,7 +95,7 @@ def valid_c_coords(c_coords: np.ndarray) -> bool:
     return c_coords.dtype.kind in {"U", "S", "O"}
 
 
-def string_channel_names(sdata: SpatialData, default_single_channel: str = "DAPI"):
+def ensure_string_channel_names(sdata: SpatialData, default_single_channel: str = "DAPI"):
     for key, image in list(sdata.images.items()):
         c_coords = get_channel_names(image)
 

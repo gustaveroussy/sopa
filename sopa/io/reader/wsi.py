@@ -10,6 +10,8 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
 from xarray import DataArray
 
+from ..._constants import SopaAttrs
+
 
 def wsi(
     path: str | Path,
@@ -52,7 +54,7 @@ def wsi(
         images[f"scale{key}"] = scale_image
 
     multiscale_image = DataTree.from_dict(images)
-    sdata = SpatialData(images={image_name: multiscale_image})
+    sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
     sdata[image_name].name = image_name

@@ -12,6 +12,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
 
+from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ def phenocycler(
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
 
 def _get_channel_name_qptiff(description):

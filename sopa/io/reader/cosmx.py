@@ -15,6 +15,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
 from spatialdata_io._constants._constants import CosmxKeys
 
+from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -110,7 +111,11 @@ def cosmx(
         feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT,
     )
 
-    return SpatialData(images={image_name: parsed_image}, points={points_name: transcripts})
+    return SpatialData(
+        images={image_name: parsed_image},
+        points={points_name: transcripts},
+        attrs={SopaAttrs.CELL_SEGMENTATION: image_name, SopaAttrs.TRANSCRIPTS: points_name},
+    )
 
 
 def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
