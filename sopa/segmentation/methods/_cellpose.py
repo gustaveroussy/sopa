@@ -73,6 +73,8 @@ def cellpose(
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
 ):
+    assert SopaKeys.PATCHES in sdata.shapes, "Run `sopa.make_image_patches` before running cellpose"
+
     channels = channels if isinstance(channels, list) else [channels]
 
     method = cellpose_patch(

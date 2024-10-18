@@ -59,10 +59,9 @@ def tissue_segmentation(
     if key_added in sdata.shapes:
         log.warning(f"sdata['{key_added}'] was already existing, but tissue segmentation is run on top")
 
-    image_key, image = get_spatial_element(
+    image = get_spatial_element(
         sdata.images,
         key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION),
-        return_key=True,
     )
 
     if isinstance(image, DataTree):

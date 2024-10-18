@@ -9,11 +9,11 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from scipy.ndimage import gaussian_filter
-from shapely.geometry import Point, box
+from shapely.geometry import MultiPolygon, Point, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
-from spatialdata.transformations import Affine, Identity
+from spatialdata.transformations import Affine, Identity, Scale
 
 from .._constants import SopaAttrs, SopaKeys
 
@@ -32,6 +32,7 @@ def toy_dataset(
     seed: int = 0,
     include_vertices: bool = False,
     include_image: bool = True,
+    include_he_image: bool = True,
     apply_blur: bool = True,
     as_output: bool = False,
     transcript_cell_id_as_merscope: bool = False,
@@ -77,11 +78,11 @@ def toy_dataset(
 
     vertices = pd.DataFrame(xy, columns=["x", "y"])
 
-    ### Create image
+    ### Create images
     images = {}
 
     if include_image:
-        x_circle, y_circle = circle_coords(radius)
+        x_circle, y_circle = _circle_coords(radius)
 
         image = np.zeros((len(c_coords), length, length))
         for i, (x, y) in enumerate(xy):
@@ -95,6 +96,16 @@ def toy_dataset(
         image = (image / image.max() * 255).astype(np.uint8)
         image = da.from_array(image, chunks=(1, 1024, 1024))
         images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
+
+    if include_he_image:
+        he_image = _he_image(length // 2)
+        scale = length / (length // 2)
+        images["he_image"] = Image2DModel.parse(
+            he_image,
+            dims=["c", "y", "x"],
+            transformations={"global": Scale([scale, scale], axes=["x", "y"])},
+            scale_factors=[2, 2],
+        )
 
     ### Create cell boundaries
     cells = [Point(vertex).buffer(radius).simplify(tolerance=1) for vertex in xy]
@@ -152,8 +163,14 @@ def toy_dataset(
         images=images,
         points=points,
         shapes=shapes,
-        attrs={SopaAttrs.CELL_SEGMENTATION: "image", SopaAttrs.TRANSCRIPTS: "transcripts"},
+        attrs={SopaAttrs.TRANSCRIPTS: "transcripts"},
     )
+
+    if include_image:
+        sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = "image"
+
+    if include_he_image:
+        sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = "he_image"
 
     from ..spatial import assign_transcript_to_cell
 
@@ -175,7 +192,7 @@ def _add_table(sdata: SpatialData):
     aggregator.compute_table(gene_column="genes")
 
 
-def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
+def _circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
     """Compute the coordinates of a circle
 
     Args:
@@ -192,6 +209,42 @@ def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
 
     x_circle, y_circle = np.where(mask)
     return x_circle - radius, y_circle - radius
+
+
+def _he_image(length: int) -> np.ndarray:
+    from ..segmentation.shapes import rasterize
+
+    coords = np.array(
+        [
+            [0.15, 0.15],
+            [0.15, 0.7],
+            [0.3, 0.8],
+            [0.8, 0.85],
+            [0.8, 0.8],
+            [0.85, 0.12],
+            [0.8, 0.2],
+            [0.7, 0.4],
+            [0.5, 0.5],
+            [0.4, 0.5],
+            [0.2, 0.35],
+        ]
+    )
+
+    circle_in = Point([0.5 * length, 0.2 * length]).buffer(0.1 * length)
+    circle_out = Point([0.7 * length, 0.7 * length]).buffer(0.1 * length)
+    polygon_he = Polygon(coords * length).buffer(0.1 * length)
+    multi_polygon = MultiPolygon([polygon_he, circle_in])
+
+    tissue = (rasterize(multi_polygon, [length, length]) - rasterize(circle_out, [length, length])).astype(np.uint8)
+
+    image = np.random.randint(0, 50, size=(3, length, length), dtype=np.uint8)  # noise 1
+    image[1] += (np.arange(length) / length * 10).astype(np.uint8)  # noise 2
+    image[1] += (np.arange(length)[:, None] / length * 10).astype(np.uint8)  # noise 3
+    image[1] += tissue * 60
+    image[0] += tissue * 20
+    image[2] += tissue * 40
+
+    return 255 - image
 
 
 def uniform(**kwargs):
