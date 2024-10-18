@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Callable
 
 import dask
@@ -18,7 +19,7 @@ class Settings:
     auto_save_on_disk: bool = True
 
     ### Parallelization
-    _parallelization_backend: str | None = None
+    _parallelization_backend: str | None = os.environ.get("SOPA_PARALLELIZATION_BACKEND", None)
     available_parallelization_backends = [None, "dask"]
     dask_client_kwargs: dict = {}
 
