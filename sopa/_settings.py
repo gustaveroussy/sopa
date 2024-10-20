@@ -19,9 +19,12 @@ class Settings:
     auto_save_on_disk: bool = True
 
     ### Parallelization
-    _parallelization_backend: str | None = os.environ.get("SOPA_PARALLELIZATION_BACKEND", None)
+    _parallelization_backend: str | None = None
     available_parallelization_backends = [None, "dask"]
     dask_client_kwargs: dict = {}
+
+    def __init__(self):
+        self.parallelization_backend = os.environ.get("SOPA_PARALLELIZATION_BACKEND", None)
 
     @property
     def parallelization_backend(self):
