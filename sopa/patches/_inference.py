@@ -84,7 +84,7 @@ class Inference:
         if isinstance(model, str):
             assert hasattr(
                 models, model
-            ), f"'{model}' is not a valid model name under `sopa.embedding.models`. Valid names are: {', '.join(models.__all__)}"
+            ), f"'{model}' is not a valid model name under `sopa.patches.models`. Valid names are: {', '.join(models.__all__)}"
             self.model_str = model
             self.model: torch.nn.Module = getattr(models, model)()
         else:

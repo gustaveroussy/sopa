@@ -10,7 +10,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from xarray import DataArray
 
-from .._constants import SopaKeys
+from .._constants import SopaAttrs, SopaKeys
 from ..utils import add_spatial_element, get_spatial_image
 from . import Patches2D
 
@@ -36,11 +36,12 @@ def compute_embeddings(
     image_key: str | None = None,
     batch_size: int = 32,
     device: str = None,
+    key_added: str | None = None,
 ) -> DataArray:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
-        The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below).
+        The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below) if `key_added` is not provided.
 
     Args:
         sdata: A `SpatialData` object
@@ -52,6 +53,7 @@ def compute_embeddings(
         image_key: Optional image key of the image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
+        key_added: Optional name of the spatial element that will be added (storing the embeddings).
 
     Returns:
         The `DataArray` of shape `(C,Y,X)` containing the model predictions (also added to the `SpatialData` object).
@@ -65,8 +67,9 @@ def compute_embeddings(
 
     from ._inference import Inference
 
-    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
-    image = sdata.images[image_key]
+    image_key, image = get_spatial_image(
+        sdata, key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION), return_key=True
+    )
 
     infer = Inference(image, model, patch_width, level, magnification, device)
     patches = Patches2D(sdata, image_key, infer.patch_width_scale0, infer.downsample * patch_overlap)
@@ -89,9 +92,9 @@ def compute_embeddings(
     output_image = DataArray(output_image, dims=("c", "y", "x"))
     output_image = Image2DModel.parse(output_image, transformations=infer.get_patches_transformations(patch_overlap))
 
-    output_key = f"sopa_{infer.model_str}"
-    add_spatial_element(sdata, output_key, output_image)
+    key_added = key_added or f"sopa_{infer.model_str}"
+    add_spatial_element(sdata, key_added, output_image)
 
     patches.write(shapes_key=SopaKeys.PATCHES_INFERENCE_KEY)
 
-    return sdata[output_key]
+    return sdata[key_added]
