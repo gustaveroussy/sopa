@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import shutil
 from typing import Callable
 
 import numpy as np
 from spatialdata import SpatialData
 
-from ..._constants import SopaAttrs, SopaKeys
-from ...utils import get_cache_dir
-from .. import StainingSegmentation, shapes
+from ..._constants import SopaKeys
+from ._staining import custom_staining_based
 
 
 def cellpose_patch(
@@ -73,8 +71,22 @@ def cellpose(
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
 ):
-    assert SopaKeys.PATCHES in sdata.shapes, "Run `sopa.make_image_patches` before running cellpose"
+    """Run Cellpose segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
+    The segmentation is run on each patch, for memory efficiency.
 
+    Args:
+        sdata: A `SpatialData` object
+        channels: Name of the channels to be used for segmentation (or list of channel names).
+        diameter: The Cellpose parameter for the expected cell diameter (in pixel).
+        image_key: Name of the image in `sdata` to be used for segmentation.
+        min_area: Minimum area of a cell to be considered. By default, it is calculated based on the `diameter` parameter.
+        delete_cache: Whether to delete the cache after segmentation.
+        recover: If `True`, recover the cache from a failed segmentation, and continue.
+        flow_threshold: Cellpose `flow_threshold` parameter.
+        cellprob_threshold: Cellpose `cellprob_threshold` parameter.
+        cellpose_model_kwargs: Dictionary of kwargs to be provided to the `cellpose.models.CellposeModel` object.
+        **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
+    """
     channels = channels if isinstance(channels, list) else [channels]
 
     method = cellpose_patch(
@@ -86,22 +98,17 @@ def cellpose(
         **cellpose_eval_kwargs,
     )
 
-    cellpose_temp_dir = get_cache_dir(sdata) / SopaKeys.CELLPOSE_BOUNDARIES
-
     if min_area is None:
         min_area = (diameter / 2) ** 2  # by default, about 15% of the "normal cell" area
 
-    segmentation = StainingSegmentation(sdata, method, channels, min_area=min_area, image_key=image_key)
-    segmentation.write_patches_cells(cellpose_temp_dir, recover=recover)
-
-    cells = StainingSegmentation.read_patches_cells(cellpose_temp_dir)
-    cells = shapes.solve_conflicts(cells)
-
-    StainingSegmentation.add_shapes(
-        sdata, cells, image_key=segmentation.image_key, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES
+    custom_staining_based(
+        sdata,
+        method,
+        channels,
+        image_key=image_key,
+        min_area=min_area,
+        delete_cache=delete_cache,
+        recover=recover,
+        cache_dir_name=SopaKeys.CELLPOSE_BOUNDARIES,
+        key_added=SopaKeys.CELLPOSE_BOUNDARIES,
     )
-
-    sdata.attrs[SopaAttrs.BOUNDARIES] = SopaKeys.CELLPOSE_BOUNDARIES
-
-    if delete_cache:
-        shutil.rmtree(cellpose_temp_dir)

@@ -35,36 +35,7 @@ class StainingSegmentation:
         clahe_kernel_size: int | Iterable[int] | None = None,
         gaussian_sigma: float = 1,
     ):
-        """Generalized staining-based segmentation
-
-        !!! note "Sequential segmentation (slower)"
-            ```python
-            from sopa.segmentation.stainings import StainingSegmentation
-
-            method = ... # custom callable that runs segmentation on each patch
-
-            segmentation = StainingSegmentation(sdata, method, "DAPI")
-            segmentation.write_patches_cells("./temp_dir")
-
-            cells = StainingSegmentation.read_patches_cells("./temp_dir")
-            StainingSegmentation.add_shapes(sdata, cells, image_key, "method_name")
-            ```
-
-        !!! note "Parallel segmentation (faster)"
-            ```python
-            from sopa.segmentation.stainings import StainingSegmentation
-
-            method = ... # custom callable that runs segmentation on each patch
-
-            segmentation = StainingSegmentation(sdata, method, "DAPI")
-
-            # Run all this in a parallel manner, e.g. on different jobs
-            for i in range(len(sdata['sopa_patches'])):
-                segmentation.write_patch_cells("./temp_dir", i)
-
-            cells = StainingSegmentation.read_patches_cells("./temp_dir")
-            StainingSegmentation.add_shapes(sdata, cells, image_key, "method_name")
-            ```
+        """Generalized staining-based segmentation class
 
         Args:
             sdata: A `SpatialData` object

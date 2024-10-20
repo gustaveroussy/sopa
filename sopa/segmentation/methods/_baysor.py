@@ -8,7 +8,7 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import SopaAttrs, SopaFiles, SopaKeys
-from ..transcripts import copy_segmentation_config, resolve
+from .._transcripts import copy_segmentation_config, resolve
 
 log = logging.getLogger(__name__)
 

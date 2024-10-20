@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 AVAILABLE_MODES = ["hsv_otsu", "staining"]
 
 
-def tissue_segmentation(
+def tissue(
     sdata: SpatialData,
     image_key: str | None = None,
     level: int = -1,
@@ -143,4 +143,4 @@ def hsv_otsu(*args, **kwargs):
         DeprecationWarning,
         stacklevel=2,
     )
-    tissue_segmentation(*args, **kwargs)
+    tissue(*args, **kwargs)

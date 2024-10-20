@@ -352,7 +352,7 @@ class TranscriptPatches:
         config_path: str | None = None,
         shapes_key: str = SopaKeys.CELLPOSE_BOUNDARIES,
     ):
-        from sopa.segmentation.transcripts import copy_segmentation_config
+        from sopa.segmentation._transcripts import copy_segmentation_config
 
         log.info("Writing sub-CSV for transcript segmentation")
 

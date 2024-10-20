@@ -162,7 +162,7 @@ def _run_staining_segmentation(
     patch_dir: str,
 ):
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.stainings import StainingSegmentation
+    from sopa.segmentation import StainingSegmentation
 
     from .utils import _default_boundary_dir
 
@@ -245,4 +245,4 @@ def tissue(sdata_path: str = typer.Argument(help=SDATA_HELPER)):
 
     sdata = read_zarr_standardized(sdata_path)
 
-    sopa.tissue_segmentation(sdata)
+    sopa.tissue(sdata)

@@ -1,6 +1,6 @@
-from . import aggregation, shapes, stainings
-from .aggregation import Aggregator, overlay_segmentation
-from .stainings import StainingSegmentation
-from .tissue import tissue_segmentation
-from .methods import cellpose, baysor
+from . import _aggregation, _stainings, shapes
+from ._aggregation import Aggregator, overlay_segmentation  # deprecated
+from ._stainings import StainingSegmentation
+from ._tissue import tissue
+from .methods import cellpose, baysor, custom_staining_based
 from . import methods

@@ -48,8 +48,7 @@ def generic(
 
 def _resolve_generic(sdata_path: str, patch_dirs: list[str], shapes_key: str):
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation import shapes
-    from sopa.segmentation.stainings import StainingSegmentation
+    from sopa.segmentation import StainingSegmentation, shapes
     from sopa.utils import get_spatial_image
 
     sdata = read_zarr_standardized(sdata_path)
@@ -80,7 +79,7 @@ def baysor(
     """Resolve patches conflicts after baysor segmentation. Provide either `--baysor-temp-dir` or `--patches-dirs`"""
     from sopa._constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.transcripts import resolve
+    from sopa.segmentation._transcripts import resolve
 
     from .utils import _default_boundary_dir
 
@@ -106,7 +105,7 @@ def comseg(
     """Resolve patches conflicts after comseg segmentation. Provide either `--comseg-temp-dir` or `--patches-dirs`"""
     from sopa._constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.transcripts import resolve
+    from sopa.segmentation._transcripts import resolve
 
     from .utils import _default_boundary_dir
 

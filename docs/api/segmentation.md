@@ -6,6 +6,8 @@
 
 ::: sopa.segmentation.baysor
 
+::: sopa.segmentation.custom_staining_based
+
 ## Tissue segmentation
 
-::: sopa.tissue_segmentation
+::: sopa.segmentation.tissue
