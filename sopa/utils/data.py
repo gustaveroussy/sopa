@@ -247,7 +247,7 @@ def _he_image(length: int) -> np.ndarray:
     return 255 - image
 
 
-def uniform(**kwargs):
+def uniform(*_, **kwargs):
     warnings.warn("The `uniform` function is deprecated, use `toy_dataset` instead", DeprecationWarning, stacklevel=2)
     return toy_dataset(**kwargs)
 

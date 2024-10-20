@@ -89,7 +89,7 @@ def read(
 
     assert hasattr(
         io, technology
-    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, phenocycler, hyperion, macsima"
+    ), f"Technology {technology} unknown. Currently available: xenium, merscope, visium_hd, cosmx, phenocycler, hyperion, macsima"
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path, delete_table=True)
@@ -117,6 +117,10 @@ def crop(
 ):
     """Crop an image based on a user-defined polygon (interactive mode).
 
+    Warning:
+        This command is deprecated. Using `napari-spatialdata` instead.
+        Provide the name `"region_of_interest"` to your selected ROI.
+
     Usage:
 
         - [Locally] Only `--sdata-path` is required
@@ -128,12 +132,12 @@ def crop(
     _check_zip([intermediate_image, intermediate_polygon])
 
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.utils.polygon_crop import intermediate_selection, polygon_selection
+    from sopa.utils.crop import intermediate_selection, polygon_selection
 
-    if sdata_path is None:
+    if intermediate_image and intermediate_polygon:
         assert (
-            intermediate_image is not None and intermediate_polygon is not None
-        ), "When no --sdata_path is provided, both --intermediate_image and --intermediate_polygon have to be provided"
+            sdata_path is None
+        ), "When both --intermediate_image and --intermediate_polygon, sdata_path should not to be provided"
 
         intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
         return
