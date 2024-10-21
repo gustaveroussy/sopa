@@ -107,19 +107,21 @@ def _read_one_segmented_patch(
 
     adata.obs.rename(columns={"area": SopaKeys.ORIGINAL_AREA_OBS}, inplace=True)
 
-    cells_num = pd.Series(adata.obs_names if id_as_string else adata.obs["CellID"].astype(int), index=adata.obs_names)
+    cells_ids = pd.Series(adata.obs_names if id_as_string else adata.obs["CellID"].astype(int), index=adata.obs_names)
     del adata.obs["CellID"]
 
     with open(polygon_file) as f:
         polygons_dict = json.load(f)
         polygons_dict = {c["cell"]: c for c in polygons_dict["geometries"]}
 
-    cells_num = cells_num[cells_num.map(lambda num: len(polygons_dict[num]["coordinates"][0]) >= min_vertices)]
+    def _keep_cell(ID: str | int):
+        if ID not in polygons_dict:
+            return False
+        return len(polygons_dict[ID]["coordinates"][0]) >= min_vertices
 
-    gdf = gpd.GeoDataFrame(
-        index=cells_num.index,
-        geometry=[shape(polygons_dict[cell_num]) for cell_num in cells_num],
-    )
+    cells_ids = cells_ids[cells_ids.map(_keep_cell)]
+
+    gdf = gpd.GeoDataFrame(index=cells_ids.index, geometry=[shape(polygons_dict[ID]) for ID in cells_ids])
 
     gdf.geometry = gdf.geometry.map(lambda cell: shapes._ensure_polygon(cell))
     gdf = gdf[~gdf.geometry.isna()]
@@ -191,7 +193,7 @@ def _resolve_patches(
     )
 
 
-def copy_segmentation_config(path: Path, config: dict, config_path: str | None):
+def copy_segmentation_config(path: Path | str, config: dict, config_path: str | None):
     """Copy the segmentation config to a file.
 
     Args:
@@ -199,6 +201,8 @@ def copy_segmentation_config(path: Path, config: dict, config_path: str | None):
         config: Dictionnary config
         config_path: Already existing config file, will be copied if provided
     """
+    path = Path(path)
+
     if config_path is not None:
         import shutil
 
