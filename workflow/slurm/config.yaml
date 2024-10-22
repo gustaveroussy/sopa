@@ -1,19 +1,22 @@
 cluster:
   "sbatch
     --partition={resources.partition}
-    --cpus-per-task={threads}
+    --cpus-per-task={resources.threads}
     --mem={resources.mem_mb}
     --job-name=smk-{rule}
     --gres=gpu:{resources.gpu}
-    --output=logs/%j" # you can update where the logs will be saved (absolute path, or relative to /.../sopa/workflow)
+    --time={resources.time}
+    --output=logs/{rule}_%j.log" # you can update where the logs will be saved (absolute path, or relative to /.../sopa/workflow)
 default-resources:
-  - partition=shortq
-  - mem_mb=32000
+  - partition=shortq # use the partition/queue name on your cluster
+  - mem_mb=15000
   - gpu=0
+  - threads=8
+  - time="30:00:00"
 restart-times: 0
 max-jobs-per-second: 100
 max-status-checks-per-second: 1
-local-cores: 1
+local-cores: 200
 latency-wait: 60
 jobs: 50
 keep-going: True
