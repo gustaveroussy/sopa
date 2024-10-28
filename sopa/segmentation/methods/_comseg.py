@@ -1,11 +1,61 @@
 from __future__ import annotations
 
+import logging
+import os
+import sys
+from functools import partial
 from pathlib import Path
 
-from ..._constants import SopaKeys
+import geopandas as gpd
+import numpy as np
+from spatialdata import SpatialData
+
+from ... import settings
+from ..._constants import SopaAttrs, SopaKeys
+from ...utils import to_intrinsic
+from .._transcripts import resolve
+
+log = logging.getLogger(__name__)
 
 
-def comseg_patch(temp_dir: str, patch_index: int, config: dict):
+def comseg(
+    sdata: SpatialData,
+    config: dict | None = None,
+    min_area: float = 0,
+    delete_cache: bool = True,
+    recover: bool = False,
+    key_added: str = SopaKeys.COMSEG_BOUNDARIES,
+):
+    assert (
+        SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
+    ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+
+    if config is None:
+        log.info("No config provided, inferring a default ComSeg config.")
+        config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES])
+
+    assert "gene_column" in config, "'gene_column' not found in config"
+
+    config["prior_name"] = sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+
+    import shutil
+
+    patches_dirs = [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+
+    _functions = [partial(comseg_patch, patch_dir, config, recover) for patch_dir in patches_dirs]
+
+    settings._run_with_backend(_functions)
+
+    resolve(sdata, None, config["gene_column"], min_area=min_area, patches_dirs=patches_dirs, key_added=key_added)
+
+    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+
+    if delete_cache:
+        for patch_dir in patches_dirs:
+            shutil.rmtree(patch_dir)
+
+
+def comseg_patch(patch_dir: Path, config: dict, recover: bool = False):
     import json
 
     try:
@@ -17,32 +67,68 @@ def comseg_patch(temp_dir: str, patch_index: int, config: dict):
 
     assert comseg.__version__ >= "1.3", "comseg version should be >= 1.3"
 
-    path_dataset_folder = Path(temp_dir) / str(patch_index)
+    if (
+        recover
+        and (patch_dir / "segmentation_counts.h5ad").exists()
+        and (patch_dir / "segmentation_polygons.json").exists()
+    ):
+        return
 
-    dataset = ds.ComSegDataset(
-        path_dataset_folder=path_dataset_folder,
-        dict_scale=config["dict_scale"],
-        mean_cell_diameter=config["mean_cell_diameter"],
-        gene_column=config["gene_column"],
-        image_csv_files=["transcripts.csv"],
-        centroid_csv_files=["centroids.csv"],
-        path_cell_centroid=path_dataset_folder,
-        min_nb_rna_patch=config.get("min_nb_rna_patch", 0),
-        prior_name=config.get("prior_name", SopaKeys.DEFAULT_CELL_KEY),
-    )
+    with HiddenPrints():
+        dataset = ds.ComSegDataset(
+            path_dataset_folder=patch_dir,
+            dict_scale=config["dict_scale"],
+            mean_cell_diameter=config["mean_cell_diameter"],
+            gene_column=config["gene_column"],
+            image_csv_files=["transcripts.csv"],
+            centroid_csv_files=["centroids.csv"],
+            path_cell_centroid=patch_dir,
+            min_nb_rna_patch=config.get("min_nb_rna_patch", 0),
+            prior_name=config["prior_name"],
+        )
 
-    dataset.compute_edge_weight(config=config)
+        dataset.compute_edge_weight(config=config)
 
-    Comsegdict = dictionary.ComSegDict(
-        dataset=dataset,
-        mean_cell_diameter=config["mean_cell_diameter"],
-    )
+        Comsegdict = dictionary.ComSegDict(
+            dataset=dataset,
+            mean_cell_diameter=config["mean_cell_diameter"],
+        )
 
-    Comsegdict.run_all(config=config)
+        Comsegdict.run_all(config=config)
 
-    if "return_polygon" in config:
-        assert config["return_polygon"] is True, "Only return_polygon=True is supported in sopa"
-    anndata_comseg, json_dict = Comsegdict.anndata_from_comseg_result(config=config)
-    anndata_comseg.write_h5ad(path_dataset_folder / "segmentation_counts.h5ad")
-    with open(path_dataset_folder / "segmentation_polygons.json", "w") as f:
-        json.dump(json_dict["transcripts"], f)
+        assert config.get("return_polygon", True), "Only return_polygon=True is supported in sopa"
+
+        anndata_comseg, json_dict = Comsegdict.anndata_from_comseg_result(config=config)
+
+        anndata_comseg.write_h5ad(patch_dir / "segmentation_counts.h5ad")
+        with open(patch_dir / "segmentation_polygons.json", "w") as f:
+            json.dump(json_dict["transcripts"], f)
+
+
+def _get_default_config(sdata: SpatialData, patches: gpd.GeoDataFrame) -> dict:
+    prior_shapes_key = patches[SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+    points_key = patches[SopaKeys.POINTS_KEY].iloc[0]
+
+    cells_area = to_intrinsic(sdata, prior_shapes_key, points_key).area
+    mean_cell_diameter = 2 * np.sqrt(cells_area / np.pi).mean()
+
+    return {
+        "dict_scale": {"x": 1, "y": 1, "z": 1},  # spot coordinates already in µm
+        "mean_cell_diameter": mean_cell_diameter,
+        "max_cell_radius": mean_cell_diameter * 1.75,
+        "norm_vector": False,
+        "alpha": 0.5,  # alpha value to compute the polygon https://pypi.org/project/alphashape/
+        "allow_disconnected_polygon": False,
+        "min_rna_per_cell": 20,  # minimal number of RNAs for a cell to be taken into account
+        "gene_column": "genes",
+    }
+
+
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, "w")
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout

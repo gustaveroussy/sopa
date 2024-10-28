@@ -53,7 +53,7 @@ class WorkflowPaths:
         # sdata.shapes
         self.baysor_boundaries = self.shapes_dir / "baysor_boundaries"
         self.cellpose_boundaries = self.shapes_dir / "cellpose_boundaries"
-        self.patches = self.shapes_dir / "sopa_patches"
+        self.patches = self.shapes_dir / "image_patches"
 
         # snakemake cache / intermediate files
         self.sopa_cache = self.sdata_path / ".sopa_cache"

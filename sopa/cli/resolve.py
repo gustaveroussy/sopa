@@ -46,7 +46,7 @@ def generic(
     _resolve_generic(sdata_path, patch_dir, method_name)
 
 
-def _resolve_generic(sdata_path: str, patch_dirs: list[str], shapes_key: str):
+def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import StainingSegmentation, shapes
     from sopa.utils import get_spatial_image
@@ -62,7 +62,7 @@ def _resolve_generic(sdata_path: str, patch_dirs: list[str], shapes_key: str):
         cells += StainingSegmentation.read_patches_cells(patch_dir)
     cells = shapes.solve_conflicts(cells)
 
-    StainingSegmentation.add_shapes(sdata, cells, image_key, shapes_key)
+    StainingSegmentation.add_shapes(sdata, cells, image_key, key_added)
 
 
 @app_resolve.command()
@@ -120,5 +120,5 @@ def comseg(
         gene_column,
         patches_dirs,
         min_area,
-        shapes_key=SopaKeys.COMSEG_BOUNDARIES,
+        key_added=SopaKeys.COMSEG_BOUNDARIES,
     )

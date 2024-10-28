@@ -13,8 +13,8 @@ from .image import (
     get_channel_names,
     scale_dtype,
     ensure_string_channel_names,
-    valid_c_coords,
-    check_integer_dtype,
+    is_valid_c_coords,
+    assert_is_integer_dtype,
     resize,
     resize_numpy,
 )

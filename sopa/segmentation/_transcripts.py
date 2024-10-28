@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from .._constants import SopaKeys
 from ..aggregation import count_transcripts
-from ..utils import add_spatial_element, get_spatial_element, get_spatial_image
+from ..utils import add_spatial_element
 from . import shapes
 
 log = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def resolve(
     gene_column: str,
     patches_dirs: list[str] | None = None,
     min_area: float = 0,
-    shapes_key: str = SopaKeys.BAYSOR_BOUNDARIES,
+    key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
 ):
     """Concatenate all the per-patch segmentation runs and resolve the conflicts. Resulting cells boundaries are saved in the `SpatialData` object.
 
@@ -39,6 +39,7 @@ def resolve(
         gene_column: Column of the transcript dataframe containing the genes names
         patches_dirs: Optional list of subdirectories inside `temp_dir` to be read. By default, read all.
         min_area: Minimum area (in microns^2) for a cell to be kept
+        key_added: Name of the spatial element that will be added, containing the cell boundaries
     """
     if min_area > 0:
         log.info(f"Cells whose area is less than {min_area} microns^2 will be removed")
@@ -46,8 +47,7 @@ def resolve(
     patches_cells, adatas = _read_all_segmented_patches(temp_dir, min_area, patches_dirs)
     geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
 
-    image_key, _ = get_spatial_image(sdata, return_key=True)
-    points = get_spatial_element(sdata.points)
+    points = sdata[sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.POINTS_KEY].iloc[0]]
     transformations = get_transformation(points, get_all=True).copy()
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
@@ -73,21 +73,20 @@ def resolve(
     geo_df = geo_df.loc[table.obs_names]
 
     table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
-    table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
-    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(image_key, index=table.obs_names, dtype="category")
+    table.obs[SopaKeys.REGION_KEY] = pd.Series(key_added, index=table.obs_names, dtype="category")
     table.obs[SopaKeys.INSTANCE_KEY] = geo_df.index
 
     table = TableModel.parse(
         table,
         region_key=SopaKeys.REGION_KEY,
-        region=shapes_key,
+        region=key_added,
         instance_key=SopaKeys.INSTANCE_KEY,
     )
 
-    add_spatial_element(sdata, shapes_key, geo_df)
+    add_spatial_element(sdata, key_added, geo_df)
     add_spatial_element(sdata, SopaKeys.TABLE, table)
 
-    log.info(f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{shapes_key}']")
+    log.info(f"Added sdata.tables['{SopaKeys.TABLE}'], and {len(geo_df)} cell boundaries to sdata['{key_added}']")
 
 
 def _read_one_segmented_patch(
@@ -184,20 +183,19 @@ def _resolve_patches(
     return cells_resolved, cells_indices, new_ids
 
 
-def copy_segmentation_config(path: Path | str, config: dict, config_path: str | None):
-    """Copy the segmentation config to a file.
+def copy_segmentation_config(path: Path | str, config: dict | str | None):
+    """Copy the segmentation config to a file (`.json` or `.toml`).
 
     Args:
         path: Where the config will be saved
-        config: Dictionnary config
-        config_path: Already existing config file, will be copied if provided
+        config: Dictionnary config, or path to an existing config file (json or toml)
     """
     path = Path(path)
 
-    if config_path is not None:
+    if isinstance(config, str):
         import shutil
 
-        shutil.copy(config_path, path)
+        shutil.copy(config, path)
         return
 
     if path.suffix == ".json":

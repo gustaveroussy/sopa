@@ -45,7 +45,7 @@ def resize_numpy(arr: np.ndarray, scale_factor: float, dims: list[str], output_s
     return dask_image.ndinterp.affine_transform(arr, matrix=transform, output_shape=output_shape).compute()
 
 
-def check_integer_dtype(dtype: np.dtype):
+def assert_is_integer_dtype(dtype: np.dtype):
     assert np.issubdtype(dtype, np.integer), f"Expecting image to have an integer dtype, but found {dtype}"
 
 
@@ -62,8 +62,8 @@ def scale_dtype(arr: np.ndarray, dtype: np.dtype) -> np.ndarray:
     Returns:
         A scaled `numpy` array with the dtype provided.
     """
-    check_integer_dtype(arr.dtype)
-    check_integer_dtype(dtype)
+    assert_is_integer_dtype(arr.dtype)
+    assert_is_integer_dtype(dtype)
 
     if arr.dtype == dtype:
         return arr
@@ -91,7 +91,7 @@ def get_channel_names(image: DataArray | DataTree | SpatialData, image_key: str 
     raise ValueError(f"Image must be a DataTree or a DataArray. Found: {type(image)}")
 
 
-def valid_c_coords(c_coords: np.ndarray) -> bool:
+def is_valid_c_coords(c_coords: np.ndarray) -> bool:
     return c_coords.dtype.kind in {"U", "S", "O"}
 
 
@@ -99,7 +99,7 @@ def ensure_string_channel_names(sdata: SpatialData, default_single_channel: str 
     for key, image in list(sdata.images.items()):
         c_coords = get_channel_names(image)
 
-        if valid_c_coords(c_coords):
+        if is_valid_c_coords(c_coords):
             continue
 
         c_coords = [str(i) for i in range(len(c_coords))]

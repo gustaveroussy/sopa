@@ -45,7 +45,7 @@ def custom_staining_based(
     cells = StainingSegmentation.read_patches_cells(temp_dir)
     cells = shapes.solve_conflicts(cells)
 
-    StainingSegmentation.add_shapes(sdata, cells, image_key=segmentation.image_key, shapes_key=key_added)
+    StainingSegmentation.add_shapes(sdata, cells, image_key=segmentation.image_key, key_added=key_added)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 

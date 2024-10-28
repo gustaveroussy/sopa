@@ -8,10 +8,10 @@ from spatialdata import SpatialData
 
 from .._constants import VALID_DIMENSIONS, SopaKeys
 from ..utils import (
-    check_integer_dtype,
+    assert_is_integer_dtype,
     get_channel_names,
     get_spatial_image,
-    valid_c_coords,
+    is_valid_c_coords,
 )
 
 log = logging.getLogger(__name__)
@@ -24,10 +24,10 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
     assert (
         image.dims == VALID_DIMENSIONS
     ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
-    check_integer_dtype(image.dtype)
+    assert_is_integer_dtype(image.dtype)
 
     c_coords = get_channel_names(image)
-    assert valid_c_coords(c_coords), f"Channel names must be strings, not {c_coords.dtype}"
+    assert is_valid_c_coords(c_coords), f"Channel names must be strings, not {c_coords.dtype}"
 
     if SopaKeys.TABLE in sdata.tables:
         if delete_table:

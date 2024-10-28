@@ -35,7 +35,7 @@ def cellpose(
     ),
     patch_index: int = typer.Option(
         default=None,
-        help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
+        help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['image_patches'])`",
     ),
     patch_dir: str = typer.Option(
         default=None,
@@ -109,7 +109,7 @@ def generic_staining(
     ),
     patch_index: int = typer.Option(
         default=None,
-        help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['sopa_patches'])`",
+        help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['image_patches'])`",
     ),
     patch_dir: str = typer.Option(
         default=None,

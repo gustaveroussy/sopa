@@ -111,7 +111,7 @@ class StainingSegmentation:
 
         Args:
             patch_dir: Directory inside which segmentation results will be saved
-            patch_index: Index of the patch on which to run segmentation. NB: the number of patches is `len(sdata['sopa_patches'])`
+            patch_index: Index of the patch on which to run segmentation. NB: the number of patches is `len(sdata['image_patches'])`
             recover: If `True`, the function will not run segmentation if the output file already exists
         """
         patch_dir: Path = Path(patch_dir)
@@ -158,7 +158,7 @@ class StainingSegmentation:
         return cells
 
     @classmethod
-    def add_shapes(cls, sdata: SpatialData, cells: gpd.GeoDataFrame, image_key: str, shapes_key: str):
+    def add_shapes(cls, sdata: SpatialData, cells: gpd.GeoDataFrame, image_key: str, key_added: str):
         """Adding `shapely` polygon to the `SpatialData` object
 
         Args:
@@ -172,6 +172,6 @@ class StainingSegmentation:
         cells.index = image_key + cells.index.astype(str)
 
         cells = ShapesModel.parse(cells, transformations=get_transformation(image, get_all=True).copy())
-        add_spatial_element(sdata, shapes_key, cells)
+        add_spatial_element(sdata, key_added, cells)
 
-        log.info(f"Added {len(cells)} cell boundaries in sdata['{shapes_key}']")
+        log.info(f"Added {len(cells)} cell boundaries in sdata['{key_added}']")

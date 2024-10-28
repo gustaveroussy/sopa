@@ -6,13 +6,15 @@ class SopaKeys:
     CUSTOM_BOUNDARIES = "custom_boundaries"
 
     # Patches keys
-    PATCHES = "sopa_patches"
-    TRANSCRIPT_PATCHES = "sopa_patches_transcripts"
-    PATCHES_INFERENCE_KEY = "sopa_patches_inference"
+    PATCHES = "image_patches"
+    TRANSCRIPT_PATCHES = "transcripts_patches"
+    PATCHES_INFERENCE_KEY = "inference_patches"
     CACHE_PATH_KEY = "cache_path"
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"
     ROI = "region_of_interest"
+    PRIOR_SHAPES_KEY = "prior_shapes_key"
+    POINTS_KEY = "points_key"
 
     # Other SpatialData keys
     TABLE = "table"
@@ -52,7 +54,7 @@ class SopaAttrs:
 
 class SopaFiles:
     SOPA_CACHE_DIR = ".sopa_cache"
-    TRANSCRIPT_TEMP_DIR = "transcript_patches"
+    TRANSCRIPT_CACHE_DIR = "transcript_patches"
     PATCHES_FILE_IMAGE = "patches_file_image"
     PATCHES_DIRS_BAYSOR = "patches_file_baysor"
     PATCHES_DIRS_COMSEG = "patches_file_comseg"
