@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sys
@@ -12,7 +13,7 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import SopaAttrs, SopaKeys
-from ...utils import to_intrinsic
+from ...utils import get_transcripts_patches_dirs, to_intrinsic
 from .._transcripts import resolve
 
 log = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ log = logging.getLogger(__name__)
 
 def comseg(
     sdata: SpatialData,
-    config: dict | None = None,
+    config: dict | str | None = None,
     min_area: float = 0,
     delete_cache: bool = True,
     recover: bool = False,
@@ -33,6 +34,9 @@ def comseg(
     if config is None:
         log.info("No config provided, inferring a default ComSeg config.")
         config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES])
+    elif isinstance(config, str):
+        with open(config, "r") as f:
+            config = json.load(f)
 
     assert "gene_column" in config, "'gene_column' not found in config"
 
@@ -40,13 +44,13 @@ def comseg(
 
     import shutil
 
-    patches_dirs = [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+    patches_dirs = get_transcripts_patches_dirs(sdata)
 
     _functions = [partial(comseg_patch, patch_dir, config, recover) for patch_dir in patches_dirs]
 
     settings._run_with_backend(_functions)
 
-    resolve(sdata, None, config["gene_column"], min_area=min_area, patches_dirs=patches_dirs, key_added=key_added)
+    resolve(sdata, patches_dirs, config["gene_column"], min_area=min_area, key_added=key_added)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 

@@ -58,13 +58,14 @@ class WorkflowPaths:
         # snakemake cache / intermediate files
         self.sopa_cache = self.sdata_path / ".sopa_cache"
         self.smk_table = self.sopa_cache / "table"
+
         self.smk_patches = self.sopa_cache / "patches"
         self.smk_patches_file_image = self.sopa_cache / "patches_file_image"
-        self.smk_patches_file_baysor = self.sopa_cache / "patches_file_baysor"
-        self.smk_patches_file_comseg = self.sopa_cache / "patches_file_comseg"
+        self.smk_patches_file_transcripts = self.sopa_cache / "patches_file_transcripts"
+
         self.smk_cellpose_temp_dir = self.sopa_cache / "cellpose_boundaries"
-        self.smk_baysor_temp_dir = self.sopa_cache / "baysor_boundaries"
-        self.smk_comseg_temp_dir = self.sopa_cache / "comseg_boundaries"
+        self.smk_baysor_temp_dir = self.sopa_cache / "transcript_patches"
+        self.smk_comseg_temp_dir = self.sopa_cache / "transcript_patches"
         self.smk_cellpose_boundaries = self.sopa_cache / "cellpose_boundaries_done"
         self.smk_baysor_boundaries = self.sopa_cache / "baysor_boundaries_done"
         self.smk_comseg_boundaries = self.sopa_cache / "comseg_boundaries_done"
@@ -220,9 +221,9 @@ def stringify_for_cli(value) -> str:
 
 
 def check_baysor_executable_path(config: dict):
-    baysor_path = os.environ.get("BAYSOR_EXECUTABLE_PATH")
+    baysor_path = os.environ.get("baysor")
 
-    error_message = """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"], or set the BAYSOR_EXECUTABLE_PATH env variable."""
+    error_message = """When using baysor, please provide the path to the baysor executable in the config["executables"]["baysor"], or set the baysor alias."""
 
     if baysor_path is None:
         assert "executables" in config and "baysor" in config["executables"], error_message

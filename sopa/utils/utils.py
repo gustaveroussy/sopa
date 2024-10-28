@@ -230,3 +230,13 @@ def clear_cache(sdata: SpatialData | None = None) -> None:
     for sub_dir in list(HOME_CACHE_DIR.iterdir()):
         if sub_dir.is_dir():
             shutil.rmtree(sub_dir)
+
+
+def get_transcripts_patches_dirs(sdata: SpatialData) -> list[Path]:
+    """Get the list of directories containing the transcript patches
+
+    Args:
+        sdata: A `SpatialData` object containing the transcript patches.
+    """
+    assert SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes, "Transcript patches not found in the SpatialData object"
+    return [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]

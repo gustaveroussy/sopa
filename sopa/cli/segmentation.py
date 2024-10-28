@@ -190,59 +190,47 @@ def _run_staining_segmentation(
 @app_segmentation.command()
 def comseg(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    config: str = typer.Option(default=None, help="Path to the JSON config file for ComSeg"),
     patch_index: int = typer.Option(
         default=None,
-        help="Index of the patch on which the segmentation method should be run.`",
-    ),
-    patch_dir: str = typer.Option(
-        default=None,
-        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/comseg` directory",
+        help="Index of the patch on which the segmentation method should be run.",
     ),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
-    import json
-    import logging
-    from pathlib import Path
+    import sopa
+    from sopa.io.standardize import read_zarr_standardized
+    from sopa.segmentation.methods._comseg import comseg, comseg_patch
 
-    from tqdm import tqdm
+    sdata = read_zarr_standardized(sdata_path)
 
-    from sopa._constants import SopaFiles, SopaKeys
-    from sopa.segmentation.methods import comseg_patch
-
-    from .utils import _default_boundary_dir
-
-    log = logging.getLogger(__name__)
-
-    config_name = SopaFiles.JSON_CONFIG_FILE
-
-    if patch_dir is None:
-        patch_dir = _default_boundary_dir(sdata_path, SopaKeys.COMSEG_BOUNDARIES)
-    patch_dir = Path(patch_dir)
-
-    if patch_index is not None:
-        with open(patch_dir / str(patch_index) / config_name, "r") as f:
-            config = json.load(f)
-        comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
+    if patch_index is None:
+        comseg(sdata, config=config)
     else:
-        log.warning(
-            "Running segmentation in a sequential manner. This is not recommended on large images because it can be extremely slow (see https://github.com/gustaveroussy/sopa/discussions/36 for more details)"
-        )
-        for path_index_folder in tqdm(list(Path(patch_dir).glob("*")), desc="Run all patches"):
-            if not path_index_folder.stem.isdigit():
-                continue
-
-            patch_index = int(path_index_folder.stem)
-            with open(patch_dir / str(patch_index) / config_name, "r") as f:
-                config = json.load(f)
-            comseg_patch(temp_dir=patch_dir, patch_index=patch_index, config=config)
+        patches_dirs = sopa.utils.get_transcripts_patches_dirs(sdata)
+        comseg_patch(patches_dirs[patch_index], config=config)
 
 
 @app_segmentation.command()
-def tissue(sdata_path: str = typer.Argument(help=SDATA_HELPER)):
+def tissue(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    image_key: str = typer.Option(
+        default=None,
+        help="Name of the image key to use for tissue segmentation.",
+    ),
+    level: int = typer.Option(
+        default=-1,
+        help="Level of the multiscale image to use for tissue segmentation.",
+    ),
+    kwargs: str = typer.Option(
+        {},
+        callback=ast.literal_eval,
+        help="Kwargs for `sopa.segmentation.tissue`. This should be a dictionnary, in inline string format.",
+    ),
+):
     """Perform tissue segmentation. This can be done only on objects with H&E staining."""
     import sopa
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
 
-    sopa.tissue(sdata)
+    sopa.segmentation.tissue(sdata, image_key=image_key, level=level, **kwargs)

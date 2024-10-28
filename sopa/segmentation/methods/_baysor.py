@@ -8,6 +8,7 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import ATTRS_KEY, SopaAttrs, SopaFiles, SopaKeys
+from ...utils import get_transcripts_patches_dirs
 from .._transcripts import copy_segmentation_config, resolve
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def baysor(
     assert config.get("data", {}).get("gene"), "Gene column not found in config['data']['gene']"
     gene_column = config["data"]["gene"]
 
-    patches_dirs = [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+    patches_dirs = get_transcripts_patches_dirs(sdata)
 
     for patch_dir in patches_dirs:
         copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config)
@@ -67,7 +68,7 @@ def baysor(
             (patch_dir / "segmentation_counts.loom").exists() for patch_dir in patches_dirs
         ), "Baysor failed on all patches"
 
-    resolve(sdata, None, gene_column, min_area=min_area, patches_dirs=patches_dirs, key_added=key_added)
+    resolve(sdata, patches_dirs, gene_column, min_area=min_area, key_added=key_added)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 

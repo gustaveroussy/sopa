@@ -142,7 +142,7 @@ rule patch_segmentation_comseg:
         mem_mb=128_000,
     shell:
         """
-        sopa segmentation comseg {paths.sdata_path} --patch-dir {paths.smk_comseg_temp_dir} --patch-index {wildcards.index}
+        sopa segmentation comseg {paths.sdata_path} --patch-index {wildcards.index}
         """
 
 def get_input_resolve(name, dirs=False):

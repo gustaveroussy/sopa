@@ -25,9 +25,8 @@ log = logging.getLogger(__name__)
 
 def resolve(
     sdata: SpatialData,
-    temp_dir: str | None,
+    patches_dirs: list[str],
     gene_column: str,
-    patches_dirs: list[str] | None = None,
     min_area: float = 0,
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
 ):
@@ -35,7 +34,6 @@ def resolve(
 
     Args:
         sdata: A `SpatialData` object
-        temp_dir: Temporary directory used to store all the patches subdirectories (one subdirectory for one patch and for one segmentation run)
         gene_column: Column of the transcript dataframe containing the genes names
         patches_dirs: Optional list of subdirectories inside `temp_dir` to be read. By default, read all.
         min_area: Minimum area (in microns^2) for a cell to be kept
@@ -44,7 +42,7 @@ def resolve(
     if min_area > 0:
         log.info(f"Cells whose area is less than {min_area} microns^2 will be removed")
 
-    patches_cells, adatas = _read_all_segmented_patches(temp_dir, min_area, patches_dirs)
+    patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
     geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
 
     points = sdata[sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.POINTS_KEY].iloc[0]]
@@ -139,13 +137,9 @@ def _find_polygon_file(directory: Path) -> tuple[bool, Path]:
 
 
 def _read_all_segmented_patches(
-    temp_dir: str,
+    patches_dirs: list[str],
     min_area: float = 0,
-    patches_dirs: list[str] | None = None,
 ) -> tuple[list[list[Polygon]], list[AnnData]]:
-    if patches_dirs is None or not len(patches_dirs):
-        patches_dirs = [subdir for subdir in Path(temp_dir).iterdir() if subdir.is_dir()]
-
     outs = [
         _read_one_segmented_patch(path, min_area)
         for path in tqdm(patches_dirs, desc="Reading transcript-segmentation outputs")
