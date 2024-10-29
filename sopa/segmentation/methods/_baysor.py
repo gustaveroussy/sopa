@@ -22,6 +22,7 @@ def baysor(
     recover: bool = False,
     force: bool = False,
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
+    patch_index: int | None = None,
 ):
     assert (
         SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
@@ -60,6 +61,10 @@ def baysor(
         recover=recover,
         prior_shapes_key=prior_shapes_key,
     )
+
+    if patch_index is not None:
+        baysor_patch(patches_dirs[patch_index])
+        return
 
     settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in patches_dirs])
 

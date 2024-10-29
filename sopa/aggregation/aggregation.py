@@ -38,9 +38,13 @@ def aggregate(
 
     gene_column = None
     if aggregate_genes or (aggregate_genes is None and bins_key is None and sdata.points):
-        points = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
+        points_key, points = get_spatial_element(
+            sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
+        )
         gene_column = points.attrs.get(ATTRS_KEY, {}).get(PointsModel.FEATURE_KEY)
-        assert aggregate_genes is None or gene_column is not None, "No gene column found in points"
+        assert (
+            aggregate_genes is None or gene_column is not None
+        ), f"No gene column found in sdata['{points_key}'].attrs['{ATTRS_KEY}']['{PointsModel.FEATURE_KEY}']"
 
     aggr.compute_table(
         gene_column=gene_column,

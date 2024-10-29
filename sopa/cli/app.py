@@ -151,8 +151,10 @@ def crop(
 @app.command()
 def aggregate(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    aggregate_genes: bool = typer.Option(False, help="Whether to aggregate the genes (counts) inside each cell"),
-    average_intensities: bool = typer.Option(False, help="Whether to average the channel intensities inside each cell"),
+    aggregate_genes: bool = typer.Option(None, help="Whether to aggregate the genes (counts) inside each cell"),
+    aggregate_channels: bool = typer.Option(
+        False, help="Whether to aggregate the channels (intensity) inside each cell"
+    ),
     expand_radius_ratio: float = typer.Option(
         default=0,
         help="Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings",
@@ -167,30 +169,31 @@ def aggregate(
         help="Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on",
     ),
     method_name: str = typer.Option(
-        None,
-        help="If segmentation was performed with a generic method, this is the name of the method used.",
+        None, help="If segmentation was performed with a generic method, this is the name of the method used."
     ),
-    gene_column: str = typer.Option(
-        None,
-        help="[Deprecated] Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count",
-    ),
+    average_intensities: bool = typer.Option(False, help="[Deprecated] Use `aggregate_channels` instead."),
+    gene_column: str = typer.Option(None, help="[Deprecated] Use `aggregate_genes` instead."),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
+    import warnings
+
     import sopa
     from sopa.io.standardize import read_zarr_standardized
 
-    sdata = read_zarr_standardized(sdata_path, warn=True)
+    sdata = read_zarr_standardized(sdata_path)
 
     if gene_column is not None:
-        import warnings
-
-        warnings.warn("The `gene_column` argument is deprecated. Use the `aggregate_genes` argument instead.")
+        warnings.warn("The `gene_column` argument is deprecated. Use `aggregate_genes` instead.")
         aggregate_genes = True
+
+    if average_intensities:
+        warnings.warn("The `average_intensities` argument is deprecated. Use `aggregate_channels` instead.")
+        aggregate_channels = True
 
     sopa.aggregate(
         sdata,
         aggregate_genes=aggregate_genes,
-        average_intensities=average_intensities,
+        aggregate_channels=aggregate_channels,
         image_key=image_key,
         shapes_key=method_name,
         min_transcripts=min_transcripts,

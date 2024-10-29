@@ -9,7 +9,11 @@ import spatialdata
 from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
-from spatialdata.transformations import get_transformation_between_coordinate_systems
+from spatialdata.transformations import (
+    Identity,
+    get_transformation,
+    get_transformation_between_coordinate_systems,
+)
 from xarray import DataArray
 
 from .. import settings
@@ -74,6 +78,13 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
     """
     element = sdata[element] if isinstance(element, str) else element
     element_cs = sdata[element_cs] if isinstance(element_cs, str) else element_cs
+
+    for cs, transformation in get_transformation(element, get_all=True).items():
+        if isinstance(transformation, Identity):
+            target_transformations = get_transformation(element_cs, get_all=True)
+            if isinstance(target_transformations.get(cs), Identity):
+                return element  # no transformation needed
+            break
 
     transformation = get_transformation_between_coordinate_systems(
         sdata, element, element_cs, intermediate_coordinate_systems=element_cs

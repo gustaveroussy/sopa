@@ -5,9 +5,10 @@ import logging
 from pathlib import Path
 
 import geopandas as gpd
+from shapely import Polygon
 from spatialdata import SpatialData
 
-from ..._constants import ATTRS_KEY, SopaKeys
+from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ...utils import (
     get_boundaries,
     get_spatial_element,
@@ -105,7 +106,9 @@ def write(
     path: Path = Path(path)
     _check_explorer_directory(path)
 
-    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
+    image_key, _ = get_spatial_image(
+        sdata, key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION), return_key=True
+    )
 
     ### Saving cell categories and gene counts
     if SopaKeys.TABLE in sdata.tables:
@@ -133,12 +136,14 @@ def write(
         if SopaKeys.TABLE in sdata.tables:
             geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
 
+        assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), "All geometries must be a `shapely.Polygon`"
+
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 
     ### Saving transcripts
     df = None
     if len(sdata.points):
-        df = get_spatial_element(sdata.points, key=points_key)
+        df = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
 
     if _should_save(mode, "t") and df is not None:
         gene_column = gene_column or df.attrs[ATTRS_KEY].get("feature_key")

@@ -26,6 +26,7 @@ def comseg(
     delete_cache: bool = True,
     recover: bool = False,
     key_added: str = SopaKeys.COMSEG_BOUNDARIES,
+    patch_index: int | None = None,
 ):
     assert (
         SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
@@ -45,6 +46,10 @@ def comseg(
     import shutil
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
+
+    if patch_index is not None:
+        comseg_patch(patches_dirs[patch_index], config, recover)
+        return
 
     _functions = [partial(comseg_patch, patch_dir, config, recover) for patch_dir in patches_dirs]
 

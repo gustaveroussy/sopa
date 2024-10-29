@@ -84,7 +84,7 @@ class WorkflowPaths:
         self.explorer_image = self.explorer_directory / "morphology.ome.tif"
         self.report = self.explorer_directory / "analysis_summary.html"
 
-    def cells_paths(self, file_content: str, name, dirs: bool = False):
+    def cells_paths(self, file_content: str, name):
         """Compute the paths to the temporary boundary files
 
         Args:
@@ -100,16 +100,10 @@ class WorkflowPaths:
         if name == "baysor":
             indices = map(int, file_content.split())
             BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]
-
-            if dirs:
-                return [str(self.smk_baysor_temp_dir / str(i)) for i in indices]
             return [str(self.smk_baysor_temp_dir / str(i) / file) for i in indices for file in BAYSOR_FILES]
         if name == "comseg":
             indices = map(int, file_content.split())
             COMSEG_FILES = ["segmentation_polygons.json", "segmentation_counts.h5ad"]
-
-            if dirs:
-                return [str(self.smk_comseg_temp_dir / str(i)) for i in indices]
             return [str(self.smk_comseg_temp_dir / str(i) / file) for i in indices for file in COMSEG_FILES]
 
 
@@ -184,20 +178,6 @@ class Args:
 
     def dump_baysor_patchify(self):
         return f'--baysor-temp-dir {self.paths.smk_baysor_temp_dir} {self["segmentation"]["baysor"].where(keys=["cell_key", "unassigned_value", "config"])}'
-
-    @property
-    def baysor_prior_seg(self):
-        if not self.baysor:
-            return ""
-
-        key = self.config["segmentation"]["baysor"].get("cell_key")
-        if key is not None:
-            return f":{key}"
-
-        if "cellpose" in self.config["segmentation"]:
-            return ":cell"
-
-        return ""
 
     @property
     def gene_column(self):

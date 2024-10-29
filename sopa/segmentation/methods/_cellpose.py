@@ -9,6 +9,71 @@ from ..._constants import SopaKeys
 from ._staining import custom_staining_based
 
 
+def cellpose(
+    sdata: SpatialData,
+    channels: list[str] | str,
+    diameter: int,
+    image_key: str | None = None,
+    min_area: int | None = None,
+    delete_cache: bool = True,
+    recover: bool = False,
+    flow_threshold: float = 2,
+    cellprob_threshold: float = -6,
+    clip_limit: float = 0.2,
+    clahe_kernel_size: int | list[int] | None = None,
+    gaussian_sigma: float = 1,
+    cellpose_model_kwargs: dict | None = None,
+    **cellpose_eval_kwargs: int,
+):
+    """Run Cellpose segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
+    The segmentation is run on each patch, for memory efficiency.
+
+    Args:
+        sdata: A `SpatialData` object
+        channels: Name of the channels to be used for segmentation (or list of channel names).
+        diameter: The Cellpose parameter for the expected cell diameter (in pixel).
+        image_key: Name of the image in `sdata` to be used for segmentation.
+        min_area: Minimum area of a cell to be considered. By default, it is calculated based on the `diameter` parameter.
+        delete_cache: Whether to delete the cache after segmentation.
+        recover: If `True`, recover the cache from a failed segmentation, and continue.
+        flow_threshold: Cellpose `flow_threshold` parameter.
+        cellprob_threshold: Cellpose `cellprob_threshold` parameter.
+        clip_limit: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
+        clahe_kernel_size: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
+        gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
+        cellpose_model_kwargs: Dictionary of kwargs to be provided to the `cellpose.models.CellposeModel` object.
+        **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
+    """
+    channels = channels if isinstance(channels, list) else [channels]
+
+    method = cellpose_patch(
+        diameter=diameter,
+        channels=channels,
+        flow_threshold=flow_threshold,
+        cellprob_threshold=cellprob_threshold,
+        cellpose_model_kwargs=cellpose_model_kwargs,
+        **cellpose_eval_kwargs,
+    )
+
+    if min_area is None:
+        min_area = (diameter / 2) ** 2  # by default, about 15% of the "normal cell" area
+
+    custom_staining_based(
+        sdata,
+        method,
+        channels,
+        image_key=image_key,
+        min_area=min_area,
+        delete_cache=delete_cache,
+        recover=recover,
+        clip_limit=clip_limit,
+        clahe_kernel_size=clahe_kernel_size,
+        gaussian_sigma=gaussian_sigma,
+        cache_dir_name=SopaKeys.CELLPOSE_BOUNDARIES,
+        key_added=SopaKeys.CELLPOSE_BOUNDARIES,
+    )
+
+
 def cellpose_patch(
     diameter: float,
     channels: list[str],
@@ -56,59 +121,3 @@ def cellpose_patch(
         return mask
 
     return _
-
-
-def cellpose(
-    sdata: SpatialData,
-    channels: list[str] | str,
-    diameter: int,
-    image_key: str | None = None,
-    min_area: int | None = None,
-    delete_cache: bool = True,
-    recover: bool = False,
-    flow_threshold: float = 2,
-    cellprob_threshold: float = -6,
-    cellpose_model_kwargs: dict | None = None,
-    **cellpose_eval_kwargs: int,
-):
-    """Run Cellpose segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
-    The segmentation is run on each patch, for memory efficiency.
-
-    Args:
-        sdata: A `SpatialData` object
-        channels: Name of the channels to be used for segmentation (or list of channel names).
-        diameter: The Cellpose parameter for the expected cell diameter (in pixel).
-        image_key: Name of the image in `sdata` to be used for segmentation.
-        min_area: Minimum area of a cell to be considered. By default, it is calculated based on the `diameter` parameter.
-        delete_cache: Whether to delete the cache after segmentation.
-        recover: If `True`, recover the cache from a failed segmentation, and continue.
-        flow_threshold: Cellpose `flow_threshold` parameter.
-        cellprob_threshold: Cellpose `cellprob_threshold` parameter.
-        cellpose_model_kwargs: Dictionary of kwargs to be provided to the `cellpose.models.CellposeModel` object.
-        **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
-    """
-    channels = channels if isinstance(channels, list) else [channels]
-
-    method = cellpose_patch(
-        diameter=diameter,
-        channels=channels,
-        flow_threshold=flow_threshold,
-        cellprob_threshold=cellprob_threshold,
-        cellpose_model_kwargs=cellpose_model_kwargs,
-        **cellpose_eval_kwargs,
-    )
-
-    if min_area is None:
-        min_area = (diameter / 2) ** 2  # by default, about 15% of the "normal cell" area
-
-    custom_staining_based(
-        sdata,
-        method,
-        channels,
-        image_key=image_key,
-        min_area=min_area,
-        delete_cache=delete_cache,
-        recover=recover,
-        cache_dir_name=SopaKeys.CELLPOSE_BOUNDARIES,
-        key_added=SopaKeys.CELLPOSE_BOUNDARIES,
-    )

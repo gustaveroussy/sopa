@@ -78,8 +78,8 @@ def transcripts(
         write_cells_centroids=write_cells_centroids,
     )
 
-    n_patches = len(sdata[SopaKeys.TRANSCRIPT_PATCHES])
-    _save_cache(sdata_path, SopaFiles.PATCHES_FILE_TRANSCRIPTS, n_patches)
+    valid_indices = list(sdata[SopaKeys.TRANSCRIPT_PATCHES].index)
+    _save_cache(sdata_path, SopaFiles.PATCHES_FILE_TRANSCRIPTS, "\n".join(map(str, valid_indices)))
 
 
 def _save_cache(sdata_path: str, filename: str, content: str):
@@ -90,5 +90,5 @@ def _save_cache(sdata_path: str, filename: str, content: str):
     cache_file = Path(sdata_path) / SopaFiles.SOPA_CACHE_DIR / filename
     cache_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(cache_file, "w") as f:
-        f.write(str(content))
+    with open(cache_file, "w", newline="\n") as f:
+        f.write(f"{content}\n")

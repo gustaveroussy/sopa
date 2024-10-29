@@ -5,7 +5,7 @@ from typing import Iterable
 
 import typer
 
-from .utils import SDATA_HELPER
+from .utils import SDATA_HELPER, _log_whether_to_resolve
 
 app_segmentation = typer.Typer()
 
@@ -56,22 +56,13 @@ def cellpose(
         - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
     """
     from sopa._constants import SopaKeys
-    from sopa.segmentation.methods import cellpose_patch
 
-    method = cellpose_patch(
-        diameter,
-        channels,
-        flow_threshold=flow_threshold,
-        cellprob_threshold=cellprob_threshold,
-        model_type=model_type,
-        pretrained_model=pretrained_model,
-        **method_kwargs,
-    )
+    channels = channels if isinstance(channels, list) else [channels]
 
     _run_staining_segmentation(
         sdata_path,
+        "cellpose_patch",
         SopaKeys.CELLPOSE_BOUNDARIES,
-        method,
         channels,
         min_area,
         clip_limit,
@@ -79,6 +70,12 @@ def cellpose(
         gaussian_sigma,
         patch_index,
         patch_dir,
+        diameter=diameter,
+        flow_threshold=flow_threshold,
+        cellprob_threshold=cellprob_threshold,
+        model_type=model_type,
+        pretrained_model=pretrained_model,
+        **method_kwargs,
     )
 
 
@@ -133,12 +130,10 @@ def generic_staining(
         methods, method_name
     ), f"'{method_name}' is not a valid method builder under `sopa.segmentation.methods`"
 
-    method = getattr(methods, method_name)(**method_kwargs)
-
     _run_staining_segmentation(
         sdata_path,
         method_name,
-        method,
+        method_name,
         channels,
         min_area,
         clip_limit,
@@ -146,13 +141,14 @@ def generic_staining(
         gaussian_sigma,
         patch_index,
         patch_dir,
+        **method_kwargs,
     )
 
 
 def _run_staining_segmentation(
     sdata_path: str,
-    shapes_key: str,
-    method,
+    method_name: str,
+    key_added: str,
     channels: list[str],
     min_area: float,
     clip_limit: float,
@@ -160,13 +156,29 @@ def _run_staining_segmentation(
     gaussian_sigma: float,
     patch_index: int | None,
     patch_dir: str,
+    **method_kwargs: int,
 ):
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation import StainingSegmentation
+    from sopa.segmentation import StainingSegmentation, custom_staining_based, methods
 
     from .utils import _default_boundary_dir
 
     sdata = read_zarr_standardized(sdata_path)
+    method = getattr(methods, method_name)(channels=channels, **method_kwargs)
+
+    if patch_index is None:
+        custom_staining_based(
+            sdata,
+            method=method,
+            channels=channels,
+            min_area=min_area,
+            clip_limit=clip_limit,
+            clahe_kernel_size=clahe_kernel_size,
+            gaussian_sigma=gaussian_sigma,
+            key_added=key_added,
+        )
+        _log_whether_to_resolve(patch_index)
+        return
 
     segmentation = StainingSegmentation(
         sdata,
@@ -179,12 +191,9 @@ def _run_staining_segmentation(
     )
 
     if patch_dir is None:
-        patch_dir = _default_boundary_dir(sdata_path, shapes_key)
+        patch_dir = _default_boundary_dir(sdata_path, key_added)
 
-    if patch_index is None:
-        segmentation.write_patches_cells(patch_dir)
-    else:
-        segmentation.write_patch_cells(patch_dir, patch_index)
+    segmentation.write_patch_cells(patch_dir, patch_index)
 
 
 @app_segmentation.command()
@@ -195,19 +204,38 @@ def comseg(
         default=None,
         help="Index of the patch on which the segmentation method should be run.",
     ),
+    min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
-    import sopa
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.methods._comseg import comseg, comseg_patch
+    from sopa.segmentation.methods._comseg import comseg
 
     sdata = read_zarr_standardized(sdata_path)
 
-    if patch_index is None:
-        comseg(sdata, config=config)
-    else:
-        patches_dirs = sopa.utils.get_transcripts_patches_dirs(sdata)
-        comseg_patch(patches_dirs[patch_index], config=config)
+    comseg(sdata, config=config, min_area=min_area, patch_index=patch_index)
+
+    _log_whether_to_resolve(patch_index)
+
+
+@app_segmentation.command()
+def baysor(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    config: str = typer.Option(default=None, help="Path to the TOML config file for Baysor"),
+    patch_index: int = typer.Option(
+        default=None,
+        help="Index of the patch on which the segmentation method should be run. By default, run on all patches.",
+    ),
+    min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
+):
+    """Perform Baysor segmentation. This can be done on all patches directly, or on one individual patch."""
+    from sopa.io.standardize import read_zarr_standardized
+    from sopa.segmentation.methods._baysor import baysor
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    baysor(sdata, config=config, min_area=min_area, patch_index=patch_index)
+
+    _log_whether_to_resolve(patch_index)
 
 
 @app_segmentation.command()

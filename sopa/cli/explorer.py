@@ -6,8 +6,6 @@ from .utils import SDATA_HELPER
 
 app_explorer = typer.Typer()
 
-PIXELSIZE_DEPRECATED = "`pixelsize` is deprecated and will be removed in future versions. Use `pixel_size` instead."
-
 
 @app_explorer.command()
 def write(
@@ -25,10 +23,6 @@ def write(
         0.2125,
         help="Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.",
     ),
-    pixelsize: float = typer.Option(
-        None,
-        help=PIXELSIZE_DEPRECATED,
-    ),
     lazy: bool = typer.Option(
         True,
         help="If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`)",
@@ -45,9 +39,11 @@ def write(
         True,
         help="Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)",
     ),
+    run_name: str = typer.Option(
+        None, help="Name of the run displayed in the Xenium Explorer. If `None`, uses the `image_key`"
+    ),
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs"""
-    import logging
     from pathlib import Path
 
     from sopa.io.explorer import write
@@ -57,11 +53,6 @@ def write(
 
     if output_path is None:
         output_path = Path(sdata_path).with_suffix(".explorer")
-
-    if pixelsize is not None:
-        log = logging.getLogger(__name__)
-        log.critical(PIXELSIZE_DEPRECATED)
-        pixel_size = pixelsize
 
     write(
         output_path,
@@ -73,6 +64,7 @@ def write(
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,
         save_h5ad=save_h5ad,
+        run_name=run_name,
     )
 
 

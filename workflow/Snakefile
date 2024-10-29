@@ -115,8 +115,6 @@ rule patch_segmentation_baysor:
     output:
         paths.smk_baysor_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_baysor_temp_dir / "{index}" / "segmentation_counts.loom",
-    params:
-        args_baysor_prior_seg = args.baysor_prior_seg,
     resources:
         mem_mb=128_000,
     shell:
@@ -125,8 +123,7 @@ rule patch_segmentation_baysor:
             module purge
         fi
 
-        cd {input.baysor_patch}
-        {config[executables][baysor]} run --save-polygons GeoJSON -c config.toml transcripts.csv {params.args_baysor_prior_seg}
+        sopa segmentation baysor {paths.sdata_path} --patch-index {wildcards.index}
         """
 
 rule patch_segmentation_comseg:
@@ -145,10 +142,10 @@ rule patch_segmentation_comseg:
         sopa segmentation comseg {paths.sdata_path} --patch-index {wildcards.index}
         """
 
-def get_input_resolve(name, dirs=False):
+def get_input_resolve(name):
     def _(wilcards):
         with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.patches_file.open() as f:
-            return paths.cells_paths(f.read(), name, dirs=dirs)
+            return paths.cells_paths(f.read(), name)
     return _
 
 rule resolve_cellpose:
@@ -166,18 +163,16 @@ rule resolve_cellpose:
 rule resolve_baysor:
     input:
         files = get_input_resolve("baysor"),
-        dirs = get_input_resolve("baysor", dirs=True),
     output:
         touch(paths.smk_baysor_boundaries),
         touch(paths.smk_table),
     conda:
         "sopa"
     params:
-        args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
         args_min_area = args.min_area("baysor"),
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
+        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area}
 
         rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
         """
@@ -185,18 +180,16 @@ rule resolve_baysor:
 rule resolve_comseg:
     input:
         files = get_input_resolve("comseg"),
-        dirs = get_input_resolve("comseg",dirs=True),
     output:
         touch(paths.smk_comseg_boundaries),
         touch(paths.smk_table),
     conda:
         "sopa"
     params:
-        args_patches_dirs=lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
         args_min_area=args.min_area("comseg"),
     shell:
         """
-        sopa resolve comseg {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
+        sopa resolve comseg {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area}
 
         rm -r {paths.smk_comseg_temp_dir}    # cleanup large comseg files
         """

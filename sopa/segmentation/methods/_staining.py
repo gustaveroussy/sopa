@@ -18,6 +18,9 @@ def custom_staining_based(
     min_area: int = 0,
     delete_cache: bool = True,
     recover: bool = False,
+    clip_limit: float = 0.2,
+    clahe_kernel_size: int | list[int] | None = None,
+    gaussian_sigma: float = 1,
     cache_dir_name: str = SopaKeys.CUSTOM_BOUNDARIES,
     key_added: str = SopaKeys.CUSTOM_BOUNDARIES,
 ):
@@ -32,6 +35,9 @@ def custom_staining_based(
         min_area: Minimum area of a cell to be considered.
         delete_cache: Whether to delete the cache after segmentation.
         recover: If `True`, recover the cache from a failed segmentation, and continue.
+        clip_limit: Parameter for skimage.exposure.equalize_adapthist (applied before running segmentation)
+        clahe_kernel_size: Parameter for skimage.exposure.equalize_adapthist (applied before running segmentation)
+        gaussian_sigma: Parameter for scipy gaussian_filter (applied before running segmentation)
         cache_dir_name: Name of the cache directory.
         key_added: Name of the key to be added to `sdata.shapes`.
     """
@@ -39,7 +45,16 @@ def custom_staining_based(
 
     temp_dir = get_cache_dir(sdata) / cache_dir_name
 
-    segmentation = StainingSegmentation(sdata, method, channels, min_area=min_area, image_key=image_key)
+    segmentation = StainingSegmentation(
+        sdata,
+        method,
+        channels,
+        min_area=min_area,
+        image_key=image_key,
+        clip_limit=clip_limit,
+        clahe_kernel_size=clahe_kernel_size,
+        gaussian_sigma=gaussian_sigma,
+    )
     segmentation.write_patches_cells(temp_dir, recover=recover)
 
     cells = StainingSegmentation.read_patches_cells(temp_dir)

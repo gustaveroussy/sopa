@@ -139,14 +139,14 @@ def toy_dataset(
         {
             "x": points_coords[:, 0],
             "y": points_coords[:, 1],
-            "z": 1,
+            "z_": 1,  # TODO: add back as 'z'?
             "genes": gene_names,
         }
     )
 
     # apply an arbritrary transformation for a more complete test case
     affine = np.array([[pixel_size, 0, 100], [0, pixel_size, 600], [0, 0, 1]])
-    df[["x", "y", "z"]] = df[["x", "y", "z"]] @ affine.T
+    df[["x", "y", "z_"]] = df[["x", "y", "z_"]] @ affine.T
     affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
 
     df = dd.from_pandas(df, chunksize=2_000_000)
