@@ -35,7 +35,7 @@ rule to_spatialdata:
         sopa read {paths.data_path} --sdata-path {paths.sdata_path} {params.args_reader}
         """
 
-checkpoint patchify_cellpose:
+checkpoint patchify_image:
     input:
         paths.sdata_zgroup,
     output:
@@ -50,13 +50,13 @@ checkpoint patchify_cellpose:
         sopa patchify image {paths.sdata_path} {params.args_patchify}
         """
 
-checkpoint patchify_baysor:
+checkpoint patchify_transcripts:
     input:
         paths.sdata_zgroup,
         paths.smk_cellpose_boundaries if args.cellpose else [],
     output:
-        patches_file = paths.smk_patches_file_baysor,
-        smk_baysor_temp_dir = directory(paths.smk_baysor_temp_dir),
+        patches_file = paths.smk_patches_file_transcripts,
+        smk_transcripts_temp_dir = directory(paths.smk_transcripts_temp_dir),
     params:
         args_patchify = str(args["patchify"].where(contains="micron")),
         args_baysor = args.dump_baysor_patchify() if args.baysor else "",
@@ -65,32 +65,7 @@ checkpoint patchify_baysor:
         "sopa"
     shell:
         """
-        sopa patchify baysor {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
-        """
-
-checkpoint patchify_comseg:
-    input:
-        paths.sdata_zgroup,
-        paths.smk_cellpose_boundaries if args.cellpose else [],
-    output:
-        patches_file = paths.smk_patches_file_comseg,
-        smk_comseg_temp_dir = directory(paths.smk_comseg_temp_dir),
-    params:
-        args_patchify = str(
-            args["patchify"].where([
-                "patch_width_microns",
-                "patch_overlap_microns",
-                "min_transcripts_per_patch",
-                "min_cells_per_patch",
-            ],
-        )),
-        args_comseg = args.dump_comseg_patchify() if args.comseg else "",
-        arg_prior = "--use-prior" if args.cellpose else "",
-    conda:
-        "sopa"
-    shell:
-        """
-        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg} {params.arg_prior}
+        sopa patchify transcripts {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
         """
 
 rule patch_segmentation_cellpose:
@@ -110,11 +85,10 @@ rule patch_segmentation_cellpose:
 
 rule patch_segmentation_baysor:
     input:
-        patches_file = paths.smk_patches_file_baysor,
-        baysor_patch = paths.smk_baysor_temp_dir / "{index}",
+        patches_file = paths.smk_patches_file_transcripts,
+        baysor_patch = paths.smk_transcripts_temp_dir / "{index}",
     output:
-        paths.smk_baysor_temp_dir / "{index}" / "segmentation_polygons.json",
-        paths.smk_baysor_temp_dir / "{index}" / "segmentation_counts.loom",
+        paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.loom",
     resources:
         mem_mb=128_000,
     shell:
@@ -128,11 +102,11 @@ rule patch_segmentation_baysor:
 
 rule patch_segmentation_comseg:
     input:
-        patches_file = paths.smk_patches_file_comseg,
-        baysor_patch = paths.smk_comseg_temp_dir / "{index}",
+        patches_file = paths.smk_patches_file_transcripts,
+        comseg_patch = paths.smk_transcripts_temp_dir / "{index}",
     output:
-        paths.smk_comseg_temp_dir / "{index}" / "segmentation_polygons.json",
-        paths.smk_comseg_temp_dir / "{index}" / "segmentation_counts.h5ad",
+        paths.smk_transcripts_temp_dir / "{index}" / "segmentation_polygons.json",
+        paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.h5ad",
     conda:
         "sopa"
     resources:
@@ -142,15 +116,15 @@ rule patch_segmentation_comseg:
         sopa segmentation comseg {paths.sdata_path} --patch-index {wildcards.index}
         """
 
-def get_input_resolve(name):
+def get_input_resolve(name, method_name):
     def _(wilcards):
         with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.patches_file.open() as f:
-            return paths.cells_paths(f.read(), name)
+            return paths.cells_paths(f.read(), method_name)
     return _
 
 rule resolve_cellpose:
     input:
-        get_input_resolve("cellpose"),
+        get_input_resolve("image", "cellpose"),
     output:
         touch(paths.smk_cellpose_boundaries),
     conda:
@@ -162,7 +136,7 @@ rule resolve_cellpose:
 
 rule resolve_baysor:
     input:
-        files = get_input_resolve("baysor"),
+        files = get_input_resolve("transcripts", "baysor"),
     output:
         touch(paths.smk_baysor_boundaries),
         touch(paths.smk_table),
@@ -174,12 +148,12 @@ rule resolve_baysor:
         """
         sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area}
 
-        rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
+        rm -r {paths.smk_transcripts_temp_dir}    # cleanup large baysor files
         """
 
 rule resolve_comseg:
     input:
-        files = get_input_resolve("comseg"),
+        files = get_input_resolve("transcripts", "comseg"),
     output:
         touch(paths.smk_comseg_boundaries),
         touch(paths.smk_table),
@@ -191,7 +165,7 @@ rule resolve_comseg:
         """
         sopa resolve comseg {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area}
 
-        rm -r {paths.smk_comseg_temp_dir}    # cleanup large comseg files
+        rm -r {paths.smk_transcripts_temp_dir}    # cleanup large comseg files
         """
 
 def get_smk_boundaries(args):

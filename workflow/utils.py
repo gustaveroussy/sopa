@@ -3,33 +3,6 @@ from pathlib import Path
 from typing import Optional
 
 
-def sanity_check_config(config: dict):
-    assert (
-        "read" in config and "technology" in config["read"]
-    ), "The `config['read']['technology'] parameter is mandatory"
-
-    if config["read"]["technology"] in ["uniform", "toy_dataset"]:
-        config["data_path"] = "."
-
-    assert (
-        "data_path" in config or "sdata_path" in config
-    ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
-
-    if "data_path" in config and "sdata_path" not in config:
-        config["sdata_path"] = Path(config["data_path"]).with_suffix(".zarr")
-        print(
-            f"SpatialData object path set to default: {config['sdata_path']}\nTo change this behavior, provide `--config sdata_path=...` when running the snakemake pipeline"
-        )
-
-    if "data_path" not in config:
-        assert Path(
-            config["sdata_path"]
-        ).exists(), f"When `data_path` is not provided, the spatial data object must exist, but the directory doesn't exists: {config['sdata_path']}"
-        config["data_path"] = []
-
-    return config
-
-
 class WorkflowPaths:
     """
     A class listing the paths to different files that are needed
@@ -64,8 +37,7 @@ class WorkflowPaths:
         self.smk_patches_file_transcripts = self.sopa_cache / "patches_file_transcripts"
 
         self.smk_cellpose_temp_dir = self.sopa_cache / "cellpose_boundaries"
-        self.smk_baysor_temp_dir = self.sopa_cache / "transcript_patches"
-        self.smk_comseg_temp_dir = self.sopa_cache / "transcript_patches"
+        self.smk_transcripts_temp_dir = self.sopa_cache / "transcript_patches"
         self.smk_cellpose_boundaries = self.sopa_cache / "cellpose_boundaries_done"
         self.smk_baysor_boundaries = self.sopa_cache / "baysor_boundaries_done"
         self.smk_comseg_boundaries = self.sopa_cache / "comseg_boundaries_done"
@@ -84,32 +56,31 @@ class WorkflowPaths:
         self.explorer_image = self.explorer_directory / "morphology.ome.tif"
         self.report = self.explorer_directory / "analysis_summary.html"
 
-    def cells_paths(self, file_content: str, name):
+    def cells_paths(self, file_content: str, method_name):
         """Compute the paths to the temporary boundary files
 
         Args:
             file_content: Content of the file listing the number of patches or the patches indices
-            name: Name of the method (cellpose or baysor)
+            method_name: Name of the method (cellpose, baysor, or comseg)
             dirs: Whether to return baysor directories
 
         Returns:
             A list of temporary boundary directories or files
         """
-        if name == "cellpose":
+        if method_name == "cellpose":
             return [str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))]
-        if name == "baysor":
+        if method_name == "baysor":
             indices = map(int, file_content.split())
-            BAYSOR_FILES = ["segmentation_polygons.json", "segmentation_counts.loom"]
-            return [str(self.smk_baysor_temp_dir / str(i) / file) for i in indices for file in BAYSOR_FILES]
-        if name == "comseg":
+            return [str(self.smk_transcripts_temp_dir / str(i) / "segmentation_counts.loom") for i in indices]
+        if method_name == "comseg":
             indices = map(int, file_content.split())
             COMSEG_FILES = ["segmentation_polygons.json", "segmentation_counts.h5ad"]
-            return [str(self.smk_comseg_temp_dir / str(i) / file) for i in indices for file in COMSEG_FILES]
+            return [str(self.smk_transcripts_temp_dir / str(i) / file) for i in indices for file in COMSEG_FILES]
 
 
 class Args:
     """
-    A convenient class to provide the YAML config arguments to Snakemake
+    A convenient class to pass the YAML config arguments to sopa's CLI
     """
 
     def __init__(self, paths: WorkflowPaths, config: dict):
@@ -215,3 +186,36 @@ def check_baysor_executable_path(config: dict):
     ), f"""Baysor executable {baysor_path} does not exist. {error_message} Also check that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor)."""
 
     return baysor_path
+
+
+def sanity_check_config(config: dict):
+    assert "segmentation" in config, "The `segmentation` parameter is mandatory"
+
+    assert ("baysor" not in config["segmentation"]) or (
+        "comseg" not in config["segmentation"]
+    ), "Baysor and ComSeg cannot be used together"
+
+    assert (
+        "read" in config and "technology" in config["read"]
+    ), "The `config['read']['technology'] parameter is mandatory"
+
+    if config["read"]["technology"] in ["uniform", "toy_dataset"]:
+        config["data_path"] = "."
+
+    assert (
+        "data_path" in config or "sdata_path" in config
+    ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
+
+    if "data_path" in config and "sdata_path" not in config:
+        config["sdata_path"] = Path(config["data_path"]).with_suffix(".zarr")
+        print(
+            f"SpatialData object path set to default: {config['sdata_path']}\nTo change this behavior, provide `--config sdata_path=...` when running the snakemake pipeline"
+        )
+
+    if "data_path" not in config:
+        assert Path(
+            config["sdata_path"]
+        ).exists(), f"When `data_path` is not provided, the spatial data object must exist, but the directory doesn't exists: {config['sdata_path']}"
+        config["data_path"] = []
+
+    return config
