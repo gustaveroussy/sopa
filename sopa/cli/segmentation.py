@@ -249,6 +249,10 @@ def tissue(
         default=-1,
         help="Level of the multiscale image to use for tissue segmentation.",
     ),
+    mode: str = typer.Option(
+        default=None,
+        help="Mode for the tissue segmentation: 'staining' or 'saturation' (for H&E images).",
+    ),
     kwargs: str = typer.Option(
         {},
         callback=ast.literal_eval,
@@ -261,4 +265,4 @@ def tissue(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    sopa.segmentation.tissue(sdata, image_key=image_key, level=level, **kwargs)
+    sopa.segmentation.tissue(sdata, image_key=image_key, level=level, mode=mode, **kwargs)
