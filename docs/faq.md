@@ -72,6 +72,47 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 
     This reader is called `aicsimageio`, i.e. you can use it via `sopa.io.aicsimageio(data_path)`, where `data_path` is the path to your data file containing your image(s). For the Snakemake pipeline, provide `aicsimageio` as a `technology` in the config file.
 
+## How to disable the auto-save?
+
+When using the API, and when your `SpatialData` object is saved on-disk, Sopa will automatically save any new spatial element on disk by default. To disable this behavior, use the following command from the API:
+
+```python
+sopa.settings.auto_save_on_disk = False
+```
+
+## How to use a parallelization backend?
+
+Some steps of Sopa, notably the segmentation, can be accelerated via a parallelization backend. If you use the API, you can set the `"dask"` backend as below:
+
+```python
+sopa.settings.parallelization_backend = "dask"
+```
+
+!!! warning
+    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/gustaveroussy/sopa/issues/145) to help us improve it.
+
+You can also pass some kwargs to the [dask Client](https://distributed.dask.org/en/stable/api.html#client):
+```python
+sopa.settings.dask_client_kwargs["n_workers"] = 4
+```
+
+Otherwise, if you don't use the API, you can also set the `SOPA_PARALLELIZATION_BACKEND` env variable, e.g.:
+```sh
+export SOPA_PARALLELIZATION_BACKEND=dask
+```
+
+## Which pipeline parameters should I use?
+
+TODO
+
+## How does Sopa know when using which elements?
+
+Many functions of Sopa can run without any argument. For instance, `sopa.aggregate(sdata)` works for very different technologies, such as VisiumHD, MERSCOPE, or MACSima data.
+
+Internally, when reading the raw data, Sopa saves some attributes inside `sdata.attrs`. These attributes are then used to know which spatial element corresponds to what. For instance, one H&E image may be tagged for tissue segmentation, while the DAPI image will be tagged to be used for cellpose.
+
+Sopa handles this internally by default, and it is completely invisible to the user. But, to get a full control on what is done, you can always set some arguments to specify which element to be used. You can refer to the following arguments of the API: `image_key`, `points_key`, `shapes_key`, `bins_key`.
+
 ## I have small artifact cells, how do remove them?
 
 You may have small cells that were segmented but that should be removed. For that, `Sopa` offers three filtering approaches: using their area, their transcript count, or their fluorescence intensity. Refer to the following config parameters from this [example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml): `min_area`, `min_transcripts`, and `min_intensity_ratio`.
@@ -108,7 +149,7 @@ segmentation:
 
 ## How to use a prior cell segmentation?
 
-If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/xenium/baysor_multimodal.yaml) data. If using the API/CLI, consider using the `cell_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `cell_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `cell_key="cell_id"` and `unassigned_value="UNASSIGNED"`.
+If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/xenium/baysor_multimodal.yaml) data. If using the API/CLI, consider using the `prior_shapes_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `prior_shapes_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `prior_shapes_key="cell_id"` and `unassigned_value="UNASSIGNED"`. You can also decide to run Cellpose via Sopa, and then use it as a prior: in that case, simply pass `prior_shapes_key="cellpose_boundaries"` after running cellpose.
 
 ## How to provide dictionnaries to CLI arguments?
 

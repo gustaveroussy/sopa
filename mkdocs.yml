@@ -12,7 +12,7 @@ nav:
   - Home: index.md
   - Getting Started: getting_started.md
   - Tutorials:
-    - API usage: tutorials/old_api_usage.ipynb
+    - API usage: tutorials/api_usage.ipynb
     - Snakemake pipeline: tutorials/snakemake.md
     - CLI usage: tutorials/cli_usage.md
     - Xenium Explorer usage: tutorials/xenium_explorer/explorer.ipynb
