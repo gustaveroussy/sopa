@@ -9,7 +9,7 @@ from spatialdata import SpatialData
 from ... import settings
 from ..._constants import ATTRS_KEY, SopaAttrs, SopaFiles, SopaKeys
 from ...utils import get_transcripts_patches_dirs
-from .._transcripts import copy_segmentation_config, resolve
+from .._transcripts import resolve
 
 log = logging.getLogger(__name__)
 
@@ -33,22 +33,15 @@ def baysor(
     baysor_executable_path = _get_baysor_executable_path()
     use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
 
-    if config is None:
+    if config is None or not len(config):
         log.info("No config provided, inferring a default Baysor config.")
         config = _get_default_config(sdata)
 
-    if isinstance(config, str):
-        import toml
-
-        config = toml.load(config)
-
-    assert config.get("data", {}).get("gene"), "Gene column not found in config['data']['gene']"
-    gene_column = config["data"]["gene"]
-
     patches_dirs = get_transcripts_patches_dirs(sdata)
-
     for patch_dir in patches_dirs:
-        copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config)
+        _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config)
+
+    gene_column = _get_gene_column_argument(config)
 
     prior_shapes_key = None
     if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES]:
@@ -187,3 +180,43 @@ def _get_default_config(sdata: SpatialData) -> dict:
         },
         "segmentation": {"prior_segmentation_confidence": 0.8},
     }
+
+
+def _get_gene_column_argument(config: dict | str) -> str:
+    if isinstance(config, str):
+        import toml
+
+        config = toml.load(config)
+
+    assert config.get("data", {}).get("gene"), "Gene column not found in config['data']['gene']"
+    return config["data"]["gene"]
+
+
+def _copy_segmentation_config(path: Path | str, config: dict | str):
+    """Copy the segmentation config to a file (`.json` or `.toml`).
+
+    Args:
+        path: Where the config will be saved
+        config: Dictionnary config, or path to an existing config file (json or toml)
+    """
+    path = Path(path)
+
+    if isinstance(config, str):
+        import shutil
+
+        shutil.copy(config, path)
+        return
+
+    assert path.suffix == ".toml"
+
+    try:
+        import toml
+    except ImportError:
+        raise ImportError(
+            "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'` (normal mode) or `pip install -e '.[baysor]'` (if using snakemake).\
+            \nAlso, make sure to install the baysor executable (https://github.com/kharchenkolab/Baysor)."
+        )
+
+    with open(path, "w") as f:
+        toml.dump(config, f)
+        return

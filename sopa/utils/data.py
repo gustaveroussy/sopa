@@ -36,6 +36,7 @@ def toy_dataset(
     apply_blur: bool = True,
     as_output: bool = False,
     transcript_cell_id_as_merscope: bool = False,
+    add_nan_gene_name: bool = True,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -133,7 +134,8 @@ def toy_dataset(
         gene_names = np.random.choice(genes, size=n_genes)
 
     gene_names = gene_names.astype(object)
-    gene_names[3] = np.nan  # Add a nan value for tests
+    if add_nan_gene_name:
+        gene_names[3] = np.nan  # Add a nan value for tests
 
     df = pd.DataFrame(
         {

@@ -175,39 +175,3 @@ def _resolve_patches(
     cells_resolved.index = np.concatenate([existing_ids, new_ids])
 
     return cells_resolved, cells_indices, new_ids
-
-
-def copy_segmentation_config(path: Path | str, config: dict | str | None):
-    """Copy the segmentation config to a file (`.json` or `.toml`).
-
-    Args:
-        path: Where the config will be saved
-        config: Dictionnary config, or path to an existing config file (json or toml)
-    """
-    path = Path(path)
-
-    if isinstance(config, str):
-        import shutil
-
-        shutil.copy(config, path)
-        return
-
-    if path.suffix == ".json":
-        with open(path, "w") as f:
-            json.dump(config, f)
-            return
-
-    if path.suffix == ".toml":
-        try:
-            import toml
-        except ImportError:
-            raise ImportError(
-                "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'` (normal mode) or `pip install -e '.[baysor]'` (if using snakemake).\
-                \nAlso, make sure to install the baysor executable (https://github.com/kharchenkolab/Baysor)."
-            )
-
-        with open(path, "w") as f:
-            toml.dump(config, f)
-            return
-
-    raise ValueError(f"Config file must be either a .json or a .toml file. Found: {path.suffix}")

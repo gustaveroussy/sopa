@@ -199,7 +199,11 @@ def _run_staining_segmentation(
 @app_segmentation.command()
 def comseg(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    config: str = typer.Option(default=None, help="Path to the JSON config file for ComSeg"),
+    config: str = typer.Option(
+        {},
+        callback=ast.literal_eval,
+        help="""Comseg config. This should be a dictionnary in inline string format, wrapped inside quotes, e.g. '{"example": 2}'""",
+    ),
     patch_index: int = typer.Option(
         default=None,
         help="Index of the patch on which the segmentation method should be run.",
@@ -220,7 +224,11 @@ def comseg(
 @app_segmentation.command()
 def baysor(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    config: str = typer.Option(default=None, help="Path to the TOML config file for Baysor"),
+    config: str = typer.Option(
+        {},
+        callback=ast.literal_eval,
+        help="""Baysor config. This should be a dictionnary in inline string format, wrapped inside single quotes, e.g. '{"example": 2}'""",
+    ),
     patch_index: int = typer.Option(
         default=None,
         help="Index of the patch on which the segmentation method should be run. By default, run on all patches.",

@@ -42,12 +42,12 @@ checkpoint patchify_image:
         patches_file = paths.smk_patches_file_image,
         patches = touch(paths.smk_patches),
     params:
-        args_patchify = str(args["patchify"].where(contains="pixel")),
+        args_patchify_image = str(args["patchify"].where(contains="pixel")),
     conda:
         "sopa"
     shell:
         """
-        sopa patchify image {paths.sdata_path} {params.args_patchify}
+        sopa patchify image {paths.sdata_path} {params.args_patchify_image}
         """
 
 checkpoint patchify_transcripts:
@@ -58,14 +58,12 @@ checkpoint patchify_transcripts:
         patches_file = paths.smk_patches_file_transcripts,
         smk_transcripts_temp_dir = directory(paths.smk_transcripts_temp_dir),
     params:
-        args_patchify = str(args["patchify"].where(contains="micron")),
-        args_baysor = args.dump_baysor_patchify() if args.baysor else "",
-        arg_prior = "--use-prior" if args.cellpose else "",
+        args_patchify_transcripts = args.patchify_transcripts(),
     conda:
         "sopa"
     shell:
         """
-        sopa patchify transcripts {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
+        sopa patchify transcripts {paths.sdata_path} {params.args_patchify_transcripts}
         """
 
 rule patch_segmentation_cellpose:
@@ -89,15 +87,19 @@ rule patch_segmentation_baysor:
         baysor_patch = paths.smk_transcripts_temp_dir / "{index}",
     output:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.loom",
+    conda:
+        "sopa"
     resources:
         mem_mb=128_000,
+    params:
+        baysor_config = str(args["segmentation"]["baysor"].where(keys=["config"])),
     shell:
         """
         if command -v module &> /dev/null; then
             module purge
         fi
 
-        sopa segmentation baysor {paths.sdata_path} --patch-index {wildcards.index}
+        sopa segmentation baysor {paths.sdata_path} --patch-index {wildcards.index} {params.baysor_config}
         """
 
 rule patch_segmentation_comseg:
@@ -111,9 +113,11 @@ rule patch_segmentation_comseg:
         "sopa"
     resources:
         mem_mb=128_000,
+    params:
+        comseg_config = str(args["segmentation"]["comseg"].where(keys=["config"])),
     shell:
         """
-        sopa segmentation comseg {paths.sdata_path} --patch-index {wildcards.index}
+        sopa segmentation comseg {paths.sdata_path} --patch-index {wildcards.index} {params.comseg_config}
         """
 
 def get_input_resolve(name, method_name):
@@ -143,10 +147,10 @@ rule resolve_baysor:
     conda:
         "sopa"
     params:
-        args_min_area = args.min_area("baysor"),
+        args_resolve = args.resolve_transcripts(),
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area}
+        sopa resolve baysor {paths.sdata_path} {params.args_resolve}
 
         rm -r {paths.smk_transcripts_temp_dir}    # cleanup large baysor files
         """
@@ -160,10 +164,10 @@ rule resolve_comseg:
     conda:
         "sopa"
     params:
-        args_min_area=args.min_area("comseg"),
+        args_resolve = args.resolve_transcripts(),
     shell:
         """
-        sopa resolve comseg {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area}
+        sopa resolve comseg {paths.sdata_path} {params.args_resolve}
 
         rm -r {paths.smk_transcripts_temp_dir}    # cleanup large comseg files
         """

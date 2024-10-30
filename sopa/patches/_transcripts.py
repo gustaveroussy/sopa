@@ -29,8 +29,6 @@ class OnDiskTranscriptPatches(Patches2D):
         unassigned_value: int | str | None = None,
         min_points_per_patch: int = 4000,
         min_cells_per_patch: int = 1,
-        config: dict | str = {},
-        config_name: str = SopaFiles.TOML_CONFIG_FILE,
         csv_name: str = SopaFiles.TRANSCRIPTS_FILE,
         centroids_csv_name: str = SopaFiles.CENTROIDS_FILE,
         write_cells_centroids: bool = False,
@@ -44,8 +42,6 @@ class OnDiskTranscriptPatches(Patches2D):
         self.unassigned_value = unassigned_value
         self.min_points_per_patch = min_points_per_patch
         self.min_cells_per_patch = min_cells_per_patch
-        self.config = config
-        self.config_name = config_name
         self.csv_name = csv_name
         self.centroids_csv_name = centroids_csv_name
         self.write_cells_centroids = write_cells_centroids
@@ -56,7 +52,6 @@ class OnDiskTranscriptPatches(Patches2D):
         self.assign_prior_segmentation()
 
         self.setup_patches_directory()
-        self.copy_config_to_subdirectories()
 
         patches_geo_df = gpd.GeoDataFrame(geometry=self.polygons)
 
@@ -161,16 +156,6 @@ class OnDiskTranscriptPatches(Patches2D):
             patch_path.parent.mkdir(parents=True, exist_ok=True)
             patch_df = patch_df.drop(columns=["index_right", "geometry"])
             patch_df.to_csv(patch_path, mode=mode, header=mode == "w", index=False)
-
-    def copy_config_to_subdirectories(self):
-        if not isinstance(self.config, str) or not len(self.config):
-            return
-
-        from sopa.segmentation._transcripts import copy_segmentation_config
-
-        for i in range(len(self)):
-            path = self.cache_dir / str(i) / self.config_name
-            copy_segmentation_config(path, self.config)
 
 
 def _check_min_lines(path: str, n: int) -> bool:

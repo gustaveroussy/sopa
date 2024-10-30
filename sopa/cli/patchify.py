@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import ast
-
 import typer
 
 from .utils import SDATA_HELPER
@@ -34,8 +32,8 @@ def image(
 @app_patchify.command()
 def transcripts(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    patch_width_micron: float = typer.Option(5000, help="Width (and height) of each patch in microns"),
-    patch_overlap_micron: float = typer.Option(
+    patch_width_microns: float = typer.Option(5000, help="Width (and height) of each patch in microns"),
+    patch_overlap_microns: float = typer.Option(
         100,
         help="Number of overlapping microns between the patches. We advise to choose approximately twice the diameter of a cell",
     ),
@@ -51,11 +49,6 @@ def transcripts(
         False,
         help="Whether to also write the centroids of the cells (must be True for ComSeg)",
     ),
-    config: str = typer.Option(
-        default={},
-        callback=ast.literal_eval,
-        help="Dictionnary of parameters, overwrite the config_path argument if provided",
-    ),
 ):
     """Prepare patches for transcript-based segmentation (including Baysor)"""
 
@@ -70,10 +63,9 @@ def transcripts(
 
     sopa.make_transcript_patches(
         sdata,
-        patch_width_micron,
-        patch_overlap_micron,
+        patch_width_microns,
+        patch_overlap_microns,
         unassigned_value=unassigned_value,
-        config=config,
         prior_shapes_key=prior_shapes_key,
         write_cells_centroids=write_cells_centroids,
     )

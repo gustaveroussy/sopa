@@ -32,7 +32,7 @@ def comseg(
         SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
     ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
 
-    if config is None:
+    if config is None or not len(config):
         log.info("No config provided, inferring a default ComSeg config.")
         config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES])
     elif isinstance(config, str):

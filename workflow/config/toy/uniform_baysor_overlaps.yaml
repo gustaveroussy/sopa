@@ -34,8 +34,6 @@ segmentation:
         n_cells_init: 0
         nuclei_genes: ""
         cyto_genes: ""
-        new_component_weight: 0.2
-        new_component_fraction: 0.3
 
 aggregate:
   average_intensities: true
