@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Optional
 
@@ -9,7 +11,7 @@ class WorkflowPaths:
     """
 
     def __init__(self, config: dict) -> None:
-        self.config = sanity_check_config(config)
+        self.config = config
 
         ### SpatialData object files
         self.data_path = self.config["data_path"]
@@ -54,13 +56,12 @@ class WorkflowPaths:
             key = self.config["annotation"].get("args", {}).get("cell_type_key", "cell_type")
             self.annotations = self.table_dir / "table" / "obs" / key
 
-    def cells_paths(self, file_content: str, method_name: str):
+    def temporary_boundaries_paths(self, file_content: str, method_name: str) -> list[str]:
         """Compute the paths to the temporary boundary files
 
         Args:
-            file_content: Content of the file listing the number of patches or the patches indices
-            method_name: Name of the method (cellpose, baysor, or comseg)
-            dirs: Whether to return baysor directories
+            file_content: Content of the file listing the number of patches (or the patches indices)
+            method_name: Name of the method: cellpose, baysor, or comseg
 
         Returns:
             A list of temporary boundary directories or files
@@ -87,22 +88,17 @@ class Args:
         self.paths = paths
         self.config = config
 
-        # whether to run segmentation
-        self.segmentation = "segmentation" in self.config  # whether to run segmentation
-
         # which segmentation method(s) is/are used
-        self.cellpose = self.segmentation and "cellpose" in self.config["segmentation"]
-        self.baysor = self.segmentation and "baysor" in self.config["segmentation"]
-        self.comseg = self.segmentation and "comseg" in self.config["segmentation"]
+        self.cellpose = "cellpose" in self.config.get("segmentation", {})
+        self.baysor = "baysor" in self.config.get("segmentation", {})
+        self.comseg = "comseg" in self.config.get("segmentation", {})
         self.transcript_based_method = "comseg" if self.comseg else ("baysor" if self.baysor else None)
 
         # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
 
-        if self.baysor:
-            check_baysor_executable_path(config)
-
     def resolve_transcripts(self) -> str:
+        """Arguments for `sopa resolve [baysor/comseg]`"""
         if self.transcript_based_method is None:
             return ""
 
@@ -115,122 +111,76 @@ class Args:
         return f"--gene-column {gene_column} --min-area {min_area}"
 
     def patchify_transcripts(self) -> str:
+        """Arguments for `sopa patchify transcripts`"""
         if self.transcript_based_method is None:
             return ""
 
-        dump_patch_params = str(self["patchify"].where(contains="micron"))
-        method_config = self["segmentation"][self.transcript_based_method]
+        params = self["patchify"].as_cli(contains="micron")
 
         if self.transcript_based_method == "comseg":
-            dump_patch_params += " --write-cells-centroids"
+            params += " --write-cells-centroids"
 
-        return f'{dump_patch_params} {method_config.where(keys=["prior_shapes_key", "unassigned_value"])}'
+        method_config = self["segmentation"][self.transcript_based_method]
+        return f'{params} {method_config.as_cli(keys=["prior_shapes_key", "unassigned_value"])}'
 
     ### The methods below are used to convert the Args object into a string for the Sopa CLI
 
-    def __str__(self) -> str:
-        """Convert an Args object into a string for the Sopa CLI"""
-        return self.dump()
+    def as_cli(self, keys: Optional[list[str]] = None, contains: Optional[str] = None) -> str:
+        """Extract a subset of the config (or the whole config) as a string for the CLI (command-line interface)
 
-    def dump(self, prefix=""):
-        return " ".join((res for item in self.config.items() for res in self.dump_arg(*item, prefix)))
+        Args:
+            keys: List of keys to extract from the config.
+            contains: String that must be contained in the keys to be extracted.
 
-    @classmethod
-    def dump_arg(cls, key: str, value, prefix: str = ""):
+        Returns:
+            A string that can be used as arguments/options for the Sopa CLI.
         """
-        Convert a key-value pair of the config into a string that
-        can be used by the Sopa CLI
-        """
-        option = f"--{prefix}{key.replace('_', '-')}"
-        if isinstance(value, list):
-            for v in value:
-                yield from (option, stringify_for_cli(v))
-        elif value is True:
-            yield option
-        elif value is False:
-            yield f"--no-{prefix}{key.replace('_', '-')}"
-        else:
-            yield from (option, stringify_for_cli(value))
+        assert (keys is None) or (contains is None), "Provide either 'keys' or 'contains', but not both"
 
-    def __getitem__(self, name):
-        subconfig = self.config.get(name, {})
-        if not isinstance(subconfig, dict):
-            return subconfig
-        return Args(self.paths, subconfig)
+        if keys is None and contains is None:
+            return str(self)
 
-    def where(self, keys: Optional[list[str]] = None, contains: Optional[str] = None):
         if keys is not None:
-            return Args(self.paths, {key: self.config[key] for key in keys if key in self.config})
-        if contains is not None:
-            return Args(
-                self.paths,
-                {key: value for key, value in self.config.items() if contains in key},
-            )
-        return self
+            sub_args = Args(self.paths, {key: self.config[key] for key in keys if key in self.config})
+        elif contains is not None:
+            sub_args = Args(self.paths, {key: value for key, value in self.config.items() if contains in key})
+
+        return str(sub_args)
+
+    def __str__(self) -> str:
+        """
+        Config as a string, useful for the Sopa CLI
+
+        For instance, {"x": 2, "y": False} will be converted to "--x 2 --no-y"
+        """
+        return " ".join((res for item in self.config.items() for res in stringify_item(*item)))
+
+    def __getitem__(self, name: str) -> Args | bool | str | list:
+        sub_config = self.config.get(name, {})
+        if not isinstance(sub_config, dict):
+            return sub_config
+        return Args(self.paths, sub_config)
 
 
-def stringify_for_cli(value) -> str:
+def stringify_item(key: str, value: bool | list | dict | str):
+    """
+    Convert a key-value pair of the config into a string that can be used by the Sopa CLI
+    """
+    key = key.replace("_", "-")
+    option = f"--{key}"
+
+    if value is True:
+        yield option
+    elif value is False:
+        yield f"--no-{key}"
+    elif isinstance(value, list):
+        for v in value:
+            yield from (option, _stringify_value_for_cli(v))
+    else:
+        yield from (option, _stringify_value_for_cli(value))
+
+
+def _stringify_value_for_cli(value) -> str:
     if isinstance(value, str) or isinstance(value, dict):
         return f'"{value}"'
     return str(value)
-
-
-def check_baysor_executable_path(config: dict) -> str:
-    import shutil
-
-    if shutil.which("baysor") is not None:
-        return
-
-    default_path = Path.home() / ".julia" / "bin" / "baysor"
-    if default_path.exists():
-        return
-
-    if "executables" in config and "baysor" in config["executables"]:
-        raise ValueError(
-            "The config['executables']['baysor'] argument is deprecated. Please set a 'baysor' alias instead."
-        )
-
-    raise KeyError(
-        f"""Baysor executable {default_path} does not exist. Please set a 'baysor' alias. Also check that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor)."""
-    )
-
-
-def sanity_check_config(config: dict):
-    assert "segmentation" in config, "The `segmentation` parameter is mandatory"
-
-    assert ("baysor" not in config["segmentation"]) or (
-        "comseg" not in config["segmentation"]
-    ), "Baysor and ComSeg cannot be used together"
-
-    assert (
-        "read" in config and "technology" in config["read"]
-    ), "The `config['read']['technology'] parameter is mandatory"
-
-    if config["read"]["technology"] in ["uniform", "toy_dataset"]:
-        config["data_path"] = "."
-
-    assert (
-        "data_path" in config or "sdata_path" in config
-    ), "Invalid config. Provide '--config data_path=...' when running the pipeline"
-
-    if "data_path" in config and "sdata_path" not in config:
-        config["sdata_path"] = Path(config["data_path"]).with_suffix(".zarr")
-        print(
-            f"SpatialData object path set to default: {config['sdata_path']}\nTo change this behavior, provide `--config sdata_path=...` when running the snakemake pipeline"
-        )
-
-    if "data_path" not in config:
-        assert Path(
-            config["sdata_path"]
-        ).exists(), f"When `data_path` is not provided, the spatial data object must exist, but the directory doesn't exists: {config['sdata_path']}"
-        config["data_path"] = []
-
-    for method in ["baysor", "comseg"]:
-        if method in config["segmentation"]:
-            if "cellpose" in config["segmentation"]:
-                config["segmentation"][method]["prior_shapes_key"] = "cellpose_boundaries"
-            elif "cell_key" in config["segmentation"][method]:
-                # backward compatibility
-                config["segmentation"][method]["prior_shapes_key"] = config["segmentation"][method]["cell_key"]
-
-    return config
