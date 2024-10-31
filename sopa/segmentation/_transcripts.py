@@ -45,7 +45,8 @@ def resolve(
     patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
     geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
 
-    points = sdata[sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.POINTS_KEY].iloc[0]]
+    points_key = sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
+    points = sdata[points_key]
     transformations = get_transformation(points, get_all=True).copy()
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
@@ -57,7 +58,7 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
-        table_conflicts = count_transcripts(sdata, gene_column, geo_df=geo_df_new)
+        table_conflicts = count_transcripts(sdata, gene_column, geo_df=geo_df_new, points_key=points_key)
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 
