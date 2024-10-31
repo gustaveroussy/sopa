@@ -23,6 +23,19 @@ sopa.settings.parallelization_backend = "dask" # using dask
 sopa.settings.parallelization_backend = None # no backend (i.e., sequential)
 ```
 
+!!! warning
+    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/gustaveroussy/sopa/issues/145) to help us improve it.
+
+You can also pass some kwargs to the [dask Client](https://distributed.dask.org/en/stable/api.html#client):
+```python
+sopa.settings.dask_client_kwargs["n_workers"] = 4
+```
+
+Otherwise, if you don't use the API, you can also set the `SOPA_PARALLELIZATION_BACKEND` env variable, e.g.:
+```sh
+export SOPA_PARALLELIZATION_BACKEND=dask
+```
+
 ## Xenium Explorer
 
 ::: sopa.io.explorer.write

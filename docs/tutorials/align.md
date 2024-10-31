@@ -1,6 +1,12 @@
+# Landmark-based alignment
+
+You can align any omic layer by defining manual landmark annotations. This can either be done via the Xenium Explorer, or [`napari-spatialdata`](https://spatialdata.scverse.org/projects/napari/en/latest/index.html).
+
+## Via the Xenium Explorer
+
 If you have an H&E image or immunofluorescence data that you want to align on the main image, this can be done with the Xenium Explorer, even if you don't work on Xenium data.
 
-## Image conversion
+### Image conversion
 Convert your image with QuPath as written in this [10x genomics webpage](https://www.10xgenomics.com/support/software/xenium-explorer/tutorials/xe-image-file-conversion).
 
 If you are not familiar with QuPath, you can also use our API to write the image:
@@ -14,13 +20,13 @@ sopa.io.write_image("where/to/save/image.ome.tif", image, is_dir=False)
 !!! note "Xenium users"
     If using the Xenium machine, then you don't need conversion; the images provided by the Xenium machine already have the correct format.
 
-## Open your data in the Xenium Explorer
+### Open your data in the Xenium Explorer
 
 If not done yet, convert your `SpatialData` object to the Xenium Explorer's inputs. This can be done as detailed in [this tutorial](../cli_usage/#visualization-xenium-explorer).
 
 Double-click on the `experiment.xenium` file, or select it from the Xenium Explorer interface. It will display the data in the explorer.
 
-## Keypoint placement
+### Keypoint placement
 
 !!! warning
     Make sure your Xenium Explorer version is at least `1.3.0`
@@ -33,7 +39,7 @@ On the Xenium Explorer, under the "Images" panel, click "Add image" and follow t
 
 Afterwards, the explorer will automatically align the images based on the key points you selected on both images.
 
-## (Optional) Update the `SpatialData` object
+### Update the `SpatialData` object (optional)
 
 After alignment, export the transformation matrix as a `.csv` file. For that, select your aligned image under the "Images" panel and click on "Download Alignment File":
 
@@ -52,3 +58,7 @@ Then, use the [CLI](../../cli/#sopa-explorer-add-aligned) to update your `Spatia
 ```sh
 sopa explorer add-aligned <SDATA_PATH> <IMAGE_PATH> <TRANSFORMATION_MATRIX_PATH>
 ```
+
+## Via napari-spatialdata
+
+You can also use [`napari-spatialdata`](https://spatialdata.scverse.org/projects/napari/en/latest/index.html) to align images. Refer to [this existing tutorial](https://spatialdata.scverse.org/en/latest/tutorials/notebooks/notebooks/examples/alignment_using_landmarks.html).

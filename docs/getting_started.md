@@ -1,5 +1,7 @@
 ## Installation
 
+### Sopa package
+
 Sopa can be installed on every OS with `pip` or [`poetry`](https://python-poetry.org/docs/).
 
 The preferred Python version is `python==3.10`, but we also support `3.9` to `3.11`.
@@ -49,31 +51,23 @@ Choose one of the following, depending on your needs (it should take at most a f
 
     If the Baysor executable is not at `~/.julia/bin/baysor`, please set the `baysor` alias or export the path to the executable via `export baysor=/path/to/exe`.
 
-## Snakemake setup
+### Snakemake setup
 
-To use the Snakemake pipeline, the installation process is slightly different because you'll need the whole repository.
+To use Snakemake, in addition to the above `sopa` package, you'll need to clone a repository containing the Snakemake workflow:
 
-1. Clone the `sopa` repository, and move to the root of the project:
 ```sh
-git clone https://github.com/gustaveroussy/sopa.git
-cd sopa
+git clone https://github.com/gustaveroussy/sopa_workflow.git
+cd sopa_workflow
 ```
 
-1. Create a `conda` environment called `sopa`:
-```sh
-conda create --name sopa python=3.10
-```
+Also, make sure you have installed `snakemake`. This does **not** necessarily have to be inside the `sopa` environment: for instance, you can create a new environment specific to snakemake:
 
-1. At the root of the `sopa` directory, install the package in dev mode, and choose the extras you want (among cellpose/baysor/tangram, depending on your desired usage):
 ```sh
-conda activate sopa
-pip install -e ".[snakemake,cellpose,baysor,tangram]"
+conda create -c conda-forge -c bioconda -n snakemake snakemake
+conda activate snakemake
 ```
 
 Now, follow our [snakemake tutorial](../tutorials/snakemake) to run your first pipeline.
-
-!!! Note
-    You can also use a separate environment for `snakemake`. In this case, you don't need to install the `'snakemake'` extra when installing `sopa`. But you may still need to install other extras, for instance, `'cellpose'` if you plan to run Cellpose.
 
 ## Usage
 

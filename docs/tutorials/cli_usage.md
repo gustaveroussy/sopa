@@ -1,7 +1,34 @@
-Here, we provide a minimal example of command line usage. For more details and to learn about other optional arguments, refer to the full [CLI documentation](../../cli).
+When installing `sopa` as written in our [getting-started guidelines](../getting_started), a new command named `sopa` becomes available.
 
-!!! tip
+!!! warning
     The [Snakemake pipeline](https://gustaveroussy.github.io/sopa/tutorials/snakemake/) is recommended to get started with Sopa. Using the CLI is advised if you want more flexibility, but you'll need to parallelize the segmentation yourself, as detailed below.
+
+## CLI helper
+
+Run `sopa --help` to get details about all the command line purposes. You can also use this helper on any subcommand, for instance, `sopa read --help`.
+
+<div class="termy">
+```console
+// Run the Sopa CLI helper
+$ sopa --help
+ Usage: sopa [OPTIONS] COMMAND [ARGS]...
+╭─ Commands ─────────────────────────────────────────────────────╮
+│ aggregate     Aggregate transcripts/channels inside cells      │
+│ annotate      Perform cell-type annotation                     │
+│ check         Run some sanity checks                           │
+│ crop          Crop an image based on a user-defined polygon    │
+│ explorer      Conversion to the Xenium Explorer's inputs       │
+│ patchify      Create patches with overlaps                     │
+│ read          Read any technology + write a SpatialData object │
+│ report        Create a web-report with figures/QCs             │
+│ resolve       Resolve the segmentation conflicts over patches  │
+│ segmentation  Perform cell segmentation on patches             │
+╰────────────────────────────────────────────────────────────────╯
+// Example: run cellpose segmentation
+$ sopa segmentation cellpose sdata.zarr
+... [Logs] ...
+```
+</div>
 
 ## Save the `SpatialData` object
 
@@ -48,34 +75,6 @@ The command below will generate and save it on disk (you can change the path `tu
 
 !!! info
     It has created a `.zarr` directory which stores a [`SpatialData` object](https://github.com/scverse/spatialdata) corresponding to your data sample. You can choose the location of the `.zarr` directory using the `--sdata-path` command line argument.
-
-## (Optional) ROI selection
-
-Sometimes, your slide may contain a region with low-quality data, and we want to run the analysis only on the good-quality region. For this, we can interactively select a region of interest (ROI), and Sopa will only run on the selected ROI.
-
-=== "If working locally"
-    Run the following command line and follow the instructions displayed in the console:
-    ```sh
-    sopa crop --sdata-path tuto.zarr --channels DAPI
-    ```
-
-=== "If working on a machine without interactive mode"
-    When interactive mode is unavailable, the ROI selection will be performed in three steps.
-
-    1. On the machine where the data is stored, save a light view of the original image (here, it will create a file called `image.zarr.zip`):
-    ```sh
-    sopa crop --sdata-path tuto.zarr --channels DAPI --intermediate-image image.zarr.zip
-    ```
-
-    2. Download the `image.zip` file locally (or on a machine with interactive mode), and select the ROI. Here, it will create a file called `roi.zarr.zip`:
-    ```sh
-    sopa crop --intermediate-image image.zarr.zip --intermediate-polygon roi.zarr.zip
-    ```
-
-    3. Upload the `roi.zarr.zip` file, and save it inside the `SpatialData` object:
-    ```sh
-    sopa crop --sdata-path tuto.zarr --intermediate-polygon roi.zarr.zip
-    ```
 
 ## Run segmentation
 
