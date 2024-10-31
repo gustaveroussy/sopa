@@ -47,7 +47,6 @@ def generic(
 
 
 def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
-    from sopa._constants import SopaAttrs
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import StainingSegmentation, shapes
     from sopa.utils import get_spatial_image
@@ -56,7 +55,7 @@ def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
 
     assert len(patch_dirs) > 0, "No patch directory was provided, cannot load cells"
 
-    image_key, _ = get_spatial_image(sdata, key=sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION), return_key=True)
+    image_key, _ = get_spatial_image(sdata, return_key=True)
 
     cells = StainingSegmentation.read_patches_cells(patch_dirs)
     cells = shapes.solve_conflicts(cells)

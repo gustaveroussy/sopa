@@ -68,7 +68,7 @@ def compute_embeddings(
     from ._inference import Inference
 
     image_key, image = get_spatial_image(
-        sdata, key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION), return_key=True
+        sdata, key=image_key, return_key=True, valid_attr=SopaAttrs.TISSUE_SEGMENTATION
     )
 
     infer = Inference(image, model, patch_width, level, magnification, device)

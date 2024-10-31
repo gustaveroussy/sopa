@@ -81,7 +81,7 @@ def assign_transcript_to_cell(
         unassigned_value: If `None`, transcripts that are not inside any cell will be assigned to NaN. If an integer, this value will be used as the unassigned value.
     """
     df = get_spatial_element(sdata.points, points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
-    geo_df = get_boundaries(sdata, shapes_key=shapes_key)
+    geo_df = get_boundaries(sdata, key=shapes_key)
 
     geo_df = to_intrinsic(sdata, geo_df, df)
     geo_df = geo_df.reset_index()

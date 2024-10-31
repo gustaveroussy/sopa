@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 def get_boundaries(
-    sdata: SpatialData, return_key: bool = False, warn: bool = False, shapes_key: str | None = None
+    sdata: SpatialData, return_key: bool = False, warn: bool = False, key: str | None = None
 ) -> gpd.GeoDataFrame | tuple[str, gpd.GeoDataFrame] | None:
     """Gets cell segmentation boundaries of a SpatialData object after running Sopa.
 
@@ -31,22 +31,23 @@ def get_boundaries(
         sdata: A SpatialData object
         return_key: Whether to return the key of the shapes or not.
         warn: If `True`, prints a warning if no boundary is found. Else, raises an error.
+        key: A valid `shapes_key` or None.
 
     Returns:
         A `GeoDataFrame` containing the boundaries, or a tuple `(shapes_key, geo_df)`
     """
-    shapes_key = shapes_key or sdata.attrs.get(SopaAttrs.BOUNDARIES)
+    key = key or sdata.attrs.get(SopaAttrs.BOUNDARIES)
 
-    if shapes_key is not None:
-        return get_spatial_element(sdata.shapes, key=shapes_key, return_key=return_key)
+    if key is not None:
+        return get_spatial_element(sdata.shapes, key=key, return_key=return_key)
 
     VALID_BOUNDARIES = [
         SopaKeys.BAYSOR_BOUNDARIES,
         SopaKeys.COMSEG_BOUNDARIES,
         SopaKeys.CELLPOSE_BOUNDARIES,
     ]
-    for shapes_key in VALID_BOUNDARIES:
-        res = _try_get_boundaries(sdata, shapes_key, return_key)
+    for key in VALID_BOUNDARIES:
+        res = _try_get_boundaries(sdata, key, return_key)
         if res is not None:
             return res
 
@@ -59,10 +60,10 @@ def get_boundaries(
     return (None, None) if return_key else None
 
 
-def _try_get_boundaries(sdata: SpatialData, shapes_key: str, return_key: bool) -> gpd.GeoDataFrame | None:
+def _try_get_boundaries(sdata: SpatialData, key: str, return_key: bool) -> gpd.GeoDataFrame | None:
     """Try to get a cell boundaries for a given `shapes_key`"""
-    if shapes_key in sdata.shapes:
-        return (shapes_key, sdata[shapes_key]) if return_key else sdata[shapes_key]
+    if key in sdata.shapes:
+        return (key, sdata[key]) if return_key else sdata[key]
 
 
 def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str) -> SpatialElement:

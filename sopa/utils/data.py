@@ -152,11 +152,13 @@ def toy_dataset(
     affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
 
     df = dd.from_pandas(df, chunksize=2_000_000)
+    misc_df = pd.DataFrame({"x": [0, 1], "y": [0, 1]})  # dummy dataframe for testing purposes
 
     points = {
         "transcripts": PointsModel.parse(
             df, transformations={"global": affine, "microns": Identity()}, feature_key="genes"
-        )
+        ),
+        "misc": PointsModel.parse(misc_df, transformations={"global": Identity()}),
     }
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)

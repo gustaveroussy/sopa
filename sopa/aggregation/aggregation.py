@@ -36,7 +36,7 @@ def aggregate(
 ):
     aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key)
 
-    gene_column = None
+    points_key, gene_column = None, None
     if aggregate_genes or (aggregate_genes is None and bins_key is None and sdata.points):
         points_key, points = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
@@ -52,6 +52,7 @@ def aggregate(
         expand_radius_ratio=expand_radius_ratio,
         min_transcripts=min_transcripts,
         min_intensity_ratio=min_intensity_ratio,
+        points_key=points_key,
     )
 
 
@@ -107,6 +108,7 @@ class Aggregator:
         gene_column: str | None = None,
         average_intensities: bool = True,
         expand_radius_ratio: float | None = None,
+        points_key: str | None = None,
         min_transcripts: int = 0,
         min_intensity_ratio: float = 0,
     ):
@@ -136,7 +138,9 @@ class Aggregator:
             if self.table is not None:
                 log.warning("sdata.table is already existing. Transcripts are not count again.")
             else:
-                self.table = count_transcripts(self.sdata, gene_column, shapes_key=self.shapes_key)
+                self.table = count_transcripts(
+                    self.sdata, gene_column, shapes_key=self.shapes_key, points_key=points_key
+                )
         elif self.bins_key is not None:
             self.table = aggregate_bins(
                 self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 0.2

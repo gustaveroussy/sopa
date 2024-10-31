@@ -12,7 +12,8 @@ from dask.diagnostics import ProgressBar
 from scipy.sparse import coo_matrix
 from spatialdata import SpatialData
 
-from ..utils import get_spatial_element, to_intrinsic
+from .._constants import SopaAttrs
+from ..utils import get_boundaries, get_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -36,10 +37,12 @@ def count_transcripts(
     Returns:
         An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
     """
-    points_key, points = get_spatial_element(sdata.points, key=points_key, return_key=True)
+    points_key, points = get_spatial_element(
+        sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
+    )
 
     if geo_df is None:
-        geo_df = get_spatial_element(sdata.shapes, key=shapes_key)
+        geo_df = get_boundaries(sdata, key=shapes_key)
         geo_df = to_intrinsic(sdata, geo_df, points_key)
 
     log.info(f"Aggregating transcripts over {len(geo_df)} cells")

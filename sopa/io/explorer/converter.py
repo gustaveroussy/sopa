@@ -106,9 +106,7 @@ def write(
     path: Path = Path(path)
     _check_explorer_directory(path)
 
-    image_key, _ = get_spatial_image(
-        sdata, key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION), return_key=True
-    )
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
 
     ### Saving cell categories and gene counts
     if SopaKeys.TABLE in sdata.tables:

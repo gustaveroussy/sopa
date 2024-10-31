@@ -12,7 +12,7 @@ from spatialdata import SpatialData
 from xarray import DataArray
 
 from ..segmentation.shapes import expand_radius, pixel_outer_bounds, rasterize
-from ..utils import get_spatial_element, get_spatial_image, to_intrinsic
+from ..utils import get_boundaries, get_spatial_image, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def average_channels(
     """
     image = get_spatial_image(sdata, image_key)
 
-    geo_df = get_spatial_element(sdata.shapes, key=shapes_key)
+    geo_df = get_boundaries(sdata, key=shapes_key)
     geo_df = to_intrinsic(sdata, geo_df, image)
     geo_df = expand_radius(geo_df, expand_radius_ratio)
 

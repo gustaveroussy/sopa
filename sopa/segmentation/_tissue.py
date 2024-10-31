@@ -235,10 +235,7 @@ def _get_image_and_mode(
         mode = AvailableModes.STAINING.value
 
     if mode == AvailableModes.STAINING.value:
-        image = get_spatial_element(
-            sdata.images,
-            key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION),
-        )
+        image = get_spatial_element(sdata.images, key=image_key)
         return image, mode
 
     if mode == AvailableModes.SATURATION.value:
