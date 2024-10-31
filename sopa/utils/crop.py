@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -112,7 +111,7 @@ def polygon_selection(
         scale_factor: Resize the image by this value (high value for a lower memory usage)
         margin_ratio: Ratio of the image margin on the display (compared to the image size)
     """
-    warnings.warn("This function is deprecated. Use `napari-spatialdata` instead.", DeprecationWarning, stacklevel=2)
+    log.warning("This function is deprecated. Use `napari-spatialdata` instead.")
 
     if intermediate_polygon is None:
         image_key, image = _prepare(sdata, channels, scale_factor)

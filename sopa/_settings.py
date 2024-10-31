@@ -41,7 +41,9 @@ class Settings:
         if self.parallelization_backend is None:
             if len(functions) > 1:
                 log.warning(
-                    "Running without parallelization backend can be slow. Consider using a backend, e.g. via `sopa.settings.parallelization_backend = 'dask'`, or `export SOPA_PARALLELIZATION_BACKEND=dask`."
+                    "Running without parallelization backend can be slow. "
+                    "Consider using a backend, e.g. via `sopa.settings.parallelization_backend = 'dask'`, "
+                    "or `export SOPA_PARALLELIZATION_BACKEND=dask`."
                 )
             return [f() for f in tqdm(functions)]
 

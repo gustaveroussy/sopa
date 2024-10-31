@@ -181,8 +181,6 @@ def _read_stitched_image(
     morphology_coords: list[str],
     **imread_kwargs,
 ) -> tuple[da.Array, list[str] | None]:
-    log.warning("Image stitching is currently experimental")
-
     fov_images = {}
     c_coords_dict = {}
     pattern = re.compile(r".*_F(\d+)")

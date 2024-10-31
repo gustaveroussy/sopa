@@ -10,8 +10,8 @@ from anndata import AnnData
 from shapely import Polygon
 from spatialdata import SpatialData
 
-from .._constants import SopaKeys
-from ..utils import to_intrinsic
+from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
+from ..utils import get_spatial_element, to_intrinsic
 from . import Aggregator
 
 log = logging.getLogger(__name__)
@@ -39,9 +39,10 @@ def overlay_segmentation(
         sopa_attrs = sdata.tables["table"].uns[SopaKeys.UNS_KEY]
 
         if sopa_attrs[SopaKeys.UNS_HAS_TRANSCRIPTS]:
+            if gene_column is None:
+                points = get_spatial_element(sdata.points, key=sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
+                gene_column = points.attrs.get(ATTRS_KEY, {}).get("feature_key")
             assert gene_column is not None, "Need 'gene_column' argument to count transcripts"
-        else:
-            gene_column = gene_column
         average_intensities = sopa_attrs[SopaKeys.UNS_HAS_INTENSITIES]
 
     aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key)

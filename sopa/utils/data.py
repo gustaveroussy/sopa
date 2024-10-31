@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 
 import dask.array as da
 import dask.dataframe as dd
@@ -113,7 +112,8 @@ def toy_dataset(
     bbox = box(0, 0, length - 1, length - 1)
     cells = [cell.intersection(bbox) for cell in cells]
     gdf = gpd.GeoDataFrame(geometry=cells)
-    shapes = {"cellpose_boundaries" if as_output else "cells": ShapesModel.parse(gdf)}
+    shapes_key = "cellpose_boundaries" if as_output else "cells"
+    shapes = {shapes_key: ShapesModel.parse(gdf)}
 
     ### Create transcripts
     n_genes = n_cells * n_points_per_cell
@@ -178,7 +178,7 @@ def toy_dataset(
 
     from ..spatial import assign_transcript_to_cell
 
-    assign_transcript_to_cell(sdata, "transcripts", "cells", "cell_id", unassigned_value=0)
+    assign_transcript_to_cell(sdata, "transcripts", shapes_key, "cell_id", unassigned_value=0)
 
     sdata["transcripts"]["cell_id"] = sdata["transcripts"]["cell_id"].astype(int) - int(transcript_cell_id_as_merscope)
 
@@ -189,7 +189,7 @@ def toy_dataset(
 
 
 def _add_table(sdata: SpatialData):
-    from ..segmentation import Aggregator
+    from ..aggregation import Aggregator
 
     aggregator = Aggregator(sdata, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES)
 
@@ -252,7 +252,7 @@ def _he_image(length: int) -> np.ndarray:
 
 
 def uniform(*_, **kwargs):
-    warnings.warn("The `uniform` function is deprecated, use `toy_dataset` instead", DeprecationWarning, stacklevel=2)
+    log.warning("The `uniform` function is deprecated, use `toy_dataset` instead")
     return toy_dataset(**kwargs)
 
 

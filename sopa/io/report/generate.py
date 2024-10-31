@@ -23,7 +23,6 @@ from .engine import (
 )
 
 log = logging.getLogger(__name__)
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def write_report(path: str, sdata: SpatialData):
@@ -36,10 +35,13 @@ def write_report(path: str, sdata: SpatialData):
         path: Path to the `.html` report that has to be created
         sdata: A `SpatialData` object, after running Sopa
     """
-    sections = SectionBuilder(sdata).compute_sections()
+    with warnings.catch_warnings():
+        warnings.simplefilter(action="ignore", category=FutureWarning)
 
-    log.info(f"Writing report to {path}")
-    Root(sections).write(path)
+        sections = SectionBuilder(sdata).compute_sections()
+
+        log.info(f"Writing report to {path}")
+        Root(sections).write(path)
 
 
 def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):

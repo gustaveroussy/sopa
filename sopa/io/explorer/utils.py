@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import geopandas as gpd
@@ -9,7 +10,10 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
-from ...utils import get_spatial_element
+from ..._constants import SopaAttrs
+from ...utils import add_spatial_element, get_spatial_element
+
+log = logging.getLogger(__name__)
 
 
 def explorer_file_path(path: str, filename: str, is_dir: bool):
@@ -58,7 +62,8 @@ def xenium_explorer_selection(path: str | Path, pixel_size: float = 0.2125, retu
 def add_explorer_selection(
     sdata: SpatialData,
     path: str,
-    shapes_key: str,
+    key_added: str = "explorer_selection",
+    shapes_key: str | None = None,
     image_key: str | None = None,
     pixel_size: float = 0.2125,
 ):
@@ -67,13 +72,19 @@ def add_explorer_selection(
     Args:
         sdata: A `SpatialData` object
         path: The path to the `coordinates.csv` selection file
-        shapes_key: The name to provide to the shapes
+        key_added: The name to provide to the selection as shapes
+        shapes_key: Deprecated. Use `key_added` instead.
         image_key: The original image name
         pixel_size: Number of microns in a pixel. It must be the same value as the one used in `sopa.io.write`
     """
+    if shapes_key is not None:
+        log.warning("The `shapes_key` argument is deprecated. Use `key_added` instead.")
+        key_added = shapes_key
+
     polys = xenium_explorer_selection(path, pixel_size=pixel_size, return_list=True)
-    image = get_spatial_element(sdata.images, key=image_key)
+    image = get_spatial_element(sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION))
 
     transformations = get_transformation(image, get_all=True).copy()
 
-    sdata.shapes[shapes_key] = ShapesModel.parse(gpd.GeoDataFrame(geometry=polys), transformations=transformations)
+    geo_df = ShapesModel.parse(gpd.GeoDataFrame(geometry=polys), transformations=transformations)
+    add_spatial_element(sdata, key_added, geo_df)

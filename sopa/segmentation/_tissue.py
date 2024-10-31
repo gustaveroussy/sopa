@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 from enum import Enum
 
 import geopandas as gpd
@@ -131,7 +130,8 @@ class TissueSegmentation:
 
         if image.sizes["y"] * image.sizes["x"] > self.SIZE_THRESHOLD_LARGE_IMAGE:
             log.warning(
-                "Tissue segmentation is computationally expensive for large images. Consider using a smaller image, or set the `level` parameter."
+                "Tissue segmentation is computationally expensive for large images. "
+                "Consider using a smaller image, or set the `level` parameter."
             )
 
     def get_polygons(self, mode: str) -> gpd.GeoDataFrame:
@@ -206,10 +206,8 @@ def hsv_otsu(
     close_k: int = 5,
     drop_threshold: int = 0.01,
 ):
-    warnings.warn(
-        "The hsv_otsu function is deprecated and will be removed in 2025. Use `sopa.segmentation.tissue` instead.",
-        DeprecationWarning,
-        stacklevel=2,
+    log.warning(
+        "The hsv_otsu function is deprecated and will be removed in 2025. Use `sopa.segmentation.tissue` instead."
     )
     tissue(
         sdata,

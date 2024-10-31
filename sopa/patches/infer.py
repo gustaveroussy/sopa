@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 from typing import Callable
 
 import numpy as np
@@ -18,11 +17,7 @@ log = logging.getLogger(__name__)
 
 
 def infer_wsi_patches(*args, **kwargs):
-    warnings.warn(
-        "`infer_wsi_patches` is deprecated, use `sopa.patches.compute_embeddings` instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    log.warning("`infer_wsi_patches` is deprecated, use `sopa.patches.compute_embeddings` instead")
     compute_embeddings(*args, **kwargs)
 
 

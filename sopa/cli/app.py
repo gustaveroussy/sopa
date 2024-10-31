@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import logging
 
 import typer
 
@@ -10,6 +11,8 @@ from .patchify import app_patchify
 from .resolve import app_resolve
 from .segmentation import app_segmentation
 from .utils import SDATA_HELPER
+
+log = logging.getLogger(__name__)
 
 app = typer.Typer()
 app.add_typer(
@@ -175,19 +178,17 @@ def aggregate(
     gene_column: str = typer.Option(None, help="[Deprecated] Use `aggregate_genes` instead."),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
-    import warnings
-
     import sopa
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
 
     if gene_column is not None:
-        warnings.warn("The `gene_column` argument is deprecated. Use `aggregate_genes` instead.")
+        log.warning("The `gene_column` argument is deprecated. Use `aggregate_genes` instead.")
         aggregate_genes = True
 
     if average_intensities:
-        warnings.warn("The `average_intensities` argument is deprecated. Use `aggregate_channels` instead.")
+        log.warning("The `average_intensities` argument is deprecated. Use `aggregate_channels` instead.")
         aggregate_channels = True
 
     sopa.aggregate(

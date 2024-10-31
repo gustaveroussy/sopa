@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import warnings
 from math import ceil
 
 import dask.dataframe as dd
@@ -179,9 +178,7 @@ class Patches2D:
         return len(self.bboxes)
 
     def write(self, *args, **kwargs):
-        warnings.warn(
-            "Patches2D.write is deprecated. Use Patches2D.add_shapes instead", DeprecationWarning, stacklevel=2
-        )
+        log.warning("Patches2D.write is deprecated. Use Patches2D.add_shapes instead")
         self.add_shapes(*args, **kwargs)
 
     def add_shapes(self, overwrite: bool = True, key_added: str | None = None) -> gpd.GeoDataFrame:
