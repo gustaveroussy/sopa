@@ -20,12 +20,12 @@ nav:
     - Xenium Explorer usage: tutorials/xenium_explorer/explorer.ipynb
     - Landmark-based alignment: tutorials/align.md
     - Spatial operations: tutorials/spatial.ipynb
-    - Visium HD usage: tutorials/visium_hd.ipynb
-    - H&E usage: tutorials/he.ipynb
-    - Command line interface: tutorials/cli_usage.md
+    - Visium HD usage: tutorials/visium_hd.ipynb # TODO: test it
+    - H&E usage: tutorials/he.ipynb # TODO: test it
+    - Command line interface: tutorials/cli_usage.md # TODO: test it
     - Other segmentations:
-      - ComSeg: tutorials/comseg.ipynb
-      - Multi-step: tutorials/multi_step_segmentation.md
+      - ComSeg: tutorials/comseg.ipynb # TODO: test it
+      - Multi-step: tutorials/multi_step_segmentation.md # TODO: test it
       - Custom segmentation: tutorials/custom_segmentation.ipynb
   - API:
     - Readers: api/readers.md

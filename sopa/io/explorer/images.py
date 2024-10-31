@@ -208,6 +208,7 @@ def align(
     sdata: SpatialData,
     image: DataArray,
     transformation_matrix_path: str,
+    key_added: str | None = None,
     image_key: str = None,
     overwrite: bool = False,
 ):
@@ -217,10 +218,14 @@ def align(
         sdata: A `SpatialData` object
         image: A `DataArray` object. Note that `image.name` is used as the key for the aligned image.
         transformation_matrix_path: Path to the `.csv` transformation matrix exported from the Xenium Explorer
+        key_added: Optional name to add to the new image. If `None`, will use `image.name`.
         image_key: Optional name of the image on which it has been aligned. Required if multiple images in the `SpatialData` object.
         overwrite: Whether to overwrite the image, if already existing.
     """
-    image_name = image.name
+    key_added = key_added or image.name
+
+    assert key_added is not None, "The image has no name, use the `key_added` argument to provide one"
+    assert key_added not in sdata, f"Image '{key_added}' already exists in the `SpatialData` object"
 
     to_pixel = Sequence(
         [
@@ -239,5 +244,5 @@ def align(
 
     set_transformation(image, transformations, set_all=True)
 
-    log.info(f"Adding image {image_name}:\n{image}")
-    add_spatial_element(sdata, image_name, image, overwrite=overwrite)
+    add_spatial_element(sdata, key_added, image, overwrite=overwrite)
+    log.info(f"Added image '{key_added}' (aligned with the Xenium Explorer)")

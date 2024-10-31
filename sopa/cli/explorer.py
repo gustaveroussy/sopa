@@ -107,9 +107,9 @@ def add_aligned(
     transformation_matrix_path: str = typer.Argument(
         help="Path to the `matrix.csv` file returned by the Explorer after alignment"
     ),
-    original_image_key: str = typer.Option(
+    image_key: str = typer.Option(
         None,
-        help="Optional original-image key (of sdata.images) on which the new image will be aligned. This doesn't need to be provided if there is only one image",
+        help="Optional original-image key (of sdata.images) on which the new image will be aligned. This doesn't need to be provided if there is only one image, or a cell-segmentation image.",
     ),
     overwrite: bool = typer.Option(False, help="Whether to overwrite the image if existing"),
 ):
@@ -122,4 +122,4 @@ def add_aligned(
     sdata = spatialdata.read_zarr(sdata_path)
     image = io.ome_tif(image_path, as_image=True)
 
-    align(sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=original_image_key)
+    align(sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=image_key)

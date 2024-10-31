@@ -141,7 +141,10 @@ def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
 
     image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
-    channel_names = _ome_channels_names(path)
+    try:
+        channel_names = _ome_channels_names(path)
+    except:
+        channel_names = []
     if len(channel_names) != len(image):
         channel_names = [str(i) for i in range(len(image))]
         log.warning(f"Channel names couldn't be read. Using {channel_names} instead.")
