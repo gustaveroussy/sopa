@@ -20,7 +20,7 @@ nav:
     - Xenium Explorer usage: tutorials/xenium_explorer/explorer.ipynb
     - Landmark-based alignment: tutorials/align.md
     - Spatial operations: tutorials/spatial.ipynb
-    - Visium HD usage: tutorials/visium_hd.ipynb # TODO: test it
+    - Visium HD usage: tutorials/visium_hd.ipynb
     - H&E usage: tutorials/he.ipynb # TODO: test it
     - Command line interface: tutorials/cli_usage.md # TODO: test it
     - Other segmentations:
