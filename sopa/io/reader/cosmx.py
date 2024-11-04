@@ -126,7 +126,7 @@ def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
         counts_files = list(path.rglob(f"[!\\.]*_fov_positions_file{suffix}"))
 
         if len(counts_files) == 1:
-            found = re.match(rf"(.*)_fov_positions_file{suffix}", str(counts_files[0]))
+            found = re.match(rf"(.*)_fov_positions_file{suffix}", counts_files[0].name)
             if found:
                 return found.group(1)
 
@@ -166,9 +166,9 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
     pixel_size = 0.120280945  # size of a pixel in microns
 
     fov_locs["xmin"] = fov_locs["X_mm"] * 1e3 / pixel_size
-    fov_locs["xmax"] = 0  # will be filled when reading the images
+    fov_locs["xmax"] = 0.0  # will be filled when reading the images
 
-    fov_locs["ymin"] = 0  # will be filled when reading the images
+    fov_locs["ymin"] = 0.0  # will be filled when reading the images
     fov_locs["ymax"] = fov_locs["Y_mm"] * 1e3 / pixel_size
 
     return fov_locs
