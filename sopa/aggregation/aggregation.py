@@ -17,7 +17,9 @@ from ..utils import (
     get_spatial_element,
     get_spatial_image,
 )
-from . import aggregate_bins, average_channels, count_transcripts
+from . import aggregate_bins
+from . import aggregate_channels as _aggregate_channels
+from . import count_transcripts
 
 log = logging.getLogger(__name__)
 
@@ -157,7 +159,7 @@ class Aggregator:
                 self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
         if aggregate_channels:
-            mean_intensities = average_channels(
+            mean_intensities = _aggregate_channels(
                 self.sdata,
                 image_key=self.image_key,
                 shapes_key=self.shapes_key,

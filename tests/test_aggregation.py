@@ -6,14 +6,14 @@ import pandas as pd
 import xarray as xr
 from shapely.geometry import Polygon, box
 
-from sopa.aggregation.channels import _average_channels_aligned
+from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa
 
 
-def test_average_channels_aligned():
+def test_aggregate_channels_aligned():
     image = np.random.randint(1, 10, size=(3, 8, 16))
     arr = da.from_array(image, chunks=(1, 8, 8))
     xarr = xr.DataArray(arr, dims=["c", "y", "x"])
@@ -24,11 +24,23 @@ def test_average_channels_aligned():
     # One cell is on the first block, one is overlapping on both blocks, and one is on the last block
     cells = [box(x, y, x + cell_size - 1, y + cell_size - 1) for x, y in cell_start]
 
-    means = _average_channels_aligned(xarr, cells)
+    mean_intensities = _aggregate_channels_aligned(xarr, cells, "average")
+    min_intensities = _aggregate_channels_aligned(xarr, cells, "min")
+    max_intensities = _aggregate_channels_aligned(xarr, cells, "max")
 
-    true_means = np.stack([image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start])
+    true_mean_intensities = np.stack(
+        [image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start]
+    )
+    true_min_intensities = np.stack(
+        [image[:, y : y + cell_size, x : x + cell_size].min(axis=(1, 2)) for x, y in cell_start]
+    )
+    true_max_intensities = np.stack(
+        [image[:, y : y + cell_size, x : x + cell_size].max(axis=(1, 2)) for x, y in cell_start]
+    )
 
-    assert (means == true_means).all()
+    assert (mean_intensities == true_mean_intensities).all()
+    assert (min_intensities == true_min_intensities).all()
+    assert (max_intensities == true_max_intensities).all()
 
 
 def test_count_transcripts():
