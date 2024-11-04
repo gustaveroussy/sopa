@@ -7,7 +7,7 @@ import pandas as pd
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
-from spatialdata.models import PointsModel, TableModel
+from spatialdata.models import TableModel
 
 from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
@@ -28,33 +28,52 @@ def aggregate(
     aggregate_channels: bool = True,
     image_key: str | None = None,
     points_key: str | None = None,
+    gene_column: str | None = None,
     shapes_key: str | None = None,
     bins_key: str | None = None,
-    min_transcripts: int = 0,
     expand_radius_ratio: float | None = None,
+    min_transcripts: int = 0,
     min_intensity_ratio: float = 0.1,
 ):
+    """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
+
+    !!! info
+        The main arguments are `sdata`, `aggregate_genes`, and `aggregate_channels`. The rest of the arguments are optional and will be inferred from the data if not provided.
+
+        - If channels are aggregated and not genes, then `sdata['table'].X` will contain the mean channel intensities per cell.
+        - If genes are aggregated and not channels, then `sdata['table'].X` will contain the gene counts per cell.
+        - If both genes and channels are aggregated, then `sdata['table'].X` will contain the gene counts per cell and `sdata['table'].obsm['intensities']` will contain the mean channel intensities per cell.
+
+    Args:
+        sdata: A `SpatialData` object
+        aggregate_genes: Whether to aggregate gene counts. If None, it will be inferred from the data.
+        aggregate_channels: Whether to aggregate channel intensities inside cells.
+        image_key: Key of `sdata` with the image channels to be averaged. By default, uses the segmentation image.
+        points_key: Key of `sdata` with the points dataframe representing the transcripts.
+        gene_column: Key of `sdata[points_key]` with the gene names.
+        shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries.
+        bins_key: Key of `sdata` with the table corresponding to the bin-by-gene table of gene counts (e.g., for Visium HD data).
+        expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. By default, the value will be inferred depending on whether we aggregate bins or not.
+        min_transcripts: Min number of transcripts to keep a cell.
+        min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
+    """
     bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
-    aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key)
-
-    points_key, gene_column = None, None
+    points_key = None
     if aggregate_genes or (aggregate_genes is None and bins_key is None and sdata.points):
-        points_key, points = get_spatial_element(
+        points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
         )
-        gene_column = points.attrs.get(ATTRS_KEY, {}).get(PointsModel.FEATURE_KEY)
-        assert (
-            aggregate_genes is None or gene_column is not None
-        ), f"No gene column found in sdata['{points_key}'].attrs['{ATTRS_KEY}']['{PointsModel.FEATURE_KEY}']"
+
+    aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key, points_key=points_key)
 
     aggr.compute_table(
-        gene_column=gene_column,
-        average_intensities=aggregate_channels,
+        aggregate_genes=aggregate_genes,
+        aggregate_channels=aggregate_channels,
         expand_radius_ratio=expand_radius_ratio,
         min_transcripts=min_transcripts,
         min_intensity_ratio=min_intensity_ratio,
-        points_key=points_key,
+        gene_column=gene_column,
     )
 
 
@@ -69,6 +88,7 @@ class Aggregator:
         image_key: str | None = None,
         shapes_key: str | None = None,
         bins_key: str | None = None,
+        points_key: str | None = None,
     ):
         """
         Args:
@@ -76,17 +96,14 @@ class Aggregator:
             image_key: Key of `sdata` with the image to be averaged. If only one image, this does not have to be provided
             shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries
             bins_key: Key of `sdata` with the table corresponding to the bins table of gene counts (e.g., for Visium HD data)
+            points_key: Key of `sdata` with the points dataframe representing the transcripts
         """
         self.sdata = sdata
         self.bins_key = bins_key
+        self.points_key = points_key
 
         self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
-
-        if shapes_key is None:
-            self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True)
-        else:
-            self.shapes_key = shapes_key
-            self.geo_df = self.sdata[shapes_key]
+        self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
 
         self.table = None
         if SopaKeys.TABLE in self.sdata.tables and self.sdata[SopaKeys.TABLE].n_obs == len(self.geo_df):
@@ -102,56 +119,44 @@ class Aggregator:
             self.table = self.table[~where_filter]
 
     def update_table(self, *args, **kwargs):
-        log.warning("'update_table' is deprecated, use 'compute_table' instead")
+        log.warning("'update_table' is deprecated and will be removed in future versions, use 'compute_table' instead")
         self.compute_table(*args, **kwargs)
 
     def compute_table(
         self,
+        aggregate_genes: bool | None = None,
+        aggregate_channels: bool = True,
         gene_column: str | None = None,
-        average_intensities: bool = True,
         expand_radius_ratio: float | None = None,
-        points_key: str | None = None,
         min_transcripts: int = 0,
         min_intensity_ratio: float = 0,
+        average_intensities: bool = True,  # deprecated argument
+        points_key: str | None = None,  # deprecated argument
     ):
-        """Perform aggregation and update the spatialdata table
-
-        Args:
-            gene_column: Column key of the transcript dataframe containing the gene names
-            average_intensities: Whether to average the channels intensities inside cells polygons
-            expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
-            min_transcripts: Minimum amount of transcript to keep a cell
-            min_intensity_ratio: Cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
-        """
-        does_count = (
-            (self.table is not None and isinstance(self.table.X, csr_matrix))
-            or gene_column is not None
-            or self.bins_key is not None
+        aggregate_genes, aggregate_channels = self._legacy_arguments(
+            points_key, gene_column, aggregate_genes, aggregate_channels, average_intensities
         )
 
         assert (
-            average_intensities or does_count
-        ), "You must choose at least one aggregation: transcripts or fluorescence intensities"
-        assert (
-            gene_column is None or self.bins_key is None
-        ), "Can't count transcripts and aggregate bins at the same time"
+            aggregate_genes or aggregate_channels
+        ), "At least one of `aggregate_genes` or `aggregate_channels` must be True"
 
-        if gene_column is not None:
-            if self.table is not None:
-                log.warning("sdata.table is already existing. Transcripts are not count again.")
-            else:
+        if aggregate_genes:
+            if self.bins_key is not None:
+                self.table = aggregate_bins(
+                    self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 0.2
+                )
+            elif self.table is None:
                 self.table = count_transcripts(
                     self.sdata, gene_column, shapes_key=self.shapes_key, points_key=points_key
                 )
-        elif self.bins_key is not None:
-            self.table = aggregate_bins(
-                self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 0.2
-            )
+            else:
+                log.warning("sdata.table is already existing. Transcripts are not count again.")
 
-        if does_count and min_transcripts > 0:
-            self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
+            if min_transcripts > 0:
+                self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
 
-        if average_intensities:
+        if aggregate_channels:
             mean_intensities = average_channels(
                 self.sdata,
                 image_key=self.image_key,
@@ -166,28 +171,58 @@ class Aggregator:
                 self.filter_cells(where_filter)
                 mean_intensities = mean_intensities[~where_filter]
 
-            if not does_count:
+            if aggregate_genes:
+                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
+                    mean_intensities,
+                    columns=self.image.coords["c"].values.astype(str),
+                    index=self.table.obs_names,
+                )
+            else:
                 self.table = AnnData(
                     mean_intensities,
                     dtype=mean_intensities.dtype,
                     var=pd.DataFrame(index=self.image.coords["c"].values.astype(str)),
                     obs=pd.DataFrame(index=self.geo_df.index),
                 )
-            else:
-                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
-                    mean_intensities,
-                    columns=self.image.coords["c"].values.astype(str),
-                    index=self.table.obs_names,
-                )
 
         self.sdata.shapes[self.shapes_key] = self.geo_df
 
         self.table.uns[SopaKeys.UNS_KEY] = {
-            SopaKeys.UNS_HAS_TRANSCRIPTS: does_count,
-            SopaKeys.UNS_HAS_INTENSITIES: average_intensities,
+            SopaKeys.UNS_HAS_TRANSCRIPTS: aggregate_genes,
+            SopaKeys.UNS_HAS_INTENSITIES: aggregate_channels,
         }
 
         self.add_standardized_table()
+
+    def _legacy_arguments(
+        self,
+        points_key: str | None,
+        gene_column: str | None,
+        aggregate_genes: bool | None,
+        aggregate_channels: bool,
+        average_intensities: bool,
+    ) -> tuple[bool, bool]:
+        if points_key is not None:
+            log.warning(
+                "`points_key` in `compute_table` is deprecated and will be removed in future versions, provide it in the constructor instead"
+            )
+            self.points_key = points_key
+
+        if aggregate_genes is None:
+            aggregate_genes = (
+                (self.table is not None and isinstance(self.table.X, csr_matrix))
+                or gene_column is not None
+                or self.bins_key is not None
+                or self.points_key is not None
+            )
+
+        if not average_intensities:
+            log.warning(
+                "`average_intensities=False` is deprecated and will be removed in future versions, use `aggregate_channels=False` instead"
+            )
+            return aggregate_genes, False
+
+        return aggregate_genes, aggregate_channels
 
     def add_standardized_table(self):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))

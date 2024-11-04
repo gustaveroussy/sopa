@@ -39,6 +39,8 @@ def cosmx(
         - `*_tx_file.csv.gz` or `*_tx_file.csv`: Transcripts location and names
         - If `read_proteins` is `True`, all the images under the nested `ProteinImages` directories will be read
 
+        These files must be exported as flat files in AtomX. That is: within a study, click on "Export" and then select files from the "Flat CSV Files" section (transcripts flat and FOV position flat).
+
     Args:
         path: Path to the root directory containing *Nanostring* files.
         dataset_id: Optional name of the dataset (needs to be provided if not infered).
@@ -90,7 +92,7 @@ def cosmx(
     parsed_image = Image2DModel.parse(image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs)
 
     if read_proteins:
-        return SpatialData(images={image_name: parsed_image})
+        return SpatialData(images={image_name: parsed_image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
     ### Read transcripts
     transcripts_data = _read_transcripts_csv(path, dataset_id)

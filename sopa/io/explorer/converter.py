@@ -11,6 +11,7 @@ from spatialdata import SpatialData
 from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ...utils import (
     get_boundaries,
+    get_feature_key,
     get_spatial_element,
     get_spatial_image,
     to_intrinsic,
@@ -144,7 +145,7 @@ def write(
         df = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
 
     if _should_save(mode, "t") and df is not None:
-        gene_column = gene_column or df.attrs[ATTRS_KEY].get("feature_key")
+        gene_column = gene_column or get_feature_key(df)
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
             write_transcripts(path, df, gene_column, pixel_size=pixel_size)

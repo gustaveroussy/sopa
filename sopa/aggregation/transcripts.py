@@ -13,16 +13,16 @@ from scipy.sparse import coo_matrix
 from spatialdata import SpatialData
 
 from .._constants import SopaAttrs
-from ..utils import get_boundaries, get_spatial_element, to_intrinsic
+from ..utils import get_boundaries, get_feature_key, get_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
 
 
 def count_transcripts(
     sdata: SpatialData,
-    gene_column: str,
-    shapes_key: str = None,
-    points_key: str = None,
+    gene_column: str | None = None,
+    shapes_key: str | None = None,
+    points_key: str | None = None,
     geo_df: gpd.GeoDataFrame | None = None,
 ) -> AnnData:
     """Counts transcripts per cell.
@@ -44,6 +44,8 @@ def count_transcripts(
     if geo_df is None:
         geo_df = get_boundaries(sdata, key=shapes_key)
         geo_df = to_intrinsic(sdata, geo_df, points_key)
+
+    gene_column = gene_column or get_feature_key(points, raise_error=True)
 
     log.info(f"Aggregating transcripts over {len(geo_df)} cells")
     return _count_transcripts_aligned(geo_df, points, gene_column)

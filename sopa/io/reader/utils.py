@@ -162,4 +162,4 @@ def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})

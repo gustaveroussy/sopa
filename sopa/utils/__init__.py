@@ -8,6 +8,7 @@ from .utils import (
     get_intensities,
     add_spatial_element,
     get_transcripts_patches_dirs,
+    get_feature_key,
 )
 from .annotation import preprocess_fluo, higher_z_score, tangram_annotate
 from .image import (

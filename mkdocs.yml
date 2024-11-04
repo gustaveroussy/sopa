@@ -31,6 +31,7 @@ nav:
     - Readers: api/readers.md
     - Patches: api/patches.md
     - Segmentation: api/segmentation.md
+    - Aggregation: api/aggregation.md
     - Utils: api/utils.md
     - Spatial operations: api/spatial.md
     - Misc: api/misc.md

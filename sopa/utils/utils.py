@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import dask.dataframe as dd
 import geopandas as gpd
 import pandas as pd
 import spatialdata
@@ -17,7 +18,7 @@ from spatialdata.transformations import (
 from xarray import DataArray
 
 from .. import settings
-from .._constants import SopaAttrs, SopaFiles, SopaKeys
+from .._constants import ATTRS_KEY, SopaAttrs, SopaFiles, SopaKeys
 
 log = logging.getLogger(__name__)
 
@@ -91,6 +92,18 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
         sdata, element, element_cs, intermediate_coordinate_systems=element_cs
     )
     return spatialdata.transform(element, transformation=transformation, maintain_positioning=True)
+
+
+def get_feature_key(points: dd.DataFrame, raise_error: bool = False) -> str:
+    """Get the feature key of a transcript dataframe"""
+    feature_key = points.attrs.get(ATTRS_KEY, {}).get("feature_key")
+
+    if raise_error and feature_key is None:
+        raise ValueError(
+            f"No gene column name found in points['{ATTRS_KEY}']['feature_key']. Provide the `gene_column` argument."
+        )
+
+    return feature_key
 
 
 def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:

@@ -278,4 +278,8 @@ def blobs(
     genes = pd.Series(np.random.choice(list("abcdef"), size=len(points))).astype("category")
     points["genes"] = dd.from_pandas(genes, npartitions=points.npartitions)
 
-    return SpatialData(images={"blob_image": image}, points={"blob_transcripts": points})
+    return SpatialData(
+        images={"blob_image": image},
+        points={"blob_transcripts": points},
+        attrs={SopaAttrs.CELL_SEGMENTATION: "blob_image", SopaAttrs.TRANSCRIPTS: "blob_transcripts"},
+    )

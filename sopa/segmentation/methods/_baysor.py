@@ -7,8 +7,8 @@ from pathlib import Path
 from spatialdata import SpatialData
 
 from ... import settings
-from ..._constants import ATTRS_KEY, SopaAttrs, SopaFiles, SopaKeys
-from ...utils import get_transcripts_patches_dirs
+from ..._constants import SopaAttrs, SopaFiles, SopaKeys
+from ...utils import get_feature_key, get_transcripts_patches_dirs
 from .._transcripts import resolve
 
 log = logging.getLogger(__name__)
@@ -164,10 +164,7 @@ def _get_default_config(sdata: SpatialData) -> dict:
         points_key
     ), f"Transcripts key not found in sdata.attrs['{SopaAttrs.TRANSCRIPTS}'], baysor config can't be inferred."
 
-    feature_key = sdata[points_key].attrs[ATTRS_KEY].get("feature_key")
-    assert (
-        feature_key
-    ), f"Feature key not found in sdata['{points_key}'].attrs['{ATTRS_KEY}'], baysor config can't be inferred."
+    feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
     return {
         "data": {

@@ -98,7 +98,7 @@ def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> S
     )
     multiscale_image.attrs["metadata"] = tiff_metadata
 
-    return SpatialData(images={image_name: multiscale_image})
+    return SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
 
 
 def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
