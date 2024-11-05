@@ -60,19 +60,24 @@ class Settings:
 
         import os
 
-        @dask.delayed
-        def run(f):
-            return f()
-
         n_cpus = os.cpu_count()
         dask_client_kwargs = self.dask_client_kwargs.copy()
         if "n_workers" not in dask_client_kwargs and len(functions) < n_cpus:
-            dask_client_kwargs["n_workers"] = n_cpus
+            dask_client_kwargs["n_workers"] = len(functions)
 
         with Client(**dask_client_kwargs) as client:
-            _ = dask.persist(*[run(f) for f in functions])
-            progress(_, notebook=False)
-            return client.gather(client.compute(_))
+            ram_per_worker = client.cluster.workers[0].memory_manager.memory_limit
+
+            if ram_per_worker < 4 * 1024**3:
+                log.warning(
+                    f"Each worker has less than 4GB of RAM ({ram_per_worker / 1024**3:.2f}GB), which may not be enough. "
+                    f"Consider setting `sopa.settings.dask_client_kwargs['n_workers']` to use less workers ({len(client.cluster.workers)} currently)."
+                )
+
+            functions = [dask.delayed(function)() for function in functions]
+            futures = dask.persist(*functions)
+            progress(futures, notebook=False)
+            return client.gather(client.compute(futures))
 
 
 settings = Settings()
