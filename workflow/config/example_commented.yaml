@@ -20,6 +20,10 @@ patchify:
 
 
 segmentation:
+  # [optional] if you want to segment the tissue before cell-segmentation
+  tissue:
+    mode: staining # 'saturation' (for H&E) or 'staining' (for fluorescence)
+
   # [only if running cellpose]
   cellpose:
     diameter: 55 # [important parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/master/workflow/config)

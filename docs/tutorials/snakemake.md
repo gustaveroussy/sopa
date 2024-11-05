@@ -2,9 +2,9 @@
 
 Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow to get started quickly. This will not involve any coding but requires some setup specific to `snakemake`.
 
-## Install `sopa`
+## Setup
 
-Follow our [installation instructions](../../getting_started/#snakemake-setup) until the end of the "Snakemake setup" section.
+Follow our [installation instructions](../../getting_started/#snakemake-setup) until the end of the "Snakemake setup" section. At the end, you should have one `sopa` environment, one one environment with `snakemake` (it can be the same environment, if desired), and you should also have cloned the `sopa` repository.
 
 ## Choose a config
 
@@ -23,7 +23,13 @@ Keep in mind the relative path of your config since you'll need it later, e.g. `
 conda activate snakemake    # or any environment that has `snakemake`
 ```
 
-3. You can either execute the pipeline locally or on a high-performance-cluster (choose the right option below)
+1. Go in the `workflow` directory
+```sh
+cd sopa       # go inside the sopa repository (if not done yet)
+cd workflow   # go inside the workflow directory of sopa
+```
+
+1. You can either execute the pipeline locally or on a high-performance-cluster (choose the right option below)
 
 === "Local execution (e.g., personal laptop)"
 
@@ -42,7 +48,7 @@ conda activate snakemake    # or any environment that has `snakemake`
 
 === "High-performance-cluster (e.g., Slurm cluster)"
 
-    To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). By default, we use [this `slurm` profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/slurm/config.yaml), but you can also update it or create your own profile under `profile/<profile-name>/config.yaml`.
+    To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). By default, we use [this `slurm` profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/slurm/config.yaml), but you can also update it or create your own profile under `profiles/<profile-name>/config.yaml`.
 
     ```sh
     snakemake \
@@ -66,6 +72,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     Make sure you have installed sopa with the `cellpose` extra (for instance, this can be done via the following command: `pip install 'sopa[cellpose]'`).
     ```sh
     conda activate snakemake    # or any environment that has `snakemake`
+    cd workflow   # move to the workflow directory inside the sopa repository
 
     # you can replace tuto.zarr by another path where the data will be saved
     snakemake \
@@ -79,6 +86,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     Make sure you have installed sopa with the Baysor extra, and that you have installed the `baysor` command.
     ```sh
     conda activate snakemake    # or any environment that has `snakemake`
+    cd workflow   # move to the workflow directory inside the sopa repository
 
     # you can replace tuto.zarr by another path where the data will be saved
     snakemake \

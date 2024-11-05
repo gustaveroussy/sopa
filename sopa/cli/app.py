@@ -159,7 +159,7 @@ def aggregate(
         False, help="Whether to aggregate the channels (intensity) inside each cell"
     ),
     expand_radius_ratio: float = typer.Option(
-        default=0,
+        default=None,
         help="Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings",
     ),
     min_transcripts: int = typer.Option(0, help="Cells with less transcript than this integer will be filtered"),

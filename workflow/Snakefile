@@ -1,7 +1,6 @@
-from utils import WorkflowPaths, Args
-from validation import sanity_check_config
+from src import WorkflowPaths, Args, validate_config
 
-config = sanity_check_config(config) # validate the Snakemake config
+config = validate_config(config) # validate the Snakemake config
 paths = WorkflowPaths(config) # object handling the paths to the files that will be created
 args = Args(paths, config) # object handling the arguments passed to the workflow
 
@@ -37,9 +36,24 @@ rule to_spatialdata:
         sopa convert {paths.data_path} --sdata-path {paths.sdata_path} {params.reader}
         """
 
+rule tissue_segmentation:
+    input:
+        paths.sdata_zgroup if paths.data_path else [],
+    output:
+        touch(paths.smk_tissue_segmentation),
+    conda:
+        "sopa"
+    params:
+        tissue_segmentation = args["segmentation"]["tissue"].as_cli(),
+    shell:
+        """
+        sopa segmentation tissue {paths.sdata_path} {params.tissue_segmentation}
+        """
+
 checkpoint patchify_image:
     input:
         paths.sdata_zgroup,
+        paths.smk_tissue_segmentation if args.tissue_segmentation else [],
     output:
         patches_file = paths.smk_patches_file_image,
         patches = touch(paths.smk_patches),
@@ -56,6 +70,7 @@ checkpoint patchify_transcripts:
     input:
         paths.sdata_zgroup,
         paths.smk_cellpose_boundaries if args.cellpose else [],
+        paths.smk_tissue_segmentation if args.tissue_segmentation else [],
     output:
         directory(paths.smk_transcripts_temp_dir),
         patches_file = paths.smk_patches_file_transcripts,
@@ -80,7 +95,7 @@ rule patch_segmentation_cellpose:
         cellpose = args["segmentation"]["cellpose"].as_cli(),
     shell:
         """
-        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir} --patch-index {wildcards.index} {params.cellpose}
+        sopa segmentation cellpose {paths.sdata_path} --patch-index {wildcards.index} {params.cellpose}
         """
 
 rule patch_segmentation_baysor:
@@ -137,7 +152,7 @@ rule resolve_cellpose:
         "sopa"
     shell:
         """
-        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir}
+        sopa resolve cellpose {paths.sdata_path}
         """
 
 rule resolve_baysor:
