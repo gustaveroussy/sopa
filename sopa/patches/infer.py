@@ -10,7 +10,7 @@ from spatialdata.models import Image2DModel
 from xarray import DataArray
 
 from .._constants import SopaAttrs, SopaKeys
-from ..utils import add_spatial_element, get_spatial_image
+from ..utils import add_spatial_element, get_spatial_element
 from . import Patches2D
 
 log = logging.getLogger(__name__)
@@ -62,12 +62,12 @@ def compute_embeddings(
 
     from ._inference import Inference
 
-    image_key, image = get_spatial_image(
-        sdata, key=image_key, return_key=True, valid_attr=SopaAttrs.TISSUE_SEGMENTATION
+    image_key, image = get_spatial_element(
+        sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION), return_key=True
     )
 
     infer = Inference(image, model, patch_width, level, magnification, device)
-    patches = Patches2D(sdata, image_key, infer.patch_width_scale0, infer.downsample * patch_overlap)
+    patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 
@@ -90,6 +90,6 @@ def compute_embeddings(
     key_added = key_added or f"sopa_{infer.model_str}"
     add_spatial_element(sdata, key_added, output_image)
 
-    patches.write(shapes_key=SopaKeys.PATCHES_INFERENCE_KEY)
+    patches.add_shapes(key_added=SopaKeys.PATCHES_INFERENCE_KEY)
 
     return sdata[key_added]

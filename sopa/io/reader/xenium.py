@@ -6,7 +6,7 @@ from pathlib import Path
 from spatialdata import SpatialData
 from spatialdata_io.readers.xenium import xenium as xenium_spatialdata_io
 
-from ..._constants import SopaAttrs
+from ..._constants import ATTRS_KEY, SopaAttrs
 from ...utils import ensure_string_channel_names
 from .utils import _default_image_kwargs
 
@@ -17,6 +17,8 @@ def xenium(
     path: str | Path,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
+    cells_boundaries: int = False,
+    cells_table: int = False,
     **kwargs: int,
 ) -> SpatialData:
     """Read Xenium data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.xenium.html).
@@ -39,16 +41,21 @@ def xenium(
 
     sdata: SpatialData = xenium_spatialdata_io(
         path,
-        cells_table=False,
+        cells_table=cells_table,
         nucleus_labels=False,
         cells_labels=False,
         cells_as_circles=False,
         nucleus_boundaries=False,
-        cells_boundaries=False,
+        cells_boundaries=cells_boundaries,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
         **kwargs,
     )
+
+    if "table" in sdata.tables:
+        sdata["table"].uns[ATTRS_KEY]["region"] = "cell_boundaries"
+        sdata["table"].obs["region"] = "cell_boundaries"
+        sdata["table"].obs["region"] = sdata["table"].obs["region"].astype("category")
 
     ensure_string_channel_names(sdata)
 

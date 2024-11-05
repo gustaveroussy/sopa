@@ -9,12 +9,12 @@ import numpy as np
 from datatree import DataTree
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
 from spatialdata import SpatialData
-from spatialdata.models import ShapesModel
+from spatialdata.models import ShapesModel, SpatialElement
 from spatialdata.transformations import get_transformation
 from xarray import DataArray
 
 from .._constants import EPS, SopaKeys
-from ..utils import add_spatial_element, get_spatial_image, to_intrinsic
+from ..utils import add_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -72,23 +72,22 @@ class Patches2D:
     def __init__(
         self,
         sdata: SpatialData,
-        element_key: str,
+        element: SpatialElement | str,
         patch_width: float | int,
         patch_overlap: float | int = 50,
     ):
         """
         Args:
             sdata: A `SpatialData` object
-            element_key: Name of the element on with patches will be made (image or points)
+            element: SpatialElement or name of the element on with patches will be made (image or points)
             patch_width: Width of the patches (in the unit of the coordinate system of the element)
             patch_overlap: Overlap width between the patches
         """
         self.sdata = sdata
-        self.element_key = element_key
-        self.element = sdata[element_key]
+        self.element = sdata[element] if isinstance(element, str) else element
 
         if isinstance(self.element, DataTree):
-            self.element = get_spatial_image(sdata, element_key)
+            self.element = next(iter(self.element["scale0"].values()))
 
         if isinstance(self.element, DataArray):
             xmin, ymin = 0, 0
@@ -106,7 +105,7 @@ class Patches2D:
 
         self.roi = None
         if SopaKeys.ROI in sdata.shapes:
-            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], element_key)
+            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], self.element)
 
             assert all(
                 isinstance(geom, Polygon) for geom in geo_df.geometry
@@ -153,7 +152,7 @@ class Patches2D:
         self.bboxes.append(bounds)
 
     def __repr__(self):
-        return f"{self.__class__.__name__} object with {len(self)} patches on {self.element_key}"
+        return f"{self.__class__.__name__} object with {len(self)} patches"
 
     @property
     def shape(self) -> tuple[int, int]:

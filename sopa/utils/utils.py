@@ -12,6 +12,7 @@ from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import (
     Identity,
+    Sequence,
     get_transformation,
     get_transformation_between_coordinate_systems,
 )
@@ -88,9 +89,21 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
                 return element  # no transformation needed
             break
 
-    transformation = get_transformation_between_coordinate_systems(
-        sdata, element, element_cs, intermediate_coordinate_systems=element_cs
-    )
+    try:
+        transformation = get_transformation_between_coordinate_systems(sdata, element, element_cs)
+    except:
+        transformations1 = get_transformation(element, get_all=True)
+        transformations2 = get_transformation(element_cs, get_all=True)
+
+        common_keys = list(set(transformations1.keys()) & set(transformations2.keys()))
+
+        if not common_keys:
+            raise ValueError("No common coordinate system found between the two elements")
+
+        cs = "global" if "global" in common_keys else common_keys.pop()
+
+        transformation = Sequence([transformations1[cs], transformations2[cs].inverse()])
+
     return spatialdata.transform(element, transformation=transformation, maintain_positioning=True)
 
 
