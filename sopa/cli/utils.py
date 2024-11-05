@@ -18,12 +18,12 @@ def _default_boundary_dir(sdata_path: str, directory_name: str):
     return temp_dir
 
 
-def _log_whether_to_resolve(patch_index: int | None):
+def _log_whether_to_resolve(patch_index: int | None, delete_cache: bool = True):
     import logging
 
     log = logging.getLogger(__name__)
 
-    if patch_index is None:
+    if patch_index is None and delete_cache:
         log.info("Segmentation is already resolved. Don't run `sopa resolve`.")
 
 

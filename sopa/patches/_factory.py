@@ -67,6 +67,8 @@ def make_transcript_patches(
         key_added: Optional name of the patches to be saved. By default, uses `"transcripts_patches"`.
         **kwargs: Additional arguments passed to the `OnDiskTranscriptPatches` class.
     """
+    assert not write_cells_centroids or prior_shapes_key, "write_cells_centroids argument requires prior_shapes_key"
+
     points_key, _ = get_spatial_element(
         sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
     )

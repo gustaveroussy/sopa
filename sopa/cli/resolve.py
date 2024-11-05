@@ -10,9 +10,9 @@ app_resolve = typer.Typer()
 @app_resolve.command()
 def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    patch_dir: list[str] = typer.Option(
+    cache_dir_name: list[str] = typer.Option(
         [],
-        help="Directory containing the cellpose segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `.sopa_cache/cellpose_boundaries` directory",
+        help="Name of the directories containing the cellpose segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `cellpose_boundaries` directory",
     ),
 ):
     """Resolve patches conflicts after cellpose segmentation"""
@@ -20,8 +20,10 @@ def cellpose(
 
     from .utils import _default_boundary_dir
 
-    if not len(patch_dir):
-        patch_dir = [_default_boundary_dir(sdata_path, SopaKeys.CELLPOSE_BOUNDARIES)]
+    if not len(cache_dir_name):
+        cache_dir_name = [SopaKeys.CELLPOSE_BOUNDARIES]
+
+    patch_dir = [_default_boundary_dir(sdata_path, name) for name in cache_dir_name]
 
     _resolve_generic(sdata_path, patch_dir, SopaKeys.CELLPOSE_BOUNDARIES)
 
@@ -32,16 +34,18 @@ def generic(
     method_name: str = typer.Option(
         help="Name of the method used during segmentation. This is also the key correspnding to the boundaries in `sdata.shapes`"
     ),
-    patch_dir: list[str] = typer.Option(
+    cache_dir_name: list[str] = typer.Option(
         [],
-        help="Directory containing the generic segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `.sopa_cache/<method_name>` directory",
+        help="Name of the directories containing the generic segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `<method_name>` directory",
     ),
 ):
     """Resolve patches conflicts after generic segmentation"""
     from .utils import _default_boundary_dir
 
-    if not len(patch_dir):
-        patch_dir = [_default_boundary_dir(sdata_path, method_name)]
+    if not len(cache_dir_name):
+        cache_dir_name = [method_name]
+
+    patch_dir = [_default_boundary_dir(sdata_path, name) for name in cache_dir_name]
 
     _resolve_generic(sdata_path, patch_dir, method_name)
 

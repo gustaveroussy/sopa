@@ -37,9 +37,9 @@ def cellpose(
         default=None,
         help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['image_patches'])`",
     ),
-    patch_dir: str = typer.Option(
+    cache_dir_name: str = typer.Option(
         default=None,
-        help="Path to the temporary cellpose directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/cellpose_boundaries` directory",
+        help="Name of the temporary cellpose directory inside which we will store each individual patch segmentation. By default, uses the `cellpose_boundaries` directory",
     ),
     method_kwargs: str = typer.Option(
         {},
@@ -69,7 +69,7 @@ def cellpose(
         clahe_kernel_size,
         gaussian_sigma,
         patch_index,
-        patch_dir,
+        cache_dir_name,
         diameter=diameter,
         flow_threshold=flow_threshold,
         cellprob_threshold=cellprob_threshold,
@@ -108,9 +108,9 @@ def generic_staining(
         default=None,
         help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['image_patches'])`",
     ),
-    patch_dir: str = typer.Option(
+    cache_dir_name: str = typer.Option(
         default=None,
-        help="Path to the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, saves into the `.sopa_cache/<method_name>` directory",
+        help="Name of the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, uses the `<method_name>` directory",
     ),
 ):
     """Perform generic staining-based segmentation. This can be done on all patches directly, or on one individual patch.
@@ -140,7 +140,7 @@ def generic_staining(
         clahe_kernel_size,
         gaussian_sigma,
         patch_index,
-        patch_dir,
+        cache_dir_name,
         **method_kwargs,
     )
 
@@ -155,7 +155,7 @@ def _run_staining_segmentation(
     clahe_kernel_size: int | Iterable[int] | None,
     gaussian_sigma: float,
     patch_index: int | None,
-    patch_dir: str,
+    cache_dir_name: str | None,
     **method_kwargs: int,
 ):
     from sopa.io.standardize import read_zarr_standardized
@@ -165,6 +165,10 @@ def _run_staining_segmentation(
 
     sdata = read_zarr_standardized(sdata_path)
     method = getattr(methods, method_name)(channels=channels, **method_kwargs)
+
+    delete_cache = cache_dir_name is None
+    if cache_dir_name is None:
+        cache_dir_name = key_added
 
     if patch_index is None:
         custom_staining_based(
@@ -176,8 +180,10 @@ def _run_staining_segmentation(
             clahe_kernel_size=clahe_kernel_size,
             gaussian_sigma=gaussian_sigma,
             key_added=key_added,
+            cache_dir_name=cache_dir_name,
+            delete_cache=delete_cache,
         )
-        _log_whether_to_resolve(patch_index)
+        _log_whether_to_resolve(patch_index, delete_cache=delete_cache)
         return
 
     segmentation = StainingSegmentation(
@@ -190,8 +196,7 @@ def _run_staining_segmentation(
         gaussian_sigma=gaussian_sigma,
     )
 
-    if patch_dir is None:
-        patch_dir = _default_boundary_dir(sdata_path, key_added)
+    patch_dir = _default_boundary_dir(sdata_path, cache_dir_name)
 
     segmentation.write_patch_cells(patch_dir, patch_index)
 

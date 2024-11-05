@@ -153,7 +153,7 @@ If you have MERSCOPE or Xenium data, you probably already have a cell segmentati
 
 ## How to provide dictionnaries to CLI arguments?
 
-Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../cli/#sopa-read) has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
+Some CLI arguments are optionnal dictionnaries. For instance, `sopa convert` has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
 
 `--kwargs "{'backend': 'rioxarray'}"`
 

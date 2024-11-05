@@ -5,7 +5,7 @@ When installing `sopa` as written in our [getting-started guidelines](../getting
 
 ## CLI helper
 
-Run `sopa --help` to get details about all the command line purposes. You can also use this helper on any subcommand, for instance, `sopa read --help`.
+Run `sopa --help` to get details about all the command line purposes. You can also use this helper on any subcommand, for instance, `sopa convert --help`.
 
 <div class="termy">
 ```console
@@ -15,7 +15,6 @@ $ sopa --help
 ╭─ Commands ─────────────────────────────────────────────────────╮
 │ aggregate     Aggregate transcripts/channels inside cells      │
 │ annotate      Perform cell-type annotation                     │
-│ check         Run some sanity checks                           │
 │ crop          Crop an image based on a user-defined polygon    │
 │ explorer      Conversion to the Xenium Explorer's inputs       │
 │ patchify      Create patches with overlaps                     │
@@ -34,42 +33,42 @@ $ sopa segmentation cellpose sdata.zarr
 
 For this tutorial, we use a generated dataset. You can expect a total runtime of a few minutes.
 
-The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa) describing which data input you need, or see the [`sopa read`](`../../cli/#sopa-read`) documentation.
+The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa) describing which data input you need, or see the [`sopa convert`](`../../cli/#sopa-read`) documentation.
 
 === "Tutorial"
     ```sh
     # it will generate a 'tuto.zarr' directory
-    sopa read . --sdata-path tuto.zarr --technology toy_dataset
+    sopa convert . --sdata-path tuto.zarr --technology toy_dataset
     ```
 === "Xenium"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
-    sopa read /path/to/sample/directory --technology xenium
+    sopa convert /path/to/sample/directory --technology xenium
     ```
 === "MERSCOPE"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
-    sopa read /path/to/sample/directory --technology merscope
+    sopa convert /path/to/sample/directory --technology merscope
     ```
 === "CosMX"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
-    sopa read /path/to/sample/directory --technology cosmx
+    sopa convert /path/to/sample/directory --technology cosmx
     ```
 === "PhenoCycler"
     ```sh
     # it will generate a '/path/to/sample.zarr' directory
-    sopa read /path/to/sample.qptiff --technology phenocycler
+    sopa convert /path/to/sample.qptiff --technology phenocycler
     ```
 === "MACSima"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
-    sopa read /path/to/sample/directory --technology macsima
+    sopa convert /path/to/sample/directory --technology macsima
     ```
 === "Hyperion"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
-    sopa read /path/to/sample/directory --technology hyperion
+    sopa convert /path/to/sample/directory --technology hyperion
     ```
 
 
@@ -86,39 +85,47 @@ First, generate the bounding boxes of the patches on which Cellpose will be run.
 sopa patchify image tuto.zarr --patch-width-pixel 1500 --patch-overlap-pixel 50
 ```
 
-Now, we can run Cellpose on each individual patch. Execute the following command line on all `patch-index` (i.e., `0`, `1`, `2`, and `3`) to run Cellpose using DAPI only (you can add an additional channel, for instance, `--channels DAPI --channels PolyT`):
+Now, we can run Cellpose on each individual patch. You can either run it directly on all patches (first option below), or on each patch individually (second option - ideal if you want to parallelize it yourself).
 
-!!! tip
-    Manually running the commands below can involve using many consecutive commands, so we recommend automatizing it. For instance, this can be done using Snakemake or Nextflow. This will help you parallelize it since you can run each task on separate jobs or using multithreading. You can also see how we do it in our [Snakefile](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile). If you prefer using the already existing pipeline instead of the CLI, you can read our [Snakemake pipeline tutorial](https://gustaveroussy.github.io/sopa/tutorials/snakemake/).
+=== "Run all patches at once"
+    The easiest way to run Cellpose is to use the command below, which directly run Cellpose on all patches and resolve the segmentation. You can add an additional channel, for instance, you can use `--channels DAPI --channels PolyT`.
 
-    To automatically get the number of patches, you can either open the `tuto.zarr/.sopa_cache/patches_file_image` file, or compute `len(sdata['sopa_patches'])` in Python.
+    ```sh
+    sopa segmentation cellpose tuto.zarr \
+        --channels DAPI \
+        --diameter 35 \
+        --min-area 2000
+    ```
 
-=== "Patch 0"
+    By default, this will run cellpose sequentially. To make it run it parallel, you can export the following env variable: `export SOPA_PARALLELIZATION_BACKEND=dask`.
+
+=== "Run on each patch"
+    Execute the following command line on all `patch-index` (i.e., `0`, `1`, `2`, and `3`) to run Cellpose using DAPI only (you can add an additional channel, for instance, `--channels DAPI --channels PolyT`):
+
+    !!! tip
+        Manually running the commands below can involve using many consecutive commands, so we recommend automatizing it. For instance, this can be done using Snakemake or Nextflow. This will help you parallelize it since you can run each task on separate jobs or using multithreading. You can also see how we do it in our [Snakefile](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile). If you prefer using the already existing pipeline instead of the CLI, you can read our [Snakemake pipeline tutorial](https://gustaveroussy.github.io/sopa/tutorials/snakemake/).
+
+        To automatically get the number of patches, you can either open the `tuto.zarr/.sopa_cache/patches_file_image` file, or compute `len(sdata['image_patches'])` in Python.
+
     ```sh
     sopa segmentation cellpose tuto.zarr \
         --channels DAPI \
         --diameter 35 \
         --min-area 2000 \
         --patch-index 0
-    ```
-=== "Patch 1"
-    ```sh
+
     sopa segmentation cellpose tuto.zarr \
         --channels DAPI \
         --diameter 35 \
         --min-area 2000 \
         --patch-index 1
-    ```
-=== "Patch 2"
-    ```sh
+
     sopa segmentation cellpose tuto.zarr \
         --channels DAPI \
         --diameter 35 \
         --min-area 2000 \
         --patch-index 2
-    ```
-=== "Patch 3"
-    ```sh
+
     sopa segmentation cellpose tuto.zarr \
         --channels DAPI \
         --diameter 35 \
@@ -126,13 +133,14 @@ Now, we can run Cellpose on each individual patch. Execute the following command
         --patch-index 3
     ```
 
+
+    At this stage, you executed 4 times Cellpose (once per patch). Now, we need to resolve the conflict, i.e. where boundaries are overlapping due to segmentation on multiple patches:
+    ```sh
+    sopa resolve cellpose tuto.zarr
+    ```
+
 !!! Note
     In the above commands, the `--diameter` and `--min-area` parameters are specific to the data type we work on. For your own data, consider using the default parameters from one of our [config files](https://github.com/gustaveroussy/sopa/tree/master/workflow/config). Here, `min-area` is in pixels^2.
-
-At this stage, you executed 4 times Cellpose (once per patch). Now, we need to resolve the conflict, i.e. where boundaries are overlapping due to segmentation on multiple patches:
-```sh
-sopa resolve cellpose tuto.zarr
-```
 
 ### Option 2: Baysor
 
@@ -155,8 +163,8 @@ min_molecules_per_segment = 3
 confidence_nn_id = 6
 
 [segmentation]
-scale = 30                          # typical cell radius
-scale_std = "25%"                   # cell radius standard deviation
+scale = 6         # typical cell radius in microns (IMPORTANT)
+scale_std = "25%" # cell radius standard deviation
 prior_segmentation_confidence = 0
 estimate_scale_from_centers = false
 n_clusters = 4
@@ -166,76 +174,62 @@ nuclei_genes = ""
 cyto_genes = ""
 ```
 
-Then, we generate the bounding boxes of the patches on which Baysor will be run. Here, the patches have a width and height of 1200 microns and an overlap of 50 microns. We advise bigger sizes for real datasets (see our default parameters in one of our [config files](https://github.com/gustaveroussy/sopa/tree/master/workflow/config)). On the toy dataset, this will generate **4** patches.
+Then, we generate the bounding boxes of the patches on which Baysor will be run. Here, the patches have a width and height of 200 microns. We advise bigger sizes for real datasets (see our default parameters in one of our [config files](https://github.com/gustaveroussy/sopa/tree/master/workflow/config)). On the toy dataset, this will generate **4** patches.
 
 ```sh
-# config.toml is the Baysor config file you generated above
-sopa patchify baysor tuto.zarr --config-path config.toml --patch-width-microns 1200 --patch-overlap-microns 50
+sopa patchify transcripts tuto.zarr --patch-width-microns 200 --prior-shapes-key cellpose_boundaries
 ```
 
-Now, we can run Baysor on each individual patch. Execute the following command lines to run Baysor on each patch (i.e., `0`, `1`, `2`, and `3`).
+As for cellpose, you can either run Baysor directly on all patches, or on each patch individually. You can provide the config argument as an inline dictionnary, or as a path to a `.toml` file, as below.
 
-!!! tip
-    Manually running the commands below can involve using many consecutive commands, so we recommend automatizing it. For instance, this can be done using Snakemake or Nextflow. This will help you parallelize it since you can run each task on separate jobs or using multithreading. You can also see how we do it in the [Sopa Snakemake pipeline](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile).
+=== "Run all patches at once"
+    The easiest way to run Baysor is to use the command below, which directly run Baysor on all patches and resolve the segmentation.
 
-    To automatically get the number of patches, you can open the `tuto.zarr/.sopa_cache/patches_file_baysor` file. This lists the names of the directories inside `tuto.zarr/.sopa_cache/baysor` related to each patch. If you selected an ROI, the excluded patches are effectively not in the `patches_file_baysor` file.
-
-=== "Patch 0"
     ```sh
-    cd tuto.zarr/.sopa_cache/baysor_boundaries/0
-
-    # 'baysor' is the official baysor executable. If unavailable, replace it with your path to the executable
-    baysor run --save-polygons GeoJSON -c config.toml transcripts.csv
-    ```
-=== "Patch 1"
-    ```sh
-    cd tuto.zarr/.sopa_cache/baysor_boundaries/1
-
-    # 'baysor' is the official baysor executable. If unavailable, replace it with your path to the executable
-    baysor run --save-polygons GeoJSON -c config.toml transcripts.csv
-    ```
-=== "Patch 2"
-    ```sh
-    cd tuto.zarr/.sopa_cache/baysor_boundaries/2
-
-    # 'baysor' is the official baysor executable. If unavailable, replace it with your path to the executable
-    baysor run --save-polygons GeoJSON -c config.toml transcripts.csv
-    ```
-=== "Patch 3"
-    ```sh
-    cd tuto.zarr/.sopa_cache/baysor_boundaries/3
-
-    # 'baysor' is the official baysor executable. If unavailable, replace it with your path to the executable
-    baysor run --save-polygons GeoJSON -c config.toml transcripts.csv
+    sopa segmentation baysor tuto.zarr --config '"config.toml"'
     ```
 
-At this stage, you executed 4 times Baysor (once per patch). Now, we need to resolve the conflict, i.e. where boundaries are overlapping due to segmentation on multiple patches:
-```sh
-sopa resolve baysor tuto.zarr --gene-column genes
-```
+    By default, this will run baysor sequentially. To make it run it parallel, you can export the following env variable: `export SOPA_PARALLELIZATION_BACKEND=dask`.
+
+=== "Run on each patch"
+    Now, we can run Baysor on each individual patch. Execute the following command lines to run Baysor on each patch (i.e., `0`, `1`, `2`, and `3`).
+
+    !!! tip
+        Manually running the commands below can involve using many consecutive commands, so we recommend automatizing it. For instance, this can be done using Snakemake or Nextflow. This will help you parallelize it since you can run each task on separate jobs or using multithreading. You can also see how we do it in the [Sopa Snakemake pipeline](https://github.com/gustaveroussy/sopa/blob/master/workflow/Snakefile).
+
+        To automatically get the number of patches, you can open the `tuto.zarr/.sopa_cache/patches_file_transcripts` file. This lists the names of the directories inside `tuto.zarr/.sopa_cache/baysor` related to each patch. If you selected an ROI, the excluded patches are effectively not in the `patches_file_transcripts` file.
+
+    ```sh
+    sopa segmentation baysor tuto.zarr --config '"config.toml"' --patch-index 0
+
+    sopa segmentation baysor tuto.zarr --config '"config.toml"' --patch-index 1
+
+    sopa segmentation baysor tuto.zarr --config '"config.toml"' --patch-index 2
+
+    sopa segmentation baysor tuto.zarr --config '"config.toml"' --patch-index 3
+    ```
+
+    At this stage, you executed 4 times Baysor (once per patch). Now, we need to resolve the conflict, i.e. where boundaries are overlapping due to segmentation on multiple patches:
+    ```sh
+    sopa resolve baysor tuto.zarr --gene-column genes
+    ```
 
 ## Aggregation
 
 This **mandatory** step turns the data into an `AnnData` object. We can count the transcript inside each cell, and/or average each channel intensity inside each cell boundary.
 
-!!! info
-    The `--gene-column` option below tells which column contains the gene names inside the transcript dataframe. If you don't know it, you can look to [our configs](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) to find the right `gene-column` corresponding to your machine.
-
 === "Count transcripts + average intensities"
     ```sh
-    sopa aggregate tuto.zarr --gene-column genes --average-intensities --min-transcripts 10
+    sopa aggregate tuto.zarr --aggregate-genes --aggregate-channels --min-transcripts 10
     ```
 === "Count transcripts"
     ```sh
-    sopa aggregate tuto.zarr --gene-column genes --min-transcripts 10
+    sopa aggregate tuto.zarr --aggregate-genes --min-transcripts 10
     ```
 === "Average intensities"
     ```sh
-    sopa aggregate tuto.zarr --average-intensities
+    sopa aggregate tuto.zarr --aggregate-channels
     ```
-
-!!! note "If using Baysor"
-    Baysor already counts the transcripts inside each cell to create a cell-by-gene table. So you'll always have this table, and there is no need to use the `--gene-column` argument. If you don't want to average the intensities, you will still need to run `sopa aggregate tuto.zarr` before continuing.
 
 ## Annotation
 
@@ -267,7 +261,7 @@ sopa report tuto.zarr report.html
 The Xenium Explorer is a software developed by 10X Genomics for visualizing spatial data, and it can be downloaded freely [here](https://www.10xgenomics.com/support/software/xenium-explorer/latest). Sopa allows the conversion to the Xenium Explorer, whatever the type of spatial data you worked on. It will create some files under a new `tuto.explorer` directory:
 
 ```sh
-sopa explorer write tuto.zarr --gene-column genes
+sopa explorer write tuto.zarr
 ```
 
 If you have downloaded the Xenium Explorer, you can now open the results in the explorer: `open tuto.explorer/experiment.xenium` (if using a Unix operating system), or double-click on the latter file.
@@ -282,13 +276,9 @@ If you have downloaded the Xenium Explorer, you can now open the results in the 
     After running everything with Sopa, you can finally save all the other Xenium Explorer input (e.g. boundaries and cell categories):
     ```sh
     # this should be done after aggregation and an eventual annotation
-    sopa explorer write tuto.zarr --mode "-i" --gene-column genes
+    sopa explorer write tuto.zarr --mode "-i"
     ```
     For more details and customization, refer to the [command line helper](../../cli/#sopa-explorer-write).
-
-## Geometric and spatial statistics
-
-All functions to compute geometric and spatial statistics are detailed in the `sopa.spatial` [API](../../api/spatial). You can also read [this tutorial](../spatial).
 
 ## Further analyses
 

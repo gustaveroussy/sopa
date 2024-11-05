@@ -143,7 +143,7 @@ def get_spatial_element(
     """Gets an element from a SpatialData object.
 
     Args:
-        sdata: SpatialData object.
+        element_dict: Dictionnary whose values are spatial elements (e.g., `sdata.images`).
         key: Optional element key. If `None`, returns the only element (if only one).
         return_key: Whether to also return the key of the element.
         as_spatial_image: Whether to return the element as a `SpatialImage` (if it is a `DataTree`)

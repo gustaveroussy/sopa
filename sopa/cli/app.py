@@ -39,7 +39,7 @@ app.add_typer(
 
 
 @app.command()
-def read(
+def convert(
     data_path: str = typer.Argument(
         help="Path to one data sample (most of the time, this corresponds to a directory with images files and eventually a transcript file)"
     ),

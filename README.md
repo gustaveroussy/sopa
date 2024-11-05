@@ -89,7 +89,7 @@ Below are examples of commands that can be run with the `sopa` CLI. For a comple
 
 ```bash
 > sopa --help # show command names and arguments
-> sopa read merscope_directory --technology merscope # read some data
+> sopa convert merscope_directory --technology merscope # read some data
 > sopa patchify image merscope_directory.zarr # make patches for low-memory segmentation
 > sopa segmentation cellpose merscope_directory.zarr --diameter 60 --channels DAPI # segmentation
 > sopa resolve cellpose merscope_directory.zarr # resolve segmentation conflicts at boundaries

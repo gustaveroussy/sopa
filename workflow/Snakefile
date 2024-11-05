@@ -34,7 +34,7 @@ rule to_spatialdata:
         reader = args['read'].as_cli()
     shell:
         """
-        sopa read {paths.data_path} --sdata-path {paths.sdata_path} {params.reader}
+        sopa convert {paths.data_path} --sdata-path {paths.sdata_path} {params.reader}
         """
 
 checkpoint patchify_image:
