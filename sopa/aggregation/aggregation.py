@@ -132,7 +132,7 @@ class Aggregator:
         expand_radius_ratio: float | None = None,
         min_transcripts: int = 0,
         min_intensity_ratio: float = 0,
-        average_intensities: bool = True,  # deprecated argument
+        average_intensities: bool | None = None,  # deprecated argument
         points_key: str | None = None,  # deprecated argument
     ):
         aggregate_genes, aggregate_channels = self._legacy_arguments(
@@ -202,7 +202,7 @@ class Aggregator:
         gene_column: str | None,
         aggregate_genes: bool | None,
         aggregate_channels: bool,
-        average_intensities: bool,
+        average_intensities: bool | None,
     ) -> tuple[bool, bool]:
         if points_key is not None:
             log.warning(
@@ -218,11 +218,11 @@ class Aggregator:
                 or self.points_key is not None
             )
 
-        if not average_intensities:
+        if average_intensities is not None:
             log.warning(
-                "`average_intensities=False` is deprecated and will be removed in future versions, use `aggregate_channels=False` instead"
+                "`average_intensities` is deprecated and will be removed in future versions, use `aggregate_channels` instead"
             )
-            return aggregate_genes, False
+            return aggregate_genes, average_intensities
 
         return aggregate_genes, aggregate_channels
 
