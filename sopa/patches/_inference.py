@@ -37,10 +37,11 @@ class Inference:
 
     def _instantiate_model(self, model: str) -> tuple[str, torch.nn.Module]:
         if isinstance(model, str):
-            assert hasattr(
-                models, model
-            ), f"'{model}' is not a valid model name under `sopa.patches.models`. Valid names are: {', '.join(models.__all__)}"
-            return model, getattr(models, model)()
+            assert (
+                model in models.available_models
+            ), f"'{model}' is not a valid model name. Valid names are: {', '.join(list(models.available_models.keys()))}"
+
+            return model, models.available_models[model]()
 
         return model.__class__.__name__, model
 
@@ -55,7 +56,7 @@ class Inference:
         Extract a numpy patch from the image given a bounding box
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
-        image_patch = self.image.sel(x=slice(box[0], box[2]), y=slice(box[1], box[3])).values
+        image_patch = self.image[:, slice(box[1], box[3]), slice(box[0], box[2])]
 
         pad_x, pad_y = self.patch_width - image_patch.shape[1], self.patch_width - image_patch.shape[2]
         return np.pad(image_patch, ((0, 0), (0, pad_x), (0, pad_y)))

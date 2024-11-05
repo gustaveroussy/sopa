@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 
 
@@ -7,4 +6,4 @@ class DummyFeatures(nn.Module):
         super().__init__()
 
     def __call__(self, x):
-        return torch.randn(len(x), 8)
+        return x[:, :, 0, 0]

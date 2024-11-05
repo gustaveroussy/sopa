@@ -21,7 +21,7 @@ nav:
     - Landmark-based alignment: tutorials/align.md
     - Spatial operations: tutorials/spatial.ipynb
     - Visium HD usage: tutorials/visium_hd.ipynb
-    - H&E usage: tutorials/he.ipynb # TODO: test it
+    - H&E usage: tutorials/he.ipynb
     - Command line interface: tutorials/cli_usage.md # TODO: test it
     - Other segmentations:
       - ComSeg: tutorials/comseg.ipynb # TODO: test it

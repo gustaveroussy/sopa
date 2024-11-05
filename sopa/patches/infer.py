@@ -36,11 +36,11 @@ def compute_embeddings(
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
-        The image will be saved into the `SpatialData` object with the key `sopa_{model_name}` (see the argument below) if `key_added` is not provided.
+        The image will be saved into the `SpatialData` object with the key `{model_name}_features` (see the argument below) if `key_added` is not provided.
 
     Args:
         sdata: A `SpatialData` object
-        model: Callable that takes as an input a tensor of size (batch_size, channels, x, y) and returns a vector for each tile (batch_size, emb_dim), or a string with the name of one of the available models (`Resnet50Features`, `HistoSSLFeatures`, or `DINOv2Features`).
+        model: Callable that takes as an input a tensor of size (batch_size, channels, x, y) and returns a vector for each tile (batch_size, emb_dim), or a string with the name of one of the available models (`resnet50`, `histo_ssl`, or `dinov2`).
         patch_width: Width (pixels) of the patches.
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
@@ -51,7 +51,7 @@ def compute_embeddings(
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
 
     Returns:
-        The `DataArray` of shape `(C,Y,X)` containing the model predictions (also added to the `SpatialData` object).
+        The `DataArray` of shape `(C, Y, X)` containing the model predictions (also added to the `SpatialData` object).
     """
     try:
         import torch
@@ -62,9 +62,7 @@ def compute_embeddings(
 
     from ._inference import Inference
 
-    image_key, image = get_spatial_element(
-        sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION), return_key=True
-    )
+    image = get_spatial_element(sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION))
 
     infer = Inference(image, model, patch_width, level, magnification, device)
     patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap)
@@ -87,7 +85,7 @@ def compute_embeddings(
     output_image = DataArray(output_image, dims=("c", "y", "x"))
     output_image = Image2DModel.parse(output_image, transformations=infer.get_patches_transformations(patch_overlap))
 
-    key_added = key_added or f"sopa_{infer.model_str}"
+    key_added = key_added or f"{infer.model_str}_features"
     add_spatial_element(sdata, key_added, output_image)
 
     patches.add_shapes(key_added=SopaKeys.PATCHES_INFERENCE_KEY)
