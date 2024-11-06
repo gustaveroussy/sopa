@@ -176,3 +176,18 @@ def _resolve_patches(
     cells_resolved.index = np.concatenate([existing_ids, new_ids])
 
     return cells_resolved, cells_indices, new_ids
+
+
+def _check_transcript_patches(sdata: SpatialData):
+    assert (
+        SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
+    ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+
+    directories = [Path(path) for path in sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+
+    assert all(directory.exists() for directory in directories), (
+        "Some patch directories are missing. "
+        "This can happen if you already finished a segmentation which deleted the cache. "
+        "You must re-run `sopa.make_transcript_patches`. "
+        "Next time, use `delete_cache=False` during the segmentation to keep the cache."
+    )

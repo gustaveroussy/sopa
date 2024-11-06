@@ -14,7 +14,7 @@ from spatialdata import SpatialData
 from ... import settings
 from ..._constants import SopaAttrs, SopaKeys
 from ...utils import get_transcripts_patches_dirs, to_intrinsic
-from .._transcripts import resolve
+from .._transcripts import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
 
@@ -28,9 +28,7 @@ def comseg(
     key_added: str = SopaKeys.COMSEG_BOUNDARIES,
     patch_index: int | None = None,
 ):
-    assert (
-        SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
-    ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+    _check_transcript_patches(sdata)
 
     if config is None or not len(config):
         log.info("No config provided, inferring a default ComSeg config.")

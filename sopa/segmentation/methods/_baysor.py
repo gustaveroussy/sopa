@@ -9,7 +9,7 @@ from spatialdata import SpatialData
 from ... import settings
 from ..._constants import SopaAttrs, SopaFiles, SopaKeys
 from ...utils import get_feature_key, get_transcripts_patches_dirs
-from .._transcripts import resolve
+from .._transcripts import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
 
@@ -24,16 +24,23 @@ def baysor(
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
     patch_index: int | None = None,
 ):
-    assert (
-        SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
-    ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+    _check_transcript_patches(sdata)
 
     import shutil
 
     baysor_executable_path = _get_baysor_executable_path()
     use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
 
+    prior_shapes_key = None
+    if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES]:
+        prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+
     if config is None or not len(config):
+        assert prior_shapes_key is not None, (
+            "The config can't be inferred without a prior shape key. "
+            "Run `sopa.make_transcript_patches(...)` with `prior_shapes_key`, or provide a Baysor config."
+        )
+
         log.info("No config provided, inferring a default Baysor config.")
         config = _get_default_config(sdata)
 
@@ -42,10 +49,6 @@ def baysor(
         _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config)
 
     gene_column = _get_gene_column_argument(config)
-
-    prior_shapes_key = None
-    if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES]:
-        prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
     baysor_patch = BaysorPatch(
         baysor_executable_path,
