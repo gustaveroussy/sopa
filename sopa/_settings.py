@@ -38,7 +38,9 @@ class Settings:
         self._parallelization_backend = value
 
     def _run_with_backend(self, functions: list[Callable]):
-        if self.parallelization_backend is None:
+        assert len(functions) > 0, "No function to run"
+
+        if len(functions) == 1 or self.parallelization_backend is None:
             if len(functions) > 1:
                 log.warning(
                     "Running without parallelization backend can be slow. "
@@ -52,13 +54,12 @@ class Settings:
 
     ### Dask backend
     def _run_dask_backend(self, functions: list[Callable]):
-        assert len(functions) > 0, "No function to run"
-
-        if len(functions) == 1:
-            log.info("Only one function to run. No parallelization will be used.")
-            functions[0]()
-
+        import logging
         import os
+
+        from distributed.scheduler import logger as _logger
+
+        _logger.setLevel(logging.ERROR)
 
         n_cpus = os.cpu_count()
         dask_client_kwargs = self.dask_client_kwargs.copy()

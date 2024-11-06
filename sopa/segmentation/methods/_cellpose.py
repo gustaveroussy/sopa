@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import warnings
+from functools import partial
 from typing import Callable
 
 import numpy as np
 from spatialdata import SpatialData
 
 from ..._constants import SopaKeys
-from ._staining import custom_staining_based
+from ._custom import custom_staining_based
 
 
 def cellpose(
@@ -102,22 +104,40 @@ def cellpose_patch(
             "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'` (normal mode) or `pip install -e '.[cellpose]'` (if using snakemake)"
         )
 
-    cellpose_model_kwargs = cellpose_model_kwargs or {}
+    def _(
+        patch: np.ndarray,
+        diameter: float,
+        channels: list[str],
+        model_type: str = "cyto3",
+        pretrained_model: str | bool = False,
+        cellpose_model_kwargs: dict | None = None,
+        **cellpose_eval_kwargs: int,
+    ):
+        warnings.filterwarnings("ignore", message="You are using `torch.load` with `weights_only=False`")
 
-    if pretrained_model:
-        model = models.CellposeModel(pretrained_model=pretrained_model, **cellpose_model_kwargs)
-    else:
-        model = models.Cellpose(model_type=model_type, **cellpose_model_kwargs)
+        cellpose_model_kwargs = cellpose_model_kwargs or {}
 
-    if isinstance(channels, str) or len(channels) == 1:
-        channels = [0, 0]  # gray scale
-    elif len(channels) == 2:
-        channels = [1, 2]
-    else:
-        raise ValueError(f"Provide 1 or 2 channels. Found {len(channels)}")
+        if pretrained_model:
+            model = models.CellposeModel(pretrained_model=pretrained_model, **cellpose_model_kwargs)
+        else:
+            model = models.Cellpose(model_type=model_type, **cellpose_model_kwargs)
 
-    def _(patch: np.ndarray):
+        if isinstance(channels, str) or len(channels) == 1:
+            channels = [0, 0]  # gray scale
+        elif len(channels) == 2:
+            channels = [1, 2]
+        else:
+            raise ValueError(f"Provide 1 or 2 channels. Found {len(channels)}")
+
         mask, *_ = model.eval(patch, diameter=diameter, channels=channels, **cellpose_eval_kwargs)
         return mask
 
-    return _
+    return partial(
+        _,
+        diameter=diameter,
+        channels=channels,
+        model_type=model_type,
+        pretrained_model=pretrained_model,
+        cellpose_model_kwargs=cellpose_model_kwargs,
+        **cellpose_eval_kwargs,
+    )

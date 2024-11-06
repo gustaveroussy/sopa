@@ -41,8 +41,6 @@ def custom_staining_based(
         cache_dir_name: Name of the cache directory.
         key_added: Name of the key to be added to `sdata.shapes`.
     """
-    assert SopaKeys.PATCHES in sdata.shapes, "Run `sopa.make_image_patches` before running segmentation"
-
     temp_dir = get_cache_dir(sdata) / cache_dir_name
 
     segmentation = StainingSegmentation(

@@ -47,7 +47,9 @@ class StainingSegmentation:
             clahe_kernel_size: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
             gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
         """
-        self.sdata = sdata
+        assert SopaKeys.PATCHES in sdata.shapes, "Run `sopa.make_image_patches` before running segmentation"
+
+        self.patches_gdf: gpd.GeoDataFrame = sdata[SopaKeys.PATCHES]
         self.method = method
         self.channels = [channels] if isinstance(channels, str) else channels
 
@@ -121,7 +123,7 @@ class StainingSegmentation:
         if recover and output_path.exists():
             return
 
-        patch = self.sdata[SopaKeys.PATCHES].geometry[patch_index]
+        patch = self.patches_gdf.geometry[patch_index]
 
         cells = self._run_patch(patch)
         cells.to_parquet(output_path)
@@ -135,8 +137,11 @@ class StainingSegmentation:
         """
         functions = [
             partial(self.write_patch_cells, patch_dir, patch_index, recover)
-            for patch_index in range(len(self.sdata[SopaKeys.PATCHES]))
+            for patch_index in range(len(self.patches_gdf))
         ]
+
+        # if settings.parallelization_backend is not None:
+
         settings._run_with_backend(functions)
 
     @classmethod
