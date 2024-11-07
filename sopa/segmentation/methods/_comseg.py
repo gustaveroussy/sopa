@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+import warnings
 from functools import partial
 from pathlib import Path
 
@@ -72,7 +73,7 @@ def comseg_patch(patch_dir: Path, config: dict, recover: bool = False):
     except ModuleNotFoundError:
         raise ModuleNotFoundError("Install comseg (`pip install comseg`) for this method to work")
 
-    assert comseg.__version__ >= "1.3", "comseg version should be >= 1.3"
+    assert comseg.__version__ >= "1.8.2", "comseg version should be >= 1.8.2"
 
     if (
         recover
@@ -80,6 +81,12 @@ def comseg_patch(patch_dir: Path, config: dict, recover: bool = False):
         and (patch_dir / "segmentation_polygons.json").exists()
     ):
         return
+
+    if "disable_tqdm" not in config:
+        config["disable_tqdm"] = True
+
+    warnings.filterwarnings("ignore", message="param_sctransform is none")
+    warnings.filterwarnings("ignore", message="Series.__getitem__")
 
     with HiddenPrints():
         dataset = ds.ComSegDataset(
@@ -92,6 +99,7 @@ def comseg_patch(patch_dir: Path, config: dict, recover: bool = False):
             path_cell_centroid=patch_dir,
             min_nb_rna_patch=config.get("min_nb_rna_patch", 0),
             prior_name=config["prior_name"],
+            disable_tqdm=config["disable_tqdm"],
         )
 
         dataset.compute_edge_weight(config=config)
@@ -99,6 +107,7 @@ def comseg_patch(patch_dir: Path, config: dict, recover: bool = False):
         Comsegdict = dictionary.ComSegDict(
             dataset=dataset,
             mean_cell_diameter=config["mean_cell_diameter"],
+            disable_tqdm=config["disable_tqdm"],
         )
 
         Comsegdict.run_all(config=config)
