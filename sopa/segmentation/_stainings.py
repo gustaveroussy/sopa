@@ -8,6 +8,7 @@ from typing import Callable, Iterable
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import spatialdata
 from scipy.ndimage import gaussian_filter
 from shapely.geometry import Polygon, box
 from skimage import exposure
@@ -140,7 +141,11 @@ class StainingSegmentation:
             for patch_index in range(len(self.patches_gdf))
         ]
 
-        # if settings.parallelization_backend is not None:
+        if settings.parallelization_backend is not None and not len(spatialdata.get_dask_backing_files(self.image)):
+            log.warning(
+                "Having backed data is recommended when running staining-based segmentation with a parallelization backend. "
+                "Consider saving your data on disk with `sdata.write(...)`, and opening it with `sdata = spatialdata.read_zarr(...)`."
+            )
 
         settings._run_with_backend(functions)
 

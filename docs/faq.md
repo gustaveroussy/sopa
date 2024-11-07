@@ -82,18 +82,11 @@ sopa.settings.auto_save_on_disk = False
 
 ## How to use a parallelization backend?
 
-Some steps of Sopa, notably the segmentation, can be accelerated via a parallelization backend. If you use the API, you can set the `"dask"` backend as below:
+Some steps of Sopa, notably the segmentation, can be accelerated via a parallelization backend. If you use the API, you can set the `"dask"` backend as below.
 
 ```python
+# when using the API
 sopa.settings.parallelization_backend = "dask"
-```
-
-!!! warning
-    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/gustaveroussy/sopa/issues/145) to help us improve it.
-
-You can also pass some kwargs to the [dask Client](https://distributed.dask.org/en/stable/api.html#client):
-```python
-sopa.settings.dask_client_kwargs["n_workers"] = 4
 ```
 
 Otherwise, if you don't use the API, you can also set the `SOPA_PARALLELIZATION_BACKEND` env variable, e.g.:
@@ -101,9 +94,33 @@ Otherwise, if you don't use the API, you can also set the `SOPA_PARALLELIZATION_
 export SOPA_PARALLELIZATION_BACKEND=dask
 ```
 
+!!! warning
+    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/gustaveroussy/sopa/issues/145) to help us improve it.
+
+You can also pass some kwargs to the [dask Client](https://distributed.dask.org/en/stable/api.html#client) as below. These kwargs are highly dependent of your cluster and the size of your patches. For "middle-size" patches, we recommend about 4GB of memory per worker for cellpose, and between 8GB and 16GB or memory for baysor.
+
+```python
+sopa.settings.dask_client_kwargs["n_workers"] = 4
+```
+
+For testing purposes, you can run the lines below, which will show you how many workers and memory you have by default:
+```python
+from dask.distributed import Client
+
+client = Client()
+
+n_workers = len(client.cluster.workers)
+mem_worker0 = client.cluster.workers[0].memory_manager.memory_limit / 1024**3
+
+print(f"{n_workers=}, {mem_worker0=:.3}GB")
+```
+
 ## Which pipeline parameters should I use?
 
-TODO
+Some parameters such as the Cellpose diameter is crucial and depends highly on the resolution of your technology (pixel size).
+As a guide, you can start from the parameters of the [config files](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) of your specific technology, and adjust them based on your knowledge of the tissue you work on.
+
+Here are some parameters which are important to check: `diameter` (in pixels for cellpose), `min_area` (in pixels^2 for cellpose, in microns^2 for baysor), `scale` (in microns for baysor), `pixel_size` (for the Xenium Explorer conversion, to have the right scale during display).
 
 ## How does Sopa know when using which elements?
 
