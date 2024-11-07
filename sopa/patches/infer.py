@@ -57,7 +57,7 @@ def compute_embeddings(
         import torch
     except ImportError:
         raise ImportError(
-            "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'` (normal mode) or `pip install -e '.[wsi]'` (if using snakemake)"
+            "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'`."
         )
 
     from ._inference import Inference

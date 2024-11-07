@@ -213,7 +213,7 @@ def _copy_segmentation_config(path: Path | str, config: dict | str):
         import toml
     except ImportError:
         raise ImportError(
-            "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'` (normal mode) or `pip install -e '.[baysor]'` (if using snakemake).\
+            "To use baysor, you need its corresponding sopa extra: `pip install 'sopa[baysor]'`.\
             \nAlso, make sure to install the baysor executable (https://github.com/kharchenkolab/Baysor)."
         )
 

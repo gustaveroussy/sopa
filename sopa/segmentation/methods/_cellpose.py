@@ -100,9 +100,7 @@ def cellpose_patch(
     try:
         from cellpose import models
     except ImportError:
-        raise ImportError(
-            "To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'` (normal mode) or `pip install -e '.[cellpose]'` (if using snakemake)"
-        )
+        raise ImportError("To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'`.")
 
     def _(
         patch: np.ndarray,

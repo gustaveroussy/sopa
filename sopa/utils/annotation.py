@@ -248,9 +248,7 @@ class MultiLevelAnnotation:
         try:
             import tangram as tg
         except ImportError:
-            raise ImportError(
-                "To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'` (normal mode) or `pip install -e '.[tangram]'` (if using snakemake)"
-            )
+            raise ImportError("To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'`.")
 
         if indices_sp is not None and len(indices_sp) == 0:
             log.warning("No cell annotated in the upper level...")
