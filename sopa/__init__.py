@@ -9,6 +9,8 @@ log = logging.getLogger("sopa")
 configure_logger(log)
 
 if "--help" not in sys.argv:
+    import spatialdata  # will set `dataframe.query-planning` to False
+
     from ._settings import settings
     from . import utils
     from . import io

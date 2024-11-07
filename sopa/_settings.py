@@ -9,8 +9,6 @@ import dask.delayed
 from dask.distributed import Client, progress
 from tqdm import tqdm
 
-dask.config.set({"dataframe.query-planning": False})  # SpatialData issue with dask-expr
-
 log = logging.getLogger(__name__)
 
 
