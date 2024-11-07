@@ -84,6 +84,7 @@ class Patches2D:
             patch_overlap: Overlap width between the patches
         """
         self.sdata = sdata
+        self.element_key = element if isinstance(element, str) else None
         self.element = sdata[element] if isinstance(element, str) else element
 
         if isinstance(self.element, DataTree):
@@ -105,7 +106,7 @@ class Patches2D:
 
         self.roi = None
         if SopaKeys.ROI in sdata.shapes:
-            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], self.element)
+            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], self.element_key or self.element)
 
             assert all(
                 isinstance(geom, Polygon) for geom in geo_df.geometry
