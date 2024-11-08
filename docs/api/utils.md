@@ -1,4 +1,4 @@
-::: sopa.utils.clear_cache
+::: sopa.utils.delete_cache
 
 ::: sopa.utils.get_cache_dir
 

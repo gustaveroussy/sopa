@@ -1,14 +1,12 @@
-import tempfile
-
 import geopandas as gpd
 import pandas as pd
 import pytest
 from shapely.geometry import box
 from spatialdata import SpatialData
 
-from sopa.patches import Patches2D
-from sopa.patches.patches import _get_cell_id
-from sopa.utils import get_spatial_element
+import sopa
+from sopa._constants import SopaKeys
+from sopa.spatial.join import _get_cell_id
 from sopa.utils.data import toy_dataset
 
 
@@ -19,27 +17,21 @@ def sdata() -> SpatialData:
 
 
 def test_patchify_image(sdata: SpatialData):
-    image_key, _ = get_spatial_element(sdata.images, return_key=True)
+    sopa.make_image_patches(sdata, 300, 100)
+    assert len(sdata[SopaKeys.PATCHES]) == 9
 
-    patches = Patches2D(sdata, image_key, 300, 100)
-    assert len(patches) == 9
-
-    patches = Patches2D(sdata, image_key, 512, 0)
-    assert len(patches) == 1
-
-
-def _patchify_transcripts(sdata: SpatialData, width: int, overlap: int) -> list[int]:
-    with tempfile.TemporaryDirectory() as baysor_temp_dir:
-        patches = Patches2D(sdata, "transcripts", width, overlap)
-        return patches.patchify_transcripts(baysor_temp_dir)
+    sopa.make_image_patches(sdata, 512, 0)
+    assert len(sdata[SopaKeys.PATCHES]) == 1
 
 
 def test_patchify_baysor(sdata: SpatialData):
-    valid_indices = _patchify_transcripts(sdata, 30, 10)
-    assert len(valid_indices) == 9
+    sopa.make_transcript_patches(sdata, 30, 10)
+    assert len(sdata[SopaKeys.TRANSCRIPT_PATCHES]) == 9
 
-    valid_indices = _patchify_transcripts(sdata, 52, 0)
-    assert len(valid_indices) == 1
+    sopa.make_transcript_patches(sdata, 52, 0)
+    assert len(sdata[SopaKeys.TRANSCRIPT_PATCHES]) == 1
+
+    sopa.utils.delete_cache(sdata)
 
 
 def test_get_cell_id():

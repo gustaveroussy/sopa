@@ -1,6 +1,6 @@
 from .utils import (
     get_cache_dir,
-    clear_cache,
+    delete_cache,
     get_boundaries,
     get_spatial_element,
     to_intrinsic,

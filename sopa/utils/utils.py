@@ -252,7 +252,7 @@ def get_cache_dir(sdata: SpatialData) -> Path:
     return cache_dir
 
 
-def clear_cache(sdata: SpatialData | None = None) -> None:
+def delete_cache(sdata: SpatialData | None = None) -> None:
     """Delete the cache directory (the entire cache, or the cache of one specific SpatialData object).
 
     Args:

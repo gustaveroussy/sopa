@@ -48,7 +48,7 @@ def sjoin(
     return gpd.sjoin(left_element, right_element, how=how, **kwargs)
 
 
-def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, unassigned_value: int | None) -> pd.Series:
+def _get_cell_id(gdf: gpd.GeoDataFrame, partition: pd.DataFrame, unassigned_value: int | None = 0) -> pd.Series:
     points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
     gdf.index.name = "index_right"  # to reuse the index name later
     spatial_join = points_gdf.sjoin(gdf, how="left")
