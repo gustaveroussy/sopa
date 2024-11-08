@@ -1,18 +1,13 @@
-import geopandas as gpd
-import pandas as pd
 import pytest
-from shapely.geometry import box
 from spatialdata import SpatialData
 
 import sopa
 from sopa._constants import SopaKeys
-from sopa.spatial.join import _get_cell_id
-from sopa.utils.data import toy_dataset
 
 
 @pytest.fixture
 def sdata() -> SpatialData:
-    sdata = toy_dataset(length=512, cell_density=1e-3)
+    sdata = sopa.io.toy_dataset(length=512, cell_density=1e-3)
     return sdata
 
 
@@ -24,21 +19,42 @@ def test_patchify_image(sdata: SpatialData):
     assert len(sdata[SopaKeys.PATCHES]) == 1
 
 
+def test_patchify_inside_tissue_roi(sdata: SpatialData):
+    sopa.make_image_patches(sdata, 80, 0)
+    assert len(sdata[SopaKeys.PATCHES]) == 49
+
+    sopa.segmentation.tissue(sdata)
+
+    sopa.make_image_patches(sdata, 80, 0)
+    assert len(sdata[SopaKeys.PATCHES]) == 42  # inside the tissue ROI
+
+    del sdata.shapes[SopaKeys.ROI]
+
+
 def test_patchify_baysor(sdata: SpatialData):
+    with pytest.raises(AssertionError):
+        sopa.utils.get_transcripts_patches_dirs(sdata)
+
     sopa.make_transcript_patches(sdata, 30, 10)
     assert len(sdata[SopaKeys.TRANSCRIPT_PATCHES]) == 9
+    assert len(sopa.utils.get_transcripts_patches_dirs(sdata)) == 9
 
     sopa.make_transcript_patches(sdata, 52, 0)
     assert len(sdata[SopaKeys.TRANSCRIPT_PATCHES]) == 1
+    assert len(sopa.utils.get_transcripts_patches_dirs(sdata)) == 1
 
     sopa.utils.delete_cache(sdata)
 
 
-def test_get_cell_id():
-    polygons = [box(10, 10, 20, 28), box(15, 18, 25, 22), box(30, 35, 34, 42)]
-    gdf = gpd.GeoDataFrame(geometry=polygons)
-    df = pd.DataFrame({"x": [1.5, 16, 23, 67, 33, 19, 22, 10], "y": [15, 21, 34, 5, 40, 20, 21, 10]})
+def test_patchify_baysor_inside_tissue_roi(sdata: SpatialData):
+    sopa.make_transcript_patches(sdata, 5, 0, min_points_per_patch=0)
 
-    cell_id = _get_cell_id(gdf, df)
+    assert len(sdata[SopaKeys.TRANSCRIPT_PATCHES]) == 121
 
-    assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 1]
+    sopa.segmentation.tissue(sdata)
+
+    sopa.make_transcript_patches(sdata, 5, 0, min_points_per_patch=0)
+
+    assert len(sdata[SopaKeys.TRANSCRIPT_PATCHES]) == 115  # inside the tissue ROI
+
+    sopa.utils.delete_cache(sdata)

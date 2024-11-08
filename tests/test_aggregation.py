@@ -4,8 +4,13 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from shapely.geometry import Polygon, box
+from anndata import AnnData
+from scipy.sparse import csr_matrix
+from shapely import Polygon, box
+from spatialdata import SpatialData
+from spatialdata.models import ShapesModel, TableModel
 
+import sopa
 from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
 
@@ -67,3 +72,72 @@ def test_count_transcripts():
     expected = np.array([[0, 3, 1], [1, 0, 1], [1, 3, 1]])
 
     assert (adata.X.toarray() == expected).all()
+
+
+def test_aggregate_bins():
+    bins = [
+        box(0, 0, 1, 1),
+        box(1, 0, 2, 1),
+        box(0, 1, 1, 2),
+        box(5, 5, 6, 6),
+        box(6, 5, 7, 6),
+        box(5, 6, 6, 7),
+        box(6, 6, 7, 7),
+    ]
+
+    gdf_bins = gpd.GeoDataFrame(geometry=bins)
+    gdf_bins.index = [f"bin{i}" for i in range(7)]
+    gdf_bins = ShapesModel.parse(gdf_bins)
+
+    cells = [
+        Polygon([(-1, -1), (0.5, 0.5), (1, -1)]),  # touches 0
+        box(-1, -1, 4, 4),  # touches 0, 1, 2
+        Polygon([(4, 4), (4, 9), (9, 4)]),  # touches 3, 4, 5, 6
+    ]
+
+    gdf_cells = gpd.GeoDataFrame(geometry=cells)
+    gdf_cells = ShapesModel.parse(gdf_cells)
+
+    counts = np.array(
+        [
+            [3, 2, 1],
+            [0, 1, 0],
+            [10, 10, 15],
+            [0, 0, 12],
+            [2, 2, 2],
+            [0, 4, 0],
+            [32, 1, 2],
+        ]
+    )
+
+    expected_counts = np.array(
+        [
+            [3, 2, 1],
+            [13, 13, 16],
+            [34, 7, 16],
+        ]
+    )
+
+    adata = AnnData(counts)
+    adata.var_names = ["gene1", "gene2", "gene3"]
+
+    adata.obs["bin_id"] = gdf_bins.index
+    adata.obs["bin_key"] = "bins_2um"
+
+    adata = TableModel.parse(adata, region="bins_2um", instance_key="bin_id", region_key="bin_key")
+
+    sdata = SpatialData(shapes={"bins_2um": gdf_bins, "cells": gdf_cells}, tables={"table": adata})
+
+    adata_aggr = sopa.aggregation.aggregate_bins(sdata, "cells", "table")
+
+    assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
+
+    assert (adata_aggr.X == expected_counts).all()
+
+    sdata.tables["table"].X = csr_matrix(sdata.tables["table"].X)
+
+    adata_aggr = sopa.aggregation.aggregate_bins(sdata, "cells", "table")
+
+    assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
+
+    assert (adata_aggr.X.toarray() == expected_counts).all()

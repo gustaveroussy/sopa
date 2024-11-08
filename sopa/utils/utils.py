@@ -109,6 +109,8 @@ def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: 
 
 def get_feature_key(points: dd.DataFrame, raise_error: bool = False) -> str:
     """Get the feature key of a transcript dataframe"""
+    assert isinstance(points, dd.DataFrame), "points must be a Dask DataFrame"
+
     feature_key = points.attrs.get(ATTRS_KEY, {}).get("feature_key")
 
     if raise_error and feature_key is None:

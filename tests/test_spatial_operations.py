@@ -1,7 +1,9 @@
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
 from anndata import AnnData
+from shapely.geometry import box
 
 from sopa._constants import SopaKeys
 from sopa.spatial import (
@@ -11,6 +13,7 @@ from sopa.spatial import (
     niches_geometry_stats,
     spatial_neighbors,
 )
+from sopa.spatial.join import _get_cell_id
 
 NICHE_KEY = "niche"
 
@@ -80,3 +83,18 @@ def test_niches_geometry_stats(adata: AnnData):
 
     expected_a = [0, 1, 1, np.sqrt(18)] * 2  # sqrt(3**2 + 3**2)
     assert (df_geometries_stats.iloc[0, 4:] == np.array(expected_a)).all()
+
+
+def test_get_cell_id():
+    polygons = [box(10, 10, 20, 28), box(15, 18, 25, 22), box(30, 35, 34, 42)]
+    gdf = gpd.GeoDataFrame(geometry=polygons)
+    df = pd.DataFrame({"x": [1.5, 16, 23, 67, 33, 19, 22, 10], "y": [15, 21, 34, 5, 40, 20, 21, 10]})
+
+    cell_id = _get_cell_id(gdf, df)
+
+    assert list(cell_id) == [0, 1, 0, 0, 3, 1, 2, 1]
+
+    cell_id = _get_cell_id(gdf, df, None)  # should be [nan, 0, nan, nan, 2, 0, 1, 0]
+
+    assert cell_id.isna().sum() == 3
+    assert list(cell_id.iloc[[1, 4, 5, 6, 7]].values) == [0, 2, 0, 1, 0]
