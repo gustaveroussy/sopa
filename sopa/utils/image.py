@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dask.array as da
 import dask_image.ndinterp
 import numpy as np
 from datatree import DataTree
@@ -8,23 +7,6 @@ from spatialdata import SpatialData
 from xarray import DataArray
 
 from . import get_spatial_image
-
-
-def resize(xarr: DataArray, scale_factor: float) -> da.Array:
-    """Resize a xarray image
-
-    Args:
-        xarr: A `xarray` array
-        scale_factor: Scale factor of resizing, e.g. `2` will decrease the width by 2
-
-    Returns:
-        Resized dask array
-    """
-    resize_dims = [dim in ["x", "y"] for dim in xarr.dims]
-    transform = np.diag([scale_factor if resize_dim else 1 for resize_dim in resize_dims])
-    output_shape = [size // scale_factor if resize_dim else size for size, resize_dim in zip(xarr.shape, resize_dims)]
-
-    return dask_image.ndinterp.affine_transform(xarr.data, matrix=transform, output_shape=output_shape)
 
 
 def resize_numpy(arr: np.ndarray, scale_factor: float, dims: list[str], output_shape: list[int]) -> np.ndarray:
@@ -84,6 +66,7 @@ def get_channel_names(image: DataArray | DataTree | SpatialData, image_key: str 
     """
     if isinstance(image, SpatialData):
         image = get_spatial_image(image, key=image_key)
+
     if isinstance(image, DataArray):
         return image.coords["c"].values
     if isinstance(image, DataTree):
@@ -95,7 +78,7 @@ def is_valid_c_coords(c_coords: np.ndarray) -> bool:
     return c_coords.dtype.kind in {"U", "S", "O"}
 
 
-def ensure_string_channel_names(sdata: SpatialData, default_single_channel: str = "DAPI"):
+def ensure_string_channel_names(sdata: SpatialData, default_single_channel: str | None = "DAPI"):
     for key, image in list(sdata.images.items()):
         c_coords = get_channel_names(image)
 
@@ -103,7 +86,7 @@ def ensure_string_channel_names(sdata: SpatialData, default_single_channel: str 
             continue
 
         c_coords = [str(i) for i in range(len(c_coords))]
-        if len(c_coords) == 1:
+        if len(c_coords) == 1 and default_single_channel is not None:
             c_coords = [default_single_channel]
 
         new_image = image.assign_coords(c=c_coords)

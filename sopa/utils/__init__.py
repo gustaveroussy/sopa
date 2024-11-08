@@ -17,6 +17,5 @@ from .image import (
     ensure_string_channel_names,
     is_valid_c_coords,
     assert_is_integer_dtype,
-    resize,
     resize_numpy,
 )

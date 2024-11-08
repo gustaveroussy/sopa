@@ -1,7 +1,11 @@
+### Deprecated functionnalities
+
 from __future__ import annotations
 
 import logging
 
+import dask.array as da
+import dask_image.ndinterp
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,9 +15,9 @@ from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
+from xarray import DataArray
 
 from .._constants import SopaKeys
-from .image import resize
 from .utils import get_spatial_image
 
 log = logging.getLogger(__name__)
@@ -43,7 +47,7 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
         ), f"Choose one or three channels among {image.c.values} by using the --channels argument"
 
     log.info(f"Resizing image by a factor of {scale_factor}")
-    return image_key, resize(image, scale_factor).compute()
+    return image_key, _resize_dataarray(image, scale_factor).compute()
 
 
 class _Selector:
@@ -141,3 +145,20 @@ def polygon_selection(
         sdata.write_element(SopaKeys.ROI, overwrite=True)
 
     log.info(f"Polygon saved in sdata['{SopaKeys.ROI}']")
+
+
+def _resize_dataarray(xarr: DataArray, scale_factor: float) -> da.Array:
+    """Resize a xarray image
+
+    Args:
+        xarr: A `xarray` array
+        scale_factor: Scale factor of resizing, e.g. `2` will decrease the width by 2
+
+    Returns:
+        Resized dask array
+    """
+    resize_dims = [dim in ["x", "y"] for dim in xarr.dims]
+    transform = np.diag([scale_factor if resize_dim else 1 for resize_dim in resize_dims])
+    output_shape = [size // scale_factor if resize_dim else size for size, resize_dim in zip(xarr.shape, resize_dims)]
+
+    return dask_image.ndinterp.affine_transform(xarr.data, matrix=transform, output_shape=output_shape)

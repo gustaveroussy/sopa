@@ -181,7 +181,7 @@ class Patches2D:
         log.warning("Patches2D.write is deprecated. Use Patches2D.add_shapes instead")
         self.add_shapes(*args, **kwargs)
 
-    def add_shapes(self, overwrite: bool = True, key_added: str | None = None) -> gpd.GeoDataFrame:
+    def add_shapes(self, key_added: str | None = None, overwrite: bool = True) -> gpd.GeoDataFrame:
         key_added = key_added or SopaKeys.PATCHES
         geo_df = self.as_geodataframe()
 

@@ -16,8 +16,6 @@
 
 ::: sopa.utils.scale_dtype
 
-::: sopa.utils.resize
-
 ::: sopa.utils.resize_numpy
 
 ::: sopa.utils.tangram_annotate

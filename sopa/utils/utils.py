@@ -213,6 +213,11 @@ def add_spatial_element(
     element: SpatialElement,
     overwrite: bool = True,
 ):
+    assert isinstance(element_name, str)
+    assert (
+        overwrite or element_name not in sdata._shared_keys
+    ), f"Trying to add {element_name=} but it is already existing and {overwrite=}"
+
     sdata[element_name] = element
 
     if sdata.is_backed() and settings.auto_save_on_disk:

@@ -1,5 +1,7 @@
+import pandas as pd
 import pytest
 from datatree import DataTree
+from spatialdata.models import PointsModel
 from xarray import DataArray
 
 import sopa
@@ -125,3 +127,41 @@ def test_sdata_attrs_images():
 
     assert image_key == "he_image"
     assert isinstance(image, DataTree)
+
+
+def test_add_spatial_element():
+    sdata = sopa.io.toy_dataset(length=100)
+
+    points = PointsModel.parse(pd.DataFrame({"x": [1, 2], "y": [1, 2]}))
+
+    sopa.utils.add_spatial_element(sdata, "points_test", points)
+
+    assert "points_test" in sdata.points
+
+    with pytest.raises(AssertionError):
+        sopa.utils.add_spatial_element(sdata, "points_test", points, overwrite=False)
+
+    sopa.utils.add_spatial_element(sdata, "points_test", points)
+
+    del sdata.points["points_test"]
+
+    sdata.write("_test_add_spatial_element.zarr")
+
+    sopa.settings.auto_save_on_disk = False
+
+    sopa.utils.add_spatial_element(sdata, "points_test", points)
+
+    assert not (sdata.path / "points" / "points_test").is_dir()
+
+    sopa.settings.auto_save_on_disk = True
+
+    with pytest.raises(AssertionError):
+        sopa.utils.add_spatial_element(sdata, "points_test", points, overwrite=False)
+
+    sopa.utils.add_spatial_element(sdata, "points_test", points)
+
+    assert (sdata.path / "points" / "points_test").is_dir()
+
+    import shutil
+
+    shutil.rmtree("_test_add_spatial_element.zarr")
