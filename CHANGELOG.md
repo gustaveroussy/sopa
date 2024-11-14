@@ -12,6 +12,7 @@ This version introduces many new API features but also some breaking changes; ch
 - New tissue segmentation for non-H&E data (`sopa.segmentation.tissue`)
 - Bins aggregation (for VisiumHD-like data)
 - Full support for `baysor>=0.7.0`
+- Added support for Python 3.12
 
 ### Minor
 - The `sopa.io.uniform` dataset is now deprecated (use `sopa.io.toy_dataset` instead)
@@ -24,6 +25,7 @@ This version introduces many new API features but also some breaking changes; ch
 - API: The annotations methods are moved to the utils. For instance, use `sopa.utils.higher_z_score` instead of `sopa.annotation.higher_z_score`
 - CLI: `sopa read` has been renamed `sopa convert` to avoid confusion.
 - CLI: during segmentation, use `--cache-dir-name` instead of `--patch-dir`
+- Drop support for Python 3.9
 
 ## [1.1.5] - 2024-09-17
 

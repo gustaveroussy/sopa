@@ -1,7 +1,5 @@
 ### Deprecated functionnalities
 
-from __future__ import annotations
-
 import logging
 
 import dask.array as da

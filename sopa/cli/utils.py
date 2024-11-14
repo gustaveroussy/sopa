@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 def _check_zip(names: list[str]):
     for name in names:
         if isinstance(name, str):

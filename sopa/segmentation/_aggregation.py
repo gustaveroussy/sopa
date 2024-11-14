@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 
 from ..aggregation import Aggregator as _Aggregator

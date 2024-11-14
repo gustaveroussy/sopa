@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from functools import partial
 
 import dask.dataframe as dd

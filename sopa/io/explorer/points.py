@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from math import ceil
 from pathlib import Path

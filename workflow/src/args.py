@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Optional
 
 from .paths import WorkflowPaths
@@ -89,7 +87,7 @@ class Args:
         """
         return " ".join((res for item in self.config.items() for res in _stringify_item(*item)))
 
-    def __getitem__(self, name: str) -> Args | bool | str | list:
+    def __getitem__(self, name: str) -> "Args" | bool | str | list:
         sub_config = self.config.get(name, {})
         if not isinstance(sub_config, dict):
             return sub_config

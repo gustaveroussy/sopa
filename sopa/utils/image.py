@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import dask_image.ndinterp
 import numpy as np
 from datatree import DataTree
