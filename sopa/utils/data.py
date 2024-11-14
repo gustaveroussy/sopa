@@ -33,7 +33,7 @@ def toy_dataset(
     apply_blur: bool = True,
     as_output: bool = False,
     transcript_cell_id_as_merscope: bool = False,
-    add_nan_gene_name: bool = True,
+    add_nan_gene_name: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
