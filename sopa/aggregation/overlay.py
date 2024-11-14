@@ -46,11 +46,11 @@ def overlay_segmentation(
         points = get_spatial_element(sdata.points, key=sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
         gene_column = get_feature_key(points, raise_error=True)
 
-    aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key)
+    aggregator = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key)
 
-    old_table: AnnData = aggr.sdata.tables[SopaKeys.TABLE]
-    aggr.sdata.tables[SopaKeys.OLD_TABLE] = old_table
-    del aggr.sdata.tables[SopaKeys.TABLE]
+    old_table: AnnData = aggregator.sdata.tables[SopaKeys.TABLE]
+    aggregator.sdata.tables[SopaKeys.OLD_TABLE] = old_table
+    del aggregator.sdata.tables[SopaKeys.TABLE]
 
     old_shapes_key = old_table.uns["spatialdata_attrs"]["region"]
     instance_key = old_table.uns["spatialdata_attrs"]["instance_key"]
@@ -59,8 +59,8 @@ def overlay_segmentation(
         assert len(old_shapes_key) == 1, "Can't overlap segmentation on multi-region SpatialData object"
         old_shapes_key = old_shapes_key[0]
 
-    old_geo_df = aggr.sdata[old_shapes_key]
-    geo_df = to_intrinsic(aggr.sdata, aggr.geo_df, old_geo_df)
+    old_geo_df = aggregator.sdata[old_shapes_key]
+    geo_df = to_intrinsic(aggregator.sdata, aggregator.geo_df, old_geo_df)
 
     geo_df.index.name = None
     gdf_join = gpd.sjoin(old_geo_df, geo_df)
@@ -71,29 +71,29 @@ def overlay_segmentation(
     table_crop = old_table[~np.isin(old_table.obs[instance_key], gdf_join.index)].copy()
     table_crop.obs[SopaKeys.CELL_OVERLAY_KEY] = False
 
-    aggr.compute_table(aggregate_channels=aggregate_channels, aggregate_genes=aggregate_genes, gene_column=gene_column)
-    aggr.table.obs[SopaKeys.CELL_OVERLAY_KEY] = True
+    aggregator.compute_table(
+        aggregate_channels=aggregate_channels,
+        aggregate_genes=aggregate_genes,
+        gene_column=gene_column,
+    )
+    aggregator.table.obs[SopaKeys.CELL_OVERLAY_KEY] = True
 
-    aggr.table = anndata.concat([table_crop, aggr.table], uns_merge="first", join="outer", fill_value=0)
-    _fillna(aggr.table.obs)
+    aggregator.table = anndata.concat(
+        [table_crop, aggregator.table],
+        uns_merge="first",
+        join="outer",
+    )
 
-    aggr.shapes_key = f"{old_shapes_key}_overlay_{aggr.shapes_key}"
+    aggregator.shapes_key = f"{old_shapes_key}_overlay_{aggregator.shapes_key}"
+
     geo_df_cropped = old_geo_df.loc[~old_geo_df.index.isin(gdf_join.index)]
-    aggr.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
-    aggr.geo_df.attrs = old_geo_df.attrs
+    aggregator.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
+    aggregator.geo_df.attrs = old_geo_df.attrs
 
-    aggr.add_standardized_table()
+    aggregator.add_standardized_table()
 
 
 def _overlap_area_ratio(row) -> float:
     poly: Polygon = row["geometry"]
     poly_right: Polygon = row["geometry_right"]
     return poly.intersection(poly_right).area / poly.area
-
-
-def _fillna(df: pd.DataFrame):
-    for key in df:
-        if df[key].dtype == "category":
-            df[key] = df[key].cat.add_categories("NA").fillna("NA")
-        else:
-            df[key] = df[key].fillna(0)

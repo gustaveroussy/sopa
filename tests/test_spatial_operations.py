@@ -2,9 +2,12 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
+import spatialdata
 from anndata import AnnData
-from shapely.geometry import box
+from shapely import box
+from spatialdata.models import ShapesModel
 
+import sopa
 from sopa._constants import SopaKeys
 from sopa.spatial import (
     cells_to_groups,
@@ -98,3 +101,36 @@ def test_get_cell_id():
 
     assert cell_id.isna().sum() == 3
     assert list(cell_id.iloc[[1, 4, 5, 6, 7]].values) == [0, 2, 0, 1, 0]
+
+
+def test_sjoin():
+    gdf = gpd.GeoDataFrame(
+        geometry=[
+            box(0, 0, 1, 1),
+            box(1, 1, 2, 2),
+            box(7, 7, 8, 8),
+            box(4, 4, 6, 6),
+        ]
+    )
+    gdf.geometry = gdf.geometry.buffer(0.1)
+    gdf = ShapesModel.parse(gdf)
+
+    gdf2 = gpd.GeoDataFrame(
+        geometry=[
+            box(0, 0, 1, 5),
+            box(3, 3, 5, 5),
+            box(10, 10, 11, 11),
+        ]
+    )
+    gdf2.geometry = gdf2.geometry.buffer(0.1)
+    gdf2 = ShapesModel.parse(gdf2)
+
+    sdata = spatialdata.SpatialData(shapes={"left": gdf, "right": gdf2})
+
+    index_right = sopa.spatial.sjoin(sdata, "left", "right")["index_right"]
+
+    assert np.array_equal(index_right, [0, 0, np.nan, 1], equal_nan=True)
+
+    index_right = sopa.spatial.sjoin(sdata, "right", "left")["index_right"]
+
+    assert np.array_equal(index_right, [0, 1, 3, np.nan], equal_nan=True)

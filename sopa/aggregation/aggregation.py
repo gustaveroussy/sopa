@@ -101,9 +101,12 @@ class Aggregator:
         self.sdata = sdata
         self.bins_key = bins_key
         self.points_key = points_key
-
-        self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
+
+        if not sdata.images:
+            self.image_key, self.image = "None", None
+        else:
+            self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
 
         self.table = None
         if SopaKeys.TABLE in self.sdata.tables and self.sdata[SopaKeys.TABLE].n_obs == len(self.geo_df):
@@ -136,6 +139,10 @@ class Aggregator:
         aggregate_genes, aggregate_channels = self._legacy_arguments(
             points_key, gene_column, aggregate_genes, aggregate_channels, average_intensities
         )
+
+        if aggregate_channels and self.image is None:
+            log.warning("No image found to aggregate channels. Use `aggregate_channels=False`")
+            aggregate_channels = False
 
         assert (
             aggregate_genes or aggregate_channels

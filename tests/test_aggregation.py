@@ -3,12 +3,13 @@ import dask.array as da
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import spatialdata
 import xarray as xr
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 from shapely import Polygon, box
 from spatialdata import SpatialData
-from spatialdata.models import ShapesModel, TableModel
+from spatialdata.models import PointsModel, ShapesModel, TableModel
 
 import sopa
 from sopa.aggregation.channels import _aggregate_channels_aligned
@@ -141,3 +142,63 @@ def test_aggregate_bins():
     assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
 
     assert (adata_aggr.X.toarray() == expected_counts).all()
+
+
+def test_overlay():
+    np.random.seed(0)
+    x, y = np.meshgrid(np.arange(6), np.arange(6))
+    x = x.flatten()
+    y = y.flatten()
+    genes = np.random.choice(["gene_a", "gene_b", "gene_c"], x.shape[0])
+    points = PointsModel.parse(pd.DataFrame({"x": x, "y": y, "gene": genes}), feature_key="gene")
+
+    gdf = gpd.GeoDataFrame(
+        geometry=[
+            box(0, 0, 1, 1),
+            box(1, 1, 2, 2),
+            box(2, 2, 4, 4),
+            box(1, 2.5, 1.5, 5),
+        ]
+    )
+    gdf.geometry = gdf.geometry.buffer(0.1)
+    gdf = ShapesModel.parse(gdf)
+
+    gdf2 = gpd.GeoDataFrame(
+        geometry=[
+            box(0, 0, 1, 5),
+            box(3, 3, 5, 5),
+        ]
+    )
+    gdf2.geometry = gdf2.geometry.buffer(0.1)
+    gdf2 = ShapesModel.parse(gdf2)
+
+    sdata = spatialdata.SpatialData(shapes={"cellpose_boundaries": gdf, "selection": gdf2}, points={"points": points})
+
+    sopa.aggregate(sdata, aggregate_channels=False)
+
+    assert (
+        sdata["table"].X.toarray()
+        == np.array(
+            [
+                [2, 1, 1],
+                [1, 0, 3],
+                [5, 2, 2],
+                [0, 1, 2],
+            ]
+        )
+    ).all()
+
+    sopa.overlay_segmentation(sdata, "selection", area_ratio_threshold=0.5)
+
+    assert (
+        sdata["table"].X.toarray()
+        == np.array(
+            [
+                [1, 0, 3],
+                [5, 2, 2],
+                [0, 1, 2],
+                [2, 6, 4],
+                [3, 5, 1],
+            ]
+        )
+    ).all()
