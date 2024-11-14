@@ -1,7 +1,6 @@
 from typing import Callable
 
 import anndata
-import geopandas as gpd
 import numpy as np
 import scanpy as sc
 from spatialdata import SpatialData
@@ -29,7 +28,7 @@ def cluster_embeddings(
     method: Callable | str = "leiden",
     key_added: str = "cluster",
     **method_kwargs: str,
-) -> gpd.GeoDataFrame:
+) -> None:
     """Create clusters of the patches embeddings (obtained from [sopa.patches.compute_embeddings][]).
 
     Args:
@@ -38,9 +37,6 @@ def cluster_embeddings(
         method: Callable that takes as an input an array of size `(n_patches x embedding_size)` and returns an array of clusters of size `n_patches`, or an available method name (`leiden`)
         key_added: The key containing the clusters to be added to the patches `GeoDataFrame`
         method_kwargs: kwargs provided to the method callable
-
-    Returns:
-        The patches `GeoDataFrame` with a new column `key_added` containing the patches clusters
     """
     if isinstance(element, str):
         element = sdata.images[element]
@@ -56,5 +52,3 @@ def cluster_embeddings(
 
     gdf_patches[key_added] = method(embeddings, **method_kwargs)
     gdf_patches[key_added] = gdf_patches[key_added].astype("category")
-
-    return gdf_patches

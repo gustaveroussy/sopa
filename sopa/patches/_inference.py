@@ -69,11 +69,12 @@ class Inference:
 
     @torch.no_grad()
     def infer_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
-        patches = self._torch_batch(bboxes)  # shape (B, 3, Y, X)
+        patches = self._torch_batch(bboxes)  # shape (B, C, Y, X)
 
-        if len(patches.shape) == 3:
-            patches = patches.unsqueeze(0)
-        embedding = self.model(patches.to(self.device)).squeeze()
+        assert len(patches.shape) == 4
+        embedding = self.model(patches.to(self.device))
+        assert len(embedding.shape) == 2, "The model must have the following signature: (B, C, Y, X) -> (B, C)"
+
         return embedding.cpu()  # shape (B, output_dim)
 
     def get_patches_transformations(self, patch_overlap: float) -> dict[str, Sequence]:
@@ -108,10 +109,11 @@ def _get_extraction_parameters(
     return image, level, resize_factor
 
 
-def _get_level_for_magnification(image: DataArray | DataTree, magnification: int, epsilon: float = 0.01) -> int:
+def _get_level_for_magnification(image: DataArray | DataTree, magnification: int) -> int:
     """Return the best level for a given downsampling factor"""
     slide_metadata, backend = image.attrs.get("metadata", {}), image.attrs.get("backend")
 
+    assert slide_metadata, "No `metadata` field found in the image attributes"
     assert backend is not None, "No backend found in the image metadata, can not infer the level for the magnification"
     assert "level_downsamples" in slide_metadata, "Missing `level_downsamples` in the image metadata"
     assert "properties" in slide_metadata, "Missing `properties` in the image metadata"

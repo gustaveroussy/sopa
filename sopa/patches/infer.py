@@ -30,7 +30,7 @@ def compute_embeddings(
     batch_size: int = 32,
     device: str = None,
     key_added: str | None = None,
-) -> DataArray:
+) -> None:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
@@ -38,7 +38,7 @@ def compute_embeddings(
 
     Args:
         sdata: A `SpatialData` object
-        model: Callable that takes as an input a tensor of size (batch_size, channels, x, y) and returns a vector for each tile (batch_size, emb_dim), or a string with the name of one of the available models (`resnet50`, `histo_ssl`, or `dinov2`).
+        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, or `dinov2`).
         patch_width: Width (pixels) of the patches.
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
@@ -47,9 +47,6 @@ def compute_embeddings(
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
-
-    Returns:
-        The `DataArray` of shape `(C, Y, X)` containing the model predictions (also added to the `SpatialData` object).
     """
     try:
         import torch
@@ -87,5 +84,3 @@ def compute_embeddings(
     add_spatial_element(sdata, key_added, output_image)
 
     patches.add_shapes(key_added=SopaKeys.PATCHES_INFERENCE_KEY)
-
-    return sdata[key_added]
