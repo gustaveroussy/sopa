@@ -27,7 +27,7 @@ def comseg(
     key_added: str = SopaKeys.COMSEG_BOUNDARIES,
     patch_index: int | None = None,
 ):
-    _check_transcript_patches(sdata)
+    _check_transcript_patches(sdata, with_prior=True)
 
     if config is None or not len(config):
         log.info("No config provided, inferring a default ComSeg config.")

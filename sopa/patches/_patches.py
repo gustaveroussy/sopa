@@ -81,6 +81,8 @@ class Patches2D:
             patch_width: Width of the patches (in the unit of the coordinate system of the element)
             patch_overlap: Overlap width between the patches
         """
+        assert patch_width > patch_overlap, f"Argument {patch_width=} must be greater than {patch_overlap=}"
+
         self.sdata = sdata
         self.element = sdata[element] if isinstance(element, str) else element
         self.original_element = self.element  # in case the element is a DataTree

@@ -19,6 +19,7 @@ def baysor(
     delete_cache: bool = True,
     recover: bool = False,
     force: bool = False,
+    scale: float | None = None,
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
     patch_index: int | None = None,
 ):
@@ -34,13 +35,7 @@ def baysor(
         prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
     if config is None or not len(config):
-        assert prior_shapes_key is not None, (
-            "The config can't be inferred without a prior shape key. "
-            "Run `sopa.make_transcript_patches(...)` with `prior_shapes_key`, or provide a Baysor config."
-        )
-
-        log.info("No config provided, inferring a default Baysor config.")
-        config = _get_default_config(sdata)
+        config = _get_default_config(sdata, prior_shapes_key, scale)
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
     for patch_dir in patches_dirs:
@@ -63,16 +58,15 @@ def baysor(
     settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in patches_dirs])
 
     if force:
-        assert any(
-            (patch_dir / "segmentation_counts.loom").exists() for patch_dir in patches_dirs
-        ), "Baysor failed on all patches"
+        patches_dirs = [patch_dir for patch_dir in patches_dirs if (patch_dir / "segmentation_counts.loom").exists()]
+        assert patches_dirs, "Baysor failed on all patches"
 
     resolve(sdata, patches_dirs, gene_column, min_area=min_area, key_added=key_added)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 
     if delete_cache:
-        for patch_dir in patches_dirs:
+        for patch_dir in get_transcripts_patches_dirs(sdata):
             shutil.rmtree(patch_dir)
 
 
@@ -159,7 +153,14 @@ def _get_baysor_executable_path() -> Path | str:
     )
 
 
-def _get_default_config(sdata: SpatialData) -> dict:
+def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale: float | None) -> dict:
+    assert prior_shapes_key is not None or scale is not None, (
+        "The config can't be inferred. Choose among the following solutions:\n"
+        "   - Provide the `scale` argument (typical cell radius in microns)\n"
+        "   - Run `sopa.make_transcript_patches(...)` with `prior_shapes_key`\n"
+        "   - Provide the `config` argument, containing a valid Baysor config."
+    )
+
     points_key = sdata.attrs.get(SopaAttrs.TRANSCRIPTS)
     assert (
         points_key
@@ -167,7 +168,7 @@ def _get_default_config(sdata: SpatialData) -> dict:
 
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
-    return {
+    config = {
         "data": {
             "x": "x",
             "y": "y",
@@ -178,6 +179,13 @@ def _get_default_config(sdata: SpatialData) -> dict:
         },
         "segmentation": {"prior_segmentation_confidence": 0.8},
     }
+
+    if scale is not None:
+        config["segmentation"]["scale"] = scale
+
+    log.info(f"The Baysor config was not provided, using the following by default:\n{config}")
+
+    return config
 
 
 def _get_gene_column_argument(config: dict | str) -> str:

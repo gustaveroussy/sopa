@@ -176,7 +176,7 @@ def _resolve_patches(
     return cells_resolved, cells_indices, new_ids
 
 
-def _check_transcript_patches(sdata: SpatialData):
+def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
     assert (
         SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
     ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
@@ -189,3 +189,9 @@ def _check_transcript_patches(sdata: SpatialData):
         "You must re-run `sopa.make_transcript_patches`. "
         "Next time, use `delete_cache=False` during the segmentation to keep the cache."
     )
+
+    if with_prior:
+        assert SopaKeys.PRIOR_SHAPES_KEY in sdata[SopaKeys.TRANSCRIPT_PATCHES].columns, (
+            "You need to create the transcript patches with a `prior_shapes_key`. "
+            "For that, you can run cellpose first, and then run again `sopa.make_transcript_patches` with `prior_shapes_key='cellpose_boundaries'`"
+        )
