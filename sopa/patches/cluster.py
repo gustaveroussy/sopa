@@ -31,6 +31,9 @@ def cluster_embeddings(
 ) -> None:
     """Create clusters of the patches embeddings (obtained from [sopa.patches.compute_embeddings][]).
 
+    Info:
+        The clusters are added to the `key_added` column of the "inference_patches" shapes (`key_added='cluster'` by default).
+
     Args:
         sdata: A `SpatialData` object
         element: The `DataArray` containing the embeddings, or the name of the element

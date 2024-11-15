@@ -1,4 +1,4 @@
-## What kind of inputs do I need to run Sopa?
+## What are the inputs or Sopa?
 
 You need the raw inputs of your machine, that is:
 
@@ -80,7 +80,7 @@ When using the API, and when your `SpatialData` object is saved on-disk, Sopa wi
 sopa.settings.auto_save_on_disk = False
 ```
 
-## How to use a parallelization backend?
+## How to parallelize segmentation?
 
 Some steps of Sopa, notably the segmentation, can be accelerated via a parallelization backend. If you use the API, you can set the `"dask"` backend as below.
 
@@ -130,13 +130,17 @@ Internally, when reading the raw data, Sopa saves some attributes inside `sdata.
 
 Sopa handles this internally by default, and it is completely invisible to the user. But, to get a full control on what is done, you can always set some arguments to specify which element to be used. You can refer to the following arguments of the API: `image_key`, `points_key`, `shapes_key`, `bins_key`.
 
-## I have small artifact cells, how do remove them?
+## How to remove cells artifacts?
 
-You may have small cells that were segmented but that should be removed. For that, `Sopa` offers three filtering approaches: using their area, their transcript count, or their fluorescence intensity. Refer to the following config parameters from this [example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml): `min_area`, `min_transcripts`, and `min_intensity_ratio`.
+When segmenting a patch that is outside of the issue, Cellpose may "hallucinate" and generate some fake cells. To avoid that, you can run [`sopa.segmentation.tissue`](../api/segmentation/#sopa.segmentation.tissue) to ensure segmentation is always run inside the tissue.
 
-If using the CLI, `--min-area` can be provided to `sopa segmentation cellpose` or `sopa resolve baysor`, and `--min-transcripts`/`--min-intensity-ratio` can be provided to `sopa aggregate`.
+Otherwise, if you have inside the tissue some small cells artefacts, `Sopa` offers three filtering approaches:
 
-## Cellpose is not segmenting enough cells; what should I do?
+- Using a [min_area](../api/segmentation/#sopa.segmentation.cellpose) threshold to remove small cells (provide this argument to the segmentation methods).
+- A [min_transcripts](/api/aggregation/#sopa.aggregate) threshold to remove cells with a low transcript count (provide this argument to the aggregation step).
+- A [min_intensity_ratio](..//api/aggregation/#sopa.aggregate) value to remove cells with a low fluorescence intensity (provide this argument to the aggregation step).
+
+## How to get more cells with Cellpose?
 
 - The main Cellpose parameter to check is `diameter`, i.e. a typical cell diameter **in pixels**. Note that this is highly specific to the technology you're using since the micron-to-pixel ratio can differ. We advise you to start with the default parameter for your technology of interest (see the `diameter` parameter inside our config files [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config)).
 - Maybe `min_area` is too high, and all the cells are filtered because they are smaller than this area. Remind that, when using Cellpose, the areas correspond to pixels^2.
@@ -178,10 +182,12 @@ Some CLI arguments are optionnal dictionnaries. For instance, `sopa convert` has
 
 If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, the `rioxarray` will be used by default by the reader (no change needed, it will be detected automatically).
 
-## Can I use Nextflow instead of Snakemake?
+## What about Nextflow?
 
 Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).
 
-## I have another issue; how do I fix it?
+## How to ask for help?
 
-Don't hesitate to open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible for the maintainers to be able to reproduce it.
+If you have an issue that is not detailed in this FAQ, you can still open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible for the maintainers to be able to reproduce it.
+
+Make sure to have a quick look to the existing issues, maybe someone faced the same problem.
