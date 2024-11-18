@@ -33,7 +33,7 @@ $ sopa segmentation cellpose sdata.zarr
 
 For this tutorial, we use a generated dataset. You can expect a total runtime of a few minutes.
 
-The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa) describing which data input you need, or see the [`sopa convert`](`../../cli/#sopa-read`) documentation.
+The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-are-the-inputs-or-sopa) describing which data input you need, or run `sopa convert --help`.
 
 === "Tutorial"
     ```sh
@@ -278,7 +278,7 @@ If you have downloaded the Xenium Explorer, you can now open the results in the 
     # this should be done after aggregation and an eventual annotation
     sopa explorer write tuto.zarr --mode "-i"
     ```
-    For more details and customization, refer to the [command line helper](../../cli/#sopa-explorer-write).
+    For more details and customization, run the command line helper with `sopa explorer write --help`.
 
 ## Further analyses
 

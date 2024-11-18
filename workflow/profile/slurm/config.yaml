@@ -10,7 +10,7 @@ set-resources:
         slurm_partition: mem_short # use the partition/queue name on your cluster
     image_write:
         mem_mb: 64_000
-        partition: cpu_long # use the partition/queue name on your cluster
+        slurm_partition: cpu_long # use the partition/queue name on your cluster
     to_spatialdata:
         mem_mb: 128_000
     patch_segmentation_baysor:
@@ -19,6 +19,10 @@ set-resources:
         mem_mb: 128_000
     aggregate:
         mem_mb: 64_000
+    patchify_transcripts:
+        mem_mb: 32_000
+    report:
+        mem_mb: 32_000
 
 # other options (you can keep the default values)
 restart-times: 0

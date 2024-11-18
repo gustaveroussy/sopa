@@ -4,9 +4,11 @@ Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stab
 
 ## Setup
 
+### Installation
+
 Follow our [installation instructions](../../getting_started/#snakemake-setup) until the end of the "Snakemake setup" section. At the end, you should have one `sopa` environment, one one environment with `snakemake` (it can be the same environment, if desired), and you should also have cloned the `sopa` repository.
 
-## Choose a config
+### Choose a config file
 
 Our pipeline config is a YAML file that describes all the steps desired for the pipeline. It is flexible; for instance, if you remove the `baysor` arguments from the config, then it will not run baysor. Similarly, if you remove the `"annotation"` section, it will not run annotation.
 
@@ -16,7 +18,7 @@ Keep in mind the relative path of your config since you'll need it later, e.g. `
 
 ## Run the pipeline
 
-1. First, locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-kind-of-inputs-do-i-need-to-run-sopa).
+1. First, locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-or-sopa).
 
 2. Then, activate an environment that has the snakemake command:
 ```sh
@@ -158,8 +160,30 @@ The `.explorer` directory contains the following files:
 
 - The other files are data files related and required by the Xenium Explorer
 
-## Create your own config
+## Advanced usage
+
+### Create your own config
 
 If the existing `config` files are not suited for your project, you can update an existing one or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, remove the section or the argument, and Sopa will not run it.
 
 When running snakemake, you will then need to provide the relative or absolute path to your `.yaml` config, for instance `--configfile=/path/to/your/config.yaml`.
+
+### Passing kwargs to the config
+
+Internally, the Snakemake pipeline is calling [Sopa's CLI](../cli_usage). **Not all argument are used** in the default config files. You can pass additionnal kwargs to the config so that they are given to the CLI.
+
+For instance, if you want to pass kwargs to the [MERSCOPE reader](../../api/readers/#sopa.io.merscope), you can update the config as below:
+```
+read:
+  technology: merscope
+  kwargs:
+    z_layers: 2
+```
+
+### Create your own profile
+
+As mentioned above, you can use a [Snakemake profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles) to execute the pipeline. In Snakemake>=8.0.0, there are multiple [executor plugins](https://snakemake.github.io/snakemake-plugin-catalog/index.html) that can help you.
+
+Save your new profile under `workflow/profile/my_profile/config.yaml`.
+
+Then, to use the new profile, pass `--workflow-profile profile/my_profile` to your `snakemake` command.
