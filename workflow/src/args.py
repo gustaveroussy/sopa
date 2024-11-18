@@ -1,4 +1,4 @@
-from typing import Optional
+from __future__ import annotations
 
 from .paths import WorkflowPaths
 
@@ -51,7 +51,7 @@ class Args:
 
     ### The methods below are used to convert the Args object into a string for the Sopa CLI
 
-    def as_cli(self, keys: Optional[list[str]] = None, contains: Optional[str] = None) -> str:
+    def as_cli(self, keys: list[str] | None = None, contains: str | None = None) -> str:
         """Extract a subset of the config (or the whole config) as a string for the CLI (command-line interface)
 
         Args:

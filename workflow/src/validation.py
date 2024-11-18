@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 TOY_READERS = ["uniform", "toy_dataset"]
