@@ -4,7 +4,8 @@ import pytest
 from shapely.affinity import translate
 from shapely.geometry import Polygon
 
-from sopa.segmentation.shapes import geometrize, solve_conflicts
+from sopa.segmentation import solve_conflicts
+from sopa.segmentation.shapes import geometrize
 
 
 @pytest.fixture

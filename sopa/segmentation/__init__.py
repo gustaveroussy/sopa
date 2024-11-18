@@ -1,4 +1,5 @@
 from . import _aggregation, _stainings, shapes
+from .resolve import solve_conflicts, combine
 from ._aggregation import Aggregator, overlay_segmentation  # deprecated in this module
 from ._stainings import StainingSegmentation
 from ._tissue import tissue

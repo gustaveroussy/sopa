@@ -50,7 +50,7 @@ def generic(
 
 def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation import StainingSegmentation, shapes
+    from sopa.segmentation import StainingSegmentation, solve_conflicts
     from sopa.utils import get_spatial_image
 
     sdata = read_zarr_standardized(sdata_path)
@@ -60,7 +60,7 @@ def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
     image_key, _ = get_spatial_image(sdata, return_key=True)
 
     cells = StainingSegmentation.read_patches_cells(patch_dirs)
-    cells = shapes.solve_conflicts(cells)
+    cells = solve_conflicts(cells)
 
     StainingSegmentation.add_shapes(sdata, cells, image_key, key_added)
 

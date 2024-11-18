@@ -5,7 +5,7 @@ from spatialdata import SpatialData
 
 from ..._constants import SopaAttrs, SopaKeys
 from ...utils import get_cache_dir
-from .. import StainingSegmentation, shapes
+from .. import StainingSegmentation, solve_conflicts
 
 
 def custom_staining_based(
@@ -54,7 +54,7 @@ def custom_staining_based(
     segmentation.write_patches_cells(temp_dir, recover=recover)
 
     cells = StainingSegmentation.read_patches_cells(temp_dir)
-    cells = shapes.solve_conflicts(cells)
+    cells = solve_conflicts(cells)
 
     StainingSegmentation.add_shapes(sdata, cells, image_key=segmentation.image_key, key_added=key_added)
 

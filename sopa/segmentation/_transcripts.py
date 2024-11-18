@@ -16,7 +16,7 @@ from tqdm import tqdm
 from .._constants import SopaKeys
 from ..aggregation import count_transcripts
 from ..utils import add_spatial_element
-from . import shapes
+from . import shapes, solve_conflicts
 
 log = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ def _resolve_patches(
     cells = [cell for cells in patches_cells for cell in cells]
     segmentation_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
-    cells_resolved, cells_indices = shapes.solve_conflicts(cells, patch_indices=patch_indices, return_indices=True)
+    cells_resolved, cells_indices = solve_conflicts(cells, patch_indices=patch_indices, return_indices=True)
 
     existing_ids = segmentation_ids[cells_indices[cells_indices >= 0]]
     new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))

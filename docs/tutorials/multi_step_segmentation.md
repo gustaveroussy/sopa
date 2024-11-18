@@ -2,6 +2,26 @@
 
 Multi-step segmentation consists of running multiple times Cellpose over the whole slides with different parameters. For instance, we can first run a nucleus segmentation using DAPI, then another round using DAPI and a membrane staining, and finally, DAPI and cell boundary staining. This can make the segmentation more robust. Note that the results of the multiple steps are combined into one final segmentation.
 
+## Using the API
+
+To run multi-step segmentation via the API, you can run multiple segmentation methods, and then combine them with [sopa.segmentation.combine](../../api/segmentation/#sopa.segmentation.combine).
+
+On the example below, we run Cellpose twice, once for nuclei and once for tumor cells. We then combine the two segmentations into a single one.
+
+```python
+import sopa
+
+sdata = sopa.io.toy_dataset(length=1000)
+sopa.make_image_patches(sdata)
+
+sopa.segmentation.cellpose(sdata, "DAPI", diameter=35, key_added="nuclei")
+sopa.segmentation.cellpose(sdata, ["DAPI", "CK"], diameter=35, key_added="tumor_cells")
+
+sopa.segmentation.combine(sdata, ["nuclei", "tumor_cells"], key_added="combined_cells")
+```
+
+## Using the CLI
+
 !!! warning
     Here, we only detail the multi-step segmentation. For the rest of the CLI usage, refer to our [CLI usage tutorial](../cli_usage), and only replace the "Run segmentation" section with the instructions below.
 

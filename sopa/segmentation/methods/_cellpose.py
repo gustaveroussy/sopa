@@ -22,6 +22,7 @@ def cellpose(
     clip_limit: float = 0.2,
     clahe_kernel_size: int | list[int] | None = None,
     gaussian_sigma: float = 1,
+    key_added: str = SopaKeys.CELLPOSE_BOUNDARIES,
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
 ):
@@ -41,6 +42,7 @@ def cellpose(
         clip_limit: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
         clahe_kernel_size: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
         gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
+        key_added: Name of the shapes element to be added to `sdata`.
         cellpose_model_kwargs: Dictionary of kwargs to be provided to the `cellpose.models.CellposeModel` object.
         **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
     """
@@ -69,8 +71,8 @@ def cellpose(
         clip_limit=clip_limit,
         clahe_kernel_size=clahe_kernel_size,
         gaussian_sigma=gaussian_sigma,
-        cache_dir_name=SopaKeys.CELLPOSE_BOUNDARIES,
-        key_added=SopaKeys.CELLPOSE_BOUNDARIES,
+        cache_dir_name=key_added,
+        key_added=key_added,
     )
 
 

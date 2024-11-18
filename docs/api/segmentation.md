@@ -11,3 +11,7 @@
 ## Tissue segmentation
 
 ::: sopa.segmentation.tissue
+
+## Segmentation utils
+
+::: sopa.segmentation.combine

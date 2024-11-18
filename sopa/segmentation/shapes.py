@@ -6,62 +6,8 @@ import numpy as np
 import shapely
 import shapely.affinity
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
-from tqdm import tqdm
 
 log = logging.getLogger(__name__)
-
-
-def solve_conflicts(
-    cells: list[Polygon] | gpd.GeoDataFrame,
-    threshold: float = 0.5,
-    patch_indices: np.ndarray | None = None,
-    return_indices: bool = False,
-) -> gpd.GeoDataFrame | tuple[gpd.GeoDataFrame, np.ndarray]:
-    """Resolve segmentation conflicts (i.e. overlap) after running segmentation on patches
-
-    Args:
-        cells: List of cell polygons
-        threshold: When two cells are overlapping, we look at the area of intersection over the area of the smallest cell. If this value is higher than the `threshold`, the cells are merged
-        patch_indices: Patch from which each cell belongs.
-        return_indices: If `True`, returns also the cells indices. Merged cells have an index of -1.
-
-    Returns:
-        Array of resolved cells polygons. If `return_indices`, it also returns an array of cell indices.
-    """
-    cells = list(cells.geometry) if isinstance(cells, gpd.GeoDataFrame) else list(cells)
-    n_cells = len(cells)
-    resolved_indices = np.arange(n_cells)
-
-    assert n_cells > 0, "No cells was segmented, cannot continue"
-
-    tree = shapely.STRtree(cells)
-    conflicts = tree.query(cells, predicate="intersects")
-
-    if patch_indices is not None:
-        conflicts = conflicts[:, patch_indices[conflicts[0]] != patch_indices[conflicts[1]]].T
-    else:
-        conflicts = conflicts[:, conflicts[0] != conflicts[1]].T
-
-    for i1, i2 in tqdm(conflicts, desc="Resolving conflicts"):
-        resolved_i1: int = resolved_indices[i1]
-        resolved_i2: int = resolved_indices[i2]
-        cell1, cell2 = cells[resolved_i1], cells[resolved_i2]
-
-        intersection = cell1.intersection(cell2).area
-        if intersection >= threshold * min(cell1.area, cell2.area):
-            cell = _ensure_polygon(cell1.union(cell2))
-            assert not cell.is_empty, "Merged cell is empty"
-
-            resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)
-            cells.append(cell)
-
-    unique_indices = np.unique(resolved_indices)
-    unique_cells = gpd.GeoDataFrame(geometry=cells).iloc[unique_indices]
-
-    if return_indices:
-        return unique_cells, np.where(unique_indices < n_cells, unique_indices, -1)
-
-    return unique_cells
 
 
 def _contours(cell_mask: np.ndarray) -> MultiPolygon:
