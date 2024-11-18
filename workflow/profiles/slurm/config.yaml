@@ -1,11 +1,26 @@
 executor: slurm
+
 default-resources:
-    mem_mb: 8_000
+    mem_mb: 8_000 # default rules memory in MB (you can keep this value)
     gpu: 0
+
 set-resources:
     explorer:
         mem_mb: 256_000
-        slurm_partition: mem_short
+        slurm_partition: mem_short # use the partition/queue name on your cluster
+    image_write:
+        mem_mb: 64_000
+        partition: cpu_long # use the partition/queue name on your cluster
+    to_spatialdata:
+        mem_mb: 128_000
+    patch_segmentation_baysor:
+        mem_mb: 128_000
+    patch_segmentation_comseg:
+        mem_mb: 128_000
+    aggregate:
+        mem_mb: 64_000
+
+# other options (you can keep the default values)
 restart-times: 0
 max-jobs-per-second: 100
 max-status-checks-per-second: 1

@@ -49,7 +49,7 @@ cd workflow   # move to the workflow directory inside the sopa repository
 
     To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
 
-    If you have a Slurm cluster, you can use our default Slurm profile. For that, you'll need `snakemake>=8.0.0`, and you'll also need to install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) via `pip install snakemake-executor-plugin-slurm`. Also, open the file `workflow/profiles/slurm/config.yaml`, and update the `slurm_partition` variable to match your default smallest partition.
+    If you have a Slurm cluster, you can use our default Slurm profile. For that, you'll need `snakemake>=8.0.0`, and you'll also need to install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) via `pip install snakemake-executor-plugin-slurm`.
 
     Then, you can use the profile as below:
 
@@ -60,8 +60,8 @@ cd workflow   # move to the workflow directory inside the sopa repository
         --workflow-profile profiles/slurm  # or any profile you want
     ```
 
-    !!! note
-        You may need to update the `partition` parameters inside the `workflow/Snakefile` file according to the partition names of your cluster. You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
+    !!! warning "Specify the slurm partition names"
+        You may need to update the `slurm_partition` parameters inside the `workflow/profiles/slurm/config.yaml` file according to the partition names of your cluster (else, it will always use the same partition). You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
 
 === "Other"
 
@@ -84,6 +84,9 @@ cd workflow   # move to the workflow directory inside the sopa repository
         --configfile=config/merscope/base.yaml
         --workflow-profile profiles/my_profile  # your new profile
     ```
+
+    !!! warning "RAM per rule"
+        Some Snakemake rules may use more RAM, for instance `explorer`, or `to_spatialdata`. Consider adjusting the RAM and the walltime depending on the Snakemake rules.
 
 
 For more customization, see the [snakemake CLI documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html).
