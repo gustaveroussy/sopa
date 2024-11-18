@@ -94,9 +94,9 @@ def _read_one_segmented_patch(
 
     loom_file = directory / "segmentation_counts.loom"
     if loom_file.exists():
-        adata = anndata.read_loom(directory / "segmentation_counts.loom", obs_names="Name", var_names="Name")
+        adata = anndata.io.read_loom(directory / "segmentation_counts.loom", obs_names="Name", var_names="Name")
     else:
-        adata = anndata.read_h5ad(directory / "segmentation_counts.h5ad")
+        adata = anndata.io.read_h5ad(directory / "segmentation_counts.h5ad")
 
     adata.obs.rename(columns={"area": SopaKeys.ORIGINAL_AREA_OBS}, inplace=True)
 

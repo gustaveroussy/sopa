@@ -89,9 +89,9 @@ def update_obs(
     path = Path(adata_path)
 
     if path.is_dir():
-        adata = anndata.read_zarr(path)
+        adata = anndata.io.read_zarr(path)
     else:
-        adata = anndata.read_h5ad(path)
+        adata = anndata.io.read_h5ad(path)
 
     write_cell_categories(output_path, adata)
 
