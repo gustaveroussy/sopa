@@ -38,7 +38,7 @@ cd workflow   # move to the workflow directory inside the sopa repository
     snakemake \
         --config data_path=/path/to/directory \
         --configfile=config/merscope/base.yaml \
-        --workflow-profile profiles/local \
+        --workflow-profile profile/local \
         --cores 1
     ```
 
@@ -57,11 +57,11 @@ cd workflow   # move to the workflow directory inside the sopa repository
     snakemake \
         --config data_path=/path/to/directory \
         --configfile=config/merscope/base.yaml
-        --workflow-profile profiles/slurm  # or any profile you want
+        --workflow-profile profile/slurm  # or any profile you want
     ```
 
     !!! warning "Specify the slurm partition names"
-        You may need to update the `slurm_partition` parameters inside the `workflow/profiles/slurm/config.yaml` file according to the partition names of your cluster (else, it will always use the same partition). You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
+        You may need to update the `slurm_partition` parameters inside the `workflow/profile/slurm/config.yaml` file according to the partition names of your cluster (else, it will always use the same partition). You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
 
 === "Other"
 
@@ -76,13 +76,13 @@ cd workflow   # move to the workflow directory inside the sopa repository
         --executor my_executor  # your new executor
     ```
 
-    Or, if you created a new config file under `workflow/profiles/my_profile`, you can use it via:
+    Or, if you created a new config file under `workflow/profile/my_profile`, you can use it via:
 
     ```sh
     snakemake \
         --config data_path=/path/to/directory \
         --configfile=config/merscope/base.yaml
-        --workflow-profile profiles/my_profile  # your new profile
+        --workflow-profile profile/my_profile  # your new profile
     ```
 
     !!! warning "RAM per rule"
@@ -107,7 +107,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     snakemake \
         --config sdata_path=tuto.zarr \
         --configfile=config/toy/cellpose.yaml \
-        --workflow-profile profiles/local \
+        --workflow-profile profile/local \
         --cores 1
     ```
 
@@ -121,7 +121,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     snakemake \
         --config sdata_path=tuto.zarr \
         --configfile=config/toy/baysor.yaml \
-        --workflow-profile profiles/local \
+        --workflow-profile profile/local \
         --cores 1
     ```
 
