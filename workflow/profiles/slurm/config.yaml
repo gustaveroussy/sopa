@@ -1,8 +1,11 @@
 executor: slurm
 default-resources:
-    slurm_partition: cpu_short # your default partition
-    mem_mb: 8000
+    mem_mb: 8_000
     gpu: 0
+set-resources:
+    explorer:
+        mem_mb: 256_000
+        slurm_partition: mem_short
 restart-times: 0
 max-jobs-per-second: 100
 max-status-checks-per-second: 1
