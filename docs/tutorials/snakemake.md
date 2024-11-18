@@ -25,8 +25,7 @@ conda activate snakemake    # or any environment that has `snakemake`
 
 1. Go in the `workflow` directory
 ```sh
-cd sopa       # go inside the sopa repository (if not done yet)
-cd workflow   # go inside the workflow directory of sopa
+cd workflow   # move to the workflow directory inside the sopa repository
 ```
 
 1. You can either execute the pipeline locally or on a high-performance-cluster (choose the right option below)
@@ -48,7 +47,11 @@ cd workflow   # go inside the workflow directory of sopa
 
 === "High-performance-cluster (e.g., Slurm cluster)"
 
-    To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). By default, we use [this `slurm` profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/slurm/config.yaml), but you can also update it or create your own profile under `profiles/<profile-name>/config.yaml`.
+    To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
+
+    If you have a Slurm cluster, you can use our default Slurm profile. For that, you'll need `snakemake>=8.0.0`, and you'll also need to install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) via `pip install snakemake-executor-plugin-slurm`. Also, open the file `workflow/profiles/slurm/config.yaml`, and update the `slurm_partition` variable to match your default smallest partition.
+
+    Then, you can use the profile as below:
 
     ```sh
     snakemake \
@@ -59,6 +62,29 @@ cd workflow   # go inside the workflow directory of sopa
 
     !!! note
         You may need to update the `partition` parameters inside the `workflow/Snakefile` file according to the partition names of your cluster. You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
+
+=== "Other"
+
+    If you don't have a Slurm cluster, we recommend reading more about the [Snakemake profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles), and, especially, the different [executor plugins](https://snakemake.github.io/snakemake-plugin-catalog/index.html).
+
+    Once you installed an executor plugin, you can use it via:
+
+    ```sh
+    snakemake \
+        --config data_path=/path/to/directory \
+        --configfile=config/merscope/base.yaml
+        --executor my_executor  # your new executor
+    ```
+
+    Or, if you created a new config file under `workflow/profiles/my_profile`, you can use it via:
+
+    ```sh
+    snakemake \
+        --config data_path=/path/to/directory \
+        --configfile=config/merscope/base.yaml
+        --workflow-profile profiles/my_profile  # your new profile
+    ```
+
 
 For more customization, see the [snakemake CLI documentation](https://snakemake.readthedocs.io/en/stable/executing/cli.html).
 
@@ -83,7 +109,7 @@ Make sure you have installed everything as detailed in this tutorial, and then r
     ```
 
 === "Baysor usage"
-    Make sure you have installed sopa with the Baysor extra, and that you have installed the `baysor` command.
+    Make sure you have installed sopa with the `baysor` extra, and that you have installed the `baysor` command (refer to our getting started).
     ```sh
     conda activate snakemake    # or any environment that has `snakemake`
     cd workflow   # move to the workflow directory inside the sopa repository

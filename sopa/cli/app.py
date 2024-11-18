@@ -37,6 +37,12 @@ app.add_typer(
 
 
 @app.command()
+def read(data_path: str = typer.Argument(), technology: str = typer.Option()):
+    """Deprecated. Use `sopa convert` instead."""
+    raise NameError("`sopa read` is deprecated. Use `sopa convert` instead.")
+
+
+@app.command()
 def convert(
     data_path: str = typer.Argument(
         help="Path to one data sample (most of the time, this corresponds to a directory with images files and eventually a transcript file)"

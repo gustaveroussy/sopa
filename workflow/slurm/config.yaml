@@ -8,7 +8,7 @@ cluster:
     --output=logs/%j" # you can update where the logs will be saved (absolute path, or relative to /.../sopa/workflow)
 default-resources:
   - partition=shortq
-  - mem_mb=32000
+  - mem_mb=8000
   - gpu=0
 restart-times: 0
 max-jobs-per-second: 100

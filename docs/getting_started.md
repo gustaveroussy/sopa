@@ -57,6 +57,7 @@ To use Snakemake, in addition to the above `sopa` environment, you'll need to cl
 
 ```sh
 git clone https://github.com/gustaveroussy/sopa.git
+cd sopa   # move inside the sopa repository
 ```
 
 Also, make sure you have installed `snakemake`. This does **not** necessarily have to be inside the `sopa` environment: for instance, you can create a new environment specific to snakemake:
