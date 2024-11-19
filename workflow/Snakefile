@@ -242,6 +242,7 @@ rule image_write:
         "sopa"
     resources:
         mem_mb=64_000,
+        time="30:00:00",
     params:
         explorer = args["explorer"].as_cli(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize']),
     shell:
