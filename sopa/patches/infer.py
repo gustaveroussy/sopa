@@ -34,7 +34,8 @@ def compute_embeddings(
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
-        The image will be saved into the `SpatialData` object with the key `{model_name}_features` (see the argument below) if `key_added` is not provided.
+        The image will be saved into the `SpatialData` object with the key `"{model_name}_embeddings"` (see the `model_name` argument below), except if `key_added` is provided.
+        The shapes of the patches will be saved with the key `"embeddings_patches"`.
 
     Args:
         sdata: A `SpatialData` object
@@ -80,7 +81,7 @@ def compute_embeddings(
     output_image = DataArray(output_image, dims=("c", "y", "x"))
     output_image = Image2DModel.parse(output_image, transformations=infer.get_patches_transformations(patch_overlap))
 
-    key_added = key_added or f"{infer.model_str}_features"
+    key_added = key_added or f"{infer.model_str}_embeddings"
     add_spatial_element(sdata, key_added, output_image)
 
-    patches.add_shapes(key_added=SopaKeys.PATCHES_INFERENCE_KEY)
+    patches.add_shapes(key_added=SopaKeys.EMBEDDINGS_PATCHES)

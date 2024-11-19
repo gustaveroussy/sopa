@@ -281,5 +281,5 @@ def get_transcripts_patches_dirs(sdata: SpatialData) -> list[Path]:
     Args:
         sdata: A `SpatialData` object containing the transcript patches.
     """
-    assert SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes, "Transcript patches not found in the SpatialData object"
-    return [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+    assert SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes, "Transcript patches not found in the SpatialData object"
+    return [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]

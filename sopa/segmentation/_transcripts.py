@@ -43,7 +43,7 @@ def resolve(
     patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
     geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
 
-    points_key = sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
+    points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     points = sdata[points_key]
     transformations = get_transformation(points, get_all=True).copy()
 
@@ -178,10 +178,10 @@ def _resolve_patches(
 
 def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
     assert (
-        SopaKeys.TRANSCRIPT_PATCHES in sdata.shapes
+        SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes
     ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
 
-    directories = [Path(path) for path in sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+    directories = [Path(path) for path in sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
 
     assert all(directory.exists() for directory in directories), (
         "Some patch directories are missing. "
@@ -191,7 +191,7 @@ def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
     )
 
     if with_prior:
-        assert SopaKeys.PRIOR_SHAPES_KEY in sdata[SopaKeys.TRANSCRIPT_PATCHES].columns, (
+        assert SopaKeys.PRIOR_SHAPES_KEY in sdata[SopaKeys.TRANSCRIPTS_PATCHES].columns, (
             "You need to create the transcript patches with a `prior_shapes_key`. "
             "For that, you can run cellpose first, and then run again `sopa.make_transcript_patches` with `prior_shapes_key='cellpose_boundaries'`"
         )

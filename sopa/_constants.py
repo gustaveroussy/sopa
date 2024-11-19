@@ -7,8 +7,8 @@ class SopaKeys:
 
     # Patches keys
     PATCHES = "image_patches"
-    TRANSCRIPT_PATCHES = "transcripts_patches"
-    PATCHES_INFERENCE_KEY = "inference_patches"
+    TRANSCRIPTS_PATCHES = "transcripts_patches"
+    EMBEDDINGS_PATCHES = "embeddings_patches"
     CACHE_PATH_KEY = "cache_path"
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"

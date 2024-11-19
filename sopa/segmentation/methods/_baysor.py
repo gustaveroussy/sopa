@@ -31,8 +31,8 @@ def baysor(
     use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
 
     prior_shapes_key = None
-    if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES]:
-        prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+    if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]:
+        prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)

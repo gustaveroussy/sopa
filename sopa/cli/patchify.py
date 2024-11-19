@@ -68,7 +68,7 @@ def transcripts(
         write_cells_centroids=write_cells_centroids,
     )
 
-    valid_indices = list(sdata[SopaKeys.TRANSCRIPT_PATCHES].index)
+    valid_indices = list(sdata[SopaKeys.TRANSCRIPTS_PATCHES].index)
     _save_cache(sdata_path, SopaFiles.PATCHES_FILE_TRANSCRIPTS, "\n".join(map(str, valid_indices)))
 
 

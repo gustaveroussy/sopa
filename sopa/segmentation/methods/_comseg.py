@@ -31,14 +31,14 @@ def comseg(
 
     if config is None or not len(config):
         log.info("No config provided, inferring a default ComSeg config.")
-        config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPT_PATCHES])
+        config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES])
     elif isinstance(config, str):
         with open(config, "r") as f:
             config = json.load(f)
 
     assert "gene_column" in config, "'gene_column' not found in config"
 
-    config["prior_name"] = sdata[SopaKeys.TRANSCRIPT_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+    config["prior_name"] = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
     import shutil
 

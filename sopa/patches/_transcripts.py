@@ -107,7 +107,7 @@ class OnDiskTranscriptPatches(Patches2D):
         if self.prior_shapes_key:
             geo_df[SopaKeys.PRIOR_SHAPES_KEY] = self.prior_shapes_key
 
-        key_added = key_added or SopaKeys.TRANSCRIPT_PATCHES
+        key_added = key_added or SopaKeys.TRANSCRIPTS_PATCHES
 
         add_spatial_element(self.sdata, key_added, geo_df)
 
