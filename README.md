@@ -32,14 +32,15 @@ The following illustration describes the main steps of `sopa`:
 # Installation
 
 ### PyPI installation
-Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.9` and `<=3.11`). On a new environment, run the following command:
-```
+Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<=3.12`). On a new environment, run the following command:
+```sh
 pip install sopa
 ```
 
-To install extras (for example, if you want to use `snakemake`/`cellpose`/`baysor`/`tangram`), please run:
-```
-pip install 'sopa[snakemake,cellpose,baysor,tangram]'
+To install extras (for example, if you want to use `cellpose`/`baysor`), please run:
+```sh
+# choose any valid extra among cellpose/baysor/tangram/wsi
+pip install 'sopa[cellpose,baysor]'
 ```
 
 **Important**: even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.

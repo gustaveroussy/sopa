@@ -6,35 +6,45 @@ Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stab
 
 ### Installation
 
-Follow our [installation instructions](../../getting_started/#snakemake-setup) until the end of the "Snakemake setup" section. At the end, you should have one `sopa` environment, one one environment with `snakemake` (it can be the same environment, if desired), and you should also have cloned the `sopa` repository.
+Follow our [installation instructions](../../getting_started/#snakemake-setup) until the end of the "Snakemake setup" section.
+
+At the end, you should have one `sopa` environment, one one environment with `snakemake>=8.0.0` (it can be the same environment, if desired), and you should also have cloned the `sopa` repository.
 
 ### Choose a config file
 
-Our pipeline config is a YAML file that describes all the steps desired for the pipeline. It is flexible; for instance, if you remove the `baysor` arguments from the config, then it will not run baysor. Similarly, if you remove the `"annotation"` section, it will not run annotation.
+Our pipeline config is a YAML file that describes all the steps desired for the pipeline. It is flexible; for instance, if you remove the `baysor` section from the config, then it will not run baysor.
 
 You can choose a config among the existing ones [here](https://github.com/gustaveroussy/sopa_workflow/tree/main/config) or [create your own](./#create-your-own-config).
 
-Keep in mind the relative path of your config since you'll need it later, e.g. `config/merscope/base.yaml`.
+Keep in mind the path of your config (relative to the `workflow` directory) because you'll need it later. For instance, `config/merscope/base.yaml` is a valid relative path. You can also use an absolute path if you prefer.
 
 ## Run the pipeline
 
-1. First, locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-or-sopa).
+### Locate your raw data
 
-2. Then, activate an environment that has the snakemake command:
+First, you need to locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-or-sopa).
+
+Again, remind this path, as we will use it later.
+
+### Activate snakemake
+
+Then, activate an environment that has the snakemake command:
 ```sh
 conda activate snakemake    # or any environment that has `snakemake`
 ```
 
-1. Go in the `workflow` directory
+And move in the `workflow` directory of the `sopa` repository:
 ```sh
 cd workflow   # move to the workflow directory inside the sopa repository
 ```
 
-1. You can either execute the pipeline locally or on a high-performance-cluster (choose the right option below)
+### Run Snakemake
+
+You can either execute the pipeline locally or on a high-performance-cluster (choose the right option below).
 
 === "Local execution (e.g., personal laptop)"
 
-    You can execute the pipeline locally as below (in this example, we use only one core). Make sure to replace `data_path` with the path to your data directory, and `configfile` with the relative path to your config.
+    You can execute the pipeline locally as below (in this example, we use only one core). Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
     ```sh
     snakemake \
@@ -47,29 +57,29 @@ cd workflow   # move to the workflow directory inside the sopa repository
     !!! note "Faster pipeline"
         Even though Sopa can be run locally, we recommend to use it on high-performance-clusters to benefit from all the pipeline capabilities (see the second tab just above).
 
-=== "High-performance-cluster (e.g., Slurm cluster)"
+=== "Slurm cluster"
 
     To benefit from high-performance-cluster, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles).
 
-    If you have a Slurm cluster, you can use our default Slurm profile. For that, you'll need `snakemake>=8.0.0`, and you'll also need to install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) via `pip install snakemake-executor-plugin-slurm`.
+    You can use our default Slurm profile. For that, make sure you have `snakemake>=8.0.0`, and also install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) with `pip install snakemake-executor-plugin-slurm`.
 
-    Then, you can use the profile as below:
+    Then, you can use the Slurm profile as shown below. Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
     ```sh
     snakemake \
         --config data_path=/path/to/directory \
-        --configfile=config/merscope/base.yaml
+        --configfile=config/merscope/base.yaml \
         --workflow-profile profile/slurm  # or any profile you want
     ```
 
     !!! warning "Specify the slurm partition names"
         You may need to update the `slurm_partition` parameters inside the `workflow/profile/slurm/config.yaml` file according to the partition names of your cluster (else, it will always use the same partition). You can also change `mem_mb`, depending on the RAM capabilities of your cluster.
 
-=== "Other"
+=== "Other high-performance-cluster"
 
-    If you don't have a Slurm cluster, we recommend reading more about the [Snakemake profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles), and, especially, the different [executor plugins](https://snakemake.github.io/snakemake-plugin-catalog/index.html).
+    If you have high-performance-cluster that is not a Slurm HPC, then we recommend reading more about the [Snakemake profiles](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles), and, especially, the different [executor plugins](https://snakemake.github.io/snakemake-plugin-catalog/index.html).
 
-    Once you installed an executor plugin, you can use it via:
+    Once you installed an executor plugin, you can use it with the command below. Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
     ```sh
     snakemake \
@@ -78,7 +88,7 @@ cd workflow   # move to the workflow directory inside the sopa repository
         --executor my_executor  # your new executor
     ```
 
-    Or, if you created a new config file under `workflow/profile/my_profile/config.yaml`, you can use it via:
+    Or you can also create a new profile for your HPC: for instance, you can create `workflow/profile/my_profile/config.yaml`, which you can use it witht the following command:
 
     ```sh
     snakemake \
