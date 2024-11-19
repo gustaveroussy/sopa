@@ -78,7 +78,7 @@ cd workflow   # move to the workflow directory inside the sopa repository
         --executor my_executor  # your new executor
     ```
 
-    Or, if you created a new config file under `workflow/profile/my_profile`, you can use it via:
+    Or, if you created a new config file under `workflow/profile/my_profile/config.yaml`, you can use it via:
 
     ```sh
     snakemake \

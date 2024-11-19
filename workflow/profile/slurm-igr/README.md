@@ -16,16 +16,36 @@ The usage on Flamingo is similar to the [public tutorial](https://gustaveroussy.
 snakemake --config data_path=/path/to/data --configfile=config/merscope/base.yaml --workflow-profile profile/slurm-igr
 ```
 
-## Show job logs
+## Show the logs
 
-By default, the logs are located in `<sopa_repository>/workflow/.snakemake/slurm_logs/rule_<RULE_NAME>/<JOB_ID>.log`.
+### Show the job/rule logs
+
+Each job has a specific job-id, which is displayed when running `squeue -u $USER`, for instance `2761280`.
+
+By default, the jobs logs are located in `<sopa_repository>/workflow/.snakemake/slurm_logs/rule_<RULE_NAME>/<JOB_ID>.log`.
 
 If the `sopa` repository in located in your workdir (e.g., `/mnt/beegfs/userdata/q_blampey`), you can add this function to your bashrc file:
 
 ```sh
-function sopa_log() {
+function sopa_job_log() {
     find /mnt/beegfs/userdata/$USER/sopa/workflow/.snakemake/slurm_logs -type f -name "$1.log" -exec cat {} \;
 }
 ```
 
-Then, run `sopa_log 2761280` to show the logs of the jobs with ID `2761280`.
+Then, run `sopa_job_log 2761280` to show the logs of the jobs with ID `2761280`.
+
+### Show the main process logs
+
+If you have a snakemake pipeline that is running, but you don't have access to the logs of the main snakemake process, then add the following
+
+```sh
+function sopa_smk_log() {
+    grep -rl "$1" /mnt/beegfs/userdata/$USER/sopa/workflow/.snakemake/log | xargs cat
+}
+```
+
+Then, you can copy the job name of any job of the pipeline, for instance `fe76fa78`, and run `sopa_smk_log fe76fa78`.
+
+### Show rule names
+
+You can also look at the rule name of your current running jobs, using `squeue -u $USER -o %i,%P,%.10j,%.40k`.
