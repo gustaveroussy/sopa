@@ -57,10 +57,11 @@ def aggregate(
         min_transcripts: Min number of transcripts to keep a cell.
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
     """
-    bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
+    if points_key is None:
+        bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
     points_key = None
-    if aggregate_genes or (aggregate_genes is None and bins_key is None and sdata.points):
+    if (bins_key is None) and (aggregate_genes or (aggregate_genes is None and sdata.points)):
         points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
         )
