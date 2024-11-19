@@ -172,6 +172,12 @@ segmentation:
 
 If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/xenium/baysor_multimodal.yaml) data. If using the API/CLI, consider using the `prior_shapes_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `prior_shapes_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `prior_shapes_key="cell_id"` and `unassigned_value="UNASSIGNED"`. You can also decide to run Cellpose via Sopa, and then use it as a prior: in that case, simply pass `prior_shapes_key="cellpose_boundaries"` after running cellpose.
 
+## How to optimize the segmentation parameters?
+
+Selecting the right parameters for Cellpose/Baysor can significantly improve the output data quality. To choose these parameters, we recommand subsetting the data (`spatialdata.bounding_box_query`), saving the subset (`sdata.write("subset.zarr")`), running different segmentation on the subset (use `key_added` to save the segmentation with a specific name), and compare the results.
+
+Using the API will be more convenient to experiment.
+
 ## How to provide dictionnaries to CLI arguments?
 
 Some CLI arguments are optionnal dictionnaries. For instance, `sopa convert` has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
