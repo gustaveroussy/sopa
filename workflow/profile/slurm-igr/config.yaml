@@ -8,7 +8,7 @@ set-resources:
     explorer:
         mem_mb: 256_000
     image_write:
-        mem_mb: 64_000
+        mem_mb: 128_000
     to_spatialdata:
         mem_mb: 128_000
     patch_segmentation_baysor:
