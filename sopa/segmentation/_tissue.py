@@ -133,20 +133,20 @@ class TissueSegmentation:
             )
 
     def get_polygons(self, mode: str) -> gpd.GeoDataFrame:
-        image_2d = getattr(self, mode)()
+        thumbnail_2d = getattr(self, mode)()
 
-        return self.otsu(image_2d)
+        return self.otsu(thumbnail_2d)
 
     def staining(self) -> np.ndarray:
         if self.channel is None:
-            image_2d = np.array(self.image.max(dim="c").transpose("y", "x"))
+            thumbnail_2d = np.array(self.image.max(dim="c").transpose("y", "x"))
         else:
-            image_2d = np.array(self.image.sel(c=self.channel).transpose("y", "x"))
+            thumbnail_2d = np.array(self.image.sel(c=self.channel).transpose("y", "x"))
 
-        threshold = np.quantile(image_2d, self.clip_parameters[0]) / self.clip_parameters[1]
-        image_2d = ((image_2d / threshold).clip(0, 1) * 255).astype(np.uint8)
+        threshold = np.quantile(thumbnail_2d, self.clip_parameters[0]) / self.clip_parameters[1]
+        thumbnail_2d = ((thumbnail_2d / threshold).clip(0, 1) * 255).astype(np.uint8)
 
-        return image_2d
+        return thumbnail_2d
 
     def saturation(self) -> np.ndarray:
         assert self.image.sizes["c"] == 3, "The image should be in RGB color space"
@@ -164,7 +164,7 @@ class TissueSegmentation:
         """Peform tissue segmentation using Otsu's method.
 
         Args:
-            thumbnail_2d: A 2D image (YX dimensions)
+            thumbnail_2d: A low-resolution 2D image (YX dimensions) of the tissue.
 
         Returns:
             A GeoDataFrame containing the segmented polygon(s).
