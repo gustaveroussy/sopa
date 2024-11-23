@@ -34,6 +34,7 @@ def aggregate(
     expand_radius_ratio: float | None = None,
     min_transcripts: int = 0,
     min_intensity_ratio: float = 0.1,
+    key_added: str | None = "table",
 ):
     """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
 
@@ -56,6 +57,7 @@ def aggregate(
         expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. By default, the value will be inferred depending on whether we aggregate bins or not.
         min_transcripts: Min number of transcripts to keep a cell.
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
+        key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
     """
     if points_key is None:
         bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
@@ -68,6 +70,10 @@ def aggregate(
 
     aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key, points_key=points_key)
 
+    if key_added is None:
+        key_added = f"{aggr.shapes_key}_{SopaKeys.TABLE}"
+        log.info(f"key_added is None, saving the table as '{key_added}' by default.")
+
     aggr.compute_table(
         aggregate_genes=aggregate_genes,
         aggregate_channels=aggregate_channels,
@@ -75,6 +81,7 @@ def aggregate(
         min_transcripts=min_transcripts,
         min_intensity_ratio=min_intensity_ratio,
         gene_column=gene_column,
+        key_added=key_added,
     )
 
 
@@ -109,10 +116,11 @@ class Aggregator:
         else:
             self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
 
+    def check_existing_table(self, key_added: str):
         self.table = None
-        if SopaKeys.TABLE in self.sdata.tables and self.sdata[SopaKeys.TABLE].n_obs == len(self.geo_df):
+        if key_added in self.sdata.tables and self.sdata[key_added].n_obs == len(self.geo_df):
             log.info("Using existing table for aggregation")
-            self.table = self.sdata[SopaKeys.TABLE]
+            self.table = self.sdata[key_added]
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
@@ -136,7 +144,10 @@ class Aggregator:
         min_intensity_ratio: float = 0,
         average_intensities: bool | None = None,  # deprecated argument
         points_key: str | None = None,  # deprecated argument
+        key_added: str = SopaKeys.TABLE,
     ):
+        self.check_existing_table(key_added)
+
         aggregate_genes, aggregate_channels = self._legacy_arguments(
             points_key, gene_column, aggregate_genes, aggregate_channels, average_intensities
         )
@@ -200,7 +211,7 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: aggregate_channels,
         }
 
-        self.add_standardized_table()
+        self.add_standardized_table(key_added)
 
     def _legacy_arguments(
         self,
@@ -232,7 +243,7 @@ class Aggregator:
 
         return aggregate_genes, aggregate_channels
 
-    def add_standardized_table(self):
+    def add_standardized_table(self, key_added: str):
         self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
         self.geo_df.index = list(self.table.obs_names)
 
@@ -254,4 +265,4 @@ class Aggregator:
             instance_key=SopaKeys.INSTANCE_KEY,
         )
 
-        add_spatial_element(self.sdata, SopaKeys.TABLE, self.table)
+        add_spatial_element(self.sdata, key_added, self.table)

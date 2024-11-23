@@ -18,7 +18,7 @@ class SopaKeys:
 
     # Other SpatialData keys
     TABLE = "table"
-    OLD_TABLE = "old_table"
+    OLD_TABLE_PREFFIX = "old_"
 
     # Table keys
     UNS_KEY = "sopa_attrs"

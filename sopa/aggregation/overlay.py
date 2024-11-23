@@ -21,6 +21,7 @@ def overlay_segmentation(
     gene_column: str | None = None,
     area_ratio_threshold: float = 0.25,
     image_key: str | None = None,
+    table_key: str = SopaKeys.TABLE,
 ):
     """Overlay a segmentation on top of an existing segmentation
 
@@ -30,14 +31,17 @@ def overlay_segmentation(
         gene_column: Key of the points dataframe containing the genes names
         area_ratio_threshold: Threshold between 0 and 1. For each original cell overlapping with a new cell, we compute the overlap-area/cell-area, if above the threshold the cell is removed.
         image_key: Optional key of the original image
+        table_key: Key of the table to be overlayed
     """
     aggregate_genes, aggregate_channels = False, False
 
-    assert SopaKeys.TABLE in sdata.tables, "No table found in the SpatialData object"
+    assert table_key in sdata.tables, f"No table with name '{table_key}' found in the SpatialData object"
 
-    assert SopaKeys.UNS_KEY in sdata.tables["table"].uns, "It seems the table was not aggregated using `sopa.aggregate`"
+    old_table: AnnData = sdata.tables[table_key]
 
-    sopa_attrs = sdata.tables["table"].uns[SopaKeys.UNS_KEY]
+    assert SopaKeys.UNS_KEY in old_table.uns, "It seems the table was not aggregated using `sopa.aggregate`"
+
+    sopa_attrs = old_table.uns[SopaKeys.UNS_KEY]
 
     aggregate_genes = sopa_attrs[SopaKeys.UNS_HAS_TRANSCRIPTS]
     aggregate_channels = sopa_attrs[SopaKeys.UNS_HAS_INTENSITIES]
@@ -47,10 +51,8 @@ def overlay_segmentation(
         gene_column = get_feature_key(points, raise_error=True)
 
     aggregator = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key)
-
-    old_table: AnnData = aggregator.sdata.tables[SopaKeys.TABLE]
-    aggregator.sdata.tables[SopaKeys.OLD_TABLE] = old_table
-    del aggregator.sdata.tables[SopaKeys.TABLE]
+    aggregator.sdata.tables[f"{SopaKeys.OLD_TABLE_PREFFIX}{table_key}"] = old_table
+    del aggregator.sdata.tables[table_key]
 
     old_shapes_key = old_table.uns["spatialdata_attrs"]["region"]
     instance_key = old_table.uns["spatialdata_attrs"]["instance_key"]
@@ -75,6 +77,7 @@ def overlay_segmentation(
         aggregate_channels=aggregate_channels,
         aggregate_genes=aggregate_genes,
         gene_column=gene_column,
+        key_added=table_key,
     )
     aggregator.table.obs[SopaKeys.CELL_OVERLAY_KEY] = True
 
@@ -90,7 +93,7 @@ def overlay_segmentation(
     aggregator.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
     aggregator.geo_df.attrs = old_geo_df.attrs
 
-    aggregator.add_standardized_table()
+    aggregator.add_standardized_table(table_key)
 
 
 def _overlap_area_ratio(row) -> float:
