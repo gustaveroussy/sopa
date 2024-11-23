@@ -25,6 +25,11 @@ def baysor(
 ):
     """Run [Baysor](https://kharchenkolab.github.io/Baysor/dev/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
 
+    !!! warning "Baysor installation"
+        Make sure to install [Baysor](https://kharchenkolab.github.io/Baysor/dev/installation/), and either have the executable at `~/.julia/bin/baysor`, or create an alias called
+        `baysor` that points to the binary executable. Also, you'll need to install
+        sopa with the baysor extra: `pip install 'sopa[baysor]'` (basically, this installs `toml` and `loompy`).
+
     !!! info "Inferred config"
         If the `config` argument is not provided, the configuration is inferred.
         If [sopa.make_transcript_patches][] was run with a `prior_shapes_key`, the configuration is inferred based on the prior segmentation.

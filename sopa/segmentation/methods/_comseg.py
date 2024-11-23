@@ -29,6 +29,9 @@ def comseg(
 ):
     """Run [ComSeg](https://comseg.readthedocs.io/en/latest/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
 
+    !!! warning "ComSeg installation"
+        Make sure to install ComSeg (`pip install comseg`) for this method to work.
+
     !!! info "Transcript patches"
         To use ComSeg, make sure to run [sopa.make_transcript_patches][] with a `prior_shapes_key` and `write_cells_centroids=True`.
 

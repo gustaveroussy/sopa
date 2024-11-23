@@ -28,6 +28,9 @@ def cellpose(
 ):
     """Run [Cellpose](https://cellpose.readthedocs.io/en/latest/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
 
+    !!! warning "Cellpose installation"
+        Make sure to install the cellpose extra (`pip install 'sopa[cellpose]'`) for this method to work.
+
     !!! info "Diameter parameter"
         The `diameter` parameter is used to estimate the expected cell diameter (in pixels). This is a crucial parameter for the segmentation.
 
