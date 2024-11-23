@@ -174,9 +174,7 @@ If you have MERSCOPE or Xenium data, you probably already have a cell segmentati
 
 ## How to optimize the segmentation parameters?
 
-Selecting the right parameters for Cellpose/Baysor can significantly improve the output data quality. To choose these parameters, we recommend subsetting the data (`spatialdata.bounding_box_query`), saving the subset (`sdata.write("subset.zarr")`), running different segmentation on the subset (use `key_added` to save the segmentation with a specific name), and compare the results.
-
-Using the API will be more convenient to experiment.
+Selecting the right parameters for Cellpose/Baysor can significantly improve the output data quality. To choose these parameters, we recommend subsetting the data (`spatialdata.bounding_box_query`), saving the subset (`sdata.write("subset.zarr")`), running different segmentation on the subset (use `key_added` to save the segmentation with a specific name), and compare the results. Refer to [this tutorial](../tutorials/compare_segmentations) for an example.
 
 ## How to provide dictionnaries to CLI arguments?
 

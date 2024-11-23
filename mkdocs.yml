@@ -19,6 +19,7 @@ nav:
     - Snakemake pipeline: tutorials/snakemake.md
     - Xenium Explorer usage: tutorials/xenium_explorer/explorer.ipynb
     - Landmark-based alignment: tutorials/align.md
+    - Comparing segmentations: tutorials/compare_segmentations.ipynb
     - Spatial operations: tutorials/spatial.ipynb
     - Visium HD usage: tutorials/visium_hd.ipynb
     - H&E usage: tutorials/he.ipynb

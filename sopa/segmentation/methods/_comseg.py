@@ -27,6 +27,20 @@ def comseg(
     key_added: str = SopaKeys.COMSEG_BOUNDARIES,
     patch_index: int | None = None,
 ):
+    """Run [ComSeg](https://comseg.readthedocs.io/en/latest/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
+
+    !!! info "Transcript patches"
+        To use ComSeg, make sure to run [sopa.make_transcript_patches][] with a `prior_shapes_key` and `write_cells_centroids=True`.
+
+    Args:
+        sdata: A `SpatialData` object.
+        config: Optional configuration dictionary or path to a JSON file containing a valid ComSeg config. By default, a configuration is inferred based on the cell area of the prior segmentation.
+        min_area: Minimal area (in microns^2) of a cell to be considered.
+        delete_cache: Whether to delete the cache after segmentation.
+        recover: If `True`, recover the cache from a failed segmentation, and continue.
+        key_added: Name of the shapes element to be added to `sdata`.
+        patch_index: Index of the patch to segment (we do not recommend to set this argument). By default, segment all patches.
+    """
     _check_transcript_patches(sdata, with_prior=True)
 
     if config is None or not len(config):

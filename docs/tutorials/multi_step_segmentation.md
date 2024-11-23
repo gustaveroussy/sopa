@@ -20,6 +20,8 @@ sopa.segmentation.cellpose(sdata, ["DAPI", "CK"], diameter=35, key_added="tumor_
 sopa.segmentation.combine(sdata, ["nuclei", "tumor_cells"], key_added="combined_cells")
 ```
 
+Then, you can continue as usual, i.e. with `sopa.aggregate` and so on.
+
 ## Using the CLI
 
 !!! warning

@@ -23,7 +23,6 @@ def custom_staining_based(
     key_added: str = SopaKeys.CUSTOM_BOUNDARIES,
 ):
     """Run a generic staining-based segmentation model, and add a GeoDataFrame containing the cell boundaries.
-    The segmentation is run on each patch, for memory efficiency.
 
     Args:
         sdata: A `SpatialData` object.

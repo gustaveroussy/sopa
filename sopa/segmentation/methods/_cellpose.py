@@ -26,8 +26,10 @@ def cellpose(
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
 ):
-    """Run Cellpose segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
-    The segmentation is run on each patch, for memory efficiency.
+    """Run [Cellpose](https://cellpose.readthedocs.io/en/latest/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
+
+    !!! info "Diameter parameter"
+        The `diameter` parameter is used to estimate the expected cell diameter (in pixels). This is a crucial parameter for the segmentation.
 
     Args:
         sdata: A `SpatialData` object

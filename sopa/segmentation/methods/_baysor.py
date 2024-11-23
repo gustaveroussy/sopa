@@ -23,6 +23,24 @@ def baysor(
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
     patch_index: int | None = None,
 ):
+    """Run [Baysor](https://kharchenkolab.github.io/Baysor/dev/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
+
+    !!! info "Inferred config"
+        If the `config` argument is not provided, the configuration is inferred.
+        If [sopa.make_transcript_patches][] was run with a `prior_shapes_key`, the configuration is inferred based on the prior segmentation.
+        Otherwise, the configuration is inferred based on the `scale` parameter (you'll need to provide it).
+
+    Args:
+        sdata: A `SpatialData` object.
+        config: Optional configuration dictionary or path to a TOML file containing a valid Baysor config. By default, a configuration is inferred based on the cell area of the prior segmentation, or based on the `scale` parameter.
+        min_area: Minimal area (in microns^2) of a cell to be considered.
+        delete_cache: Whether to delete the cache after segmentation.
+        recover: If `True`, recover the cache from a failed segmentation, and continue.
+        force: If `True`, ignore failed patches and continue with the successful ones.
+        scale: The typical cell radius in microns. If `config` is not provided, the configuration is inferred based on this parameter.
+        key_added: Name of the shapes element to be added to `sdata.shapes`.
+        patch_index: Index of the patch to segment (we do not recommend to set this argument). By default, segment all patches.
+    """
     _check_transcript_patches(sdata)
 
     import shutil
