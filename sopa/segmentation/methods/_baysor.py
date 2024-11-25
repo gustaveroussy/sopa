@@ -60,30 +60,28 @@ def baysor(
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)
 
-    patches_dirs = get_transcripts_patches_dirs(sdata)
-    for patch_dir in patches_dirs:
-        _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, config)
-
-    gene_column = _get_gene_column_argument(config)
-
     baysor_patch = BaysorPatch(
         baysor_executable_path,
         use_polygons_format_argument,
+        config,
         force=force,
         recover=recover,
         prior_shapes_key=prior_shapes_key,
     )
 
     if patch_index is not None:
-        baysor_patch(patches_dirs[patch_index])
+        patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
+        baysor_patch(patch_dir)
         return
 
+    patches_dirs = get_transcripts_patches_dirs(sdata)
     settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in patches_dirs])
 
     if force:
         patches_dirs = [patch_dir for patch_dir in patches_dirs if (patch_dir / "segmentation_counts.loom").exists()]
         assert patches_dirs, "Baysor failed on all patches"
 
+    gene_column = _get_gene_column_argument(config)
     resolve(sdata, patches_dirs, gene_column, min_area=min_area, key_added=key_added)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
@@ -98,12 +96,14 @@ class BaysorPatch:
         self,
         baysor_executable_path: str,
         use_polygons_format_argument: bool,
+        config: dict | str,
         force: bool = False,
         recover: bool = False,
         prior_shapes_key: str | None = None,
     ):
         self.baysor_executable_path = baysor_executable_path
         self.use_polygons_format_argument = use_polygons_format_argument
+        self.config = config
         self.force = force
         self.recover = recover
         self.prior_shapes_key = prior_shapes_key
@@ -111,6 +111,8 @@ class BaysorPatch:
     def __call__(self, patch_dir: Path):
         if self.recover and (patch_dir / "segmentation_counts.loom").exists():
             return
+
+        _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, self.config)
 
         import subprocess
 
@@ -135,7 +137,7 @@ class BaysorPatch:
         )
 
         if result.returncode != 0:
-            message = f"Baysor error on patch {patch_dir} with command `{baysor_command}`"
+            message = f"Baysor error on patch {patch_dir.resolve()} with command `{baysor_command}`"
             if self.force:
                 log.warning(message)
                 return

@@ -57,16 +57,14 @@ def comseg(
 
     config["prior_name"] = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
-    import shutil
+    if patch_index is not None:
+        patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
+        comseg_patch(patch_dir, config, recover)
+        return
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
 
-    if patch_index is not None:
-        comseg_patch(patches_dirs[patch_index], config, recover)
-        return
-
     _functions = [partial(comseg_patch, patch_dir, config, recover) for patch_dir in patches_dirs]
-
     settings._run_with_backend(_functions)
 
     resolve(sdata, patches_dirs, config["gene_column"], min_area=min_area, key_added=key_added)
@@ -74,6 +72,8 @@ def comseg(
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 
     if delete_cache:
+        import shutil
+
         for patch_dir in patches_dirs:
             shutil.rmtree(patch_dir)
 

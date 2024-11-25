@@ -215,7 +215,7 @@ def comseg(
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.methods._comseg import comseg
+    from sopa.segmentation.methods import comseg
 
     sdata = read_zarr_standardized(sdata_path)
 
@@ -237,14 +237,15 @@ def baysor(
         help="Index of the patch on which the segmentation method should be run. By default, run on all patches.",
     ),
     min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
+    scale: float = typer.Option(default=None, help="Baysor scale parameter (for config inference)"),
 ):
     """Perform Baysor segmentation. This can be done on all patches directly, or on one individual patch."""
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.methods._baysor import baysor
+    from sopa.segmentation.methods import baysor
 
     sdata = read_zarr_standardized(sdata_path)
 
-    baysor(sdata, config=config, min_area=min_area, patch_index=patch_index)
+    baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
 
     _log_whether_to_resolve(patch_index)
 
