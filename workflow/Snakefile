@@ -72,6 +72,7 @@ checkpoint patchify_transcripts:
         paths.smk_cellpose_boundaries if args.cellpose else [],
         paths.smk_tissue_segmentation if args.tissue_segmentation else [],
     output:
+        directory(paths.smk_transcripts_temp_dir),
         patches_file = paths.smk_patches_file_transcripts,
     params:
         patchify_transcripts = args.patchify_transcripts(),
@@ -100,6 +101,7 @@ rule patch_segmentation_cellpose:
 rule patch_segmentation_baysor:
     input:
         paths.smk_patches_file_transcripts,
+        paths.smk_transcripts_temp_dir / "{index}",
     output:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.loom",
     conda:
@@ -120,6 +122,7 @@ rule patch_segmentation_baysor:
 rule patch_segmentation_comseg:
     input:
         paths.smk_patches_file_transcripts,
+        paths.smk_transcripts_temp_dir / "{index}",
     output:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.h5ad",
@@ -167,7 +170,6 @@ rule resolve_baysor:
         sopa resolve baysor {paths.sdata_path} {params.resolve}
 
         rm -r {paths.smk_transcripts_temp_dir}    # cleanup large baysor files
-        rm {paths.smk_patches_file_transcripts}
         """
 
 rule resolve_comseg:
@@ -185,7 +187,6 @@ rule resolve_comseg:
         sopa resolve comseg {paths.sdata_path} {params.resolve}
 
         rm -r {paths.smk_transcripts_temp_dir}    # cleanup large comseg files
-        rm {paths.smk_patches_file_transcripts}
         """
 
 def get_smk_boundaries(args):
