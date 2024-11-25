@@ -1,0 +1,114 @@
+from src import WorkflowPaths, Args, validate_config
+
+config = validate_config(config) # validate the Snakemake config
+paths = WorkflowPaths(config) # object handling the paths to the files that will be created
+args = Args(paths, config) # object handling the arguments passed to the workflow
+
+localrules: all
+
+rule all:
+    input:
+        paths.annotations if args.annotate else [],
+        paths.explorer_experiment,
+        paths.explorer_image,
+        paths.report,
+    shell:
+        """
+        echo 🎉 Successfully run sopa
+        echo → SpatialData output directory: {paths.sdata_path}
+        echo → Explorer output directory: {paths.explorer_directory}
+        echo → Open the result in the explorer: 'open {paths.explorer_experiment}'
+        """
+
+def get_smk_boundaries(args):
+    if args.baysor:
+        return paths.smk_baysor_boundaries
+    elif args.comseg:
+        return paths.smk_comseg_boundaries
+    elif args.cellpose:
+        return paths.smk_cellpose_boundaries
+    else:
+        raise ValueError("No segmentation method selected")
+
+rule aggregate:
+    input:
+        get_smk_boundaries(args),
+    output:
+        touch(paths.smk_aggregation),
+    conda:
+        "sopa"
+    resources:
+        mem_mb=64_000,
+    params:
+        aggregate = args["aggregate"].as_cli(),
+    shell:
+        """
+        sopa aggregate {paths.sdata_path} {params.aggregate}
+        """
+
+rule annotate:
+    input:
+        paths.smk_aggregation,
+    output:
+        directory(paths.annotations),
+    conda:
+        "sopa"
+    resources:
+        partition="gpgpuq" if args['annotation']['method'] == "tangram" else "shortq",
+        gpu="a100:1" if args['annotation']['method'] == "tangram" else 0,
+    params:
+        method_name = args['annotation']['method'],
+        annotation = args['annotation']['args'].as_cli(),
+    shell:
+        """
+        sopa annotate {params.method_name} {paths.sdata_path} {params.annotation}
+        """
+
+rule image_write:
+    input:
+        paths.sdata_zgroup,
+    output:
+        paths.explorer_image,
+    conda:
+        "sopa"
+    resources:
+        mem_mb=64_000,
+        runtime=1500, # in minutes
+    params:
+        explorer = args["explorer"].as_cli(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize']),
+    shell:
+        """
+        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.explorer} --mode "+i" --no-save-h5ad
+        """
+
+rule report:
+    input:
+        get_smk_boundaries(args),
+        paths.smk_aggregation,
+        paths.annotations if args.annotate else [],
+    output:
+        paths.report,
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa report {paths.sdata_path} {paths.report}
+        """
+
+rule explorer:
+    input:
+        get_smk_boundaries(args),
+        paths.smk_aggregation,
+        paths.annotations if args.annotate else [],
+    output:
+        paths.explorer_experiment,
+    conda:
+        "sopa"
+    resources:
+        mem_mb=256_000,
+    params:
+        explorer = args["explorer"].as_cli(),
+    shell:
+        """
+        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.explorer} --mode "-i"
+        """
