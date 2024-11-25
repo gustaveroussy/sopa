@@ -29,7 +29,7 @@ segmentation:
         confidence_nn_id: 6
 
       segmentation:
-        scale: 3 # typical cell radius
+        scale: 3 # typical cell radius in microns
         scale_std: "25%" # cell radius standard deviation
         prior_segmentation_confidence: 0
         estimate_scale_from_centers: false
