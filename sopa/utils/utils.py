@@ -66,32 +66,34 @@ def _try_get_boundaries(sdata: SpatialData, key: str, return_key: bool) -> gpd.G
         return (key, sdata[key]) if return_key else sdata[key]
 
 
-def to_intrinsic(sdata: SpatialData, element: SpatialElement | str, element_cs: SpatialElement | str) -> SpatialElement:
+def to_intrinsic(
+    sdata: SpatialData, element: SpatialElement | str, target_element: SpatialElement | str
+) -> SpatialElement:
     """Transforms a `SpatialElement` into the intrinsic coordinate system of another `SpatialElement`
 
     Args:
         sdata: A SpatialData object
-        element: `SpatialElement` to transform, or its key
-        element_cs: `SpatialElement` of the target coordinate system, or its key
+        element: `SpatialElement` to transform, or its key. We recommend it to choose a vector element (for instance, points or shapes).
+        target_element: `SpatialElement` of the target coordinate system, or its key.
 
     Returns:
-        The `SpatialElement` after transformation in the target coordinate system
+        The `element` with coordinates transformed to the intrinsic coordinate system of `target_element`.
     """
     element = sdata[element] if isinstance(element, str) else element
-    element_cs = sdata[element_cs] if isinstance(element_cs, str) else element_cs
+    target_element = sdata[target_element] if isinstance(target_element, str) else target_element
 
     for cs, transformation in get_transformation(element, get_all=True).items():
         if isinstance(transformation, Identity):
-            target_transformations = get_transformation(element_cs, get_all=True)
+            target_transformations = get_transformation(target_element, get_all=True)
             if isinstance(target_transformations.get(cs), Identity):
                 return element  # no transformation needed
             break
 
     try:
-        transformation = get_transformation_between_coordinate_systems(sdata, element, element_cs)
+        transformation = get_transformation_between_coordinate_systems(sdata, element, target_element)
     except:
         transformations1 = get_transformation(element, get_all=True)
-        transformations2 = get_transformation(element_cs, get_all=True)
+        transformations2 = get_transformation(target_element, get_all=True)
 
         common_keys = list(set(transformations1.keys()) & set(transformations2.keys()))
 
@@ -286,6 +288,11 @@ def get_transcripts_patches_dirs(sdata: SpatialData) -> list[Path]:
 
 
 def delete_transcripts_patches_dirs(sdata: SpatialData):
+    """Delete the cache directories containing the transcript patches (for instance, for Baysor or ComSeg)
+
+    Args:
+        sdata: A `SpatialData` object.
+    """
     import shutil
 
     for patch_dir in get_transcripts_patches_dirs(sdata):

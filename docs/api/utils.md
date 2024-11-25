@@ -1,22 +1,32 @@
-::: sopa.utils.delete_cache
+## Cache operations
 
 ::: sopa.utils.get_cache_dir
 
-::: sopa.utils.to_intrinsic
+::: sopa.utils.delete_cache
 
-::: sopa.utils.get_intensities
+::: sopa.utils.delete_transcripts_patches_dirs
 
-::: sopa.utils.get_boundaries
+## Accessing the elements
 
 ::: sopa.utils.get_spatial_element
 
 ::: sopa.utils.get_spatial_image
 
+::: sopa.utils.get_boundaries
+
+::: sopa.utils.get_intensities
+
 ::: sopa.utils.get_channel_names
+
+## Transformations and scaling
+
+::: sopa.utils.to_intrinsic
 
 ::: sopa.utils.scale_dtype
 
 ::: sopa.utils.resize_numpy
+
+## Cell-type annotation
 
 ::: sopa.utils.tangram_annotate
 
