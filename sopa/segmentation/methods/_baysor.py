@@ -6,7 +6,11 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import SopaAttrs, SopaFiles, SopaKeys
-from ...utils import get_feature_key, get_transcripts_patches_dirs
+from ...utils import (
+    delete_transcripts_patches_dirs,
+    get_feature_key,
+    get_transcripts_patches_dirs,
+)
 from .._transcripts import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
@@ -48,26 +52,16 @@ def baysor(
     """
     _check_transcript_patches(sdata)
 
-    import shutil
-
-    baysor_executable_path = _get_baysor_executable_path()
-    use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
-
     prior_shapes_key = None
     if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]:
         prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
+    baysor_command = _get_baysor_command(prior_shapes_key)
+
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)
 
-    baysor_patch = BaysorPatch(
-        baysor_executable_path,
-        use_polygons_format_argument,
-        config,
-        force=force,
-        recover=recover,
-        prior_shapes_key=prior_shapes_key,
-    )
+    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover)
 
     if patch_index is not None:
         patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
@@ -87,26 +81,15 @@ def baysor(
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 
     if delete_cache:
-        for patch_dir in get_transcripts_patches_dirs(sdata):
-            shutil.rmtree(patch_dir)
+        delete_transcripts_patches_dirs(sdata)
 
 
 class BaysorPatch:
-    def __init__(
-        self,
-        baysor_executable_path: str,
-        use_polygons_format_argument: bool,
-        config: dict | str,
-        force: bool = False,
-        recover: bool = False,
-        prior_shapes_key: str | None = None,
-    ):
-        self.baysor_executable_path = baysor_executable_path
-        self.use_polygons_format_argument = use_polygons_format_argument
+    def __init__(self, baysor_command: str, config: dict | str, force: bool = False, recover: bool = False):
+        self.baysor_command = baysor_command
         self.config = config
         self.force = force
         self.recover = recover
-        self.prior_shapes_key = prior_shapes_key
 
     def __call__(self, patch_dir: Path):
         if self.recover and (patch_dir / "segmentation_counts.loom").exists():
@@ -116,20 +99,10 @@ class BaysorPatch:
 
         import subprocess
 
-        polygon_substring = (
-            "--polygon-format GeometryCollection" if self.use_polygons_format_argument else "--save-polygons GeoJSON"
-        )
-
-        prior_suffix = f":{self.prior_shapes_key}" if self.prior_shapes_key else ""
-
-        baysor_command = (
-            f"{self.baysor_executable_path} run {polygon_substring} -c config.toml transcripts.csv {prior_suffix}"
-        )
-
         result = subprocess.run(
             f"""
             cd {patch_dir}
-            {baysor_command}
+            {self.baysor_command}
             """,
             shell=True,
             stdout=subprocess.PIPE,
@@ -137,11 +110,24 @@ class BaysorPatch:
         )
 
         if result.returncode != 0:
-            message = f"Baysor error on patch {patch_dir.resolve()} with command `{baysor_command}`"
+            message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"
             if self.force:
                 log.warning(message)
                 return
-            raise RuntimeError(f"{message}:\n{result.stdout.decode()}")
+            raise RuntimeError(f"{message}:\n{result.stderr.decode()}")
+
+
+def _get_baysor_command(prior_shapes_key: str | None) -> str:
+    baysor_executable_path = _get_baysor_executable_path()
+
+    use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
+    polygon_format = (
+        "--polygon-format GeometryCollection" if use_polygons_format_argument else "--save-polygons GeoJSON"
+    )  # depends on the version of baysor
+
+    prior_suffix = f" :{prior_shapes_key}" if prior_shapes_key else ""  # use a prior segmentation
+
+    return f"{baysor_executable_path} run {polygon_format} -c config.toml transcripts.csv" + prior_suffix
 
 
 def _use_polygons_format_argument(baysor_executable_path: str) -> bool:

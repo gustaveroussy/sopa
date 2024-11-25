@@ -12,7 +12,11 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import SopaAttrs, SopaKeys
-from ...utils import get_transcripts_patches_dirs, to_intrinsic
+from ...utils import (
+    delete_transcripts_patches_dirs,
+    get_transcripts_patches_dirs,
+    to_intrinsic,
+)
 from .._transcripts import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
@@ -72,10 +76,7 @@ def comseg(
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 
     if delete_cache:
-        import shutil
-
-        for patch_dir in patches_dirs:
-            shutil.rmtree(patch_dir)
+        delete_transcripts_patches_dirs(sdata)
 
 
 def comseg_patch(patch_dir: Path, config: dict, recover: bool = False):

@@ -283,3 +283,10 @@ def get_transcripts_patches_dirs(sdata: SpatialData) -> list[Path]:
     """
     assert SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes, "Transcript patches not found in the SpatialData object"
     return [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+
+
+def delete_transcripts_patches_dirs(sdata: SpatialData):
+    import shutil
+
+    for patch_dir in get_transcripts_patches_dirs(sdata):
+        shutil.rmtree(patch_dir)

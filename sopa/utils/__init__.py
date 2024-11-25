@@ -9,6 +9,7 @@ from .utils import (
     add_spatial_element,
     get_transcripts_patches_dirs,
     get_feature_key,
+    delete_transcripts_patches_dirs,
 )
 from .annotation import preprocess_fluo, higher_z_score, tangram_annotate
 from .image import (
