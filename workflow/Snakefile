@@ -101,7 +101,6 @@ rule patch_segmentation_cellpose:
 rule patch_segmentation_baysor:
     input:
         paths.smk_patches_file_transcripts,
-        paths.smk_transcripts_temp_dir / "{index}",
     output:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.loom",
     conda:
@@ -123,7 +122,6 @@ rule patch_segmentation_baysor:
 rule patch_segmentation_comseg:
     input:
         paths.smk_patches_file_transcripts,
-        paths.smk_transcripts_temp_dir / "{index}",
     output:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.h5ad",
