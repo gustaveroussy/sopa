@@ -6,6 +6,7 @@ import geopandas as gpd
 import numpy as np
 from datatree import DataTree
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
+from shapely.ops import unary_union
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, SpatialElement
 from spatialdata.transformations import get_transformation
@@ -112,10 +113,8 @@ class Patches2D:
                 isinstance(geom, Polygon) for geom in geo_df.geometry
             ), f"All sdata['{SopaKeys.ROI}'] geometries must be polygons"
 
-            if len(geo_df) == 1:
-                self.roi: Polygon = geo_df.geometry[0]
-            else:
-                self.roi = MultiPolygon(list(geo_df.geometry))
+            self.roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
+            assert isinstance(self.roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(self.roi)}"
 
         self._init_patches()
 
