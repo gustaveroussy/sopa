@@ -108,6 +108,7 @@ rule patch_segmentation_baysor:
         "sopa"
     resources:
         mem_mb=128_000,
+        runtime=150, # in minutes
     params:
         baysor_config = args["segmentation"]["baysor"].as_cli(keys=["config"]),
     shell:
