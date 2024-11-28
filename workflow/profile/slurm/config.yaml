@@ -7,14 +7,15 @@ default-resources:
 set-resources:
     explorer:
         mem_mb: 256_000
-        slurm_partition: cpu_med # use a valid partition/queue name on your cluster
+        slurm_partition: cpu_med # use a valid partition/queue name on your cluster (with enough RAM)
     image_write:
         mem_mb: 64_000
-        slurm_partition: cpu_long # use a valid partition/queue name on your cluster
+        slurm_partition: cpu_long # use a valid partition/queue name on your cluster (with a large walltime)
     to_spatialdata:
         mem_mb: 128_000
     patch_segmentation_baysor:
         mem_mb: 128_000
+        slurm_partition: cpu_med # use a valid partition/queue name on your cluster (with at least 2h30 walltime)
     patch_segmentation_comseg:
         mem_mb: 128_000
     aggregate:
