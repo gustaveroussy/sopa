@@ -144,7 +144,7 @@ class Patches2D:
                 return
             patch = max(geoms, key=lambda polygon: polygon.area)
 
-        if not isinstance(patch, Polygon) and not isinstance(patch, MultiPolygon):
+        if not isinstance(patch, (Polygon, MultiPolygon)):
             return
 
         self.polygons.append(patch)
