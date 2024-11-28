@@ -15,7 +15,7 @@ set-resources:
         mem_mb: 128_000
     patch_segmentation_baysor:
         mem_mb: 128_000
-        slurm_partition: cpu_med # use a valid partition/queue name on your cluster (with at least 2h30 walltime)
+        slurm_partition: cpu_med # use a valid partition/queue name on your cluster (with at least 2h of walltime)
     patch_segmentation_comseg:
         mem_mb: 128_000
     aggregate:
