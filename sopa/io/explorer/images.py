@@ -6,12 +6,11 @@ from math import ceil
 
 import numpy as np
 import tifffile as tf
-from datatree import DataTree
 from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
 from spatialdata.transformations import Affine, set_transformation
 from tqdm import tqdm
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from ..._sdata import get_intrinsic_cs, get_spatial_image
 from ...utils.image import resize_numpy, scale_dtype

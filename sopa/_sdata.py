@@ -7,11 +7,10 @@ from typing import Any, Iterator
 import geopandas as gpd
 import pandas as pd
 from anndata import AnnData
-from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import Identity, get_transformation, set_transformation
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from ._constants import SopaAttrs, SopaFiles, SopaKeys
 

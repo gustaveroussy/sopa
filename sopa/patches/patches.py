@@ -10,12 +10,11 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from dask.diagnostics import ProgressBar
-from datatree import DataTree
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from .._constants import EPS, ROI, SopaFiles, SopaKeys
 from .._sdata import (

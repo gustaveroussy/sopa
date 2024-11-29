@@ -12,11 +12,10 @@ except ImportError:
 
 import numpy as np
 import tqdm
-from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Scale
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from .._constants import SopaKeys
 from .._sdata import get_intrinsic_cs, get_spatial_image
