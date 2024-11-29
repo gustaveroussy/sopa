@@ -1,8 +1,9 @@
-## [1.x.x] - 2024-xx-xx
+## [1.1.6] - 2024-11-29
 
 ### Fix
 - Support `baysor>=0.7.0` (#125, @lguerard).
   - NB: For Snakemake, please remove the `new_component_*` arguments from the Baysor config.
+- Use `DataTree` from `xarray` - use new spatialdata version (#159)
 
 ## [1.1.5] - 2024-09-17
 
