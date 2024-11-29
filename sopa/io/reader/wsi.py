@@ -4,11 +4,10 @@ from pathlib import Path
 from typing import Any
 
 import xarray
-from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 
 def wsi(

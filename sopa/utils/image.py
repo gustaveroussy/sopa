@@ -3,9 +3,8 @@ from __future__ import annotations
 import dask.array as da
 import dask_image.ndinterp
 import numpy as np
-from datatree import DataTree
 from spatialdata import SpatialData
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 
 def resize(xarr: DataArray, scale_factor: float) -> da.Array:

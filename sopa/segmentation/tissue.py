@@ -6,11 +6,10 @@ import warnings
 import geopandas as gpd
 import numpy as np
 import spatialdata
-from datatree import DataTree
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from .._constants import ROI, SopaAttrs
 from .._sdata import get_intrinsic_cs, get_spatial_element
