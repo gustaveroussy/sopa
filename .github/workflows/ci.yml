@@ -58,7 +58,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --extras "dev cellpose" --no-interaction && pip install snakemake
+        run: poetry install --extras "dev cellpose wsi" --no-interaction && pip install snakemake
 
       #----------------------------------------------
       #              perform tasks
