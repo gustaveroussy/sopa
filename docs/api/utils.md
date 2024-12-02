@@ -18,6 +18,8 @@
 
 ::: sopa.utils.get_channel_names
 
+::: sopa.utils.set_sopa_attrs
+
 ## Transformations and scaling
 
 ::: sopa.utils.to_intrinsic

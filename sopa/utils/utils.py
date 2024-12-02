@@ -230,6 +230,50 @@ def add_spatial_element(
                 log.error(f"Error while saving {element_name} on disk: {e}")
 
 
+def set_sopa_attrs(
+    sdata: SpatialData,
+    cell_segmentation_key: str | None = None,
+    tissue_segmentation_key: str | None = None,
+    transcripts_key: str | None = None,
+    boundaries_key: str | None = None,
+    bins_table_key: str | None = None,
+):
+    """Stores in the `SpatialData` object the keys of the main elements used in Sopa.
+    This allows Sopa to retreive with elements should be used for each operation.
+
+    !!! info
+        The attrs are already stored in `sdata.attrs` when reading data with `sopa.io`.
+        Use this function only if you already stored on disk a SpatialData object without the attrs (with `sopa<2.0.0`).
+
+    Args:
+        sdata: A `SpatialData` object.
+        cell_segmentation_key: Name of the image to be used for cell segmentation (highest resolution image).
+        tissue_segmentation_key: Name of the image to be used for tissue segmentation (medium/low resolution image).
+        transcripts_key: Name of the points containing the transcripts.
+        boundaries_key: Name of the shapes containing the cell boundaries.
+        bins_table_key: Name of the table containing the bins (e.g., for Visium HD data).
+    """
+    if cell_segmentation_key is not None:
+        assert cell_segmentation_key in sdata.images
+        sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = cell_segmentation_key
+
+    if tissue_segmentation_key is not None:
+        assert tissue_segmentation_key in sdata.images
+        sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = tissue_segmentation_key
+
+    if transcripts_key is not None:
+        assert transcripts_key in sdata.points
+        sdata.attrs[SopaAttrs.TRANSCRIPTS] = transcripts_key
+
+    if boundaries_key is not None:
+        assert boundaries_key in sdata.shapes
+        sdata.attrs[SopaAttrs.BOUNDARIES] = boundaries_key
+
+    if bins_table_key is not None:
+        assert bins_table_key in sdata.tables
+        sdata.attrs[SopaAttrs.BINS_TABLE] = bins_table_key
+
+
 HOME_CACHE_DIR = Path.home() / SopaFiles.SOPA_CACHE_DIR
 
 
