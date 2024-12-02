@@ -65,15 +65,15 @@ def test_patches_inference_clustering():
 
     sopa.patches.compute_embeddings(sdata, "dummy", 50)
 
-    assert sdata["dummy_features"].shape == (3, 2, 2)
+    assert sdata["dummy_embeddings"].shape == (3, 2, 2)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 25, level=-1)
 
-    assert sdata["dummy_features"].shape == (3, 1, 1)
+    assert sdata["dummy_embeddings"].shape == (3, 1, 1)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 13, patch_overlap=3, level=-1)
 
-    assert sdata["dummy_features"].shape == (3, 3, 3)
+    assert sdata["dummy_embeddings"].shape == (3, 3, 3)
 
     sdata["he_image"].attrs["backend"] = "test"
     sdata["he_image"].attrs["metadata"] = {
@@ -82,14 +82,14 @@ def test_patches_inference_clustering():
     }
 
     sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10)
-    assert sdata["dummy_features"].shape == (3, 3, 3)
+    assert sdata["dummy_embeddings"].shape == (3, 3, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 11, magnification=10)
-    assert sdata["dummy_features"].shape == (3, 2, 2)
+    assert sdata["dummy_embeddings"].shape == (3, 2, 2)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 50, magnification=100)
-    assert sdata["dummy_features"].shape == (3, 2, 2)
+    assert sdata["dummy_embeddings"].shape == (3, 2, 2)
 
-    sopa.patches.cluster_embeddings(sdata, "dummy_features")
+    sopa.patches.cluster_embeddings(sdata, "dummy_embeddings")
 
-    assert "cluster" in sdata["inference_patches"].columns
+    assert "cluster" in sdata["embeddings_patches"].columns
