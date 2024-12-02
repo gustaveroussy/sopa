@@ -1,4 +1,4 @@
-When installing `sopa` as written in our [getting-started guidelines](../getting_started), a new command named `sopa` becomes available.
+When installing `sopa` as written in our [getting-started guidelines](../../getting_started), a new command named `sopa` becomes available.
 
 !!! warning
     The [Snakemake pipeline](https://gustaveroussy.github.io/sopa/tutorials/snakemake/) is recommended to get started with Sopa. Using the CLI is advised if you want more flexibility, but you'll need to parallelize the segmentation yourself, as detailed below.
@@ -241,7 +241,7 @@ If desired, cell-type annotation can be run. Currently, we support Tangram for t
     sopa annotate fluorescence tuto.zarr --marker-cell-dict '{"CK": "Tumoral cell", "CD3": "T cell", "CD20": "B cell"}'
     ```
     !!! note "More complex annotation"
-        If you have a large number of channels, it may be preferable to run clustering on your data, for instance, using [`Leiden clustering](https://scanpy.readthedocs.io/en/stable/generated/scanpy.tl.leiden.html). Then, you can annotate each cluster manually by plotting a heatmap of all channels expressions per cluster.
+        If you have a large number of channels, it may be preferable to run clustering on your data, for instance, using [Leiden clustering](https://scanpy.readthedocs.io/en/stable/generated/scanpy.tl.leiden.html). Then, you can annotate each cluster manually by plotting a heatmap of all channels expressions per cluster.
 === "Tangram annotation"
     [Tangram](https://github.com/broadinstitute/Tangram) is a transcript-based annotation that uses an annotated single-cell reference. Let's suppose your reference `AnnData` object is stored in a file called `adata_reference.h5ad` (preferably, keep raw counts), and the cell type is in `adata.obs["cell_type"]`. Then, you can annotate your spatial data as follows:
     ```sh

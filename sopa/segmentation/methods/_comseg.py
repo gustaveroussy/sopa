@@ -51,7 +51,6 @@ def comseg(
     _check_transcript_patches(sdata, with_prior=True)
 
     if config is None or not len(config):
-        log.info("No config provided, inferring a default ComSeg config.")
         config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES])
     elif isinstance(config, str):
         with open(config, "r") as f:
@@ -144,7 +143,7 @@ def _get_default_config(sdata: SpatialData, patches: gpd.GeoDataFrame) -> dict:
     cells_area = to_intrinsic(sdata, prior_shapes_key, points_key).area
     mean_cell_diameter = 2 * np.sqrt(cells_area / np.pi).mean()
 
-    return {
+    config = {
         "dict_scale": {"x": 1, "y": 1, "z": 1},  # spot coordinates already in µm
         "mean_cell_diameter": mean_cell_diameter,
         "max_cell_radius": mean_cell_diameter * 1.75,
@@ -154,6 +153,10 @@ def _get_default_config(sdata: SpatialData, patches: gpd.GeoDataFrame) -> dict:
         "min_rna_per_cell": 20,  # minimal number of RNAs for a cell to be taken into account
         "gene_column": "genes",
     }
+
+    log.info(f"The Comseg config was not provided, using the following by default:\n{config}")
+
+    return config
 
 
 class HiddenPrints:
