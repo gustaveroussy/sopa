@@ -1,8 +1,7 @@
 import dask_image.ndinterp
 import numpy as np
-from datatree import DataTree
 from spatialdata import SpatialData
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from . import get_spatial_image
 

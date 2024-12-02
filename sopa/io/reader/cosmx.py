@@ -11,7 +11,6 @@ import xarray as xr
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
-from spatialdata_io._constants._constants import CosmxKeys
 
 from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
@@ -104,6 +103,8 @@ def cosmx(
         transcripts_data = transcripts_data[transcripts_data["fov"] == fov]
         coordinates = {"x": "x_local_px", "y": "y_local_px"}
         points_name = f"{fov}_points"
+
+    from spatialdata_io._constants._constants import CosmxKeys
 
     transcripts = PointsModel.parse(
         transcripts_data,

@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 
 from spatialdata import SpatialData
-from spatialdata_io.readers.visium_hd import visium_hd as visium_hd_spatialdata_io
 
 from ..._constants import SopaAttrs
 from ...utils import ensure_string_channel_names
@@ -28,6 +27,8 @@ def visium_hd(
     Returns:
         A `SpatialData` object representing the Xenium experiment
     """
+    from spatialdata_io.readers.visium_hd import visium_hd as visium_hd_spatialdata_io
+
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
     del image_models_kwargs["scale_factors"]  # already set in the spatialdata_io reader

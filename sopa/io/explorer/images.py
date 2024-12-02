@@ -4,7 +4,6 @@ from math import ceil
 
 import numpy as np
 import tifffile as tf
-from datatree import DataTree
 from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
 from spatialdata.transformations import (
@@ -14,7 +13,7 @@ from spatialdata.transformations import (
     set_transformation,
 )
 from tqdm import tqdm
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from ...utils import add_spatial_element, get_spatial_image, resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, FileNames, image_metadata

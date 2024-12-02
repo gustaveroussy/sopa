@@ -3,9 +3,8 @@ from typing import Callable
 
 import numpy as np
 import torch
-from datatree import DataTree
 from spatialdata.transformations import Scale, Sequence, get_transformation
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from . import models
 

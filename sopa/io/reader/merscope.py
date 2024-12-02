@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Literal
 
 from spatialdata import SpatialData
-from spatialdata_io.readers.merscope import merscope as merscope_spatialdata_io
 
 from ..._constants import SopaAttrs
 from .utils import _default_image_kwargs
@@ -40,6 +39,8 @@ def merscope(
     Returns:
         A `SpatialData` object representing the MERSCOPE experiment
     """
+    from spatialdata_io.readers.merscope import merscope as merscope_spatialdata_io
+
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
     sdata = merscope_spatialdata_io(

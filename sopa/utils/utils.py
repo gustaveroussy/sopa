@@ -5,7 +5,6 @@ import dask.dataframe as dd
 import geopandas as gpd
 import pandas as pd
 import spatialdata
-from datatree import DataTree
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import (
@@ -14,7 +13,7 @@ from spatialdata.transformations import (
     get_transformation,
     get_transformation_between_coordinate_systems,
 )
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from .. import settings
 from .._constants import ATTRS_KEY, SopaAttrs, SopaFiles, SopaKeys

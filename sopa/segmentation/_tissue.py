@@ -3,12 +3,11 @@ from enum import Enum
 
 import geopandas as gpd
 import numpy as np
-from datatree import DataTree
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from .._constants import SopaAttrs, SopaKeys
 from ..utils import add_spatial_element, get_spatial_element

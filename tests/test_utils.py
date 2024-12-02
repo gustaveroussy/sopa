@@ -1,8 +1,7 @@
 import pandas as pd
 import pytest
-from datatree import DataTree
 from spatialdata.models import PointsModel
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 import sopa
 from sopa._constants import ATTRS_KEY, SopaAttrs

@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 
 from spatialdata import SpatialData
-from spatialdata_io.readers.xenium import xenium as xenium_spatialdata_io
 
 from ..._constants import ATTRS_KEY, SopaAttrs
 from ...utils import ensure_string_channel_names
@@ -35,6 +34,8 @@ def xenium(
     Returns:
         A `SpatialData` object representing the Xenium experiment
     """
+    from spatialdata_io.readers.xenium import xenium as xenium_spatialdata_io
+
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
     sdata: SpatialData = xenium_spatialdata_io(
