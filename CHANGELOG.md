@@ -28,6 +28,14 @@ This version introduces many new API features but also some breaking changes; ch
 - CLI: during segmentation, use `--cache-dir-name` instead of `--patch-dir`
 - Drop support for Python 3.9
 
+
+## [1.1.6] - 2024-11-29
+
+### Fix
+- Support `baysor>=0.7.0` (#125, @lguerard).
+  - NB: For Snakemake, please remove the `new_component_*` arguments from the Baysor config.
+- Use `DataTree` from `xarray` - use new spatialdata version (#159)
+
 ## [1.1.5] - 2024-09-17
 
 ### Fix
