@@ -9,11 +9,11 @@ from xarray import DataArray
 from sopa._constants import SopaKeys
 
 
-def leiden_clustering(X: np.ndarray, **kwargs):
+def leiden_clustering(X: np.ndarray, flavor: str = "igraph", **kwargs):
     adata = anndata.AnnData(X=X)
     sc.pp.pca(adata)
     sc.pp.neighbors(adata)
-    sc.tl.leiden(adata, **kwargs)
+    sc.tl.leiden(adata, flavor=flavor, **kwargs)
     return adata.obs["leiden"].values
 
 

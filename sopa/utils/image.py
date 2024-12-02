@@ -86,6 +86,4 @@ def ensure_string_channel_names(sdata: SpatialData, default_single_channel: str 
         if len(c_coords) == 1 and default_single_channel is not None:
             c_coords = [default_single_channel]
 
-        new_image = image.assign_coords(c=c_coords)
-        del sdata.images[key]
-        sdata.images[key] = new_image
+        sdata.set_channel_names(key, c_coords)
