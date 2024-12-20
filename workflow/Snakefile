@@ -240,7 +240,6 @@ rule annotate:
     conda:
         "sopa"
     resources:
-resources:
         # adapted by RB, recommended by sopa author
         slurm_partition = "gpu" if args['annotation']['method'] == "tangram" else "shortq",
         slurm_extra = "--qos=gpu --gres=gpu:h100pcie" if args['annotation']['method'] == "tangram" else "--qos=shortq",
