@@ -56,7 +56,7 @@ def tangram_annotate(
     sdata: SpatialData,
     adata_sc: AnnData,
     cell_type_key: str,
-    reference_preprocessing: str = None,
+    reference_preprocessing: str | None = None,
     bag_size: int = 10_000,
     max_obs_reference: int = 10_000,
     **kwargs,

@@ -20,13 +20,13 @@ def test_rasterize():
     assert (mask == expected).all()
 
 
-def test_raster_and_geometrize():
+def test_raster_and_vectorize():
     mask = shapes.rasterize(cell, image_shape)
 
-    new_cell = shapes.geometrize(mask, 0, 0).geometry[0]
+    new_cell = shapes.vectorize(mask, 0, 0).geometry[0]
     new_mask = shapes.rasterize(new_cell, image_shape)
 
-    assert (mask == new_mask).all(), "Applying geometrize and then rasterize shouldn't change the mask"
+    assert (mask == new_mask).all(), "Applying vectorize and then rasterize shouldn't change the mask"
 
 
 def test_rasterize_cropped():

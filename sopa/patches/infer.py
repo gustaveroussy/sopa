@@ -28,7 +28,7 @@ def compute_embeddings(
     magnification: int | None = None,
     image_key: str | None = None,
     batch_size: int = 32,
-    device: str = None,
+    device: str | None = None,
     key_added: str | None = None,
 ) -> None:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.

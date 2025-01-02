@@ -5,7 +5,7 @@ from shapely.affinity import translate
 from shapely.geometry import Polygon
 
 from sopa.segmentation import solve_conflicts
-from sopa.segmentation.shapes import geometrize
+from sopa.segmentation.shapes import vectorize
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def mask() -> np.ndarray:
 
 @pytest.fixture
 def cells(mask: np.ndarray) -> gpd.GeoDataFrame:
-    return geometrize(mask)
+    return vectorize(mask)
 
 
 def test_keep_all_cells(mask: np.ndarray, cells: gpd.GeoDataFrame):

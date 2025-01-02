@@ -102,7 +102,7 @@ class StainingSegmentation:
         if patch.area < box(*bounds).area:
             image = image * shapes.rasterize(patch, image.shape[1:], bounds)
 
-        cells = shapes.geometrize(self.method(image))
+        cells = shapes.vectorize(self.method(image))
         cells.geometry = cells.translate(*bounds[:2])
 
         return cells[cells.area >= self.min_area] if self.min_area > 0 else cells

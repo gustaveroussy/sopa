@@ -88,7 +88,7 @@ def _add_coo(
     X_partitions: list[coo_matrix],
     geo_df: gpd.GeoDataFrame,
     partition: pd.DataFrame,
-    gene_column: list[str],
+    gene_column: str,
     gene_names: list[str],
 ) -> None:
     points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))

@@ -32,7 +32,7 @@ class Inference:
         if self.device is not None:
             self.model.to(device)
 
-    def _instantiate_model(self, model: str) -> tuple[str, torch.nn.Module]:
+    def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:
         if isinstance(model, str):
             assert (
                 model in models.available_models

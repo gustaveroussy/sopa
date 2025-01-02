@@ -100,7 +100,9 @@ def combine(
     """
     assert len(elements) > 1, "At least two elements must be provided to combine"
 
-    elements = [element if isinstance(element, gpd.GeoDataFrame) else sdata.shapes[element] for element in elements]
+    elements: list[gpd.GeoDataFrame] = [
+        element if isinstance(element, gpd.GeoDataFrame) else sdata.shapes[element] for element in elements
+    ]
 
     reference = elements[0]
     intrinsic_elements = [reference] + [to_intrinsic(sdata, element, reference) for element in elements[1:]]

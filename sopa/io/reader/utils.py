@@ -103,7 +103,7 @@ def _image_int_dtype(image: xr.DataArray, clip_quantile: bool | None = None, qua
     return _clip_intensity_values(image, clip_quantile=clip_quantile, quantile=quantile)
 
 
-def _ome_channels_names(path: str):
+def _ome_channels_names(path: Path | str):
     import xml.etree.ElementTree as ET
 
     tiff = tf.TiffFile(path)

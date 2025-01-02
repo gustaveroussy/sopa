@@ -57,7 +57,7 @@ class Settings:
 
         _logger.setLevel(logging.ERROR)
 
-        n_cpus = os.cpu_count()
+        n_cpus: int = os.cpu_count()
         dask_client_kwargs = self.dask_client_kwargs.copy()
         if "n_workers" not in dask_client_kwargs and len(functions) < n_cpus:
             dask_client_kwargs["n_workers"] = len(functions)

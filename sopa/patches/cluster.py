@@ -42,7 +42,7 @@ def cluster_embeddings(
         method_kwargs: kwargs provided to the method callable
     """
     if isinstance(element, str):
-        element = sdata.images[element]
+        element: DataArray = sdata.images[element]
 
     if isinstance(method, str):
         assert method in METHODS_DICT, f"Method {method} is not available. Use one of: {', '.join(METHODS_DICT.keys())}"

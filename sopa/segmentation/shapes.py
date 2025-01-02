@@ -72,7 +72,7 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
     """Smoothen a cell polygon
 
     Args:
-        cell_id: ID of the cell to geometrize
+        cell_id: ID of the cell to vectorize
         smooth_radius: radius used to smooth the cell polygon
         tolerance: tolerance used to simplify the cell polygon
 
@@ -93,7 +93,12 @@ def _default_tolerance(mean_radius: float) -> float:
     return 2
 
 
-def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1) -> gpd.GeoDataFrame:
+def geometrize(*args, **kwargs):
+    """Alias for `vectorize`"""
+    return vectorize(*args, **kwargs)
+
+
+def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1) -> gpd.GeoDataFrame:
     """Convert a cells mask to multiple `shapely` geometries. Inspired from https://github.com/Vizgen/vizgen-postprocessing
 
     Args:
@@ -107,7 +112,7 @@ def geometrize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_r
 
     if max_cells == 0:
         log.warning("No cell was returned by the segmentation")
-        return []
+        return gpd.GeoDataFrame(geometry=[])
 
     cells = gpd.GeoDataFrame(
         geometry=[_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
@@ -129,7 +134,7 @@ def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
 
 
-def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tuple[int, int] = [0, 0]) -> np.ndarray:
+def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tuple[int, int] = (0, 0)) -> np.ndarray:
     """Transform a cell polygon into a numpy array with value 1 where the polygon touches a pixel, else 0.
 
     Args:

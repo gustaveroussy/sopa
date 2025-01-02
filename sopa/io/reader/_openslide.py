@@ -16,7 +16,7 @@ from zarr.storage import (
 from zarr.util import json_dumps, normalize_shape, normalize_storage_path
 
 
-def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str = None):
+def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str | None = None):
     path = normalize_storage_path(path)
     path = _path_to_prefix(path)
     store[path + attrs_key] = json_dumps(attrs)

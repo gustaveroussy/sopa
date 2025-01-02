@@ -19,7 +19,7 @@ AVAILABLE_MODES = ["average", "min", "max"]
 
 
 def average_channels(
-    sdata: SpatialData, image_key: str = None, shapes_key: str = None, expand_radius_ratio: float = 0
+    sdata: SpatialData, image_key: str = None, shapes_key: str | None = None, expand_radius_ratio: float = 0
 ) -> np.ndarray:
     log.warning("average_channels is deprecated, use `aggregate_channels` instead")
     return aggregate_channels(sdata, image_key, shapes_key, expand_radius_ratio, mode="average")
@@ -27,8 +27,8 @@ def average_channels(
 
 def aggregate_channels(
     sdata: SpatialData,
-    image_key: str = None,
-    shapes_key: str = None,
+    image_key: str | None = None,
+    shapes_key: str | None = None,
     expand_radius_ratio: float = 0,
     mode: str = "average",
 ) -> np.ndarray:

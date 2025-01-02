@@ -113,7 +113,7 @@ class TissueSegmentation:
         blur_kernel_size: int,
         open_kernel_size: int,
         close_kernel_size: int,
-        drop_threshold: int,
+        drop_threshold: float,
         channel: str | None,
         clip_parameters: tuple[float, float],
     ):
@@ -201,7 +201,7 @@ def hsv_otsu(
     blur_k: int = 5,
     open_k: int = 5,
     close_k: int = 5,
-    drop_threshold: int = 0.01,
+    drop_threshold: float = 0.01,
 ):
     log.warning(
         "The hsv_otsu function is deprecated and will be removed in 2025. Use `sopa.segmentation.tissue` instead."
