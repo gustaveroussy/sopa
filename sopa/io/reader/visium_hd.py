@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 
 def visium_hd(
     path: str | Path,
-    bin_size: int | list[int] | None = 2,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
     **kwargs: int,
@@ -35,7 +34,6 @@ def visium_hd(
 
     sdata: SpatialData = visium_hd_spatialdata_io(
         path,
-        bin_size=bin_size,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
         **kwargs,
