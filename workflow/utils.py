@@ -204,8 +204,7 @@ class Args:
             return self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
         elif "comseg" in self.config["segmentation"]:
             return self.config["segmentation"]["comseg"]["config"]["gene_column"]
-        else:
-            raise ValueError("No gene column found in the config")
+        return ""  # gene column not needed
 
     ### ComSeg related methods
 

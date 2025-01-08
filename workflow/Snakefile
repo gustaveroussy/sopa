@@ -11,12 +11,16 @@ rule all:
         paths.explorer_experiment,
         paths.explorer_image,
         paths.report,
+    params:
+        explorer_directory = paths.explorer_directory,
+        explorer_experiment = paths.explorer_experiment,
+        sdata_path = paths.sdata_path,
     shell:
         """
         echo 🎉 Successfully run sopa
-        echo → SpatialData output directory: {paths.sdata_path}
-        echo → Explorer output directory: {paths.explorer_directory}
-        echo → Open the result in the explorer: 'open {paths.explorer_experiment}'
+        echo → SpatialData output directory: {params.sdata_path}
+        echo → Explorer output directory: {params.explorer_directory}
+        echo → Open the result in the explorer: 'open {params.explorer_experiment}'
         """
 
 rule to_spatialdata:
@@ -29,10 +33,12 @@ rule to_spatialdata:
     resources:
         mem_mb=128_000,
     params:
-        args_reader = str(args['read'])
+        args_reader = str(args['read']),
+        data_path = paths.data_path,
+        sdata_path = paths.sdata_path,
     shell:
         """
-        sopa read {paths.data_path} --sdata-path {paths.sdata_path} {params.args_reader}
+        sopa read {params.data_path} --sdata-path {params.sdata_path} {params.args_reader}
         """
 
 checkpoint patchify_cellpose:
@@ -43,11 +49,12 @@ checkpoint patchify_cellpose:
         patches = touch(paths.smk_patches),
     params:
         args_patchify = str(args["patchify"].where(contains="pixel")),
+        sdata_path = paths.sdata_path,
     conda:
         "sopa"
     shell:
         """
-        sopa patchify image {paths.sdata_path} {params.args_patchify}
+        sopa patchify image {params.sdata_path} {params.args_patchify}
         """
 
 checkpoint patchify_baysor:
@@ -61,11 +68,12 @@ checkpoint patchify_baysor:
         args_patchify = str(args["patchify"].where(contains="micron")),
         args_baysor = args.dump_baysor_patchify() if args.baysor else "",
         arg_prior = "--use-prior" if args.cellpose else "",
+        sdata_path = paths.sdata_path,
     conda:
         "sopa"
     shell:
         """
-        sopa patchify baysor {paths.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
+        sopa patchify baysor {params.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
         """
 
 checkpoint patchify_comseg:
@@ -86,11 +94,12 @@ checkpoint patchify_comseg:
         )),
         args_comseg = args.dump_comseg_patchify() if args.comseg else "",
         arg_prior = "--use-prior" if args.cellpose else "",
+        sdata_path = paths.sdata_path,
     conda:
         "sopa"
     shell:
         """
-        sopa patchify comseg {paths.sdata_path} {params.args_patchify} {params.args_comseg} {params.arg_prior}
+        sopa patchify comseg {params.sdata_path} {params.args_patchify} {params.args_comseg} {params.arg_prior}
         """
 
 rule patch_segmentation_cellpose:
@@ -103,9 +112,11 @@ rule patch_segmentation_cellpose:
         "sopa"
     params:
         args_cellpose = str(args["segmentation"]["cellpose"]),
+        sdata_path = paths.sdata_path,
+        smk_cellpose_temp_dir = paths.smk_cellpose_temp_dir,
     shell:
         """
-        sopa segmentation cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
+        sopa segmentation cellpose {params.sdata_path} --patch-dir {params.smk_cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
         """
 
 rule patch_segmentation_baysor:
@@ -141,13 +152,16 @@ rule patch_segmentation_comseg:
     output:
         paths.smk_comseg_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_comseg_temp_dir / "{index}" / "segmentation_counts.h5ad",
+    params:
+        sdata_path = paths.sdata_path,
+        smk_comseg_temp_dir = paths.smk_comseg_temp_dir,
     conda:
         "sopa"
     resources:
         mem_mb=128_000,
     shell:
         """
-        sopa segmentation comseg {paths.sdata_path} --patch-dir {paths.smk_comseg_temp_dir} --patch-index {wildcards.index}
+        sopa segmentation comseg {params.sdata_path} --patch-dir {params.smk_comseg_temp_dir} --patch-index {wildcards.index}
         """
 
 def get_input_resolve(name, dirs=False):
@@ -161,11 +175,14 @@ rule resolve_cellpose:
         get_input_resolve("cellpose"),
     output:
         touch(paths.smk_cellpose_boundaries),
+    params:
+        sdata_path = paths.sdata_path,
+        smk_cellpose_temp_dir = paths.smk_cellpose_temp_dir,
     conda:
         "sopa"
     shell:
         """
-        sopa resolve cellpose {paths.sdata_path} --patch-dir {paths.smk_cellpose_temp_dir}
+        sopa resolve cellpose {params.sdata_path} --patch-dir {params.smk_cellpose_temp_dir}
         """
 
 rule resolve_baysor:
@@ -180,11 +197,14 @@ rule resolve_baysor:
     params:
         args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
         args_min_area = args.min_area("baysor"),
+        sdata_path = paths.sdata_path,
+        smk_baysor_temp_dir = paths.smk_baysor_temp_dir,
+        gene_column = args.gene_column,
     shell:
         """
-        sopa resolve baysor {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
+        sopa resolve baysor {params.sdata_path} --gene-column {params.gene_column} {params.args_min_area} {params.args_patches_dirs}
 
-        rm -r {paths.smk_baysor_temp_dir}    # cleanup large baysor files
+        rm -r {params.smk_baysor_temp_dir}    # cleanup large baysor files
         """
 
 rule resolve_comseg:
@@ -199,11 +219,14 @@ rule resolve_comseg:
     params:
         args_patches_dirs=lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
         args_min_area=args.min_area("comseg"),
+        sdata_path = paths.sdata_path,
+        smk_comseg_temp_dir = paths.smk_comseg_temp_dir,
+        gene_column = args.gene_column,
     shell:
         """
-        sopa resolve comseg {paths.sdata_path} --gene-column {args.gene_column} {params.args_min_area} {params.args_patches_dirs}
+        sopa resolve comseg {params.sdata_path} --gene-column {params.gene_column} {params.args_min_area} {params.args_patches_dirs}
 
-        rm -r {paths.smk_comseg_temp_dir}    # cleanup large comseg files
+        rm -r {params.smk_comseg_temp_dir}    # cleanup large comseg files
         """
 
 def get_smk_boundaries(args):
@@ -225,11 +248,12 @@ rule aggregate:
         "sopa"
     params:
         args_aggregate = str(args["aggregate"] or ""),
+        sdata_path = paths.sdata_path,
     resources:
         mem_mb=64_000,
     shell:
         """
-        sopa aggregate {paths.sdata_path} {params.args_aggregate}
+        sopa aggregate {params.sdata_path} {params.args_aggregate}
         """
 
 rule annotate:
@@ -240,14 +264,18 @@ rule annotate:
     conda:
         "sopa"
     resources:
-        partition="gpgpuq" if args['annotation']['method'] == "tangram" else "shortq",
-        gpu="a100:1" if args['annotation']['method'] == "tangram" else 0,
+        # adapted by RB, recommended by sopa author
+        slurm_partition = "gpu" if args['annotation']['method'] == "tangram" else "shortq",
+        slurm_extra = "--qos=gpu --gres=gpu:h100pcie" if args['annotation']['method'] == "tangram" else "--qos=shortq",
+        mem_mb = 128000,
+        runtime = "12h",
     params:
         method_name = args['annotation']['method'],
         args_annotation = str(args['annotation']['args']),
+        sdata_path = paths.sdata_path,
     shell:
         """
-        sopa annotate {params.method_name} {paths.sdata_path} {params.args_annotation}
+        sopa annotate {params.method_name} {params.sdata_path} {params.args_annotation}
         """
 
 rule image_write:
@@ -255,16 +283,18 @@ rule image_write:
         paths.sdata_zgroup,
     output:
         paths.explorer_image,
+    params:
+        sdata_path = paths.sdata_path,
+        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize'])),
+        explorer_directory = paths.explorer_directory,
     conda:
         "sopa"
     resources:
         mem_mb=64_000,
         partition="longq"
-    params:
-        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize'])),
     shell:
         """
-        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode "+i" --no-save-h5ad
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.args_explorer} --mode "+i" --no-save-h5ad
         """
 
 rule report:
@@ -274,11 +304,14 @@ rule report:
         paths.annotations if args.annotate else [],
     output:
         paths.report,
+    params:
+        sdata_path = paths.sdata_path,
+        report = paths.report,
     conda:
         "sopa"
     shell:
         """
-        sopa report {paths.sdata_path} {paths.report}
+        sopa report {params.sdata_path} {params.report}
         """
 
 rule explorer:
@@ -294,7 +327,9 @@ rule explorer:
         mem_mb=256_000,
     params:
         args_explorer = str(args["explorer"]),
+        sdata_path = paths.sdata_path,
+        explorer_directory = paths.explorer_directory,
     shell:
         """
-        sopa explorer write {paths.sdata_path} --output-path {paths.explorer_directory} {params.args_explorer} --mode "-i"
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.args_explorer} --mode "-i"
         """
