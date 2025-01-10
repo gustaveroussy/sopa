@@ -67,13 +67,13 @@ class WorkflowPaths:
             A list of temporary boundary directories or files
         """
         if method_name == "cellpose":
-            return [str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))]
-
-        if method_name == "baysor":
+            paths = [self.smk_cellpose_temp_dir / f"{i}.parquet" for i in range(int(file_content))]
+        elif method_name == "baysor":
             indices = map(int, file_content.split())
-            return [str(self.smk_transcripts_temp_dir / str(i) / "segmentation_counts.loom") for i in indices]
-
-        if method_name == "comseg":
+            paths = [self.smk_transcripts_temp_dir / str(i) / "segmentation_counts.loom" for i in indices]
+        elif method_name == "comseg":
             indices = map(int, file_content.split())
             COMSEG_FILES = ["segmentation_polygons.json", "segmentation_counts.h5ad"]
-            return [str(self.smk_transcripts_temp_dir / str(i) / file) for i in indices for file in COMSEG_FILES]
+            paths = [self.smk_transcripts_temp_dir / str(i) / file for i in indices for file in COMSEG_FILES]
+
+        return [str(path.as_posix()) for path in paths]  # snakemake uses posix paths (fix issue #64)
