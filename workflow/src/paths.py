@@ -56,7 +56,7 @@ class WorkflowPaths:
             key = self.config["annotation"].get("args", {}).get("cell_type_key", "cell_type")
             self.annotations = self.table_dir / "table" / "obs" / key
 
-    def temporary_boundaries_paths(self, file_content: str, method_name: str) -> list[str]:
+    def temporary_boundaries_paths(self, file_content: str, method_name: str) -> list[Path]:
         """Compute the paths to the temporary boundary files
 
         Args:
@@ -67,13 +67,12 @@ class WorkflowPaths:
             A list of temporary boundary directories or files
         """
         if method_name == "cellpose":
-            return [str(self.smk_cellpose_temp_dir / f"{i}.parquet") for i in range(int(file_content))]
-
+            return [self.smk_cellpose_temp_dir / f"{i}.parquet" for i in range(int(file_content))]
         if method_name == "baysor":
             indices = map(int, file_content.split())
-            return [str(self.smk_transcripts_temp_dir / str(i) / "segmentation_counts.loom") for i in indices]
-
+            return [self.smk_transcripts_temp_dir / str(i) / "segmentation_counts.loom" for i in indices]
         if method_name == "comseg":
             indices = map(int, file_content.split())
             COMSEG_FILES = ["segmentation_polygons.json", "segmentation_counts.h5ad"]
-            return [str(self.smk_transcripts_temp_dir / str(i) / file) for i in indices for file in COMSEG_FILES]
+            return [self.smk_transcripts_temp_dir / str(i) / file for i in indices for file in COMSEG_FILES]
+        raise ValueError(f"Unknown method name {method_name}")

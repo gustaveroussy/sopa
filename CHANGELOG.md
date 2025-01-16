@@ -29,6 +29,10 @@ This version introduces many new API features but also some breaking changes; ch
 - CLI: during segmentation, use `--cache-dir-name` instead of `--patch-dir`
 - Drop support for Python 3.9
 
+### Fixes
+- Snakemake path issue on Windows (#64)
+- Issues related to incompatible versions of Baysor
+
 
 ## [1.1.6] - 2024-11-29
 
