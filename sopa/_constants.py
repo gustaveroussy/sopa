@@ -4,6 +4,7 @@ class SopaKeys:
     BAYSOR_BOUNDARIES = "baysor_boundaries"
     COMSEG_BOUNDARIES = "comseg_boundaries"
     CUSTOM_BOUNDARIES = "custom_boundaries"
+    STARDIST_BOUNDARIES = "stardist_boundaries"
 
     # Patches keys
     PATCHES = "image_patches"

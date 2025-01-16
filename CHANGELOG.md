@@ -12,6 +12,7 @@ This version introduces many new API features but also some breaking changes; ch
 - Better cache handling (invisible to API users)
 - New tissue segmentation for non-H&E data (`sopa.segmentation.tissue`)
 - Full support for `baysor>=0.7.0`
+- Added `Stardist` segmentation (mainly used for H&E data)
 - Added support for Python 3.12
 
 ### Changes

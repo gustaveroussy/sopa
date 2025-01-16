@@ -4,6 +4,8 @@
 
 ::: sopa.segmentation.cellpose
 
+::: sopa.segmentation.stardist
+
 ::: sopa.segmentation.baysor
 
 ::: sopa.segmentation.comseg

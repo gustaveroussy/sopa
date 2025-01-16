@@ -13,6 +13,7 @@ def cellpose(
     sdata: SpatialData,
     channels: list[str] | str,
     diameter: int,
+    model_type: str = "cyto3",
     image_key: str | None = None,
     min_area: int | None = None,
     delete_cache: bool = True,
@@ -38,6 +39,7 @@ def cellpose(
         sdata: A `SpatialData` object
         channels: Name of the channels to be used for segmentation (or list of channel names).
         diameter: The Cellpose parameter for the expected cell diameter (in pixel).
+        model_type: Cellpose model type.
         image_key: Name of the image in `sdata` to be used for segmentation.
         min_area: Minimum area of a cell to be considered. By default, it is calculated based on the `diameter` parameter.
         delete_cache: Whether to delete the cache after segmentation.
@@ -56,6 +58,7 @@ def cellpose(
     method = cellpose_patch(
         diameter=diameter,
         channels=channels,
+        model_type=model_type,
         flow_threshold=flow_threshold,
         cellprob_threshold=cellprob_threshold,
         cellpose_model_kwargs=cellpose_model_kwargs,
@@ -84,7 +87,7 @@ def cellpose(
 def cellpose_patch(
     diameter: float,
     channels: list[str],
-    model_type: str = "cyto3",
+    model_type: str,
     pretrained_model: str | bool = False,
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
@@ -111,7 +114,7 @@ def cellpose_patch(
         patch: np.ndarray,
         diameter: float,
         channels: list[str],
-        model_type: str = "cyto3",
+        model_type: str,
         pretrained_model: str | bool = False,
         cellpose_model_kwargs: dict | None = None,
         **cellpose_eval_kwargs: int,

@@ -42,6 +42,7 @@ def get_boundaries(
 
     VALID_BOUNDARIES = [
         SopaKeys.BAYSOR_BOUNDARIES,
+        SopaKeys.STARDIST_BOUNDARIES,
         SopaKeys.COMSEG_BOUNDARIES,
         SopaKeys.CELLPOSE_BOUNDARIES,
     ]
