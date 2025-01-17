@@ -58,10 +58,7 @@ def compute_embeddings(
 
     from ._inference import Inference
 
-    image = get_spatial_element(
-        sdata.images,
-        key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION) or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION),
-    )
+    image = get_spatial_element(sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION))
 
     infer = Inference(image, model, patch_width, level, magnification, device)
     patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap)
