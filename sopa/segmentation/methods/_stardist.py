@@ -1,3 +1,6 @@
+import os
+import sys
+import warnings
 from functools import partial
 from typing import Callable
 
@@ -89,12 +92,15 @@ def stardist_patch(
         nms_thresh: float,
         **stardist_eval_kwargs,
     ):
-        model = StarDist2D.from_pretrained(model_type)
+        with SuppressPrintsAndWarnings():
+            model = StarDist2D.from_pretrained(model_type)
 
-        patch = normalize(patch.transpose(1, 2, 0))
-        mask, _ = model.predict_instances(patch, prob_thresh=prob_thresh, nms_thresh=nms_thresh, **stardist_eval_kwargs)
+            patch = normalize(patch.transpose(1, 2, 0))
+            mask, _ = model.predict_instances(
+                patch, prob_thresh=prob_thresh, nms_thresh=nms_thresh, **stardist_eval_kwargs
+            )
 
-        return mask
+            return mask
 
     return partial(
         _,
@@ -103,3 +109,22 @@ def stardist_patch(
         nms_thresh=nms_thresh,
         **stardist_eval_kwargs,
     )
+
+
+class SuppressPrintsAndWarnings:
+    def __enter__(self):
+        # Suppress stdout (print statements)
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, "w")
+
+        # Suppress warnings
+        self._original_warnings_filter = warnings.filters[:]
+        warnings.simplefilter("ignore")
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Restore stdout
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+
+        # Restore warnings filter
+        warnings.filters = self._original_warnings_filter
