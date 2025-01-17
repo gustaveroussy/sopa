@@ -3,7 +3,7 @@ from enum import Enum
 
 import geopandas as gpd
 import numpy as np
-from shapely.geometry import Polygon
+from shapely.geometry import GeometryCollection, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
@@ -258,3 +258,25 @@ def _get_image_and_mode(
 def _get_default_mode(image: DataArray | DataTree) -> str:
     n_channels = image.sizes["c"] if isinstance(image, DataArray) else next(iter(image.values())).sizes["c"]
     return AvailableModes.SATURATION.value if n_channels == 3 else AvailableModes.STAINING.value
+
+
+def shapes_bounding_box(sdata: SpatialData, shape_key: str, key_added: str = SopaKeys.ROI):
+    """Compute the bounding box of a shape layer and save it as a new shape in the `SpatialData` object.
+    For instance, this can be used on VisiumHD data to use the bounding box of the bins as the ROI.
+
+    Args:
+        sdata: A `SpatialData` object
+        shape_key: Key of the shape that will be used to compute the bounding box
+        key_added: Name of the new shape that will be added to the `SpatialData` object
+    """
+    shapes = get_spatial_element(sdata.shapes, key=shape_key)
+
+    if key_added in sdata.shapes:
+        log.warning(f"sdata['{key_added}'] was already existing, but shapes_bounding_box is run on top")
+
+    bounding_box = GeometryCollection(shapes.geometry.values)
+    bounding_box = gpd.GeoDataFrame(geometry=[box(*bounding_box.bounds)])
+
+    geo_df = ShapesModel.parse(bounding_box, transformations=get_transformation(shapes, get_all=True).copy())
+
+    add_spatial_element(sdata, key_added, geo_df)
