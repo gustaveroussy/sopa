@@ -13,9 +13,15 @@ rule all:
         paths.explorer_image,
         paths.report,
     params:
+<<<<<<< HEAD
         sdata_path = paths.sdata_path,
         explorer_directory = paths.explorer_directory,
         explorer_experiment = paths.explorer_experiment,
+=======
+        explorer_directory = paths.explorer_directory,
+        explorer_experiment = paths.explorer_experiment,
+        sdata_path = paths.sdata_path,
+>>>>>>> master
     shell:
         """
         echo 🎉 Successfully run sopa
@@ -34,12 +40,20 @@ rule to_spatialdata:
     resources:
         mem_mb=128_000,
     params:
+<<<<<<< HEAD
         reader = args['read'].as_cli(),
+=======
+        args_reader = str(args['read']),
+>>>>>>> master
         data_path = paths.data_path,
         sdata_path = paths.sdata_path,
     shell:
         """
+<<<<<<< HEAD
         sopa convert {params.data_path} --sdata-path {params.sdata_path} {params.reader}
+=======
+        sopa read {params.data_path} --sdata-path {params.sdata_path} {params.args_reader}
+>>>>>>> master
         """
 
 rule tissue_segmentation:
@@ -65,13 +79,21 @@ checkpoint patchify_image:
         patches_file = paths.smk_patches_file_image,
         patches = touch(paths.smk_patches),
     params:
+<<<<<<< HEAD
         patchify_image = args["patchify"].as_cli(contains="pixel"),
+=======
+        args_patchify = str(args["patchify"].where(contains="pixel")),
+>>>>>>> master
         sdata_path = paths.sdata_path,
     conda:
         "sopa"
     shell:
         """
+<<<<<<< HEAD
         sopa patchify image {params.sdata_path} {params.patchify_image}
+=======
+        sopa patchify image {params.sdata_path} {params.args_patchify}
+>>>>>>> master
         """
 
 checkpoint patchify_transcripts:
@@ -83,13 +105,49 @@ checkpoint patchify_transcripts:
         directory(paths.smk_transcripts_temp_dir),
         patches_file = paths.smk_patches_file_transcripts,
     params:
+<<<<<<< HEAD
         patchify_transcripts = args.patchify_transcripts(),
+=======
+        args_patchify = str(args["patchify"].where(contains="micron")),
+        args_baysor = args.dump_baysor_patchify() if args.baysor else "",
+        arg_prior = "--use-prior" if args.cellpose else "",
+>>>>>>> master
         sdata_path = paths.sdata_path,
     conda:
         "sopa"
     shell:
         """
+<<<<<<< HEAD
         sopa patchify transcripts {params.sdata_path} {params.patchify_transcripts}
+=======
+        sopa patchify baysor {params.sdata_path} {params.args_patchify} {params.args_baysor} {params.arg_prior}
+        """
+
+checkpoint patchify_comseg:
+    input:
+        paths.sdata_zgroup,
+        paths.smk_cellpose_boundaries if args.cellpose else [],
+    output:
+        patches_file = paths.smk_patches_file_comseg,
+        smk_comseg_temp_dir = directory(paths.smk_comseg_temp_dir),
+    params:
+        args_patchify = str(
+            args["patchify"].where([
+                "patch_width_microns",
+                "patch_overlap_microns",
+                "min_transcripts_per_patch",
+                "min_cells_per_patch",
+            ],
+        )),
+        args_comseg = args.dump_comseg_patchify() if args.comseg else "",
+        arg_prior = "--use-prior" if args.cellpose else "",
+        sdata_path = paths.sdata_path,
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa patchify comseg {params.sdata_path} {params.args_patchify} {params.args_comseg} {params.arg_prior}
+>>>>>>> master
         """
 
 rule patch_segmentation_cellpose:
@@ -101,11 +159,20 @@ rule patch_segmentation_cellpose:
     conda:
         "sopa"
     params:
+<<<<<<< HEAD
         cellpose = args["segmentation"]["cellpose"].as_cli(),
         sdata_path = paths.sdata_path,
     shell:
         """
         sopa segmentation cellpose {params.sdata_path} --patch-index {wildcards.index} {params.cellpose}
+=======
+        args_cellpose = str(args["segmentation"]["cellpose"]),
+        sdata_path = paths.sdata_path,
+        smk_cellpose_temp_dir = paths.smk_cellpose_temp_dir,
+    shell:
+        """
+        sopa segmentation cellpose {params.sdata_path} --patch-dir {params.smk_cellpose_temp_dir} --patch-index {wildcards.index} {params.args_cellpose}
+>>>>>>> master
         """
 
 rule patch_segmentation_baysor:
@@ -134,8 +201,16 @@ rule patch_segmentation_comseg:
     input:
         paths.smk_patches_file_transcripts,
     output:
+<<<<<<< HEAD
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_polygons.json",
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.h5ad",
+=======
+        paths.smk_comseg_temp_dir / "{index}" / "segmentation_polygons.json",
+        paths.smk_comseg_temp_dir / "{index}" / "segmentation_counts.h5ad",
+    params:
+        sdata_path = paths.sdata_path,
+        smk_comseg_temp_dir = paths.smk_comseg_temp_dir,
+>>>>>>> master
     conda:
         "sopa"
     resources:
@@ -145,7 +220,11 @@ rule patch_segmentation_comseg:
         sdata_path = paths.sdata_path,
     shell:
         """
+<<<<<<< HEAD
         sopa segmentation comseg {params.sdata_path} --patch-index {wildcards.index} {params.comseg_config}
+=======
+        sopa segmentation comseg {params.sdata_path} --patch-dir {params.smk_comseg_temp_dir} --patch-index {wildcards.index}
+>>>>>>> master
         """
 
 def get_input_resolve(name: str, method_name: str):
@@ -160,13 +239,20 @@ rule resolve_cellpose:
         get_input_resolve("image", "cellpose"),
     output:
         touch(paths.smk_cellpose_boundaries),
+    params:
+        sdata_path = paths.sdata_path,
+        smk_cellpose_temp_dir = paths.smk_cellpose_temp_dir,
     conda:
         "sopa"
     params:
         sdata_path = paths.sdata_path,
     shell:
         """
+<<<<<<< HEAD
         sopa resolve cellpose {params.sdata_path}
+=======
+        sopa resolve cellpose {params.sdata_path} --patch-dir {params.smk_cellpose_temp_dir}
+>>>>>>> master
         """
 
 rule resolve_baysor:
@@ -178,6 +264,7 @@ rule resolve_baysor:
     conda:
         "sopa"
     params:
+<<<<<<< HEAD
         resolve = args.resolve_transcripts(),
         sdata_path = paths.sdata_path,
         smk_transcripts_temp_dir = paths.smk_transcripts_temp_dir,
@@ -186,6 +273,18 @@ rule resolve_baysor:
         sopa resolve baysor {params.sdata_path} {params.resolve}
 
         rm -r {params.smk_transcripts_temp_dir}    # cleanup large baysor files
+=======
+        args_patches_dirs = lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
+        args_min_area = args.min_area("baysor"),
+        sdata_path = paths.sdata_path,
+        smk_baysor_temp_dir = paths.smk_baysor_temp_dir,
+        gene_column = args.gene_column,
+    shell:
+        """
+        sopa resolve baysor {params.sdata_path} --gene-column {params.gene_column} {params.args_min_area} {params.args_patches_dirs}
+
+        rm -r {params.smk_baysor_temp_dir}    # cleanup large baysor files
+>>>>>>> master
         """
 
 rule resolve_comseg:
@@ -197,6 +296,7 @@ rule resolve_comseg:
     conda:
         "sopa"
     params:
+<<<<<<< HEAD
         resolve = args.resolve_transcripts(),
         sdata_path = paths.sdata_path,
         smk_transcripts_temp_dir = paths.smk_transcripts_temp_dir,
@@ -205,6 +305,18 @@ rule resolve_comseg:
         sopa resolve comseg {params.sdata_path} {params.resolve}
 
         rm -r {params.smk_transcripts_temp_dir}    # cleanup large comseg files
+=======
+        args_patches_dirs=lambda _, input: " ".join(f"--patches-dirs {directory}" for directory in input.dirs),
+        args_min_area=args.min_area("comseg"),
+        sdata_path = paths.sdata_path,
+        smk_comseg_temp_dir = paths.smk_comseg_temp_dir,
+        gene_column = args.gene_column,
+    shell:
+        """
+        sopa resolve comseg {params.sdata_path} --gene-column {params.gene_column} {params.args_min_area} {params.args_patches_dirs}
+
+        rm -r {params.smk_comseg_temp_dir}    # cleanup large comseg files
+>>>>>>> master
         """
 
 def get_smk_boundaries(args):
@@ -224,6 +336,12 @@ rule aggregate:
         touch(paths.smk_aggregation),
     conda:
         "sopa"
+<<<<<<< HEAD
+=======
+    params:
+        args_aggregate = str(args["aggregate"] or ""),
+        sdata_path = paths.sdata_path,
+>>>>>>> master
     resources:
         mem_mb=64_000,
     params:
@@ -231,7 +349,11 @@ rule aggregate:
         sdata_path = paths.sdata_path,
     shell:
         """
+<<<<<<< HEAD
         sopa aggregate {params.sdata_path} {params.aggregate}
+=======
+        sopa aggregate {params.sdata_path} {params.args_aggregate}
+>>>>>>> master
         """
 
 rule annotate:
@@ -242,15 +364,26 @@ rule annotate:
     conda:
         "sopa"
     resources:
-        partition="gpgpuq" if args['annotation']['method'] == "tangram" else "shortq",
-        gpu="a100:1" if args['annotation']['method'] == "tangram" else 0,
+        # adapted by RB, recommended by sopa author
+        slurm_partition = "gpu" if args['annotation']['method'] == "tangram" else "shortq",
+        slurm_extra = "--qos=gpu --gres=gpu:h100pcie" if args['annotation']['method'] == "tangram" else "--qos=shortq",
+        mem_mb = 128000,
+        runtime = "12h",
     params:
         method_name = args['annotation']['method'],
+<<<<<<< HEAD
         annotation = args['annotation']['args'].as_cli(),
         sdata_path = paths.sdata_path,
     shell:
         """
         sopa annotate {params.method_name} {params.sdata_path} {params.annotation}
+=======
+        args_annotation = str(args['annotation']['args']),
+        sdata_path = paths.sdata_path,
+    shell:
+        """
+        sopa annotate {params.method_name} {params.sdata_path} {params.args_annotation}
+>>>>>>> master
         """
 
 rule image_write:
@@ -258,10 +391,15 @@ rule image_write:
         paths.sdata_zgroup,
     output:
         paths.explorer_image,
+    params:
+        sdata_path = paths.sdata_path,
+        args_explorer = str(args["explorer"].where(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize'])),
+        explorer_directory = paths.explorer_directory,
     conda:
         "sopa"
     resources:
         mem_mb=64_000,
+<<<<<<< HEAD
         runtime=1500, # in minutes
     params:
         explorer = args["explorer"].as_cli(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize']),
@@ -270,6 +408,12 @@ rule image_write:
     shell:
         """
         sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "+i" --no-save-h5ad
+=======
+        partition="longq"
+    shell:
+        """
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.args_explorer} --mode "+i" --no-save-h5ad
+>>>>>>> master
         """
 
 rule report:
@@ -301,10 +445,18 @@ rule explorer:
     resources:
         mem_mb=256_000,
     params:
+<<<<<<< HEAD
         explorer = args["explorer"].as_cli(),
+=======
+        args_explorer = str(args["explorer"]),
+>>>>>>> master
         sdata_path = paths.sdata_path,
         explorer_directory = paths.explorer_directory,
     shell:
         """
+<<<<<<< HEAD
         sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-i"
+=======
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.args_explorer} --mode "-i"
+>>>>>>> master
         """
