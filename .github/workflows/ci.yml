@@ -1,11 +1,10 @@
 name: ci
 on:
   push:
-    branches: [master]
     tags:
       - v*
   pull_request:
-    branches: [master, dev]
+    branches: [master]
 
 jobs:
   pre-commit:
