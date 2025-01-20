@@ -110,17 +110,21 @@ class Aggregator:
         self.bins_key = bins_key
         self.points_key = points_key
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
+        self.table = None
 
         if not sdata.images:
             self.image_key, self.image = "None", None
         else:
             self.image_key, self.image = get_spatial_image(sdata, image_key, return_key=True)
 
-    def check_existing_table(self, key_added: str):
-        self.table = None
-        if key_added in self.sdata.tables and self.sdata[key_added].n_obs == len(self.geo_df):
-            log.info("Using existing table for aggregation")
-            self.table = self.sdata[key_added]
+    def already_has_valid_table(self, key_added: str) -> bool:
+        if (key_added not in self.sdata.tables) or (self.sdata[key_added].n_obs != len(self.geo_df)):
+            return False
+
+        log.warning("Found existing table, transcripts are not count again.")
+        self.table = self.sdata[key_added]
+
+        return True
 
     def filter_cells(self, where_filter: np.ndarray):
         log.info(f"Filtering {where_filter.sum()} cells")
@@ -147,8 +151,6 @@ class Aggregator:
         points_key: str | None = None,  # deprecated argument
         key_added: str = SopaKeys.TABLE,
     ):
-        self.check_existing_table(key_added)
-
         aggregate_genes, aggregate_channels = self._legacy_arguments(
             points_key, gene_column, aggregate_genes, aggregate_channels, average_intensities
         )
@@ -166,12 +168,10 @@ class Aggregator:
                 self.table = aggregate_bins(
                     self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 0.5
                 )
-            elif self.table is None:
+            elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(
                     self.sdata, gene_column, shapes_key=self.shapes_key, points_key=points_key
                 )
-            else:
-                log.warning("sdata.table is already existing. Transcripts are not count again.")
 
             if min_transcripts > 0:
                 self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
@@ -200,7 +200,6 @@ class Aggregator:
             else:
                 self.table = AnnData(
                     mean_intensities,
-                    dtype=mean_intensities.dtype,
                     var=pd.DataFrame(index=self.image.coords["c"].values.astype(str)),
                     obs=pd.DataFrame(index=self.geo_df.index),
                 )

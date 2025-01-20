@@ -1,4 +1,5 @@
 import logging
+import warnings
 from pathlib import Path
 
 import dask.dataframe as dd
@@ -218,7 +219,9 @@ def add_spatial_element(
         overwrite or element_name not in sdata._shared_keys
     ), f"Trying to add {element_name=} but it is already existing and {overwrite=}"
 
-    sdata[element_name] = element
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=".*already exists. Overwriting it in-memory.")
+        sdata[element_name] = element
 
     if sdata.is_backed() and settings.auto_save_on_disk:
         try:
