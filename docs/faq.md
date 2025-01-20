@@ -190,6 +190,16 @@ If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can i
 
 Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).
 
+## How to remove the logs?
+
+You can change the level of `logging` for sopa, e.g. you can run the lines below to set the logging level to show only errors:
+
+```python
+import sopa
+
+sopa.log.setLevel(sopa.logging.ERROR)
+```
+
 ## How to ask for help?
 
 If you have an issue that is not detailed in this FAQ, you can still open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible for the maintainers to be able to reproduce it.
