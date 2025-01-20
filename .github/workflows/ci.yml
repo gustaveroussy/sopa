@@ -58,7 +58,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --extras "dev cellpose wsi" --no-interaction && pip install snakemake
+        run: poetry install --extras "dev cellpose wsi" --no-interaction && poetry run pip install snakemake
 
       #----------------------------------------------
       #              perform tasks
@@ -67,7 +67,7 @@ jobs:
         run: poetry run pytest
 
       - name: Snakemake
-        run: cd workflow && poetry run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/uniform_cellpose.yaml --workflow-profile profile/local -c1
+        run: cd workflow && poetry run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
 
       - name: Deploy doc
         if: contains(github.ref, 'tags')
