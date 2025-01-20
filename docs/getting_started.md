@@ -55,7 +55,7 @@ Choose one of the following, depending on your needs (it should take at most a f
     ```
 
 !!! warning "Baysor usage"
-    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
+    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official documentation](https://kharchenkolab.github.io/Baysor/dev/installation/)) if you want to use it.
 
     If the Baysor executable is not at `~/.julia/bin/baysor`, please set the `baysor` alias or export the path to the executable via `export baysor=/path/to/baysor/executable`.
 
