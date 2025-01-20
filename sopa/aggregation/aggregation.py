@@ -54,7 +54,7 @@ def aggregate(
         gene_column: Key of `sdata[points_key]` with the gene names.
         shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries.
         bins_key: Key of `sdata` with the table corresponding to the bin-by-gene table of gene counts (e.g., for Visium HD data).
-        expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. By default, the value is 0.5 if we aggregate bins data, and 0 otherwise.
+        expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None` (default), use 1 if we aggregate bins data, and 0 otherwise.
         min_transcripts: Min number of transcripts to keep a cell.
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
@@ -166,7 +166,7 @@ class Aggregator:
         if aggregate_genes:
             if self.bins_key is not None:
                 self.table = aggregate_bins(
-                    self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 0.5
+                    self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 1
                 )
             elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(
