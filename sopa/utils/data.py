@@ -1,29 +1,23 @@
-from __future__ import annotations
-
 import logging
 
-import dask
 import dask.array as da
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from scipy.ndimage import gaussian_filter
-from shapely.geometry import Point, box
+from shapely.geometry import MultiPolygon, Point, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
-from spatialdata.transformations import Affine, Identity
+from spatialdata.transformations import Affine, Identity, Scale
 
-from .._constants import SopaKeys
-from ..patches.patches import _map_transcript_to_cell
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa
+from .._constants import SopaAttrs, SopaKeys
 
 log = logging.getLogger(__name__)
 
 
-def uniform(
+def toy_dataset(
     *_,
     length: int = 2_048,
     cell_density: float = 1e-4,
@@ -35,9 +29,11 @@ def uniform(
     seed: int = 0,
     include_vertices: bool = False,
     include_image: bool = True,
+    include_he_image: bool = True,
     apply_blur: bool = True,
     as_output: bool = False,
     transcript_cell_id_as_merscope: bool = False,
+    add_nan_gene_name: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -80,11 +76,11 @@ def uniform(
 
     vertices = pd.DataFrame(xy, columns=["x", "y"])
 
-    ### Create image
+    ### Create images
     images = {}
 
     if include_image:
-        x_circle, y_circle = circle_coords(radius)
+        x_circle, y_circle = _circle_coords(radius)
 
         image = np.zeros((len(c_coords), length, length))
         for i, (x, y) in enumerate(xy):
@@ -99,12 +95,23 @@ def uniform(
         image = da.from_array(image, chunks=(1, 1024, 1024))
         images["image"] = Image2DModel.parse(image, c_coords=c_coords, dims=["c", "y", "x"])
 
+    if include_he_image:
+        he_image = _he_image(length // 2)
+        scale = length / (length // 2)
+        images["he_image"] = Image2DModel.parse(
+            he_image,
+            dims=["c", "y", "x"],
+            transformations={"global": Scale([scale, scale], axes=["x", "y"])},
+            scale_factors=[2, 2],
+        )
+
     ### Create cell boundaries
     cells = [Point(vertex).buffer(radius).simplify(tolerance=1) for vertex in xy]
     bbox = box(0, 0, length - 1, length - 1)
     cells = [cell.intersection(bbox) for cell in cells]
     gdf = gpd.GeoDataFrame(geometry=cells)
-    shapes = {"cellpose_boundaries" if as_output else "cells": ShapesModel.parse(gdf)}
+    shapes_key = "cellpose_boundaries" if as_output else "cells"
+    shapes = {shapes_key: ShapesModel.parse(gdf)}
 
     ### Create transcripts
     n_genes = n_cells * n_points_per_cell
@@ -125,31 +132,52 @@ def uniform(
         gene_names = np.random.choice(genes, size=n_genes)
 
     gene_names = gene_names.astype(object)
-    gene_names[3] = np.nan  # Add a nan value for tests
+    if add_nan_gene_name:
+        gene_names[3] = np.nan  # Add a nan value for tests
 
     df = pd.DataFrame(
         {
             "x": points_coords[:, 0],
             "y": points_coords[:, 1],
-            "z": 1,
+            "z_": 1,  # TODO: add back as 'z'?
             "genes": gene_names,
         }
     )
 
     # apply an arbritrary transformation for a more complete test case
     affine = np.array([[pixel_size, 0, 100], [0, pixel_size, 600], [0, 0, 1]])
-    df[["x", "y", "z"]] = df[["x", "y", "z"]] @ affine.T
+    df[["x", "y", "z_"]] = df[["x", "y", "z_"]] @ affine.T
     affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
 
     df = dd.from_pandas(df, chunksize=2_000_000)
+    misc_df = pd.DataFrame({"x": [0, 1], "y": [0, 1]})  # dummy dataframe for testing purposes
 
-    points = {"transcripts": PointsModel.parse(df, transformations={"global": affine, "microns": Identity()})}
+    points = {
+        "transcripts": PointsModel.parse(
+            df, transformations={"global": affine, "microns": Identity()}, feature_key="genes"
+        ),
+        "misc": PointsModel.parse(misc_df, transformations={"global": Identity()}),
+    }
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 
-    sdata = SpatialData(images=images, points=points, shapes=shapes)
+    sdata = SpatialData(
+        images=images,
+        points=points,
+        shapes=shapes,
+        attrs={SopaAttrs.TRANSCRIPTS: "transcripts"},
+    )
 
-    _map_transcript_to_cell(sdata, "cell_id", sdata["transcripts"], sdata["cells"])
+    if include_image:
+        sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = "image"
+
+    if include_he_image:
+        sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = "he_image"
+
+    from ..spatial import assign_transcript_to_cell
+
+    assign_transcript_to_cell(sdata, "transcripts", shapes_key, "cell_id", unassigned_value=0)
+
     sdata["transcripts"]["cell_id"] = sdata["transcripts"]["cell_id"].astype(int) - int(transcript_cell_id_as_merscope)
 
     if as_output:
@@ -159,14 +187,14 @@ def uniform(
 
 
 def _add_table(sdata: SpatialData):
-    from ..segmentation import Aggregator
+    from ..aggregation import Aggregator
 
     aggregator = Aggregator(sdata, shapes_key=SopaKeys.CELLPOSE_BOUNDARIES)
 
     aggregator.compute_table(gene_column="genes")
 
 
-def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
+def _circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
     """Compute the coordinates of a circle
 
     Args:
@@ -183,6 +211,47 @@ def circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
 
     x_circle, y_circle = np.where(mask)
     return x_circle - radius, y_circle - radius
+
+
+def _he_image(length: int) -> np.ndarray:
+    from ..segmentation.shapes import rasterize
+
+    coords = np.array(
+        [
+            [0.15, 0.15],
+            [0.15, 0.7],
+            [0.3, 0.8],
+            [0.8, 0.85],
+            [0.8, 0.8],
+            [0.85, 0.12],
+            [0.8, 0.2],
+            [0.7, 0.4],
+            [0.5, 0.5],
+            [0.4, 0.5],
+            [0.2, 0.35],
+        ]
+    )
+
+    circle_in = Point([0.5 * length, 0.2 * length]).buffer(0.1 * length)
+    circle_out = Point([0.7 * length, 0.7 * length]).buffer(0.1 * length)
+    polygon_he = Polygon(coords * length).buffer(0.1 * length)
+    multi_polygon = MultiPolygon([polygon_he, circle_in])
+
+    tissue = (rasterize(multi_polygon, [length, length]) - rasterize(circle_out, [length, length])).astype(np.uint8)
+
+    image = np.random.randint(0, 50, size=(3, length, length), dtype=np.uint8)  # noise 1
+    image[1] += (np.arange(length) / length * 10).astype(np.uint8)  # noise 2
+    image[1] += (np.arange(length)[:, None] / length * 10).astype(np.uint8)  # noise 3
+    image[1] += tissue * 60
+    image[0] += tissue * 20
+    image[2] += tissue * 40
+
+    return 255 - image
+
+
+def uniform(*_, **kwargs):
+    log.warning("The `uniform` function is deprecated and will be removed in sopa==2.1.0, use `toy_dataset` instead")
+    return toy_dataset(**kwargs)
 
 
 def blobs(
@@ -207,4 +276,8 @@ def blobs(
     genes = pd.Series(np.random.choice(list("abcdef"), size=len(points))).astype("category")
     points["genes"] = dd.from_pandas(genes, npartitions=points.npartitions)
 
-    return SpatialData(images={"blob_image": image}, points={"blob_transcripts": points})
+    return SpatialData(
+        images={"blob_image": image},
+        points={"blob_transcripts": points},
+        attrs={SopaAttrs.CELL_SEGMENTATION: "blob_image", SopaAttrs.TRANSCRIPTS: "blob_transcripts"},
+    )

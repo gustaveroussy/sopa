@@ -11,6 +11,8 @@ sandbox
 *.h5ad
 *.zarr
 *.explorer
+*.tif
+docs/tutorials/data
 
 # OS related
 .DS_Store

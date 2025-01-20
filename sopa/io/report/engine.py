@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 from io import BytesIO
 from typing import Optional
@@ -121,7 +119,7 @@ class ProgressBar(Renderable):
 class Section(Renderable):
     """Section of the report"""
 
-    def __init__(self, name: str, content: list["Section"] = None) -> None:
+    def __init__(self, name: str, content: list["Section"] | None = None) -> None:
         self.name = name
         self._children = content
         self.subtitle = False

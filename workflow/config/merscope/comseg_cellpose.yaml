@@ -48,6 +48,3 @@ explorer:
   gene_column: "gene"
   ram_threshold_gb: 4
   pixel_size: 0.108
-
-executables:
-  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable

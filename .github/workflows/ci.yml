@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11.8"]
+        python-version: ["3.10", "3.11.8", "3.12"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -44,21 +44,10 @@ jobs:
           installer-parallel: true
 
       #----------------------------------------------
-      #       load cached venv if cache exists
-      #----------------------------------------------
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      #----------------------------------------------
-      # install dependencies if cache does not exist
+      #             install dependencies
       #----------------------------------------------
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --extras "dev cellpose snakemake" --no-interaction
+        run: poetry install --extras "dev cellpose wsi" --no-interaction && poetry run pip install snakemake 'pulp<2.8'
 
       #----------------------------------------------
       #              perform tasks
@@ -67,7 +56,7 @@ jobs:
         run: poetry run pytest
 
       - name: Snakemake
-        run: cd workflow && poetry run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/uniform_cellpose.yaml -c1
+        run: cd workflow && poetry run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
 
       - name: Deploy doc
         if: contains(github.ref, 'tags')

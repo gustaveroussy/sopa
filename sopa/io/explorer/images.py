@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import re
 from math import ceil
@@ -8,12 +6,16 @@ import numpy as np
 import tifffile as tf
 from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
-from spatialdata.transformations import Affine, set_transformation
+from spatialdata.transformations import (
+    Affine,
+    Sequence,
+    get_transformation,
+    set_transformation,
+)
 from tqdm import tqdm
 from xarray import DataArray, DataTree
 
-from ..._sdata import get_intrinsic_cs, get_spatial_image
-from ...utils.image import resize_numpy, scale_dtype
+from ...utils import add_spatial_element, get_spatial_image, resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
 
@@ -203,6 +205,7 @@ def align(
     sdata: SpatialData,
     image: DataArray,
     transformation_matrix_path: str,
+    key_added: str | None = None,
     image_key: str = None,
     overwrite: bool = False,
 ):
@@ -212,24 +215,31 @@ def align(
         sdata: A `SpatialData` object
         image: A `DataArray` object. Note that `image.name` is used as the key for the aligned image.
         transformation_matrix_path: Path to the `.csv` transformation matrix exported from the Xenium Explorer
+        key_added: Optional name to add to the new image. If `None`, will use `image.name`.
         image_key: Optional name of the image on which it has been aligned. Required if multiple images in the `SpatialData` object.
         overwrite: Whether to overwrite the image, if already existing.
     """
-    image_name = image.name
+    key_added = key_added or image.name
 
-    to_pixel = Affine(
-        np.genfromtxt(transformation_matrix_path, delimiter=","),
-        input_axes=("x", "y"),
-        output_axes=("x", "y"),
+    assert key_added is not None, "The image has no name, use the `key_added` argument to provide one"
+    assert key_added not in sdata, f"Image '{key_added}' already exists in the `SpatialData` object"
+
+    to_pixel = Sequence(
+        [
+            Affine(
+                np.genfromtxt(transformation_matrix_path, delimiter=","),
+                input_axes=("x", "y"),
+                output_axes=("x", "y"),
+            )
+        ]
     )
 
     default_image = get_spatial_image(sdata, image_key)
-    pixel_cs = get_intrinsic_cs(sdata, default_image)
 
-    set_transformation(image, {pixel_cs: to_pixel}, set_all=True)
+    original_transformations = get_transformation(default_image, get_all=True)
+    transformations = {cs: to_pixel.compose_with(t) for cs, t in original_transformations.items()}
 
-    log.info(f"Adding image {image_name}:\n{image}")
-    sdata.images[image_name] = image
+    set_transformation(image, transformations, set_all=True)
 
-    if sdata.is_backed():
-        sdata.write_element(image_name, overwrite=overwrite)
+    add_spatial_element(sdata, key_added, image, overwrite=overwrite)
+    log.info(f"Added image '{key_added}' (aligned with the Xenium Explorer)")

@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-
 class FileNames:
     IMAGE = "morphology.ome.tif"
     POINTS = "transcripts.zarr.zip"

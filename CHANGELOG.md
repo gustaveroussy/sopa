@@ -1,3 +1,39 @@
+## [2.0.0] - 2025-01-20
+
+This version introduces many new API features but also some breaking changes; check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
+
+### Added
+- Full Visium HD support (including, notably, bins aggregation)
+- Dask parallelization backend for faster segmentation (useful for API users). This can be done via `sopa.settings.parallelization_backend = 'dask'`. More details in the FAQ.
+- Support for one-line segmentation, e.g. `sopa.segmentation.cellpose(sdata, ...)` or `sopa.segmentation.baysor(sdata, ...)`. This will implicitly use the selected parallelization backend.
+- Spatial elements keys are saved in `sdata.attrs` so that Sopa knows automatically which element should be used in which function. It is still possible to precise `image_key` / `points_key` / `shapes_key` if needed. More details in the FAQ.
+- Allows changing the auto-save settings (i.e. decide if spatial elements are saved on-disk automatically or not). This can be done via `sopa.settings.auto_save_on_disk = False`.
+- Can recover a failed/stopped segmentation when using the API (and also `force` a segmentation, for Baysor)
+- Better cache handling (invisible to API users)
+- New tissue segmentation for non-H&E data (`sopa.segmentation.tissue`)
+- Full support for `baysor>=0.7.0`
+- Added `Stardist` segmentation (mainly used for H&E data)
+- Added support for Python 3.12
+
+### Changes
+- The `sopa.io.uniform` dataset is now deprecated (use `sopa.io.toy_dataset` instead)
+- API: The image patches are now called `sdata["image_patches"]` instead of `sdata["sopa_patches"]`
+
+### Breaking changes
+- Drop support for Python 3.9
+- API: `sopa.segmentation.Patches2D` is deprecated. Instead, use the functions `sopa.make_image_patches` or `sopa.make_transcript_patches`
+- API: Use `sopa.overlay_segmentation` instead of `sopa.segmentation.overlay_segmentation`
+- API: The `Aggregator` class has been replaced by a simple function wrapper: `sopa.aggregate`
+- API: The annotations methods are moved to the utils. For instance, use `sopa.utils.higher_z_score` instead of `sopa.annotation.higher_z_score`
+- CLI: `sopa read` has been renamed `sopa convert` to avoid confusion.
+- CLI: during segmentation, use `--cache-dir-name` instead of `--patch-dir`
+- Drop support for Python 3.9
+
+### Fixes
+- Snakemake path issue on Windows (#64)
+- Issues related to incompatible versions of Baysor
+
+
 ## [1.1.6] - 2024-11-29
 
 ### Fix

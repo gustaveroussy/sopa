@@ -1,16 +1,16 @@
-from __future__ import annotations
-
 import ast
+import logging
 
 import typer
 
 from .annotate import app_annotate
-from .check import app_check
 from .explorer import app_explorer
 from .patchify import app_patchify
 from .resolve import app_resolve
 from .segmentation import app_segmentation
 from .utils import SDATA_HELPER
+
+log = logging.getLogger(__name__)
 
 app = typer.Typer()
 app.add_typer(
@@ -34,15 +34,16 @@ app.add_typer(
     name="patchify",
     help="Create patches with overlaps. Afterwards, segmentation will be run on each patch",
 )
-app.add_typer(
-    app_check,
-    name="check",
-    help="Run some sanity checks (e.g., on the YAML config, on the tangram reference, ...)",
-)
 
 
 @app.command()
-def read(
+def read(data_path: str = typer.Argument(), technology: str = typer.Option()):
+    """Deprecated and will be removed in sopa==2.1.0. Use `sopa convert` instead."""
+    raise NameError("`sopa read` is deprecated. Use `sopa convert` instead.")
+
+
+@app.command()
+def convert(
     data_path: str = typer.Argument(
         help="Path to one data sample (most of the time, this corresponds to a directory with images files and eventually a transcript file)"
     ),
@@ -89,7 +90,7 @@ def read(
 
     assert hasattr(
         io, technology
-    ), f"Technology {technology} unknown. Currently available: xenium, merscope, cosmx, phenocycler, hyperion, macsima"
+    ), f"Technology {technology} unknown. Currently available: xenium, merscope, visium_hd, cosmx, phenocycler, hyperion, macsima"
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path, delete_table=True)
@@ -117,6 +118,10 @@ def crop(
 ):
     """Crop an image based on a user-defined polygon (interactive mode).
 
+    Warning:
+        This command is deprecated. Using `napari-spatialdata` instead.
+        Provide the name `"region_of_interest"` to your selected ROI.
+
     Usage:
 
         - [Locally] Only `--sdata-path` is required
@@ -128,12 +133,12 @@ def crop(
     _check_zip([intermediate_image, intermediate_polygon])
 
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.utils.polygon_crop import intermediate_selection, polygon_selection
+    from sopa.utils.crop import intermediate_selection, polygon_selection
 
-    if sdata_path is None:
+    if intermediate_image and intermediate_polygon:
         assert (
-            intermediate_image is not None and intermediate_polygon is not None
-        ), "When no --sdata_path is provided, both --intermediate_image and --intermediate_polygon have to be provided"
+            sdata_path is None
+        ), "When both --intermediate_image and --intermediate_polygon, sdata_path should not to be provided"
 
         intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
         return
@@ -153,13 +158,12 @@ def crop(
 @app.command()
 def aggregate(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    gene_column: str = typer.Option(
-        None,
-        help="Column of the transcript dataframe representing the gene names. If not provided, it will not compute transcript count",
+    aggregate_genes: bool = typer.Option(None, help="Whether to aggregate the genes (counts) inside each cell"),
+    aggregate_channels: bool = typer.Option(
+        False, help="Whether to aggregate the channels (intensity) inside each cell"
     ),
-    average_intensities: bool = typer.Option(False, help="Whether to average the channel intensities inside each cell"),
     expand_radius_ratio: float = typer.Option(
-        default=0,
+        default=None,
         help="Cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings",
     ),
     min_transcripts: int = typer.Option(0, help="Cells with less transcript than this integer will be filtered"),
@@ -172,19 +176,38 @@ def aggregate(
         help="Optional image key of the SpatialData object. By default, considers the only one image. It can be useful if another image is added later on",
     ),
     method_name: str = typer.Option(
-        None,
-        help="If segmentation was performed with a generic method, this is the name of the method used.",
+        None, help="If segmentation was performed with a generic method, this is the name of the method used."
     ),
+    average_intensities: bool = typer.Option(False, help="[Deprecated] Use `aggregate_channels` instead."),
+    gene_column: str = typer.Option(None, help="[Deprecated] Use `aggregate_genes` instead."),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
+    import sopa
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation import Aggregator
 
-    sdata = read_zarr_standardized(sdata_path, warn=True)
+    sdata = read_zarr_standardized(sdata_path)
 
-    aggregator = Aggregator(sdata, image_key=image_key, shapes_key=method_name)
-    aggregator.compute_table(
-        gene_column, average_intensities, expand_radius_ratio, min_transcripts, min_intensity_ratio
+    if gene_column is not None:
+        log.warning(
+            "The `gene_column` argument is deprecated and will be removed in sopa==2.1.0. Use `aggregate_genes` instead."
+        )
+        aggregate_genes = True
+
+    if average_intensities:
+        log.warning(
+            "The `average_intensities` argument is deprecated and will be removed in sopa==2.1.0. Use `aggregate_channels` instead."
+        )
+        aggregate_channels = True
+
+    sopa.aggregate(
+        sdata,
+        aggregate_genes=aggregate_genes,
+        aggregate_channels=aggregate_channels,
+        image_key=image_key,
+        shapes_key=method_name,
+        min_transcripts=min_transcripts,
+        expand_radius_ratio=expand_radius_ratio,
+        min_intensity_ratio=min_intensity_ratio,
     )
 
 

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import ast
 
 import typer
@@ -20,8 +18,8 @@ def fluorescence(
     For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
     """
     from sopa._constants import SopaKeys
-    from sopa.annotation.fluorescence import higher_z_score
     from sopa.io.standardize import read_zarr_standardized
+    from sopa.utils import higher_z_score
 
     sdata = read_zarr_standardized(sdata_path)
 
@@ -56,11 +54,11 @@ def tangram(
     import anndata
 
     from sopa._constants import SopaKeys
-    from sopa.annotation.tangram.run import tangram_annotate
     from sopa.io.standardize import read_zarr_standardized
+    from sopa.utils import tangram_annotate
 
     sdata = read_zarr_standardized(sdata_path)
-    adata_sc = anndata.read_h5ad(sc_reference_path)
+    adata_sc = anndata.io.read_h5ad(sc_reference_path)
 
     tangram_annotate(
         sdata,

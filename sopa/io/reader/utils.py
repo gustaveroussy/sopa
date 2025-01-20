@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 from typing import Callable
@@ -14,6 +12,8 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
 from xarray import DataArray
+
+from ..._constants import SopaAttrs
 
 log = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def _general_tif_directory_reader(
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
 
 def _clip_intensity_values(
@@ -103,7 +103,7 @@ def _image_int_dtype(image: xr.DataArray, clip_quantile: bool | None = None, qua
     return _clip_intensity_values(image, clip_quantile=clip_quantile, quantile=quantile)
 
 
-def _ome_channels_names(path: str):
+def _ome_channels_names(path: Path | str):
     import xml.etree.ElementTree as ET
 
     tiff = tf.TiffFile(path)
@@ -139,10 +139,13 @@ def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
 
     image = image.rechunk(chunks=image_models_kwargs["chunks"])
 
-    channel_names = _ome_channels_names(path)
+    try:
+        channel_names = _ome_channels_names(path)
+    except:
+        channel_names = []
     if len(channel_names) != len(image):
         channel_names = [str(i) for i in range(len(image))]
-        log.warn(f"Channel names couldn't be read. Using {channel_names} instead.")
+        log.warning(f"Channel names couldn't be read. Using {channel_names} instead.")
 
     image = DataArray(image, dims=["c", "y", "x"], name=image_name, coords={"c": channel_names})
     image = _image_int_dtype(image)
@@ -157,4 +160,4 @@ def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})

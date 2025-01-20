@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import warnings
 
@@ -10,12 +8,7 @@ import seaborn as sns
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
-from ..._sdata import (
-    get_boundaries,
-    get_intensities,
-    get_intrinsic_cs,
-    get_spatial_image,
-)
+from ...utils import get_boundaries, get_intensities, get_spatial_image
 from .engine import (
     CodeBlock,
     Columns,
@@ -28,7 +21,6 @@ from .engine import (
 )
 
 log = logging.getLogger(__name__)
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def write_report(path: str, sdata: SpatialData):
@@ -41,10 +33,13 @@ def write_report(path: str, sdata: SpatialData):
         path: Path to the `.html` report that has to be created
         sdata: A `SpatialData` object, after running Sopa
     """
-    sections = SectionBuilder(sdata).compute_sections()
+    with warnings.catch_warnings():
+        warnings.simplefilter(action="ignore", category=FutureWarning)
 
-    log.info(f"Writing report to {path}")
-    Root(sections).write(path)
+        sections = SectionBuilder(sdata).compute_sections()
+
+        log.info(f"Writing report to {path}")
+        Root(sections).write(path)
 
 
 def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):
@@ -89,7 +84,6 @@ class SectionBuilder:
 
     def cell_section(self):
         shapes_key, _ = get_boundaries(self.sdata, return_key=True)
-        coord_system = get_intrinsic_cs(self.sdata, shapes_key)
 
         fig = plt.figure()
         _kdeplot_vmax_quantile(self.adata.obs[SopaKeys.AREA_OBS])
@@ -106,7 +100,7 @@ class SectionBuilder:
                     "Areas",
                     [
                         Paragraph(
-                            f"The cells areas are obtained based on the coordinate system '{coord_system}' for the '{shapes_key}' boundaries"
+                            f"The cells areas are obtained based on the '{shapes_key}' boundaries (and its intrinsic coordinate system)."
                         ),
                         Columns([Image(fig)]),
                     ],
@@ -211,6 +205,6 @@ class SectionBuilder:
                 section = getattr(self, name)()
                 sections.append(section)
             except Exception as e:
-                log.warn(f"Section {name} failed with error {e}")
+                log.warning(f"Section {name} failed with error {e}")
 
         return [section for section in sections if section is not None]

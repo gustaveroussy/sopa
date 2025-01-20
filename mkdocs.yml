@@ -8,38 +8,34 @@ theme:
   favicon: assets/sopa_favicon.png
   features:
     - content.code.annotate
+  palette:
+    scheme: default
+    primary: indigo
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
   - Tutorials:
-    - Snakemake pipeline: tutorials/snakemake.md
-    - CLI usage: tutorials/cli_usage.md
     - API usage: tutorials/api_usage.ipynb
-    - Explorer usage: tutorials/xenium_explorer/explorer.ipynb
-    - Align images (e.g. H&E): tutorials/align.md
-    - Spatial statistics: tutorials/spatial.ipynb
+    - Snakemake pipeline: tutorials/snakemake.md
+    - Xenium Explorer usage: tutorials/xenium_explorer/explorer.ipynb
+    - Landmark-based alignment: tutorials/align.md
+    - Comparing segmentations: tutorials/compare_segmentations.ipynb
+    - Spatial operations: tutorials/spatial.ipynb
+    - Visium HD usage: tutorials/visium_hd.ipynb
     - H&E usage: tutorials/he.ipynb
-    - Advanced segmentation: tutorials/advanced_segmentation.md
-    - Other segmentation methods:
+    - Command line interface: tutorials/cli_usage.md
+    - Other segmentations:
       - ComSeg: tutorials/comseg.ipynb
-  - CLI: cli.md
+      - Multi-step: tutorials/multi_step_segmentation.md
+      - Custom segmentation: tutorials/custom_segmentation.ipynb
   - API:
-    - sopa.spatial: api/spatial.md
-    - sopa.segmentation:
-      - sopa.segmentation.shapes: api/segmentation/shapes.md
-      - sopa.segmentation.aggregate: api/segmentation/aggregate.md
-      - sopa.segmentation.stainings: api/segmentation/stainings.md
-      - sopa.segmentation.transcripts: api/segmentation/transcripts.md
-      - sopa.segmentation.methods: api/segmentation/methods.md
-      - sopa.segmentation.patching: api/segmentation/patching.md
-      - sopa.segmentation.tissue: api/segmentation/tissue.md
-    - sopa.io: api/io.md
-    - sopa.annotation: api/annotation.md
-    - sopa.utils:
-      - sopa.utils.image: api/utils/image.md
-      - sopa.utils.polygon_crop: api/utils/polygon_crop.md
-    - sopa.patches: api/patches.md
-    - sopa._sdata: api/_sdata.md
+    - Readers: api/readers.md
+    - Patches: api/patches.md
+    - Segmentation: api/segmentation.md
+    - Aggregation: api/aggregation.md
+    - Utils: api/utils.md
+    - Spatial operations: api/spatial.md
+    - Misc: api/misc.md
   - Frequently asked questions: faq.md
   - Cite us: cite_us.md
 plugins:
@@ -49,7 +45,7 @@ plugins:
         python:
           options:
             show_root_heading: true
-            heading_level: 3
+            heading_level: 4
   - mkdocs-jupyter:
       include_source: True
 markdown_extensions:

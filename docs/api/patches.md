@@ -1,5 +1,7 @@
-::: sopa.patches.Patches2D
+::: sopa.make_image_patches
 
-::: sopa.patches.infer.infer_wsi_patches
+::: sopa.make_transcript_patches
 
-::: sopa.patches.cluster.cluster_embeddings
+::: sopa.patches.compute_embeddings
+
+::: sopa.patches.cluster_embeddings

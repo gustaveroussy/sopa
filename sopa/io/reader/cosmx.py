@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import re
 from pathlib import Path
@@ -13,8 +11,8 @@ import xarray as xr
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
-from spatialdata_io._constants._constants import CosmxKeys
 
+from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -37,6 +35,8 @@ def cosmx(
         - `Morphology_ChannelID_Dictionary.txt`: Morphology channels names
         - `*_tx_file.csv.gz` or `*_tx_file.csv`: Transcripts location and names
         - If `read_proteins` is `True`, all the images under the nested `ProteinImages` directories will be read
+
+        These files must be exported as flat files in AtomX. That is: within a study, click on "Export" and then select files from the "Flat CSV Files" section (transcripts flat and FOV position flat).
 
     Args:
         path: Path to the root directory containing *Nanostring* files.
@@ -89,7 +89,7 @@ def cosmx(
     parsed_image = Image2DModel.parse(image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs)
 
     if read_proteins:
-        return SpatialData(images={image_name: parsed_image})
+        return SpatialData(images={image_name: parsed_image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
     ### Read transcripts
     transcripts_data = _read_transcripts_csv(path, dataset_id)
@@ -104,13 +104,19 @@ def cosmx(
         coordinates = {"x": "x_local_px", "y": "y_local_px"}
         points_name = f"{fov}_points"
 
+    from spatialdata_io._constants._constants import CosmxKeys
+
     transcripts = PointsModel.parse(
         transcripts_data,
         coordinates=coordinates,
         feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT,
     )
 
-    return SpatialData(images={image_name: parsed_image}, points={points_name: transcripts})
+    return SpatialData(
+        images={image_name: parsed_image},
+        points={points_name: transcripts},
+        attrs={SopaAttrs.CELL_SEGMENTATION: image_name, SopaAttrs.TRANSCRIPTS: points_name},
+    )
 
 
 def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
@@ -121,7 +127,7 @@ def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
         counts_files = list(path.rglob(f"[!\\.]*_fov_positions_file{suffix}"))
 
         if len(counts_files) == 1:
-            found = re.match(rf"(.*)_fov_positions_file{suffix}", str(counts_files[0]))
+            found = re.match(rf"(.*)_fov_positions_file{suffix}", counts_files[0].name)
             if found:
                 return found.group(1)
 
@@ -161,9 +167,9 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
     pixel_size = 0.120280945  # size of a pixel in microns
 
     fov_locs["xmin"] = fov_locs["X_mm"] * 1e3 / pixel_size
-    fov_locs["xmax"] = 0  # will be filled when reading the images
+    fov_locs["xmax"] = 0.0  # will be filled when reading the images
 
-    fov_locs["ymin"] = 0  # will be filled when reading the images
+    fov_locs["ymin"] = 0.0  # will be filled when reading the images
     fov_locs["ymax"] = fov_locs["Y_mm"] * 1e3 / pixel_size
 
     return fov_locs
@@ -176,8 +182,6 @@ def _read_stitched_image(
     morphology_coords: list[str],
     **imread_kwargs,
 ) -> tuple[da.Array, list[str] | None]:
-    log.warn("Image stitching is currently experimental")
-
     fov_images = {}
     c_coords_dict = {}
     pattern = re.compile(r".*_F(\d+)")
@@ -210,7 +214,7 @@ def _read_stitched_image(
         stitched_image.loc[{"c": c_coords_dict[fov], "y": slice(ymin, ymax), "x": slice(xmin, xmax)}] = im
 
         if len(c_coords_dict[fov]) < len(c_coords):
-            log.warn(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
+            log.warning(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
 
     return stitched_image.data, c_coords
 

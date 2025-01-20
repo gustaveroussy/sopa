@@ -1,5 +1,7 @@
 ::: sopa.spatial.sjoin
 
+::: sopa.spatial.assign_transcript_to_cell
+
 ::: sopa.spatial.mean_distance
 
 ::: sopa.spatial.geometrize_niches

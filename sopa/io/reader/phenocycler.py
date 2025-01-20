@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import re
 from pathlib import Path
@@ -12,6 +10,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity
 
+from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -59,7 +58,7 @@ def phenocycler(
         **image_models_kwargs,
     )
 
-    return SpatialData(images={image_name: image})
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
 
 
 def _get_channel_name_qptiff(description):
@@ -85,10 +84,10 @@ def _get_IJ_channel_names(path: str) -> list[str]:
             if ij_metadata_tag and "Labels" in ij_metadata_tag.value:
                 return ij_metadata_tag.value["Labels"]
 
-            log.warn("Could not find channel names in IJMetadata.")
+            log.warning("Could not find channel names in IJMetadata.")
             return default_names
 
-        log.warn("The TIF file does not have multiple channels.")
+        log.warning("The TIF file does not have multiple channels.")
         return default_names
 
 

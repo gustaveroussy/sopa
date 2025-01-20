@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +6,8 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
 from xarray import DataArray, DataTree
+
+from ..._constants import SopaAttrs
 
 
 def wsi(
@@ -51,7 +51,7 @@ def wsi(
         images[f"scale{key}"] = scale_image
 
     multiscale_image = DataTree.from_dict(images)
-    sdata = SpatialData(images={image_name: multiscale_image})
+    sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
     sdata[image_name].name = image_name
@@ -95,7 +95,7 @@ def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> S
     )
     multiscale_image.attrs["metadata"] = tiff_metadata
 
-    return SpatialData(images={image_name: multiscale_image})
+    return SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
 
 
 def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
@@ -126,7 +126,7 @@ def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray
     elif backend == "openslide":
         import openslide
 
-        from ...utils.io import OpenSlideStore
+        from ._openslide import OpenSlideStore
 
         slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store

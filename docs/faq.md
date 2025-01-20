@@ -1,4 +1,4 @@
-## What kind of inputs do I need to run Sopa?
+## What are the inputs or Sopa?
 
 You need the raw inputs of your machine, that is:
 
@@ -72,13 +72,75 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
 
     This reader is called `aicsimageio`, i.e. you can use it via `sopa.io.aicsimageio(data_path)`, where `data_path` is the path to your data file containing your image(s). For the Snakemake pipeline, provide `aicsimageio` as a `technology` in the config file.
 
-## I have small artifact cells, how do remove them?
+## How to disable the auto-save?
 
-You may have small cells that were segmented but that should be removed. For that, `Sopa` offers three filtering approaches: using their area, their transcript count, or their fluorescence intensity. Refer to the following config parameters from this [example config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml): `min_area`, `min_transcripts`, and `min_intensity_ratio`.
+When using the API, and when your `SpatialData` object is saved on-disk, Sopa will automatically save any new spatial element on disk by default. To disable this behavior, use the following command from the API:
 
-If using the CLI, `--min-area` can be provided to `sopa segmentation cellpose` or `sopa resolve baysor`, and `--min-transcripts`/`--min-intensity-ratio` can be provided to `sopa aggregate`.
+```python
+sopa.settings.auto_save_on_disk = False
+```
 
-## Cellpose is not segmenting enough cells; what should I do?
+## How to parallelize segmentation?
+
+Some steps of Sopa, notably the segmentation, can be accelerated via a parallelization backend. If you use the API, you can set the `"dask"` backend as below.
+
+```python
+# when using the API
+sopa.settings.parallelization_backend = "dask"
+```
+
+Otherwise, if you don't use the API, you can also set the `SOPA_PARALLELIZATION_BACKEND` env variable, e.g.:
+```sh
+export SOPA_PARALLELIZATION_BACKEND=dask
+```
+
+!!! warning
+    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/gustaveroussy/sopa/issues/145) to help us improve it.
+
+You can also pass some kwargs to the [dask Client](https://distributed.dask.org/en/stable/api.html#client) as below. These kwargs are highly dependent of your cluster and the size of your patches. For "middle-size" patches, we recommend about 4GB of memory per worker for cellpose, and between 8GB and 16GB or memory for baysor.
+
+```python
+sopa.settings.dask_client_kwargs["n_workers"] = 4
+```
+
+For testing purposes, you can run the lines below, which will show you how many workers and memory you have by default:
+```python
+from dask.distributed import Client
+
+client = Client()
+
+n_workers = len(client.cluster.workers)
+mem_worker0 = client.cluster.workers[0].memory_manager.memory_limit / 1024**3
+
+print(f"{n_workers=}, {mem_worker0=:.3}GB")
+```
+
+## Which pipeline parameters should I use?
+
+Some parameters such as the Cellpose diameter is crucial and depends highly on the resolution of your technology (pixel size).
+As a guide, you can start from the parameters of the [config files](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) of your specific technology, and adjust them based on your knowledge of the tissue you work on.
+
+Here are some parameters which are important to check: `diameter` (in pixels for cellpose), `min_area` (in pixels^2 for cellpose, in microns^2 for baysor), `scale` (in microns for baysor), `pixel_size` (for the Xenium Explorer conversion, to have the right scale during display).
+
+## How does Sopa know when using which elements?
+
+Many functions of Sopa can run without any argument. For instance, `sopa.aggregate(sdata)` works for very different technologies, such as VisiumHD, MERSCOPE, or MACSima data.
+
+Internally, when reading the raw data, Sopa saves some attributes inside `sdata.attrs`. These attributes are then used to know which spatial element corresponds to what. For instance, one H&E image may be tagged for tissue segmentation, while the DAPI image will be tagged to be used for cellpose.
+
+Sopa handles this internally by default, and it is completely invisible to the user. But, to get a full control on what is done, you can always set some arguments to specify which element to be used. You can refer to the following arguments of the API: `image_key`, `points_key`, `shapes_key`, `bins_key`.
+
+## How to remove cells artifacts?
+
+When segmenting a patch that is outside of the issue, Cellpose may "hallucinate" and generate some fake cells. To avoid that, you can run [`sopa.segmentation.tissue`](../api/segmentation/#sopa.segmentation.tissue) to ensure segmentation is always run inside the tissue.
+
+Otherwise, if you have inside the tissue some small cells artefacts, `Sopa` offers three filtering approaches:
+
+- Using a [min_area](../api/segmentation/#sopa.segmentation.cellpose) threshold to remove small cells (provide this argument to the segmentation methods).
+- A [min_transcripts](/api/aggregation/#sopa.aggregate) threshold to remove cells with a low transcript count (provide this argument to the aggregation step).
+- A [min_intensity_ratio](..//api/aggregation/#sopa.aggregate) value to remove cells with a low fluorescence intensity (provide this argument to the aggregation step).
+
+## How to get more cells with Cellpose?
 
 - The main Cellpose parameter to check is `diameter`, i.e. a typical cell diameter **in pixels**. Note that this is highly specific to the technology you're using since the micron-to-pixel ratio can differ. We advise you to start with the default parameter for your technology of interest (see the `diameter` parameter inside our config files [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config)).
 - Maybe `min_area` is too high, and all the cells are filtered because they are smaller than this area. Remind that, when using Cellpose, the areas correspond to pixels^2.
@@ -108,11 +170,15 @@ segmentation:
 
 ## How to use a prior cell segmentation?
 
-If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/xenium/baysor_multimodal.yaml) data. If using the API/CLI, consider using the `cell_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `cell_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `cell_key="cell_id"` and `unassigned_value="UNASSIGNED"`.
+If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/xenium/baysor_prior.yaml) data. If using the API/CLI, consider using the `prior_shapes_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `prior_shapes_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `prior_shapes_key="cell_id"` and `unassigned_value="UNASSIGNED"`. You can also decide to run Cellpose via Sopa, and then use it as a prior: in that case, simply pass `prior_shapes_key="cellpose_boundaries"` after running cellpose.
+
+## How to optimize the segmentation parameters?
+
+Selecting the right parameters for Cellpose/Baysor can significantly improve the output data quality. To choose these parameters, we recommend subsetting the data (`spatialdata.bounding_box_query`), saving the subset (`sdata.write("subset.zarr")`), running different segmentation on the subset (use `key_added` to save the segmentation with a specific name), and compare the results. Refer to [this tutorial](../tutorials/compare_segmentations) for an example.
 
 ## How to provide dictionnaries to CLI arguments?
 
-Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../cli/#sopa-read) has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
+Some CLI arguments are optionnal dictionnaries. For instance, `sopa convert` has a `--kwargs` option. In that case, a dictionnary can be provided as an inline string, for instance:
 
 `--kwargs "{'backend': 'rioxarray'}"`
 
@@ -120,10 +186,22 @@ Some CLI arguments are optionnal dictionnaries. For instance, [`sopa read`](../c
 
 If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, the `rioxarray` will be used by default by the reader (no change needed, it will be detected automatically).
 
-## Can I use Nextflow instead of Snakemake?
+## What about Nextflow?
 
 Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).
 
-## I have another issue; how do I fix it?
+## How to remove the logs?
 
-Don't hesitate to open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible for the maintainers to be able to reproduce it.
+You can change the level of `logging` for sopa, e.g. you can run the lines below to set the logging level to show only errors:
+
+```python
+import sopa
+
+sopa.log.setLevel(sopa.logging.ERROR)
+```
+
+## How to ask for help?
+
+If you have an issue that is not detailed in this FAQ, you can still open an issue on [Sopa's Github repository](https://github.com/gustaveroussy/sopa/issues), and detail your issue with as much precision as possible for the maintainers to be able to reproduce it.
+
+Make sure to have a quick look to the existing issues, maybe someone faced the same problem.

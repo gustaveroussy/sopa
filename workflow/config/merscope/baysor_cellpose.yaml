@@ -33,7 +33,7 @@ segmentation:
         confidence_nn_id: 6
 
       segmentation:
-        scale: 6.25 # typical cell radius
+        scale: 6.25 # typical cell radius in microns
         scale_std: "25%" # cell radius standard deviation
         prior_segmentation_confidence: 1 # confidence of the cellpose confidence (float in [0, 1])
         estimate_scale_from_centers: false
@@ -59,6 +59,3 @@ explorer:
   gene_column: "gene"
   ram_threshold_gb: 4
   pixel_size: 0.108
-
-executables:
-  baysor: ~/.julia/bin/baysor # if you run baysor, put here the path to the baysor executable. Instead, you can also set the BAYSOR_EXECUTABLE_PATH environment variable (always used if existing).

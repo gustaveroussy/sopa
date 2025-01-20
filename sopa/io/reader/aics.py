@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from pathlib import Path
 
@@ -7,6 +5,7 @@ import xarray as xr
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 
+from ..._constants import SopaAttrs
 from .utils import _default_image_kwargs, _image_int_dtype
 
 log = logging.getLogger(__name__)
@@ -52,4 +51,4 @@ def aicsimageio(
 
     image = Image2DModel.parse(xarr, c_coords=xarr.coords["c"].values, **image_models_kwargs)
 
-    return SpatialData(images={"image": image})
+    return SpatialData(images={"image": image}, attrs={SopaAttrs.CELL_SEGMENTATION: "image"})
