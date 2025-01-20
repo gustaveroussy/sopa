@@ -31,7 +31,7 @@ segmentation:
       segmentation:
         scale: 3 # typical cell radius in microns
         scale_std: "25%" # cell radius standard deviation
-        prior_segmentation_confidence: 0
+        prior_segmentation_confidence: 1
         estimate_scale_from_centers: false
         n_clusters: 4
         iters: 500
