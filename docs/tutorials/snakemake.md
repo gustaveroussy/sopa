@@ -59,7 +59,7 @@ You can either execute the pipeline locally or on a high-performance-cluster (ch
 
 === "Slurm cluster"
 
-    To fully benefit from Slurm, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles); Sopa offers a default Slurm profile for you. Make sure you have `snakemake>=8.0.0`, and also install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) with `pip install snakemake-executor-plugin-slurm`.
+    To fully benefit from Slurm, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Sopa offers a [default Slurm profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/profile/slurm/config.yaml) for you. Make sure you have `snakemake>=8.0.0`, and also install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) with `pip install snakemake-executor-plugin-slurm`.
 
     Then, you can use the Slurm profile as shown below. Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
@@ -78,7 +78,7 @@ You can either execute the pipeline locally or on a high-performance-cluster (ch
     !!! warning
         The LSF profile is experimental. Don't hesitate to open an issue or a PR.
 
-    To fully benefit from LSF, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles); Sopa offers a default LSF profile for you, but **it is still experimental**. Make sure you have `snakemake>=8.0.0`, and also install the [LSF plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/lsf.html) with `pip install snakemake-executor-plugin-lsf`.
+    To fully benefit from LSF, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Sopa offers a [default LSF profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/profile/lsf/config.yaml) for you, but **it is still experimental**. Make sure you have `snakemake>=8.0.0`, and also install the [LSF plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/lsf.html) with `pip install snakemake-executor-plugin-lsf`.
 
     Then, you can use the LSF profile as shown below. Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
