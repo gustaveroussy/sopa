@@ -5,7 +5,7 @@ import numpy as np
 import tqdm
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from xarray import DataArray
+from xarray import DataArray, DataTree
 
 from .._constants import SopaAttrs, SopaKeys
 from ..utils import add_spatial_element, get_spatial_element
@@ -60,10 +60,7 @@ def compute_embeddings(
 
     from ._inference import Inference
 
-    image = get_spatial_element(
-        sdata.images,
-        key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION) or sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION),
-    )
+    image = _get_image_for_inference(sdata, image_key)
 
     infer = Inference(image, model, patch_width, level, magnification, device)
     patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap)
@@ -90,3 +87,17 @@ def compute_embeddings(
     add_spatial_element(sdata, key_added, output_image)
 
     patches.add_shapes(key_added=SopaKeys.EMBEDDINGS_PATCHES)
+
+
+def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:
+    if image_key is not None:
+        return get_spatial_element(sdata.images, key=image_key)
+
+    cell_image = sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION)
+    tissue_image = sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION)
+
+    assert (
+        cell_image is None or tissue_image is None or cell_image == tissue_image
+    ), "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+
+    return get_spatial_element(sdata.images, key=cell_image or tissue_image)
