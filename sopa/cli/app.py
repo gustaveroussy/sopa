@@ -38,7 +38,7 @@ app.add_typer(
 
 @app.command()
 def read(data_path: str = typer.Argument(), technology: str = typer.Option()):
-    """Deprecated. Use `sopa convert` instead."""
+    """Deprecated and will be removed in sopa==2.1.0. Use `sopa convert` instead."""
     raise NameError("`sopa read` is deprecated. Use `sopa convert` instead.")
 
 
@@ -188,11 +188,15 @@ def aggregate(
     sdata = read_zarr_standardized(sdata_path)
 
     if gene_column is not None:
-        log.warning("The `gene_column` argument is deprecated. Use `aggregate_genes` instead.")
+        log.warning(
+            "The `gene_column` argument is deprecated and will be removed in sopa==2.1.0. Use `aggregate_genes` instead."
+        )
         aggregate_genes = True
 
     if average_intensities:
-        log.warning("The `average_intensities` argument is deprecated. Use `aggregate_channels` instead.")
+        log.warning(
+            "The `average_intensities` argument is deprecated and will be removed in sopa==2.1.0. Use `aggregate_channels` instead."
+        )
         aggregate_channels = True
 
     sopa.aggregate(

@@ -204,7 +204,7 @@ def hsv_otsu(
     drop_threshold: float = 0.01,
 ):
     log.warning(
-        "The hsv_otsu function is deprecated and will be removed in 2025. Use `sopa.segmentation.tissue` instead."
+        "The hsv_otsu function is deprecated and will be removed in sopa==2.1.0. Use `sopa.segmentation.tissue` instead."
     )
     tissue(
         sdata,

@@ -76,7 +76,9 @@ def add_explorer_selection(
         pixel_size: Number of microns in a pixel. It must be the same value as the one used in `sopa.io.write`
     """
     if shapes_key is not None:
-        log.warning("The `shapes_key` argument is deprecated. Use `key_added` instead.")
+        log.warning(
+            "The `shapes_key` argument is deprecated and will be removed in sopa==2.1.0. Use `key_added` instead."
+        )
         key_added = shapes_key
 
     polys = xenium_explorer_selection(path, pixel_size=pixel_size, return_list=True)

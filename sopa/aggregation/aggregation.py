@@ -132,7 +132,7 @@ class Aggregator:
             self.table = self.table[~where_filter]
 
     def update_table(self, *args, **kwargs):
-        log.warning("'update_table' is deprecated and will be removed in future versions, use 'compute_table' instead")
+        log.warning("'update_table' is deprecated and will be removed in sopa==2.1.0, use 'compute_table' instead")
         self.compute_table(*args, **kwargs)
 
     def compute_table(
@@ -224,7 +224,7 @@ class Aggregator:
     ) -> tuple[bool, bool]:
         if points_key is not None:
             log.warning(
-                "`points_key` in `compute_table` is deprecated and will be removed in future versions, provide it in the constructor instead"
+                "`points_key` in `compute_table` is deprecated and will be removed in sopa==2.1.0, provide it in the constructor instead"
             )
             self.points_key = points_key
 
@@ -238,7 +238,7 @@ class Aggregator:
 
         if average_intensities is not None:
             log.warning(
-                "`average_intensities` is deprecated and will be removed in future versions, use `aggregate_channels` instead"
+                "`average_intensities` is deprecated and will be removed in sopa==2.1.0, use `aggregate_channels` instead"
             )
             return aggregate_genes, average_intensities
 

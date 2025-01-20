@@ -250,7 +250,7 @@ def _he_image(length: int) -> np.ndarray:
 
 
 def uniform(*_, **kwargs):
-    log.warning("The `uniform` function is deprecated, use `toy_dataset` instead")
+    log.warning("The `uniform` function is deprecated and will be removed in sopa==2.1.0, use `toy_dataset` instead")
     return toy_dataset(**kwargs)
 
 
