@@ -10,3 +10,5 @@
 ::: sopa.aggregation.count_transcripts
 
 ::: sopa.aggregation.aggregate_bins
+
+::: sopa.overlay_segmentation

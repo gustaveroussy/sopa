@@ -9,6 +9,8 @@ The readers below are used to read your raw spatial data into a `SpatialData` ob
 
 ::: sopa.io.merscope
 
+::: sopa.io.visium_hd
+
 ::: sopa.io.cosmx
 
 ::: sopa.io.macsima

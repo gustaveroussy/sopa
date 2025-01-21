@@ -25,6 +25,7 @@ def visium_hd(
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
         var_names_make_unique: If True, ensure that the var names are unique.
+        kwargs: Additional keyword arguments passed to `spatialdata_io.visium_hd`.
 
     Returns:
         A `SpatialData` object representing the Xenium experiment
