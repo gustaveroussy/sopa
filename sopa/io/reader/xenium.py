@@ -16,6 +16,10 @@ def xenium(
     imread_kwargs: dict | None = None,
     cells_boundaries: int = False,
     cells_table: int = False,
+    nucleus_labels: int = False,
+    cells_labels: int = False,
+    cells_as_circles: int = False,
+    nucleus_boundaries: int = False,
     **kwargs: int,
 ) -> SpatialData:
     """Read Xenium data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.xenium.html).
@@ -30,6 +34,13 @@ def xenium(
         path: Path to the Xenium directory containing all the experiment files
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
+        cells_boundaries: Whether to read cell boundaries
+        cells_table: Whether to read cell table
+        nucleus_labels: Whether to read nucleus labels
+        cells_labels: Whether to read cell labels
+        cells_as_circles: Whether to read cells as circles
+        nucleus_boundaries: Whether to read nucleus boundaries
+        kwargs: Additional keyword arguments passed to `spatialdata_io.xenium
 
     Returns:
         A `SpatialData` object representing the Xenium experiment
@@ -41,10 +52,10 @@ def xenium(
     sdata: SpatialData = xenium_spatialdata_io(
         path,
         cells_table=cells_table,
-        nucleus_labels=False,
-        cells_labels=False,
-        cells_as_circles=False,
-        nucleus_boundaries=False,
+        nucleus_labels=nucleus_labels,
+        cells_labels=cells_labels,
+        cells_as_circles=cells_as_circles,
+        nucleus_boundaries=nucleus_boundaries,
         cells_boundaries=cells_boundaries,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
