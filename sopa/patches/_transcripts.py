@@ -4,8 +4,10 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from dask.diagnostics import ProgressBar
+from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData
 
 from .._constants import SopaFiles, SopaKeys
@@ -167,7 +169,7 @@ def _check_min_lines(path: str, n: int) -> bool:
 
 
 def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.Series:
-    if series.dtype == "string":
+    if is_string_dtype(series):
         series = series.astype("category")
         series = series.cat.as_known()
 
@@ -178,8 +180,12 @@ def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.S
 
         series = series.cat.reorder_categories(categories)
         return series.cat.codes
+    try:
+        is_integer_dtype = np.issubdtype(series.dtype, np.integer)
+    except:
+        is_integer_dtype = False
 
-    if series.dtype == "int":
+    if is_integer_dtype:
         if unassigned_value is None or unassigned_value == 0:
             return series
         return series.replace(int(unassigned_value), 0)
