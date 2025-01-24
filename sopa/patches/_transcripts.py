@@ -142,6 +142,8 @@ class OnDiskTranscriptPatches(Patches2D):
             log.info(f"Patch {index} is out for segmentation (less than {self.min_points_per_patch} transcripts).")
 
     def query_points_partition(self, patches_gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:
+        if SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY in df.columns:
+            df = df[~df[SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY]]
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
         self.write_points(patches_gdf, points_gdf, mode="a")
 

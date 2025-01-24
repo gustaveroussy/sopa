@@ -42,6 +42,9 @@ class SopaKeys:
     GEOMETRY_ROUNDNESS = "roundness"
     GEOMETRY_COUNT = "n_components"
 
+    # Misc keys
+    LOW_QUALITY_TRANSCRIPT_KEY = "low_quality_transcript"
+
 
 class SopaAttrs:
     CELL_SEGMENTATION = "cell_segmentation_image"
