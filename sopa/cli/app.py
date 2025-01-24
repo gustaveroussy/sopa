@@ -215,6 +215,9 @@ def aggregate(
 def report(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     path: str = typer.Argument(help="Path to the HTML report"),
+    table_key: str = typer.Option(
+        "table", help="Key of the table in the `SpatialData` object to be used for the report"
+    ),
 ):
     """Create a HTML report of the pipeline run and some quality controls"""
     from sopa.io.report import write_report
@@ -222,4 +225,4 @@ def report(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    write_report(path, sdata)
+    write_report(path, sdata, table_key=table_key)
