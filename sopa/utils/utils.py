@@ -23,7 +23,11 @@ log = logging.getLogger(__name__)
 
 
 def get_boundaries(
-    sdata: SpatialData, return_key: bool = False, warn: bool = False, key: str | None = None
+    sdata: SpatialData,
+    return_key: bool = False,
+    warn: bool = False,
+    key: str | None = None,
+    table_key: str | None = None,
 ) -> gpd.GeoDataFrame | tuple[str, gpd.GeoDataFrame] | None:
     """Gets cell segmentation boundaries of a SpatialData object after running Sopa.
 
@@ -32,10 +36,18 @@ def get_boundaries(
         return_key: Whether to return the key of the shapes or not.
         warn: If `True`, prints a warning if no boundary is found. Else, raises an error.
         key: A valid `shapes_key` or None.
+        table_key: Name of the table used to find the corresponding boundaries.
 
     Returns:
         A `GeoDataFrame` containing the boundaries, or a tuple `(shapes_key, geo_df)`
     """
+    assert key is None or table_key is None, "Provide only one of `key` or `table_key`"
+
+    if table_key is not None:
+        key = sdata.tables[table_key].uns[ATTRS_KEY]["region"]
+        assert isinstance(key, str)
+        return get_spatial_element(sdata.shapes, key=key, return_key=return_key)
+
     key = key or sdata.attrs.get(SopaAttrs.BOUNDARIES)
 
     if key is not None:

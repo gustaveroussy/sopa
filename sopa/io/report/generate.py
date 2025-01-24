@@ -23,7 +23,7 @@ from .engine import (
 log = logging.getLogger(__name__)
 
 
-def write_report(path: str, sdata: SpatialData):
+def write_report(path: str, sdata: SpatialData, table_key: str = SopaKeys.TABLE):
     """Create a HTML report (or web report) after running Sopa.
 
     Note:
@@ -32,11 +32,12 @@ def write_report(path: str, sdata: SpatialData):
     Args:
         path: Path to the `.html` report that has to be created
         sdata: A `SpatialData` object, after running Sopa
+        table_key: Key of the table in the `SpatialData` object to be used for the report
     """
     with warnings.catch_warnings():
         warnings.simplefilter(action="ignore", category=FutureWarning)
 
-        sections = SectionBuilder(sdata).compute_sections()
+        sections = SectionBuilder(sdata, table_key).compute_sections()
 
         log.info(f"Writing report to {path}")
         Root(sections).write(path)
@@ -57,9 +58,14 @@ class SectionBuilder:
         "representation_section",
     ]
 
-    def __init__(self, sdata: SpatialData):
+    def __init__(self, sdata: SpatialData, table_key: str):
         self.sdata = sdata
-        self.adata = self.sdata.tables.get(SopaKeys.TABLE)
+        self.table_key = table_key
+
+        if table_key not in self.sdata.tables.keys():
+            log.warning(f"Table key '{table_key}' not found in the SpatialData object")
+
+        self.adata = self.sdata.tables.get(table_key)
 
     def _table_has(self, key, default=False):
         if SopaKeys.UNS_KEY not in self.adata.uns:
@@ -83,7 +89,7 @@ class SectionBuilder:
         )
 
     def cell_section(self):
-        shapes_key, _ = get_boundaries(self.sdata, return_key=True)
+        shapes_key, _ = get_boundaries(self.sdata, return_key=True, table_key=self.table_key)
 
         fig = plt.figure()
         _kdeplot_vmax_quantile(self.adata.obs[SopaKeys.AREA_OBS])

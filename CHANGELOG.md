@@ -1,3 +1,12 @@
+## [2.0.1] - xxxx-xx-xx
+
+### Fixed
+- Safer check dataframe series is of integer dtype (#179)
+
+### Added
+- Possibility to choose the table name for the report (#183)
+- Can set all `spatialdata_io.xenium` arguments in `sopa.io.xenium`
+
 ## [2.0.0] - 2025-01-20
 
 This version introduces many new API features but also some breaking changes; check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
