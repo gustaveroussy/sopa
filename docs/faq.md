@@ -122,13 +122,24 @@ As a guide, you can start from the parameters of the [config files](https://gith
 
 Here are some parameters which are important to check: `diameter` (in pixels for cellpose), `min_area` (in pixels^2 for cellpose, in microns^2 for baysor), `scale` (in microns for baysor), `pixel_size` (for the Xenium Explorer conversion, to have the right scale during display).
 
+## How to filter genes?
+
+By default, we remove some genes names during segmentation and aggregation (for instance, `"blank"` or `"unassigned"` gene names). To change this behavior, you can update the gene pattern under `sopa.settings.gene_exclude_pattern` (this pattern is used by [`pandas.Series.str.match`](https://pandas.pydata.org/docs/reference/api/pandas.Series.str.match.html)).
+
+You can also decide not to remove some specific low quality transcripts for segmenation. To do that, create a (boolean) column called `"low_quality_transcript"` to your transcript dataframe. The rows whose value is `True` will not be used during segmentation. For instance, if you have Xenium data, you can filter the genes based on a QV value of 20.
+
+```python
+df = sdata["transcripts"]
+df["low_quality_transcript"] = df.qv < 20
+```
+
 ## How does Sopa know when using which elements?
 
 Many functions of Sopa can run without any argument. For instance, `sopa.aggregate(sdata)` works for very different technologies, such as VisiumHD, MERSCOPE, or MACSima data.
 
 Internally, when reading the raw data, Sopa saves some attributes inside `sdata.attrs`. These attributes are then used to know which spatial element corresponds to what. For instance, one H&E image may be tagged for tissue segmentation, while the DAPI image will be tagged to be used for cellpose.
 
-Sopa handles this internally by default, and it is completely invisible to the user. But, to get a full control on what is done, you can always set some arguments to specify which element to be used. You can refer to the following arguments of the API: `image_key`, `points_key`, `shapes_key`, `bins_key`.
+Sopa handles this internally by default, and it is completely invisible to the user. But, to get a full control on what is done, you can always set some arguments to specify which element to be used. You can refer to the following arguments of the API: `image_key`, `points_key`, `shapes_key`, `bins_key`, and `table_key`.
 
 ## How to remove cells artifacts?
 

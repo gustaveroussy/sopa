@@ -36,6 +36,14 @@ Otherwise, if you don't use the API, you can also set the `SOPA_PARALLELIZATION_
 export SOPA_PARALLELIZATION_BACKEND=dask
 ```
 
+### Gene filtering
+
+Use `sopa.settings.gene_exclude_pattern` to filter out gene names during segmentation and aggregation. By default, we use the variable below:
+```python
+sopa.settings.gene_exclude_pattern: str | None = "negcontrol.*|blank.*|antisense.*|unassigned.*|deprecated.*|intergenic.*"
+```
+Use `sopa.settings.gene_exclude_pattern = None` to keep all genes.
+
 ## Xenium Explorer
 
 ::: sopa.io.explorer.write
