@@ -100,13 +100,7 @@ class BaysorPatch:
         import subprocess
 
         result = subprocess.run(
-            f"""
-            cd {patch_dir}
-            {self.baysor_command}
-            """,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            self.baysor_command.split(), cwd=patch_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
         if result.returncode != 0:
