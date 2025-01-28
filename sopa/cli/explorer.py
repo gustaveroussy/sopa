@@ -13,6 +13,10 @@ def write(
         help="Path to a directory where Xenium Explorer's outputs will be saved. By default, writes to the same path as `sdata_path` but with the `.explorer` suffix",
     ),
     gene_column: str = typer.Option(None, help="Column name of the points dataframe containing the gene names"),
+    table_key: str = typer.Option(
+        None,
+        help="Sdata key for the table. By default, uses 'table'.",
+    ),
     shapes_key: str = typer.Option(
         None,
         help="Sdata key for the boundaries. By default, uses the baysor boundaires, else the cellpose boundaries",
@@ -56,6 +60,7 @@ def write(
         output_path,
         sdata,
         shapes_key=shapes_key,
+        table_key=table_key,
         gene_column=gene_column,
         pixel_size=pixel_size,
         lazy=lazy,
