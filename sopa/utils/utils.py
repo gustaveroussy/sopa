@@ -134,11 +134,19 @@ def get_feature_key(points: dd.DataFrame, raise_error: bool = False) -> str:
     return feature_key
 
 
-def get_intensities(sdata: SpatialData) -> pd.DataFrame | None:
-    """Gets the intensity dataframe of shape `n_obs x n_channels`"""
-    assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
+def get_intensities(sdata: SpatialData, table_key: str = SopaKeys.TABLE) -> pd.DataFrame | None:
+    """Gets the intensity dataframe of shape `n_obs x n_channels`
 
-    adata = sdata.tables[SopaKeys.TABLE]
+    Args:
+        sdata: A `SpatialData` object.
+        table_key: Key of `sdata` containing to table from which intensities will be extracted.
+
+    Returns:
+        A pandas DataFrame containing the intensities, or `None` if no intensities are found.
+    """
+    assert table_key in sdata.tables, f"No '{table_key}' found in sdata.tables"
+
+    adata = sdata.tables[table_key]
 
     if not adata.uns[SopaKeys.UNS_KEY][SopaKeys.UNS_HAS_INTENSITIES]:
         return None

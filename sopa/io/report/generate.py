@@ -127,7 +127,7 @@ class SectionBuilder:
         if self._table_has(SopaKeys.UNS_HAS_INTENSITIES):
             fig = plt.figure()
 
-            df_intensities = get_intensities(self.sdata)
+            df_intensities = get_intensities(self.sdata, self.table_key)
             threshold = np.quantile(df_intensities.values.ravel(), 0.95)
 
             for channel, intensities in df_intensities.items():

@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import geopandas as gpd
+from anndata import AnnData
 from shapely import Polygon
 from spatialdata import SpatialData
 
@@ -49,6 +50,7 @@ def _should_save(mode: str | None, character: str):
 def write(
     path: str,
     sdata: SpatialData,
+    table_key: str = SopaKeys.TABLE,
     image_key: str | None = None,
     shapes_key: str | None = None,
     points_key: str | None = None,
@@ -89,9 +91,10 @@ def write(
     Args:
         path: Path to the directory where files will be saved.
         sdata: SpatialData object.
-        image_key: Name of the image of interest (key of `sdata.images`).
-        shapes_key: Name of the cell shapes (key of `sdata.shapes`).
-        points_key: Name of the transcripts (key of `sdata.points`).
+        table_key: Name of the table containing the gene counts or intensities (key of `sdata.tables`). By default, uses `sdata["table"]`.
+        image_key: Name of the image of interest (key of `sdata.images`). By default, it will be inferred.
+        shapes_key: Name of the cell shapes (key of `sdata.shapes`). By default, it will be inferred from the table.
+        points_key: Name of the transcripts (key of `sdata.points`). By default, it will be inferred.
         gene_column: Column name of the points dataframe containing the gene names.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
         layer: Layer of the AnnData table where the gene counts are saved. If `None`, uses `table.X`.
@@ -107,12 +110,15 @@ def write(
 
     image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
 
-    ### Saving cell categories and gene counts
-    if SopaKeys.TABLE in sdata.tables:
-        adata = sdata.tables[SopaKeys.TABLE]
+    ### Saving table / cell categories / gene counts
+    if table_key in sdata.tables:
+        adata: AnnData = sdata.tables[table_key]
 
-        shapes_key = adata.uns[ATTRS_KEY]["region"]
-        shapes_key = shapes_key[0] if isinstance(shapes_key, list) else shapes_key
+        _shapes_key = adata.uns[ATTRS_KEY]["region"]
+        assert (
+            shapes_key is None or _shapes_key == shapes_key
+        ), f"Got {shapes_key=}, while the table corresponds to the shapes {_shapes_key}"
+        shapes_key = _shapes_key[0] if isinstance(_shapes_key, list) else _shapes_key
 
         geo_df = sdata[shapes_key]
 
@@ -120,6 +126,8 @@ def write(
             write_gene_counts(path, adata, layer=layer)
         if _should_save(mode, "o"):
             write_cell_categories(path, adata)
+        if save_h5ad:
+            adata.write_h5ad(path / FileNames.H5AD)
 
     ### Saving cell boundaries
     if shapes_key is None:
@@ -130,7 +138,7 @@ def write(
     if _should_save(mode, "b") and geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image_key)
 
-        if SopaKeys.TABLE in sdata.tables:
+        if table_key in sdata.tables:
             geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
 
         assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), "All geometries must be a `shapely.Polygon`"
@@ -162,18 +170,15 @@ def write(
 
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
-        write_metadata(path, run_name or image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
-
-    if save_h5ad and SopaKeys.TABLE in sdata.tables:
-        sdata.tables[SopaKeys.TABLE].write_h5ad(path / FileNames.H5AD)
+        write_metadata(path, run_name or image_key, shapes_key, _get_n_obs(sdata, geo_df, table_key), pixel_size)
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
 
 
-def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
-    if SopaKeys.TABLE in sdata.tables:
-        return sdata.tables[SopaKeys.TABLE].n_obs
+def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> int:
+    if table_key in sdata.tables:
+        return sdata.tables[table_key].n_obs
     return len(geo_df) if geo_df is not None else 0
 
 
