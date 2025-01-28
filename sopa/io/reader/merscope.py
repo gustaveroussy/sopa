@@ -73,6 +73,4 @@ def merscope(
         if key.endswith("_transcripts"):
             sdata.attrs[SopaAttrs.TRANSCRIPTS] = key
 
-    sdata.attrs[SopaAttrs.GENE_EXCLUDE_PATTERN] = "blank"
-
     return sdata

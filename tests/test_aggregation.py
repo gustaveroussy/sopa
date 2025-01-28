@@ -52,9 +52,9 @@ def test_aggregate_channels_aligned():
 def test_count_transcripts():
     df_pandas = pd.DataFrame(
         {
-            "x": [1, 2, 3, 7, 11, 1, 2, 2],
-            "y": [1, 1, 2, 8, 0, 2, 3, 3],
-            "gene": ["a", "a", "b", "c", "a", "c", "b", "b"],
+            "x": [1, 2, 3, 7, 11, 1, 2, 2, 1],
+            "y": [1, 1, 2, 8, 0, 2, 3, 3, 1],
+            "gene": ["a", "a", "b", "c", "a", "c", "b", "b", "blank"],
         }
     )
     df_pandas["gene"] = df_pandas["gene"].astype(object)

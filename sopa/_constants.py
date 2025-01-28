@@ -52,7 +52,6 @@ class SopaAttrs:
     BINS_TABLE = "bins_table"
     TRANSCRIPTS = "transcripts_dataframe"
     BOUNDARIES = "boundaries_shapes"
-    GENE_EXCLUDE_PATTERN = "gene_exclude_pattern"  # usage: columns.str.match(pattern, case=False)
     UID = "sopa_uid"
 
 

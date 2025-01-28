@@ -4,6 +4,7 @@
 - Safer check dataframe series is of integer dtype (#179)
 
 ### Added
+- Aggregation and segmentation now excludes non-interesting gene names (e.g., "blank", "unassigned", ...) (#144)
 - Can filter low-quality transcript for transcript-based segmentation (#79)
 - Possibility to choose the table name for the report (#183)
 - Possibility to choose the table name for `sopa.io.explorer.write` (#183)

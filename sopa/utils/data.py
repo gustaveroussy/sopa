@@ -134,6 +134,7 @@ def toy_dataset(
     gene_names = gene_names.astype(object)
     if add_nan_gene_name:
         gene_names[3] = np.nan  # Add a nan value for tests
+        gene_names[4] = "blank"  # Add a blank value for tests
 
     df = pd.DataFrame(
         {

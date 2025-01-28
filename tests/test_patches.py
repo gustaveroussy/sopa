@@ -1,8 +1,9 @@
+import pandas as pd
 import pytest
 from spatialdata import SpatialData
 
 import sopa
-from sopa._constants import SopaKeys
+from sopa._constants import SopaFiles, SopaKeys
 
 
 @pytest.fixture
@@ -96,3 +97,29 @@ def test_patches_inference_clustering():
     sopa.patches.cluster_embeddings(sdata, "dummy_embeddings")
 
     assert "cluster" in sdata["embeddings_patches"].columns
+
+
+def test_gene_exlude_pattern():
+    _default_gene_exclude_pattern = sopa.settings.gene_exclude_pattern
+
+    sdata = sopa.io.toy_dataset(add_nan_gene_name=True, length=1000)
+
+    sopa.make_transcript_patches(sdata)
+
+    df = pd.read_csv(
+        sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE
+    )
+
+    assert len(df) == len(sdata["transcripts"]) - 1
+
+    sopa.settings.gene_exclude_pattern = None
+
+    sopa.make_transcript_patches(sdata)
+
+    df = pd.read_csv(
+        sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE
+    )
+
+    assert len(df) == len(sdata["transcripts"])
+
+    sopa.settings.gene_exclude_pattern = _default_gene_exclude_pattern

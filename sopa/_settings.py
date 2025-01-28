@@ -19,6 +19,9 @@ class Settings:
     available_parallelization_backends = [None, "dask"]
     dask_client_kwargs: dict = {}
 
+    ### Segmentation or aggregation
+    gene_exclude_pattern: str | None = "negcontrol.*|blank.*|antisense.*|unassigned.*|deprecated.*|intergenic.*"
+
     def __init__(self):
         self.parallelization_backend = os.environ.get("SOPA_PARALLELIZATION_BACKEND", None)
 

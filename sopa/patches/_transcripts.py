@@ -10,9 +10,10 @@ from dask.diagnostics import ProgressBar
 from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData
 
+from .. import settings
 from .._constants import SopaFiles, SopaKeys
 from ..spatial import assign_transcript_to_cell
-from ..utils import add_spatial_element, get_cache_dir, to_intrinsic
+from ..utils import add_spatial_element, get_cache_dir, get_feature_key, to_intrinsic
 from ._patches import Patches2D
 
 log = logging.getLogger(__name__)
@@ -36,7 +37,11 @@ class OnDiskTranscriptPatches(Patches2D):
         super().__init__(sdata, points_key, patch_width, patch_overlap)
 
         self.points_key = points_key
-        self.points = sdata[points_key]
+        self.points: dd.DataFrame = sdata.points[points_key]
+
+        assert isinstance(
+            self.points, dd.DataFrame
+        ), "Points should be a dask DataFrame. Please report this issue on Sopa's Github repository."
 
         self.prior_shapes_key = prior_shapes_key
         self.unassigned_value = unassigned_value
@@ -59,11 +64,11 @@ class OnDiskTranscriptPatches(Patches2D):
             centroids = self.get_prior_centroids()
             self.write_points(patches_geo_df, centroids, csv_name=self.centroids_csv_name)
 
-        if isinstance(self.points, dd.DataFrame):
-            with ProgressBar():
-                self.points.map_partitions(partial(self.query_points_partition, patches_geo_df), meta=()).compute()
-        else:
-            self.write_points(patches_geo_df, self.points)
+        gene_column = get_feature_key(self.points)
+        with ProgressBar():
+            self.points.map_partitions(
+                partial(self.query_points_partition, patches_geo_df, gene_column=gene_column), meta=()
+            ).compute()
 
     def assign_prior_segmentation(self) -> None:
         if self.prior_shapes_key is None:
@@ -85,6 +90,8 @@ class OnDiskTranscriptPatches(Patches2D):
         self.points[self.prior_shapes_key] = _assign_prior(self.points[self.prior_shapes_key], self.unassigned_value)
 
     def get_prior_centroids(self) -> gpd.GeoDataFrame:
+        assert self.prior_shapes_key is not None, "Prior shapes key is required to write cell centroids"
+
         centroids = to_intrinsic(self.sdata, self.prior_shapes_key, self.points).geometry.centroid
 
         return gpd.GeoDataFrame(
@@ -124,8 +131,7 @@ class OnDiskTranscriptPatches(Patches2D):
             patch_path.parent.mkdir(parents=True, exist_ok=True)
             if patch_path.exists():
                 patch_path.unlink()
-            if isinstance(self.points, dd.DataFrame):
-                pd.DataFrame(columns=self.points.columns).to_csv(patch_path, index=False)
+            pd.DataFrame(columns=self.points.columns).to_csv(patch_path, index=False)
 
     def valid_indices(self):
         for index in range(len(self)):
@@ -141,9 +147,13 @@ class OnDiskTranscriptPatches(Patches2D):
 
             log.info(f"Patch {index} is out for segmentation (less than {self.min_points_per_patch} transcripts).")
 
-    def query_points_partition(self, patches_gdf: gpd.GeoDataFrame, df: pd.DataFrame) -> pd.DataFrame:
+    def query_points_partition(
+        self, patches_gdf: gpd.GeoDataFrame, df: pd.DataFrame, gene_column: str | None = None
+    ) -> pd.DataFrame:
         if SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY in df.columns:
             df = df[~df[SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY]]
+        if gene_column is not None and settings.gene_exclude_pattern is not None:
+            df = df[~df[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=False)]
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
         self.write_points(patches_gdf, points_gdf, mode="a")
 

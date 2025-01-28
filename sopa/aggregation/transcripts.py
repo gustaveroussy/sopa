@@ -10,6 +10,7 @@ from dask.diagnostics import ProgressBar
 from scipy.sparse import coo_matrix
 from spatialdata import SpatialData
 
+from .. import settings
 from .._constants import SopaAttrs
 from ..utils import get_boundaries, get_feature_key, get_spatial_element, to_intrinsic
 
@@ -81,6 +82,10 @@ def _count_transcripts_aligned(geo_df: gpd.GeoDataFrame, points: dd.DataFrame, v
         adata.X += X_partition
 
     adata.X = adata.X.tocsr()
+
+    if settings.gene_exclude_pattern is not None:
+        adata = adata[:, ~adata.var_names.str.match(settings.gene_exclude_pattern, case=False, na=False)].copy()
+
     return adata
 
 
@@ -91,6 +96,9 @@ def _add_coo(
     gene_column: str,
     gene_names: list[str],
 ) -> None:
+    if settings.gene_exclude_pattern is not None:
+        partition = partition[~partition[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=False)]
+
     points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
     joined = geo_df.sjoin(points_gdf)
     cells_indices, column_indices = joined.index, joined[gene_column].cat.codes
