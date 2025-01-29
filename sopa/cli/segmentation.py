@@ -1,5 +1,7 @@
 import ast
+import sys
 from typing import Iterable
+from subprocess import CalledProcessError
 
 import typer
 
@@ -245,7 +247,10 @@ def baysor(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
+    try:
+        baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
+    except CalledProcessError as e:
+        sys.exit(e.returncode)
 
     _log_whether_to_resolve(patch_index)
 

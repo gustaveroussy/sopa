@@ -1,6 +1,10 @@
 import logging
+import subprocess
+import sys
 import warnings
 from pathlib import Path
+from threading import Thread
+from queue import Queue
 
 import dask.dataframe as dd
 import geopandas as gpd
@@ -364,3 +368,50 @@ def delete_transcripts_patches_dirs(sdata: SpatialData):
 
     for patch_dir in get_transcripts_patches_dirs(sdata):
         shutil.rmtree(patch_dir)
+
+
+def connect_streams(stream, output_stream):
+    """
+    Forward output of one stream to another
+
+    Args:
+        stream: input stream
+        output_stream: output stream
+    """
+    for line in iter(stream.readline, b''):
+        output_stream.buffer.write(line)
+        output_stream.buffer.flush()
+    stream.close()
+
+
+def run_process_with_streaming_output(command: list[str] | str, **popen_kwargs):
+    """
+
+    Args:
+        command: A string, or a sequence of program arguments.
+        popen_kwargs: Additional arguments for the Popen constructor
+
+    Returns: An awaited subprocess.Popen object
+
+    """
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=False,
+        **popen_kwargs
+    )
+
+    stdout_thread = Thread(target=connect_streams, args=(process.stdout, sys.stdout))
+    stderr_thread = Thread(target=connect_streams, args=(process.stderr, sys.stderr))
+    stdout_thread.daemon = True
+    stderr_thread.daemon = True
+    stdout_thread.start()
+    stderr_thread.start()
+
+    process.wait()
+
+    stdout_thread.join()
+    stderr_thread.join()
+
+    return process
