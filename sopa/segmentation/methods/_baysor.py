@@ -1,6 +1,9 @@
 import logging
 from functools import partial
 from pathlib import Path
+from subprocess import CalledProcessError
+from threading import Thread
+from queue import Queue
 
 from spatialdata import SpatialData
 
@@ -11,6 +14,7 @@ from ...utils import (
     get_feature_key,
     get_transcripts_patches_dirs,
 )
+from ...utils.utils import run_process_with_streaming_output
 from .._transcripts import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
@@ -97,10 +101,9 @@ class BaysorPatch:
 
         _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, self.config)
 
-        import subprocess
-
-        result = subprocess.run(
-            self.baysor_command.split(), cwd=patch_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        result = run_process_with_streaming_output(
+            self.baysor_command.split(),
+            cwd=patch_dir
         )
 
         if result.returncode != 0:
@@ -108,7 +111,12 @@ class BaysorPatch:
             if self.force:
                 log.warning(message)
                 return
-            raise RuntimeError(f"{message}:\n{result.stderr.decode()}")
+            raise CalledProcessError(
+                returncode=result.returncode,
+                cmd=self.baysor_command.split(),
+                output=result.stdout,
+                stderr=result.stderr,
+            )
 
 
 def _get_baysor_command(prior_shapes_key: str | None) -> str:
