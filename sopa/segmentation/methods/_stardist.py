@@ -77,6 +77,7 @@ def stardist_patch(
     model_type: str,
     prob_thresh: float,
     nms_thresh: float,
+    channels: list[str],
     **stardist_eval_kwargs: int,
 ) -> Callable:
     try:
