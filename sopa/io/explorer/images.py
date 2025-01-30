@@ -1,20 +1,21 @@
-from __future__ import annotations
-
 import logging
 import re
 from math import ceil
 
 import numpy as np
 import tifffile as tf
-import xarray as xr
-from multiscale_spatial_image import MultiscaleSpatialImage, to_multiscale
-from spatial_image import SpatialImage
+from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
-from spatialdata.transformations import Affine, set_transformation
+from spatialdata.transformations import (
+    Affine,
+    Sequence,
+    get_transformation,
+    set_transformation,
+)
 from tqdm import tqdm
+from xarray import DataArray, DataTree
 
-from ..._sdata import get_intrinsic_cs, get_spatial_image, save_image
-from ...utils.image import resize_numpy, scale_dtype
+from ...utils import add_spatial_element, get_spatial_image, resize_numpy, scale_dtype
 from ._constants import ExplorerConstants, FileNames, image_metadata
 from .utils import explorer_file_path
 
@@ -29,10 +30,8 @@ class MultiscaleImageWriter:
     resolutionunit = "CENTIMETER"
     dtype = np.uint8
 
-    def __init__(self, image: SpatialImage, n_subscales: int, tile_width: int, pixel_size: float):
-        self.image: MultiscaleSpatialImage = to_multiscale(
-            image, [2] * n_subscales, chunks=(1, TILE_SIZE, TILE_SIZE)
-        )
+    def __init__(self, image: DataTree, tile_width: int, pixel_size: float):
+        self.image = image
         self.tile_width = tile_width
         self.pixel_size = pixel_size
 
@@ -45,10 +44,10 @@ class MultiscaleImageWriter:
         self.lazy = True
         self.ram_threshold_gb = None
 
-    def _n_tiles_axis(self, xarr: xr.DataArray, axis: int) -> int:
+    def _n_tiles_axis(self, xarr: DataArray, axis: int) -> int:
         return ceil(xarr.shape[axis] / self.tile_width)
 
-    def _get_tiles(self, xarr: xr.DataArray):
+    def _get_tiles(self, xarr: DataArray):
         for c in range(xarr.shape[0]):
             for index_y in range(self._n_tiles_axis(xarr, 1)):
                 for index_x in range(self._n_tiles_axis(xarr, 2)):
@@ -75,7 +74,7 @@ class MultiscaleImageWriter:
         return scale_dtype(array, self.dtype)
 
     def _write_image_level(self, tif: tf.TiffWriter, scale_index: int, **kwargs):
-        xarr: xr.DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
+        xarr: DataArray = next(iter(self.image[self.scale_names[scale_index]].values()))
         resolution = 1e4 * 2**scale_index / self.pixel_size
 
         if not self._should_load_memory(xarr.shape, xarr.dtype):
@@ -143,9 +142,7 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     But some channels colors are set to white by default. This functions allows to color these
     channels with an available wavelength color (e.g., `550`).
     """
-    existing_wavelength = [
-        bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", c)) for c in channel_names
-    ]
+    existing_wavelength = [bool(re.search(r"(?<![0-9])[0-9]{3}(?![0-9])", c)) for c in channel_names]
     valid_colors = [c for c in ExplorerConstants.COLORS if c != ExplorerConstants.NUCLEUS_COLOR]
     n_missing = sum(
         not is_wavelength and c not in ExplorerConstants.KNOWN_CHANNELS
@@ -154,14 +151,24 @@ def _set_colors(channel_names: list[str]) -> list[str]:
     colors_iterator: list = np.repeat(valid_colors, ceil(n_missing / len(valid_colors))).tolist()
 
     return [
-        _to_color(c, is_wavelength, colors_iterator)
-        for c, is_wavelength in zip(channel_names, existing_wavelength)
+        _to_color(c, is_wavelength, colors_iterator) for c, is_wavelength in zip(channel_names, existing_wavelength)
     ]
+
+
+def _to_xenium_explorer_multiscale(image: DataArray | DataTree, n_subscales: int) -> DataTree:
+    if isinstance(image, DataTree):
+        shapes = np.array([next(iter(data_tree.values())).shape[1:] for data_tree in image.values()])
+        if len(shapes) == n_subscales + 1 and (shapes[:-1] // shapes[1:] == 2).all():
+            return image
+
+        image = DataArray(next(iter(image["scale0"].values())))
+
+    return to_multiscale(image, [2] * n_subscales, chunks=(1, TILE_SIZE, TILE_SIZE))
 
 
 def write_image(
     path: str,
-    image: SpatialImage | np.ndarray,
+    image: DataTree | DataArray | np.ndarray,
     lazy: bool = True,
     tile_width: int = TILE_SIZE,
     n_subscales: int = 5,
@@ -185,19 +192,20 @@ def write_image(
 
     if isinstance(image, np.ndarray):
         assert len(image.shape) == 3, "Can only write channels with shape (C,Y,X)"
-        log.info(f"Converting image of shape {image.shape} into a SpatialImage (with dims: C,Y,X)")
-        image = SpatialImage(image, dims=["c", "y", "x"], name="image")
+        log.info(f"Converting image of shape {image.shape} into a DataArray (with dims: C,Y,X)")
+        image = DataArray(image, dims=["c", "y", "x"], name="image")
 
-    image_writer = MultiscaleImageWriter(
-        image, n_subscales, pixel_size=pixel_size, tile_width=tile_width
-    )
+    image = _to_xenium_explorer_multiscale(image, n_subscales)
+
+    image_writer = MultiscaleImageWriter(image, pixel_size=pixel_size, tile_width=tile_width)
     image_writer.write(path, lazy=lazy, ram_threshold_gb=ram_threshold_gb)
 
 
 def align(
     sdata: SpatialData,
-    image: SpatialImage,
+    image: DataArray,
     transformation_matrix_path: str,
+    key_added: str | None = None,
     image_key: str = None,
     overwrite: bool = False,
 ):
@@ -205,24 +213,33 @@ def align(
 
     Args:
         sdata: A `SpatialData` object
-        image: A `SpatialImage` object. Note that `image.name` is used as the key for the aligned image.
+        image: A `DataArray` object. Note that `image.name` is used as the key for the aligned image.
         transformation_matrix_path: Path to the `.csv` transformation matrix exported from the Xenium Explorer
+        key_added: Optional name to add to the new image. If `None`, will use `image.name`.
         image_key: Optional name of the image on which it has been aligned. Required if multiple images in the `SpatialData` object.
         overwrite: Whether to overwrite the image, if already existing.
     """
-    image_name = image.name
+    key_added = key_added or image.name
 
-    to_pixel = Affine(
-        np.genfromtxt(transformation_matrix_path, delimiter=","),
-        input_axes=("x", "y"),
-        output_axes=("x", "y"),
+    assert key_added is not None, "The image has no name, use the `key_added` argument to provide one"
+    assert key_added not in sdata, f"Image '{key_added}' already exists in the `SpatialData` object"
+
+    to_pixel = Sequence(
+        [
+            Affine(
+                np.genfromtxt(transformation_matrix_path, delimiter=","),
+                input_axes=("x", "y"),
+                output_axes=("x", "y"),
+            )
+        ]
     )
 
     default_image = get_spatial_image(sdata, image_key)
-    pixel_cs = get_intrinsic_cs(sdata, default_image)
 
-    set_transformation(image, {pixel_cs: to_pixel}, set_all=True)
+    original_transformations = get_transformation(default_image, get_all=True)
+    transformations = {cs: to_pixel.compose_with(t) for cs, t in original_transformations.items()}
 
-    log.info(f"Adding image {image_name}:\n{image}")
-    sdata.images[image_name] = image
-    save_image(sdata, image_name, overwrite=overwrite)
+    set_transformation(image, transformations, set_all=True)
+
+    add_spatial_element(sdata, key_added, image, overwrite=overwrite)
+    log.info(f"Added image '{key_added}' (aligned with the Xenium Explorer)")

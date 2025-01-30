@@ -1,4 +1,17 @@
+import logging
 from pathlib import Path
+
+import geopandas as gpd
+import pandas as pd
+from shapely import Polygon
+from spatialdata import SpatialData
+from spatialdata.models import ShapesModel
+from spatialdata.transformations import get_transformation
+
+from ..._constants import SopaAttrs
+from ...utils import add_spatial_element, get_spatial_element
+
+log = logging.getLogger(__name__)
 
 
 def explorer_file_path(path: str, filename: str, is_dir: bool):
@@ -28,3 +41,50 @@ def str_cell_id(cell_id: int) -> str:
         cell_id, coef = divmod(cell_id, 16)
         coefs.append(coef)
     return "".join([chr(97 + coef) for coef in coefs][::-1]) + "-1"
+
+
+def _selection_to_polygon(df, pixel_size):
+    return Polygon(df[["X", "Y"]].values / pixel_size)
+
+
+def xenium_explorer_selection(path: str | Path, pixel_size: float = 0.2125, return_list: bool = False) -> Polygon:
+    df = pd.read_csv(path, skiprows=2)
+
+    if "Selection" not in df:
+        polygon = _selection_to_polygon(df, pixel_size)
+        return [polygon] if return_list else polygon
+
+    return [_selection_to_polygon(sub_df, pixel_size) for _, sub_df in df.groupby("Selection")]
+
+
+def add_explorer_selection(
+    sdata: SpatialData,
+    path: str,
+    key_added: str = "explorer_selection",
+    shapes_key: str | None = None,
+    image_key: str | None = None,
+    pixel_size: float = 0.2125,
+):
+    """After saving a selection on the Xenium Explorer, it will add all polygons inside `sdata.shapes[shapes_key]`
+
+    Args:
+        sdata: A `SpatialData` object
+        path: The path to the `coordinates.csv` selection file
+        key_added: The name to provide to the selection as shapes
+        shapes_key: Deprecated. Use `key_added` instead.
+        image_key: The original image name
+        pixel_size: Number of microns in a pixel. It must be the same value as the one used in `sopa.io.write`
+    """
+    if shapes_key is not None:
+        log.warning(
+            "The `shapes_key` argument is deprecated and will be removed in sopa==2.1.0. Use `key_added` instead."
+        )
+        key_added = shapes_key
+
+    polys = xenium_explorer_selection(path, pixel_size=pixel_size, return_list=True)
+    image = get_spatial_element(sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION))
+
+    transformations = get_transformation(image, get_all=True).copy()
+
+    geo_df = ShapesModel.parse(gpd.GeoDataFrame(geometry=polys), transformations=transformations)
+    add_spatial_element(sdata, key_added, geo_df)

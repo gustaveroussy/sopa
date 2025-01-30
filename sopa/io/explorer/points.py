@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from math import ceil
 from pathlib import Path
@@ -51,7 +49,7 @@ def write_transcripts(
     location = np.concatenate([location, np.zeros((num_transcripts, 1))], axis=1)
 
     if location.min() < 0:
-        log.warn("Some transcripts are located outside of the image (pixels < 0)")
+        log.warning("Some transcripts are located outside of the image (pixels < 0)")
     log.info(f"Writing {len(df)} transcripts")
 
     xmax, ymax = location[:, :2].max(axis=0)

@@ -3,8 +3,6 @@ Copied from squidpy (to not have squidpy as a dependency)
 Functions for building graphs from spatial coordinates.
 """
 
-from __future__ import annotations
-
 import logging
 import warnings
 from functools import partial
@@ -44,9 +42,7 @@ def spatial_neighbors(
     if isinstance(adata, SpatialData):
         adata = adata.tables[SopaKeys.TABLE]
 
-    assert (
-        radius is None or len(radius) == 2
-    ), "Radius is expected to be a tuple (min_radius, max_radius)"
+    assert radius is None or len(radius) == 2, "Radius is expected to be a tuple (min_radius, max_radius)"
 
     log.info("Computing delaunay graph")
 

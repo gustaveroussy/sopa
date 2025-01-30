@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import numpy as np
 from anndata import AnnData
 from scipy.spatial import Delaunay
@@ -88,9 +86,7 @@ class Component:
         rings = self.rings
         index_largest = np.argmax([Polygon(ring).area for ring in rings])
 
-        return Polygon(
-            rings[index_largest], rings[:index_largest] + rings[index_largest + 1 :]
-        ).buffer(0)
+        return Polygon(rings[index_largest], rings[:index_largest] + rings[index_largest + 1 :]).buffer(0)
 
     def visit(self, simplices_to_visit: set[int]):
         visited = set()

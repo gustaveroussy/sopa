@@ -1,14 +1,8 @@
-from __future__ import annotations
-
 import typer
 
 from .utils import SDATA_HELPER
 
 app_explorer = typer.Typer()
-
-PIXELSIZE_DEPRECATED = (
-    "`pixelsize` is deprecated and will be removed in future versions. Use `pixel_size` instead."
-)
 
 
 @app_explorer.command()
@@ -18,8 +12,10 @@ def write(
         None,
         help="Path to a directory where Xenium Explorer's outputs will be saved. By default, writes to the same path as `sdata_path` but with the `.explorer` suffix",
     ),
-    gene_column: str = typer.Option(
-        None, help="Column name of the points dataframe containing the gene names"
+    gene_column: str = typer.Option(None, help="Column name of the points dataframe containing the gene names"),
+    table_key: str = typer.Option(
+        None,
+        help="Sdata key for the table. By default, uses 'table'.",
     ),
     shapes_key: str = typer.Option(
         None,
@@ -28,10 +24,6 @@ def write(
     pixel_size: float = typer.Option(
         0.2125,
         help="Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.",
-    ),
-    pixelsize: float = typer.Option(
-        None,
-        help=PIXELSIZE_DEPRECATED,
     ),
     lazy: bool = typer.Option(
         True,
@@ -49,9 +41,11 @@ def write(
         True,
         help="Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)",
     ),
+    run_name: str = typer.Option(
+        None, help="Name of the run displayed in the Xenium Explorer. If `None`, uses the `image_key`"
+    ),
 ):
     """Convert a spatialdata object to Xenium Explorer's inputs"""
-    import logging
     from pathlib import Path
 
     from sopa.io.explorer import write
@@ -62,21 +56,18 @@ def write(
     if output_path is None:
         output_path = Path(sdata_path).with_suffix(".explorer")
 
-    if pixelsize is not None:
-        log = logging.getLogger(__name__)
-        log.critical(PIXELSIZE_DEPRECATED)
-        pixel_size = pixelsize
-
     write(
         output_path,
         sdata,
         shapes_key=shapes_key,
+        table_key=table_key,
         gene_column=gene_column,
         pixel_size=pixel_size,
         lazy=lazy,
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,
         save_h5ad=save_h5ad,
+        run_name=run_name,
     )
 
 
@@ -103,9 +94,9 @@ def update_obs(
     path = Path(adata_path)
 
     if path.is_dir():
-        adata = anndata.read_zarr(path)
+        adata = anndata.io.read_zarr(path)
     else:
-        adata = anndata.read_h5ad(path)
+        adata = anndata.io.read_h5ad(path)
 
     write_cell_categories(output_path, adata)
 
@@ -119,9 +110,9 @@ def add_aligned(
     transformation_matrix_path: str = typer.Argument(
         help="Path to the `matrix.csv` file returned by the Explorer after alignment"
     ),
-    original_image_key: str = typer.Option(
+    image_key: str = typer.Option(
         None,
-        help="Optional original-image key (of sdata.images) on which the new image will be aligned. This doesn't need to be provided if there is only one image",
+        help="Optional original-image key (of sdata.images) on which the new image will be aligned. This doesn't need to be provided if there is only one image, or a cell-segmentation image.",
     ),
     overwrite: bool = typer.Option(False, help="Whether to overwrite the image if existing"),
 ):
@@ -132,8 +123,6 @@ def add_aligned(
     from sopa.io.explorer.images import align
 
     sdata = spatialdata.read_zarr(sdata_path)
-    image = io.imaging.ome_tif(image_path, as_image=True)
+    image = io.ome_tif(image_path, as_image=True)
 
-    align(
-        sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=original_image_key
-    )
+    align(sdata, image, transformation_matrix_path, overwrite=overwrite, image_key=image_key)

@@ -11,6 +11,8 @@ sandbox
 *.h5ad
 *.zarr
 *.explorer
+*.tif
+docs/tutorials/data
 
 # OS related
 .DS_Store
@@ -33,7 +35,7 @@ run.log
 .ipynb_checkpoints
 exploration/*
 *.ipynb
-!docs/tutorials/**.ipynb
+!docs/tutorials/**/**.ipynb
 !notebooks/*.ipynb
 
 # pyenv

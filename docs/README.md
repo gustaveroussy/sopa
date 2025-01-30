@@ -14,9 +14,3 @@ Then, run:
 ```sh
 mkdocs serve
 ```
-
-You can also update the CLI docs (if you install `typer-cli`) with the following command line:
-
-```sh
-typer sopa.main utils docs --output tmpfile --name sopa && sed '1,2d; s/## /### /g; s/Usage:/!!! note '\"'Usage'\"'/g' tmpfile >> docs/cli.md && rm tmpfile
-```

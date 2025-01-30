@@ -1,14 +1,20 @@
-from __future__ import annotations
-
 import json
 import logging
 from pathlib import Path
 
 import geopandas as gpd
+from anndata import AnnData
+from shapely import Polygon
 from spatialdata import SpatialData
 
-from ..._constants import SopaKeys
-from ..._sdata import get_boundaries, get_element, get_spatial_image, to_intrinsic
+from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
+from ...utils import (
+    get_boundaries,
+    get_feature_key,
+    get_spatial_element,
+    get_spatial_image,
+    to_intrinsic,
+)
 from . import (
     write_cell_categories,
     write_gene_counts,
@@ -44,6 +50,7 @@ def _should_save(mode: str | None, character: str):
 def write(
     path: str,
     sdata: SpatialData,
+    table_key: str = SopaKeys.TABLE,
     image_key: str | None = None,
     shapes_key: str | None = None,
     points_key: str | None = None,
@@ -55,6 +62,7 @@ def write(
     ram_threshold_gb: int | None = 4,
     mode: str = None,
     save_h5ad: bool = False,
+    run_name: str | None = None,
 ) -> None:
     """
     Transform a SpatialData object into inputs for the Xenium Explorer.
@@ -83,9 +91,10 @@ def write(
     Args:
         path: Path to the directory where files will be saved.
         sdata: SpatialData object.
-        image_key: Name of the image of interest (key of `sdata.images`).
-        shapes_key: Name of the cell shapes (key of `sdata.shapes`).
-        points_key: Name of the transcripts (key of `sdata.points`).
+        table_key: Name of the table containing the gene counts or intensities (key of `sdata.tables`). By default, uses `sdata["table"]`.
+        image_key: Name of the image of interest (key of `sdata.images`). By default, it will be inferred.
+        shapes_key: Name of the cell shapes (key of `sdata.shapes`). By default, it will be inferred from the table.
+        points_key: Name of the transcripts (key of `sdata.points`). By default, it will be inferred.
         gene_column: Column name of the points dataframe containing the gene names.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
         layer: Layer of the AnnData table where the gene counts are saved. If `None`, uses `table.X`.
@@ -94,23 +103,31 @@ def write(
         ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
         mode: string that indicated which files should be created. "-ib" means everything except images and boundaries, while "+tocm" means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything.
         save_h5ad: Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)
+        run_name: Name of the run displayed in the Xenium Explorer. If `None`, uses the `image_key`.
     """
     path: Path = Path(path)
     _check_explorer_directory(path)
 
-    image_key, image = get_spatial_image(sdata, image_key, return_key=True)
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
 
-    ### Saving cell categories and gene counts
-    if SopaKeys.TABLE in sdata.tables:
-        adata = sdata.tables[SopaKeys.TABLE]
+    ### Saving table / cell categories / gene counts
+    if table_key in sdata.tables:
+        adata: AnnData = sdata.tables[table_key]
 
-        shapes_key = adata.uns["spatialdata_attrs"]["region"]
+        _shapes_key = adata.uns[ATTRS_KEY]["region"]
+        assert (
+            shapes_key is None or _shapes_key == shapes_key
+        ), f"Got {shapes_key=}, while the table corresponds to the shapes {_shapes_key}"
+        shapes_key = _shapes_key[0] if isinstance(_shapes_key, list) else _shapes_key
+
         geo_df = sdata[shapes_key]
 
         if _should_save(mode, "c"):
             write_gene_counts(path, adata, layer=layer)
         if _should_save(mode, "o"):
             write_cell_categories(path, adata)
+        if save_h5ad:
+            adata.write_h5ad(path / FileNames.H5AD)
 
     ### Saving cell boundaries
     if shapes_key is None:
@@ -121,47 +138,53 @@ def write(
     if _should_save(mode, "b") and geo_df is not None:
         geo_df = to_intrinsic(sdata, geo_df, image_key)
 
-        if SopaKeys.TABLE in sdata.tables:
-            geo_df = geo_df.loc[adata.obs[adata.uns["spatialdata_attrs"]["instance_key"]]]
+        if table_key in sdata.tables:
+            geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
+
+        assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), "All geometries must be a `shapely.Polygon`"
 
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 
     ### Saving transcripts
-    df = get_element(sdata, "points", points_key)
+    df = None
+    if len(sdata.points):
+        df = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
 
     if _should_save(mode, "t") and df is not None:
+        gene_column = gene_column or get_feature_key(df)
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
             write_transcripts(path, df, gene_column, pixel_size=pixel_size)
         else:
-            log.warn("The argument 'gene_column' has to be provided to save the transcripts")
+            log.warning("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
     if _should_save(mode, "i"):
         write_image(
-            path, image, lazy=lazy, ram_threshold_gb=ram_threshold_gb, pixel_size=pixel_size
+            path,
+            sdata[image_key],
+            lazy=lazy,
+            ram_threshold_gb=ram_threshold_gb,
+            pixel_size=pixel_size,
         )
 
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
-        write_metadata(path, image_key, shapes_key, _get_n_obs(sdata, geo_df), pixel_size)
-
-    if save_h5ad and SopaKeys.TABLE in sdata.tables:
-        sdata.tables[SopaKeys.TABLE].write_h5ad(path / FileNames.H5AD)
+        write_metadata(path, run_name or image_key, shapes_key, _get_n_obs(sdata, geo_df, table_key), pixel_size)
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
 
 
-def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame) -> int:
-    if SopaKeys.TABLE in sdata.tables:
-        return sdata.tables[SopaKeys.TABLE].n_obs
+def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> int:
+    if table_key in sdata.tables:
+        return sdata.tables[table_key].n_obs
     return len(geo_df) if geo_df is not None else 0
 
 
 def write_metadata(
     path: str,
-    image_key: str = "NA",
+    run_name: str = "NA",
     shapes_key: str = "NA",
     n_obs: int = 0,
     is_dir: bool = True,
@@ -174,7 +197,7 @@ def write_metadata(
 
     Args:
         path: Path to the Xenium Explorer directory where the metadata file will be written
-        image_key: Key of `SpatialData` object containing the primary image used on the explorer.
+        run_name: Key of `SpatialData` object containing the primary image used on the explorer.
         shapes_key: Key of `SpatialData` object containing the boundaries shown on the explorer.
         n_obs: Number of cells
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
@@ -183,5 +206,5 @@ def write_metadata(
     path = explorer_file_path(path, FileNames.METADATA, is_dir)
 
     with open(path, "w") as f:
-        metadata = experiment_dict(image_key, shapes_key, n_obs, pixel_size)
+        metadata = experiment_dict(run_name, shapes_key, n_obs, pixel_size)
         json.dump(metadata, f, indent=4)

@@ -20,6 +20,10 @@ patchify:
 
 
 segmentation:
+  # [optional] if you want to segment the tissue before cell-segmentation
+  tissue:
+    mode: staining # 'saturation' (for H&E) or 'staining' (for fluorescence)
+
   # [only if running cellpose]
   cellpose:
     diameter: 55 # [important parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/master/workflow/config)
@@ -35,14 +39,14 @@ segmentation:
   # [only if running baysor]
   baysor:
     min_area: 20 # [optional] minimum area (in microns^2) for a cell to not be filtered
-    cell_key: cell_id # [optional] if prior segmentation has been performed, this is the column in the transcript dataframe that indicated the cell that contains the transcript. This doesn't need to be provided if you run cellpose with Sopa.
+    prior_shapes_key: cell_id # [optional] if prior segmentation has been performed, this is the column in the transcript dataframe that indicated the cell that contains the transcript. This doesn't need to be provided if you run cellpose with Sopa.
     unassigned_value: -1 # [optional] if prior segmentation has been performed and if 'cell_key' above is provided, this is the value given to transcript that is not contained inside any cell
 
     config: # [this is the baysor config, as in https://github.com/kharchenkolab/Baysor]
       data:
         exclude_genes: "Blank*"      # genes excluded from the Baysor segmentation
         force_2d: true               # if false, uses 3D mode
-        min_molecules_per_cell: 30   # min number of transcripts per cell
+        min_molecules_per_cell: 10
         gene: "gene"                 # name of the column of the transcript dataframe indicating the genes names
         min_molecules_per_gene: 0
         min_molecules_per_segment: 8
@@ -63,16 +67,14 @@ segmentation:
         n_cells_init: 0
         nuclei_genes: ""
         cyto_genes: ""
-        new_component_weight: 0.2
-        new_component_fraction: 0.3
 
 
 aggregate:
-  average_intensities: true # [optional] whether to compute, for each cell, the mean intensity per staining/channel
+  aggregate_genes: true # [optional] whether to compute the genes counts for each cell (cell-by-gene matrix)
+  aggregate_channels: true # [optional] whether to compute, for each cell, the mean intensity per staining/channel
   min_intensity_ratio: 0.1 # [optional] cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
   expand_radius_ratio: 0.1 # [optional] cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
 
-  gene_column: "gene" # [optional, not-needed if not using baysor] name of the column of the transcript dataframe indicating the genes names. Used to count transcripts inside cells.
   min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
 
@@ -102,6 +104,3 @@ explorer: # parameters related to the conversion to the Xenium Explorer (Sopa's 
   gene_column: "gene" # [optional] name of the column of the transcript dataframe indicating the genes names. Provide this if you want to see transcripts on the explorer
   ram_threshold_gb: 4 # [optional] images below this RAM threshold will be loaded in memory during conversion. It can accelerate image writing
   pixel_size: 0.2125 # [optional] this is the number of microns in a pixel for the technology used (see the config of your technology of interest)
-
-executables:
-  baysor: ~/.julia/bin/baysor # [optional] if you run baysor, write here the path to the 'baysor' executable

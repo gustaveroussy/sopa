@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import ast
 
 import typer
@@ -13,33 +11,31 @@ app_annotate = typer.Typer()
 def fluorescence(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     marker_cell_dict: str = typer.Option(callback=ast.literal_eval),
-    cell_type_key: str = typer.Option(
-        "cell_type", help="Key added in `adata.obs` corresponding to the cell type"
-    ),
+    cell_type_key: str = typer.Option("cell_type", help="Key added in `adata.obs` corresponding to the cell type"),
 ):
     """Simple annotation based on fluorescence, where each provided channel corresponds to one cell type.
 
     For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
     """
     from sopa._constants import SopaKeys
-    from sopa._sdata import save_table
-    from sopa.annotation.fluorescence import higher_z_score
     from sopa.io.standardize import read_zarr_standardized
+    from sopa.utils import higher_z_score
 
     sdata = read_zarr_standardized(sdata_path)
 
     assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
 
     higher_z_score(sdata.tables[SopaKeys.TABLE], marker_cell_dict, cell_type_key)
-    save_table(sdata, SopaKeys.TABLE)
+
+    if sdata.is_backed():
+        sdata.delete_element_from_disk(SopaKeys.TABLE)
+        sdata.write_element(SopaKeys.TABLE)
 
 
 @app_annotate.command()
 def tangram(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    sc_reference_path: str = typer.Option(
-        help="Path to the scRNAseq annotated reference, as a `.h5ad` file"
-    ),
+    sc_reference_path: str = typer.Option(help="Path to the scRNAseq annotated reference, as a `.h5ad` file"),
     cell_type_key: str = typer.Option(help="Key of `adata_ref.obs` containing the cell-types"),
     reference_preprocessing: str = typer.Option(
         None,
@@ -58,12 +54,11 @@ def tangram(
     import anndata
 
     from sopa._constants import SopaKeys
-    from sopa._sdata import save_table
-    from sopa.annotation.tangram.run import tangram_annotate
     from sopa.io.standardize import read_zarr_standardized
+    from sopa.utils import tangram_annotate
 
     sdata = read_zarr_standardized(sdata_path)
-    adata_sc = anndata.read_h5ad(sc_reference_path)
+    adata_sc = anndata.io.read_h5ad(sc_reference_path)
 
     tangram_annotate(
         sdata,
@@ -73,4 +68,6 @@ def tangram(
         bag_size=bag_size,
         max_obs_reference=max_obs_reference,
     )
-    save_table(sdata, SopaKeys.TABLE)
+    if sdata.is_backed():
+        sdata.delete_element_from_disk(SopaKeys.TABLE)
+        sdata.write_element(SopaKeys.TABLE, overwrite=True)

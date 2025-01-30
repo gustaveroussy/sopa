@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import typer
 
 from .utils import SDATA_HELPER
@@ -10,9 +8,9 @@ app_resolve = typer.Typer()
 @app_resolve.command()
 def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    patch_dir: list[str] = typer.Option(
+    cache_dir_name: list[str] = typer.Option(
         [],
-        help="Directory containing the cellpose segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `.sopa_cache/cellpose_boundaries` directory",
+        help="Name of the directories containing the cellpose segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `cellpose_boundaries` directory",
     ),
 ):
     """Resolve patches conflicts after cellpose segmentation"""
@@ -20,8 +18,10 @@ def cellpose(
 
     from .utils import _default_boundary_dir
 
-    if not len(patch_dir):
-        patch_dir = [_default_boundary_dir(sdata_path, SopaKeys.CELLPOSE_BOUNDARIES)]
+    if not len(cache_dir_name):
+        cache_dir_name = [SopaKeys.CELLPOSE_BOUNDARIES]
+
+    patch_dir = [_default_boundary_dir(sdata_path, name) for name in cache_dir_name]
 
     _resolve_generic(sdata_path, patch_dir, SopaKeys.CELLPOSE_BOUNDARIES)
 
@@ -32,67 +32,84 @@ def generic(
     method_name: str = typer.Option(
         help="Name of the method used during segmentation. This is also the key correspnding to the boundaries in `sdata.shapes`"
     ),
-    patch_dir: list[str] = typer.Option(
+    cache_dir_name: list[str] = typer.Option(
         [],
-        help="Directory containing the generic segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `.sopa_cache/<method_name>` directory",
+        help="Name of the directories containing the generic segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `<method_name>` directory",
     ),
 ):
     """Resolve patches conflicts after generic segmentation"""
     from .utils import _default_boundary_dir
 
-    if not len(patch_dir):
-        patch_dir = [_default_boundary_dir(sdata_path, method_name)]
+    if not len(cache_dir_name):
+        cache_dir_name = [method_name]
+
+    patch_dir = [_default_boundary_dir(sdata_path, name) for name in cache_dir_name]
 
     _resolve_generic(sdata_path, patch_dir, method_name)
 
 
-def _resolve_generic(sdata_path: str, patch_dirs: list[str], shapes_key: str):
-    from sopa._sdata import get_key
+def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation import shapes
-    from sopa.segmentation.stainings import StainingSegmentation
+    from sopa.segmentation import StainingSegmentation, solve_conflicts
+    from sopa.utils import get_spatial_image
 
     sdata = read_zarr_standardized(sdata_path)
 
     assert len(patch_dirs) > 0, "No patch directory was provided, cannot load cells"
 
-    image_key = get_key(sdata, "images")
+    image_key, _ = get_spatial_image(sdata, return_key=True)
 
-    cells = []
-    for patch_dir in patch_dirs:
-        cells += StainingSegmentation.read_patches_cells(patch_dir)
-    cells = shapes.solve_conflicts(cells)
+    cells = StainingSegmentation.read_patches_cells(patch_dirs)
+    cells = solve_conflicts(cells)
 
-    StainingSegmentation.add_shapes(sdata, cells, image_key, shapes_key)
+    StainingSegmentation.add_shapes(sdata, cells, image_key, key_added)
 
 
 @app_resolve.command()
 def baysor(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    gene_column: str = typer.Option(
-        help="Column of the transcripts dataframe containing the genes names"
-    ),
-    baysor_temp_dir: str = typer.Option(
-        None,
-        help="Path to the directory containing all the baysor patches (see `sopa patchify`). By default, uses the `.sopa_cache/baysor_boundaries` directory",
-    ),
-    min_area: float = typer.Option(
-        0, help="Cells with an area less than this value (in microns^2) will be filtered"
-    ),
-    patches_dirs: list[str] = typer.Option(
-        [], help="List of patches directories inside `baysor_temp_dir`"
-    ),
+    gene_column: str = typer.Option(help="Column of the transcripts dataframe containing the genes names"),
+    min_area: float = typer.Option(0, help="Cells with an area less than this value (in microns^2) will be filtered"),
 ):
-    """Resolve patches conflicts after baysor segmentation. Provide either `--baysor-temp-dir` or `--patches-dirs`"""
+    """Resolve patches conflicts after baysor segmentation."""
+    import sopa
     from sopa._constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation.baysor.resolve import resolve
-
-    from .utils import _default_boundary_dir
-
-    if not len(patches_dirs) and baysor_temp_dir is None:
-        baysor_temp_dir = _default_boundary_dir(sdata_path, SopaKeys.BAYSOR_BOUNDARIES)
+    from sopa.segmentation._transcripts import resolve
 
     sdata = read_zarr_standardized(sdata_path)
 
-    resolve(sdata, baysor_temp_dir, gene_column, patches_dirs, min_area)
+    patches_dirs = sopa.utils.get_transcripts_patches_dirs(sdata)
+
+    resolve(
+        sdata,
+        patches_dirs,
+        gene_column,
+        min_area=min_area,
+        key_added=SopaKeys.BAYSOR_BOUNDARIES,
+    )
+
+
+@app_resolve.command()
+def comseg(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    gene_column: str = typer.Option(help="Column of the transcripts dataframe containing the genes names"),
+    min_area: float = typer.Option(0, help="Cells with an area less than this value (in microns^2) will be filtered"),
+):
+    """Resolve patches conflicts after comseg segmentation."""
+    import sopa
+    from sopa._constants import SopaKeys
+    from sopa.io.standardize import read_zarr_standardized
+    from sopa.segmentation._transcripts import resolve
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    patches_dirs = sopa.utils.get_transcripts_patches_dirs(sdata)
+
+    resolve(
+        sdata,
+        patches_dirs,
+        gene_column,
+        min_area=min_area,
+        key_added=SopaKeys.COMSEG_BOUNDARIES,
+    )

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import warnings
 
@@ -10,12 +8,7 @@ import seaborn as sns
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
-from ..._sdata import (
-    get_boundaries,
-    get_intensities,
-    get_intrinsic_cs,
-    get_spatial_image,
-)
+from ...utils import get_boundaries, get_intensities, get_spatial_image
 from .engine import (
     CodeBlock,
     Columns,
@@ -28,10 +21,9 @@ from .engine import (
 )
 
 log = logging.getLogger(__name__)
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
-def write_report(path: str, sdata: SpatialData):
+def write_report(path: str, sdata: SpatialData, table_key: str = SopaKeys.TABLE):
     """Create a HTML report (or web report) after running Sopa.
 
     Note:
@@ -40,11 +32,15 @@ def write_report(path: str, sdata: SpatialData):
     Args:
         path: Path to the `.html` report that has to be created
         sdata: A `SpatialData` object, after running Sopa
+        table_key: Key of the table in the `SpatialData` object to be used for the report
     """
-    sections = SectionBuilder(sdata).compute_sections()
+    with warnings.catch_warnings():
+        warnings.simplefilter(action="ignore", category=FutureWarning)
 
-    log.info(f"Writing report to {path}")
-    Root(sections).write(path)
+        sections = SectionBuilder(sdata, table_key).compute_sections()
+
+        log.info(f"Writing report to {path}")
+        Root(sections).write(path)
 
 
 def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):
@@ -54,9 +50,22 @@ def _kdeplot_vmax_quantile(values: np.ndarray, quantile: float = 0.95):
 
 
 class SectionBuilder:
-    def __init__(self, sdata: SpatialData):
+    SECTION_NAMES = [
+        "general_section",
+        "cell_section",
+        "channel_section",
+        "transcripts_section",
+        "representation_section",
+    ]
+
+    def __init__(self, sdata: SpatialData, table_key: str):
         self.sdata = sdata
-        self.adata = self.sdata.tables.get(SopaKeys.TABLE)
+        self.table_key = table_key
+
+        if table_key not in self.sdata.tables.keys():
+            log.warning(f"Table key '{table_key}' not found in the SpatialData object")
+
+        self.adata = self.sdata.tables.get(table_key)
 
     def _table_has(self, key, default=False):
         if SopaKeys.UNS_KEY not in self.adata.uns:
@@ -64,8 +73,6 @@ class SectionBuilder:
         return self.adata.uns[SopaKeys.UNS_KEY].get(key, default)
 
     def general_section(self):
-        log.info("Writing general section")
-
         return Section(
             "General",
             [
@@ -82,10 +89,7 @@ class SectionBuilder:
         )
 
     def cell_section(self):
-        log.info("Writing cell section")
-
-        shapes_key, _ = get_boundaries(self.sdata, return_key=True)
-        coord_system = get_intrinsic_cs(self.sdata, shapes_key)
+        shapes_key, _ = get_boundaries(self.sdata, return_key=True, table_key=self.table_key)
 
         fig = plt.figure()
         _kdeplot_vmax_quantile(self.adata.obs[SopaKeys.AREA_OBS])
@@ -102,7 +106,7 @@ class SectionBuilder:
                     "Areas",
                     [
                         Paragraph(
-                            f"The cells areas are obtained based on the coordinate system '{coord_system}' for the '{shapes_key}' boundaries"
+                            f"The cells areas are obtained based on the '{shapes_key}' boundaries (and its intrinsic coordinate system)."
                         ),
                         Columns([Image(fig)]),
                     ],
@@ -111,23 +115,19 @@ class SectionBuilder:
         )
 
     def channel_section(self):
-        log.info("Writing channel section")
-
         image = get_spatial_image(self.sdata)
 
         subsections = [
             SubSection(
                 "Names",
-                Paragraph(
-                    f"Channels names:<br>{Message(', '.join(map(str, list(image.coords['c'].values))))}"
-                ),
+                Paragraph(f"Channels names:<br>{Message(', '.join(map(str, list(image.coords['c'].values))))}"),
             )
         ]
 
         if self._table_has(SopaKeys.UNS_HAS_INTENSITIES):
             fig = plt.figure()
 
-            df_intensities = get_intensities(self.sdata)
+            df_intensities = get_intensities(self.sdata, self.table_key)
             threshold = np.quantile(df_intensities.values.ravel(), 0.95)
 
             for channel, intensities in df_intensities.items():
@@ -154,8 +154,6 @@ class SectionBuilder:
         if not self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             return None
 
-        log.info("Writing transcript section")
-
         mean_transcript_count = self.adata.X.mean(0).A1
         low_average = mean_transcript_count < LOW_AVERAGE_COUNT
 
@@ -166,9 +164,7 @@ class SectionBuilder:
                     f"{low_average.sum()} genes have a low count (less than {LOW_AVERAGE_COUNT} per cell, on average):"
                 )
             )
-            QC_subsubsections.append(
-                Message(", ".join(self.adata.var_names[low_average]), color="danger")
-            )
+            QC_subsubsections.append(Message(", ".join(self.adata.var_names[low_average]), color="danger"))
 
         fig1 = plt.figure()
         _kdeplot_vmax_quantile(mean_transcript_count)
@@ -183,8 +179,6 @@ class SectionBuilder:
         return Section("Transcripts", [SubSection("Quality controls", QC_subsubsections)])
 
     def representation_section(self, max_obs: int = 400_000):
-        log.info("Writing representation section")
-
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             sc.pp.normalize_total(self.adata)
             sc.pp.log1p(self.adata)
@@ -209,11 +203,14 @@ class SectionBuilder:
         )
 
     def compute_sections(self) -> list[Section]:
-        sections = [
-            self.general_section(),
-            self.cell_section(),
-            self.channel_section(),
-            self.transcripts_section(),
-            self.representation_section(),
-        ]
+        sections = []
+
+        for name in self.SECTION_NAMES:
+            try:
+                log.info(f"Writing {name}")
+                section = getattr(self, name)()
+                sections.append(section)
+            except Exception as e:
+                log.warning(f"Section {name} failed with error {e}")
+
         return [section for section in sections if section is not None]

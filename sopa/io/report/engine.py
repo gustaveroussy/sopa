@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import base64
 from io import BytesIO
 from typing import Optional
@@ -121,7 +119,7 @@ class ProgressBar(Renderable):
 class Section(Renderable):
     """Section of the report"""
 
-    def __init__(self, name: str, content: list["Section"] = None) -> None:
+    def __init__(self, name: str, content: list["Section"] | None = None) -> None:
         self.name = name
         self._children = content
         self.subtitle = False
@@ -165,10 +163,7 @@ class NavbarItem(Renderable):
         self.section = section
 
     def subsections(self):
-        li = [
-            f"<li><a href='#{subsection.id}'>{subsection.name}</a></li>"
-            for subsection in self.section.children
-        ]
+        li = [f"<li><a href='#{subsection.id}'>{subsection.name}</a></li>" for subsection in self.section.children]
         return "".join(li)
 
     def __str__(self) -> str:
@@ -212,9 +207,7 @@ class Columns(Renderable):
 class Image(Renderable):
     """Image renderer"""
 
-    def __init__(
-        self, fig: Figure, width: float = 50, extension: str = "png", pretty_legend: bool = True
-    ):
+    def __init__(self, fig: Figure, width: float = 50, extension: str = "png", pretty_legend: bool = True):
         self.fig = fig
         self.width = width
         self.extension = extension
@@ -222,9 +215,7 @@ class Image(Renderable):
 
     def make_figure_pretty(self):
         if self.pretty_legend and _has_handles(self.fig):
-            self.fig.legend(
-                bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False
-            )
+            self.fig.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False)
         sns.despine(fig=self.fig, offset=10, trim=True)
 
     def encod(self):
@@ -235,7 +226,9 @@ class Image(Renderable):
         return base64.b64encode(tmpfile.getvalue()).decode("utf-8")
 
     def __str__(self) -> str:
-        return f"""<img src=\'data:image/{self.extension};base64,{self.encod()}\'  width="{self.width}%" height="auto"/>"""
+        return (
+            f"""<img src=\'data:image/{self.extension};base64,{self.encod()}\'  width="{self.width}%" height="auto"/>"""
+        )
 
 
 def _has_handles(fig: Figure) -> bool:
@@ -260,7 +253,7 @@ class Root(Renderable):
     def write(self, path: str) -> None:
         self.sanity_check()
 
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(str(self))
 
     def __str__(self) -> str:
