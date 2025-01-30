@@ -2,6 +2,7 @@
 
 ### Fixed
 - Safer check dataframe series is of integer dtype (#179)
+- Ensure `feature_key` is converted correctly to as string (#185)
 
 ### Added
 - Aggregation and segmentation now excludes non-interesting gene names (e.g., "blank", "unassigned", ...) (#144)

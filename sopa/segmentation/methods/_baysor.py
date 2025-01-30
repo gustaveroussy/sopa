@@ -177,7 +177,7 @@ def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale:
         "data": {
             "x": "x",
             "y": "y",
-            "gene": feature_key,
+            "gene": str(feature_key),
             "min_molecules_per_gene": 10,
             "min_molecules_per_cell": 20,
             "force_2d": True,
