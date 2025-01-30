@@ -74,10 +74,10 @@ def stardist(
 
 
 def stardist_patch(
-    model_type: str,
-    prob_thresh: float,
-    nms_thresh: float,
-    channels: list[str],
+    model_type: str = "2D_versatile_he",
+    prob_thresh: float = 0.5,
+    nms_thresh: float = 0.4,
+    channels: list[str] = ["r", "g", "b"],  # unused but needed for the CLI
     **stardist_eval_kwargs: int,
 ) -> Callable:
     try:
