@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import xarray
 from spatialdata import SpatialData
@@ -14,7 +14,7 @@ def wsi(
     path: str | Path,
     chunks: tuple[int, int, int] = (3, 256, 256),
     as_image: bool = False,
-    backend: str = "tiffslide",
+    backend: Literal["tiffslide", "openslide"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
@@ -71,7 +71,7 @@ def _get_scale_transformation(scale_factor: float):
 def wsi_autoscale(
     path: str | Path,
     image_model_kwargs: dict | None = None,
-    backend: str = "tiffslide",
+    backend: Literal["tiffslide", "openslide"] = "tiffslide",
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object.
 
@@ -99,6 +99,7 @@ def wsi_autoscale(
         **image_model_kwargs,
     )
     multiscale_image.attrs["metadata"] = tiff_metadata
+    multiscale_image.attrs["backend"] = backend
 
     return SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
 
@@ -115,7 +116,9 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
-def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray.Dataset, Any, dict]:
+def _open_wsi(
+    path: str | Path, backend: Literal["tiffslide", "openslide"] = "openslide"
+) -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
     if backend == "tiffslide":
