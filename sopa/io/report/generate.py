@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scanpy as sc
 import seaborn as sns
+from anndata import AnnData
 from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
@@ -65,7 +66,9 @@ class SectionBuilder:
         if table_key not in self.sdata.tables.keys():
             log.warning(f"Table key '{table_key}' not found in the SpatialData object")
 
-        self.adata = self.sdata.tables.get(table_key)
+        self.adata = None
+        if table_key in self.sdata.tables.keys():
+            self.adata: AnnData = self.sdata.tables[table_key].copy()
 
     def _table_has(self, key, default=False):
         if SopaKeys.UNS_KEY not in self.adata.uns:

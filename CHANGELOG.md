@@ -14,6 +14,9 @@
 - Can set all `spatialdata_io.xenium` arguments in `sopa.io.xenium`
 - CLI for stardist @jeffquinn-msk (#189)
 
+### Changed
+- `sopa.io.write_report` is copying the adata to avoid modifying it (#196)
+
 ## [2.0.0] - 2025-01-20
 
 This version introduces many new API features but also some breaking changes; check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
