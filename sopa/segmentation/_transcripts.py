@@ -40,12 +40,9 @@ def resolve(
     if min_area > 0:
         log.info(f"Cells whose area is less than {min_area} microns^2 will be removed")
 
-    patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
+    patch_ids, patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
     patch_id_to_centroid = sdata[SopaKeys.TRANSCRIPTS_PATCHES].centroid.apply(lambda x: (x.x, x.y)).to_dict()
-    geo_df, cells_indices, new_ids = _resolve_patches(
-        patches_cells,
-        adatas,
-        patch_id_to_centroid)
+    geo_df, cells_indices, new_ids = _resolve_patches(patch_ids, patches_cells, patch_id_to_centroid)
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     points = sdata[points_key]
@@ -92,8 +89,9 @@ def resolve(
 
 def _read_one_segmented_patch(
     directory: str, min_area: float = 0, min_vertices: int = 4
-) -> tuple[list[Polygon], AnnData]:
+) -> tuple[int, list[Polygon], AnnData]:
     directory: Path = Path(directory)
+    patch_id = int(directory.name)
     id_as_string, polygon_file = _find_polygon_file(directory)
 
     loom_file = directory / "segmentation_counts.loom"
@@ -127,7 +125,7 @@ def _read_one_segmented_patch(
 
     geo_df = geo_df[geo_df.area > min_area]
 
-    return geo_df.geometry.values, adata[geo_df.index].copy()
+    return patch_id, geo_df.geometry.values, adata[geo_df.index].copy()
 
 
 def _find_polygon_file(directory: Path) -> tuple[bool, Path]:
@@ -142,40 +140,37 @@ def _find_polygon_file(directory: Path) -> tuple[bool, Path]:
 def _read_all_segmented_patches(
     patches_dirs: list[str],
     min_area: float = 0,
-) -> tuple[list[list[Polygon]], list[AnnData]]:
+) -> tuple[list[int], list[list[Polygon]], list[AnnData]]:
     outs = [
         _read_one_segmented_patch(path, min_area)
         for path in tqdm(patches_dirs, desc="Reading transcript-segmentation outputs")
     ]
 
-    patches_cells, adatas = zip(*outs)
+    patch_ids, patches_cells, adatas = zip(*outs)
 
-    return patches_cells, adatas
+    return patch_ids, patches_cells, adatas
 
 
 def _resolve_patches(
-    patches_cells: list[list[Polygon]], adatas: list[AnnData], patch_centroids: dict[int, tuple[float, float]]
+    patch_ids: list[int], patches_cells: list[list[Polygon]], patch_centroids: dict[int, tuple[float, float]]
 ) -> tuple[gpd.GeoDataFrame, np.ndarray, np.ndarray]:
     """Resolve the segmentation conflits on the patches overlaps.
 
     Args:
+        patch_ids: List of ids of the patches
         patches_cells: List of polygons segmented on each patch
-        adatas: List of AnnData objects corresponding to each patch
+        patch_centroids: Centroids of the patches
 
     Returns:
         The new GeoDataFrame, the new cells indices (-1 for merged cells), and the ids of the merged cells.
     """
-    patch_ids = [adata.obs_names for adata in adatas]
-
-    patch_indices = np.arange(len(patches_cells)).repeat([len(cells) for cells in patches_cells])
+    per_cell_patch_indices = np.array(patch_ids).repeat([len(cells) for cells in patches_cells])
     cells = [cell for cells in patches_cells for cell in cells]
     segmentation_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
     cells_resolved, cells_indices = solve_conflicts(
-        cells,
-        patch_indices=patch_indices,
-        patch_centroids=patch_centroids,
-        return_indices=True)
+        cells, patch_indices=per_cell_patch_indices, patch_centroids=patch_centroids, return_indices=True
+    )
 
     existing_ids = segmentation_ids[cells_indices[cells_indices >= 0]]
     new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))

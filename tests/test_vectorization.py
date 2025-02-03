@@ -31,3 +31,19 @@ def test_solve_conflict(cells: gpd.GeoDataFrame):
 
     res = solve_conflicts(list(cells.geometry) + other_cells)
     assert all(isinstance(cell, Polygon) for cell in res.geometry)
+
+
+def test_solve_conflict_patches(cells: gpd.GeoDataFrame):
+    tile_overlap = 50
+    other_cells = [translate(cell, cells.total_bounds[2] - tile_overlap, 0) for cell in cells.geometry]
+
+    res = solve_conflicts(
+        cells=list(cells.geometry) + other_cells,
+        patch_indices=np.array([0] * len(cells) + [1] * len(other_cells)),
+        patch_centroids={
+            0: (cells.total_bounds[2] / 2, cells.total_bounds[3] / 2),
+            1: (cells.total_bounds[2] / 2 + (cells.total_bounds[2] - tile_overlap), cells.total_bounds[3] / 2),
+        },
+    )
+    assert all(isinstance(cell, Polygon) for cell in res.geometry)
+    assert len(res) < len(cells) + len(other_cells)

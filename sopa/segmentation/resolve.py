@@ -38,15 +38,14 @@ def solve_conflicts(
     """
     cells = list(cells.geometry) if isinstance(cells, gpd.GeoDataFrame) else list(cells)
     n_cells = len(cells)
-    resolved_indices = np.arange(n_cells)
 
     assert n_cells > 0, "No cells was segmented, cannot continue"
 
     if patch_centroids is not None and patch_indices is not None:
-        cells_gdf = gpd.GeoDataFrame(geometry=cells, cell_patch_index=patch_indices).reset_index(names="cell_id")
+        cells_gdf = gpd.GeoDataFrame({"cell_patch_index": patch_indices}, geometry=cells).reset_index(names="cell_id")
         centroid_gdf = gpd.GeoDataFrame(
+            {"patch_index": list(patch_centroids.keys())},
             geometry=[shapely.geometry.Point(coord) for coord in patch_centroids.values()],
-            patch_index=list(patch_centroids.keys())
         )
 
         joined_to_centroids = gpd.sjoin_nearest(
@@ -54,9 +53,7 @@ def solve_conflicts(
             centroid_gdf,
         )
 
-        joined_to_centroids = joined_to_centroids.drop_duplicates(
-            subset=["cell_id"], keep="first"
-        )
+        joined_to_centroids = joined_to_centroids.drop_duplicates(subset=["cell_id"], keep="first")
 
         cells = joined_to_centroids[
             joined_to_centroids["patch_index"] == joined_to_centroids["cell_patch_index"]
@@ -64,6 +61,7 @@ def solve_conflicts(
 
     tree = shapely.STRtree(cells)
     conflicts = tree.query(cells, predicate="intersects")
+    resolved_indices = np.arange(len(cells))
 
     if patch_indices is not None:
         conflicts = conflicts[:, patch_indices[conflicts[0]] != patch_indices[conflicts[1]]].T
