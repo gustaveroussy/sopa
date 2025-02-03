@@ -41,7 +41,11 @@ def resolve(
         log.info(f"Cells whose area is less than {min_area} microns^2 will be removed")
 
     patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
-    geo_df, cells_indices, new_ids = _resolve_patches(patches_cells, adatas)
+    patch_id_to_centroid = sdata[SopaKeys.TRANSCRIPTS_PATCHES].centroid.apply(lambda x: (x.x, x.y)).to_dict()
+    geo_df, cells_indices, new_ids = _resolve_patches(
+        patches_cells,
+        adatas,
+        patch_id_to_centroid)
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     points = sdata[points_key]
@@ -150,7 +154,7 @@ def _read_all_segmented_patches(
 
 
 def _resolve_patches(
-    patches_cells: list[list[Polygon]], adatas: list[AnnData]
+    patches_cells: list[list[Polygon]], adatas: list[AnnData], patch_centroids: dict[int, tuple[float, float]]
 ) -> tuple[gpd.GeoDataFrame, np.ndarray, np.ndarray]:
     """Resolve the segmentation conflits on the patches overlaps.
 
@@ -167,7 +171,11 @@ def _resolve_patches(
     cells = [cell for cells in patches_cells for cell in cells]
     segmentation_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
 
-    cells_resolved, cells_indices = solve_conflicts(cells, patch_indices=patch_indices, return_indices=True)
+    cells_resolved, cells_indices = solve_conflicts(
+        cells,
+        patch_indices=patch_indices,
+        patch_centroids=patch_centroids,
+        return_indices=True)
 
     existing_ids = segmentation_ids[cells_indices[cells_indices >= 0]]
     new_ids = np.char.add("merged_cell_", np.arange((cells_indices == -1).sum()).astype(str))

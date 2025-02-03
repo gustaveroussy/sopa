@@ -21,6 +21,7 @@ def solve_conflicts(
     cells: list[Polygon] | gpd.GeoDataFrame,
     threshold: float = 0.5,
     patch_indices: np.ndarray | None = None,
+    patch_centroids: dict[int, tuple[float, float]] | None = None,
     return_indices: bool = False,
 ) -> gpd.GeoDataFrame | tuple[gpd.GeoDataFrame, np.ndarray]:
     """Resolve segmentation conflicts (i.e. overlap) after running segmentation on patches
@@ -29,6 +30,7 @@ def solve_conflicts(
         cells: List of cell polygons
         threshold: When two cells are overlapping, we look at the area of intersection over the area of the smallest cell. If this value is higher than the `threshold`, the cells are merged
         patch_indices: Patch from which each cell belongs.
+        patch_centroids: Centroids of each patch.
         return_indices: If `True`, returns also the cells indices. Merged cells have an index of -1.
 
     Returns:
@@ -39,6 +41,26 @@ def solve_conflicts(
     resolved_indices = np.arange(n_cells)
 
     assert n_cells > 0, "No cells was segmented, cannot continue"
+
+    if patch_centroids is not None and patch_indices is not None:
+        cells_gdf = gpd.GeoDataFrame(geometry=cells, cell_patch_index=patch_indices).reset_index(names="cell_id")
+        centroid_gdf = gpd.GeoDataFrame(
+            geometry=[shapely.geometry.Point(coord) for coord in patch_centroids.values()],
+            patch_index=list(patch_centroids.keys())
+        )
+
+        joined_to_centroids = gpd.sjoin_nearest(
+            cells_gdf,
+            centroid_gdf,
+        )
+
+        joined_to_centroids = joined_to_centroids.drop_duplicates(
+            subset=["cell_id"], keep="first"
+        )
+
+        cells = joined_to_centroids[
+            joined_to_centroids["patch_index"] == joined_to_centroids["cell_patch_index"]
+        ].geometry.to_list()
 
     tree = shapely.STRtree(cells)
     conflicts = tree.query(cells, predicate="intersects")
