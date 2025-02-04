@@ -42,7 +42,9 @@ def resolve(
 
     patch_ids, patches_cells, adatas = _read_all_segmented_patches(patches_dirs, min_area)
     patch_id_to_centroid = sdata[SopaKeys.TRANSCRIPTS_PATCHES].centroid.apply(lambda x: (x.x, x.y)).to_dict()
-    geo_df, cells_indices, new_ids = _resolve_patches(patch_ids, patches_cells, patch_id_to_centroid)
+    geo_df, cells_indices, new_ids = _resolve_patches(
+        patch_ids=patch_ids, adatas=adatas, patches_cells=patches_cells, patch_centroids=patch_id_to_centroid
+    )
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     points = sdata[points_key]
@@ -152,21 +154,26 @@ def _read_all_segmented_patches(
 
 
 def _resolve_patches(
-    patch_ids: list[int], patches_cells: list[list[Polygon]], patch_centroids: dict[int, tuple[float, float]]
+    patch_ids: list[int],
+    adatas: list[AnnData],
+    patches_cells: list[list[Polygon]],
+    patch_centroids: dict[int, tuple[float, float]],
 ) -> tuple[gpd.GeoDataFrame, np.ndarray, np.ndarray]:
-    """Resolve the segmentation conflits on the patches overlaps.
+    """Resolve the segmentation conflicts on the patches overlaps.
 
     Args:
         patch_ids: List of ids of the patches
+        adatas: List of AnnData objects corresponding to each patch
         patches_cells: List of polygons segmented on each patch
         patch_centroids: Centroids of the patches
 
     Returns:
         The new GeoDataFrame, the new cells indices (-1 for merged cells), and the ids of the merged cells.
     """
+    per_patch_segment_ids = [adata.obs_names for adata in adatas]
     per_cell_patch_indices = np.array(patch_ids).repeat([len(cells) for cells in patches_cells])
     cells = [cell for cells in patches_cells for cell in cells]
-    segmentation_ids = np.array([cell_id for ids in patch_ids for cell_id in ids])
+    segmentation_ids = np.array([cell_id for ids in per_patch_segment_ids for cell_id in ids])
 
     cells_resolved, cells_indices = solve_conflicts(
         cells, patch_indices=per_cell_patch_indices, patch_centroids=patch_centroids, return_indices=True
