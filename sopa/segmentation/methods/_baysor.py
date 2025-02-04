@@ -56,10 +56,10 @@ def baysor(
     if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]:
         prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
-    baysor_command = _get_baysor_command(prior_shapes_key)
-
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)
+
+    baysor_command = _get_baysor_command(prior_shapes_key)
 
     baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover)
 
