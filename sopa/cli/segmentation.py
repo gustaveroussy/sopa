@@ -1,7 +1,7 @@
 import ast
 import sys
-from typing import Iterable
 from subprocess import CalledProcessError
+from typing import Iterable
 
 import typer
 

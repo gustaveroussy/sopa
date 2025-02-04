@@ -2,8 +2,6 @@ import logging
 from functools import partial
 from pathlib import Path
 from subprocess import CalledProcessError
-from threading import Thread
-from queue import Queue
 
 from spatialdata import SpatialData
 
@@ -101,10 +99,7 @@ class BaysorPatch:
 
         _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, self.config)
 
-        result = run_process_with_streaming_output(
-            self.baysor_command.split(),
-            cwd=patch_dir
-        )
+        result = run_process_with_streaming_output(self.baysor_command.split(), cwd=patch_dir)
 
         if result.returncode != 0:
             message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"

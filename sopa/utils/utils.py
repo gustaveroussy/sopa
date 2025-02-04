@@ -4,7 +4,6 @@ import sys
 import warnings
 from pathlib import Path
 from threading import Thread
-from queue import Queue
 
 import dask.dataframe as dd
 import geopandas as gpd
@@ -378,7 +377,7 @@ def connect_streams(stream, output_stream):
         stream: input stream
         output_stream: output stream
     """
-    for line in iter(stream.readline, b''):
+    for line in iter(stream.readline, b""):
         output_stream.buffer.write(line)
         output_stream.buffer.flush()
     stream.close()
@@ -395,11 +394,7 @@ def run_process_with_streaming_output(command: list[str] | str, **popen_kwargs):
 
     """
     process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=False,
-        **popen_kwargs
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=False, **popen_kwargs
     )
 
     stdout_thread = Thread(target=connect_streams, args=(process.stdout, sys.stdout))
