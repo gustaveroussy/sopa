@@ -1,4 +1,5 @@
 import logging
+import sys
 from functools import partial
 from pathlib import Path
 
@@ -61,7 +62,7 @@ def baysor(
 
     baysor_command = _get_baysor_command(prior_shapes_key)
 
-    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover)
+    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover, capture_output=patch_index is None)
 
     if patch_index is not None:
         patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
@@ -85,11 +86,19 @@ def baysor(
 
 
 class BaysorPatch:
-    def __init__(self, baysor_command: str, config: dict | str, force: bool = False, recover: bool = False):
+    def __init__(
+        self,
+        baysor_command: str,
+        config: dict | str,
+        force: bool = False,
+        recover: bool = False,
+        capture_output: bool = True,
+    ):
         self.baysor_command = baysor_command
         self.config = config
         self.force = force
         self.recover = recover
+        self.capture_output = capture_output
 
     def __call__(self, patch_dir: Path):
         if self.recover and (patch_dir / "segmentation_counts.loom").exists():
@@ -99,16 +108,15 @@ class BaysorPatch:
 
         import subprocess
 
-        result = subprocess.run(
-            self.baysor_command.split(), cwd=patch_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        result = subprocess.run(self.baysor_command.split(), cwd=patch_dir, capture_output=self.capture_output)
 
         if result.returncode != 0 or not (patch_dir / "segmentation_counts.loom").exists():
             message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"
             if self.force:
                 log.warning(message)
                 return
-            raise RuntimeError(f"{message}:\n{result.stderr.decode()}")
+            log.error(f"{message}:\n{result.stderr.decode()}")
+            sys.exit(result.returncode)
 
 
 def _get_baysor_command(prior_shapes_key: str | None) -> str:
