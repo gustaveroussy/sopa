@@ -103,7 +103,7 @@ class BaysorPatch:
             self.baysor_command.split(), cwd=patch_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
-        if result.returncode != 0:
+        if result.returncode != 0 or not (patch_dir / "segmentation_counts.loom").exists():
             message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"
             if self.force:
                 log.warning(message)
