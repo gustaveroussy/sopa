@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import xarray
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
-from xarray import DataArray, DataTree
+from xarray import DataArray, Dataset, DataTree
 
 from ..._constants import SopaAttrs
 
@@ -14,7 +14,7 @@ def wsi(
     path: str | Path,
     chunks: tuple[int, int, int] = (3, 256, 256),
     as_image: bool = False,
-    backend: str = "tiffslide",
+    backend: Literal["tiffslide", "openslide"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
@@ -48,7 +48,7 @@ def wsi(
         scale_image.coords["y"] = scale_factor * scale_image.coords["y"]
         scale_image.coords["x"] = scale_factor * scale_image.coords["x"]
 
-        images[f"scale{key}"] = scale_image
+        images[f"scale{key}"] = Dataset({"image": scale_image})
 
     multiscale_image = DataTree.from_dict(images)
     sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
@@ -68,7 +68,11 @@ def _get_scale_transformation(scale_factor: float):
     return Scale([scale_factor, scale_factor], axes=("x", "y"))
 
 
-def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> SpatialData:
+def wsi_autoscale(
+    path: str | Path,
+    image_model_kwargs: dict | None = None,
+    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+) -> SpatialData:
     """Read a WSI into a `SpatialData` object.
 
     Scales are generated automatically by `spatialdata` instead of using
@@ -77,13 +81,14 @@ def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> S
     Args:
         path: Path to the WSI
         image_model_kwargs: Kwargs provided to the `Image2DModel`
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
 
     Returns:
         A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
     """
     image_model_kwargs = _default_image_models_kwargs(image_model_kwargs)
 
-    image_name, img, _, tiff_metadata = _open_wsi(path)
+    image_name, img, _, tiff_metadata = _open_wsi(path, backend=backend)
 
     img = img.rename_dims({"S": "c", "Y": "y", "X": "x"})
 
@@ -94,6 +99,7 @@ def wsi_autoscale(path: str | Path, image_model_kwargs: dict | None = None) -> S
         **image_model_kwargs,
     )
     multiscale_image.attrs["metadata"] = tiff_metadata
+    multiscale_image.attrs["backend"] = backend
 
     return SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
 
@@ -110,7 +116,9 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
-def _open_wsi(path: str | Path, backend: str = "openslide") -> tuple[str, xarray.Dataset, Any, dict]:
+def _open_wsi(
+    path: str | Path, backend: Literal["tiffslide", "openslide"] = "openslide"
+) -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
     if backend == "tiffslide":

@@ -2,6 +2,9 @@
 
 ### Fixed
 - Safer check dataframe series is of integer dtype (#179)
+- Ensure `feature_key` is converted correctly to as string (#185)
+- Fixed the WSI readers @stergioc (#192)
+- Fixed `points_key` usage in `sopa.aggregate` (#194)
 
 ### Added
 - Aggregation and segmentation now excludes non-interesting gene names (e.g., "blank", "unassigned", ...) (#144)
@@ -9,6 +12,10 @@
 - Possibility to choose the table name for the report (#183)
 - Possibility to choose the table name for `sopa.io.explorer.write` (#183)
 - Can set all `spatialdata_io.xenium` arguments in `sopa.io.xenium`
+- CLI for stardist @jeffquinn-msk (#189)
+
+### Changed
+- `sopa.io.write_report` is copying the adata to avoid modifying it (#196)
 
 ## [2.0.0] - 2025-01-20
 

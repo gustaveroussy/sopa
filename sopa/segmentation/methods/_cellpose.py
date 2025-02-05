@@ -87,7 +87,7 @@ def cellpose(
 def cellpose_patch(
     diameter: float,
     channels: list[str],
-    model_type: str,
+    model_type: str = "cyto3",
     pretrained_model: str | bool = False,
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,

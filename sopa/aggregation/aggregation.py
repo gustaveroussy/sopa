@@ -59,10 +59,11 @@ def aggregate(
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
     """
+    assert points_key is None or bins_key is None, "Provide either `points_key` or `bins_key`, not both."
+
     if points_key is None:
         bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
-    points_key = None
     if (bins_key is None) and (aggregate_genes or (aggregate_genes is None and sdata.points)):
         points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True

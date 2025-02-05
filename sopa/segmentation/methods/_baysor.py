@@ -56,10 +56,10 @@ def baysor(
     if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]:
         prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
-    baysor_command = _get_baysor_command(prior_shapes_key)
-
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)
+
+    baysor_command = _get_baysor_command(prior_shapes_key)
 
     baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover)
 
@@ -103,7 +103,7 @@ class BaysorPatch:
             self.baysor_command.split(), cwd=patch_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
-        if result.returncode != 0:
+        if result.returncode != 0 or not (patch_dir / "segmentation_counts.loom").exists():
             message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"
             if self.force:
                 log.warning(message)
@@ -177,7 +177,7 @@ def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale:
         "data": {
             "x": "x",
             "y": "y",
-            "gene": feature_key,
+            "gene": str(feature_key),
             "min_molecules_per_gene": 10,
             "min_molecules_per_cell": 20,
             "force_2d": True,
