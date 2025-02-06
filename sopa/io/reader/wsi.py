@@ -38,7 +38,7 @@ def wsi(
             dims=("c", "y", "x"),
         ).chunk(chunks)
 
-        scale_factor = slide.level_downsamples[level]
+        scale_factor = slide_metadata["level_downsamples"][level]
 
         scale_image = Image2DModel.parse(
             scale_image[:3, :, :],
@@ -131,6 +131,14 @@ def _open_wsi(
             consolidated=False,
             mask_and_scale=False,
         )
+        
+        metadata = {
+            "properties": slide.properties,
+            "dimensions": slide.dimensions,
+            "level_count": slide.level_count,
+            "level_dimensions": slide.level_dimensions,
+            "level_downsamples": slide.level_downsamples,
+        }
     elif backend == "openslide":
         import openslide
 
@@ -138,16 +146,31 @@ def _open_wsi(
 
         slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store
-    else:
-        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide' and 'tiffslide'")
+        
+        metadata = {
+            "properties": slide.properties,
+            "dimensions": slide.dimensions,
+            "level_count": slide.level_count,
+            "level_dimensions": slide.level_dimensions,
+            "level_downsamples": slide.level_downsamples,
+        }
+    elif backend == "slideio":
+        import slideio
 
+        from ._slideio import SlideIOStore
+
+        slide = slideio.open_slide(path)
+        zarr_store = SlideIOStore(path).store
+        metadata = {
+            "properties": {"slideio.objective-power": slide.get_scene(0).magnification},
+            "dimensions": slide.get_scene(0).size,
+            "level_count": slide.get_scene(0).num_zoom_levels,
+            "level_dimensions": [(slide.get_scene(0).get_zoom_level_info(i).size.width, slide.get_scene(0).get_zoom_level_info(i).size.height) for i in range(slide.get_scene(0).num_zoom_levels)],
+            "level_downsamples": [1/slide.get_scene(0).get_zoom_level_info(i).scale for i in range(slide.get_scene(0).num_zoom_levels)],
+        }
+    else:
+        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
+    
     zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
-    metadata = {
-        "properties": slide.properties,
-        "dimensions": slide.dimensions,
-        "level_count": slide.level_count,
-        "level_dimensions": slide.level_dimensions,
-        "level_downsamples": slide.level_downsamples,
-    }
     return image_name, zarr_img, slide, metadata
