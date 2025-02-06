@@ -88,7 +88,7 @@ def generic_staining(
         callback=ast.literal_eval,
         help="Kwargs for the method. This should be a dictionnary, in inline string format.",
     ),
-    channels: list[str] = typer.Option(None, help="Names of the channels used for segmentation."),
+    channels: list[str] = typer.Option(help="Names of the channels used for segmentation."),
     min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
     clip_limit: float = typer.Option(
         0.2,
@@ -147,7 +147,7 @@ def _run_staining_segmentation(
     sdata_path: str,
     method_name: str,
     key_added: str,
-    channels: list[str] | None,
+    channels: list[str],
     min_area: float,
     clip_limit: float,
     clahe_kernel_size: int | Iterable[int] | None,
@@ -162,11 +162,7 @@ def _run_staining_segmentation(
     from .utils import _default_boundary_dir
 
     sdata = read_zarr_standardized(sdata_path)
-
-    if channels is not None:
-        method_kwargs["channels"] = channels
-
-    method = getattr(methods, method_name)(**method_kwargs)
+    method = getattr(methods, method_name)(channels=channels, **method_kwargs)
 
     delete_cache = cache_dir_name is None
     if cache_dir_name is None:

@@ -13,6 +13,7 @@ from ._custom import custom_staining_based
 
 def stardist(
     sdata: SpatialData,
+    channels: list[str] | str = ["r", "g", "b"],
     model_type: str = "2D_versatile_he",
     image_key: str | None = None,
     min_area: int = 0,
@@ -33,6 +34,7 @@ def stardist(
 
     Args:
         sdata: A `SpatialData` object
+        channels: Name of the channels to be used for segmentation (or list of channel names).
         model_type: Stardist model name.
         image_key: Name of the image in `sdata` to be used for segmentation.
         min_area: Minimum area of a cell to be considered.
@@ -46,6 +48,8 @@ def stardist(
         key_added: Name of the shapes element to be added to `sdata`.
         **stardist_eval_kwargs: Kwargs to be provided to `model.predict_instances` (where `model` is a `stardist.models.StarDist2D` object)
     """
+    channels = channels if isinstance(channels, list) else [channels]
+
     method = stardist_patch(
         model_type=model_type,
         prob_thresh=prob_thresh,
@@ -56,7 +60,7 @@ def stardist(
     custom_staining_based(
         sdata,
         method,
-        channels=None,
+        channels,
         image_key=image_key,
         min_area=min_area,
         delete_cache=delete_cache,
@@ -73,6 +77,7 @@ def stardist_patch(
     model_type: str = "2D_versatile_he",
     prob_thresh: float = 0.5,
     nms_thresh: float = 0.4,
+    channels: list[str] = ["r", "g", "b"],  # unused but needed for the CLI
     **stardist_eval_kwargs: int,
 ) -> Callable:
     try:
@@ -116,7 +121,7 @@ class SuppressPrintsAndWarnings:
         self._original_warnings_filter = warnings.filters[:]
         warnings.simplefilter("ignore")
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, exc_type, exc_value, traceback):
         # Restore stdout
         sys.stdout.close()
         sys.stdout = self._original_stdout
