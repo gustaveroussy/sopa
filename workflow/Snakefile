@@ -176,6 +176,8 @@ rule resolve_baysor:
         smk_transcripts_temp_dir = paths.smk_transcripts_temp_dir,
     shell:
         """
+        export JULIA_NUM_THREADS={resources.cpus_per_task} # parallelize within each patch for Baysor >= v0.7
+
         sopa resolve baysor {params.sdata_path} {params.resolve}
 
         rm -r {params.smk_transcripts_temp_dir}    # cleanup large baysor files
