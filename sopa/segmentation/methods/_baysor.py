@@ -131,8 +131,7 @@ def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
 
     try:
         res = subprocess.run(
-            f"{baysor_executable_path} --version",
-            shell=True,
+            [baysor_executable_path, "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
@@ -153,8 +152,9 @@ def _get_baysor_executable_path() -> Path | str:
     if default_path.exists():
         return default_path
 
+    bin_path = Path.home() / ".local" / "bin" / "baysor"
     raise FileNotFoundError(
-        f"Please install baysor and ensure that either `{default_path}` executes baysor, or `baysor` is an existing shell alias for baysor's executable."
+        f"Please install baysor and ensure that either `{default_path}` executes baysor, or that `baysor` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
     )
 
 
