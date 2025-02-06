@@ -214,6 +214,29 @@ As for cellpose, you can either run Baysor directly on all patches, or on each p
     sopa resolve baysor tuto.zarr --gene-column genes
     ```
 
+
+### Option 3: Custom staining-based
+
+As for Cellpose, we generate the bounding boxes of the patches on which staining-based segmentation will be run.
+
+```sh
+sopa patchify image tuto.zarr --patch-width-pixel 1500 --patch-overlap-pixel 50
+```
+
+With the `sopa segmentation generic-staining` command, you can use a custom segmentation method, with the signature described [here](../custom_segmentation/) (or any function named `*_patch` from [this file](https://github.com/gustaveroussy/sopa/blob/master/sopa/segmentation/methods/__init__.py)).
+
+For instance, we can use `stardist_patch` directly from the CLI as below.
+
+```sh
+sopa segmentation generic-staining tuto.zarr --method-name stardist_patch
+```
+
+!!! warning
+    The toy dataset is not H&E based, so stardist will fail on this example because of the number of channels. To create the right number of channels on the toy dataset, you can use the following command:
+    ```sh
+    sopa convert . --sdata-path tuto.zarr --technology toy_dataset --kwargs '{"c_coords": ["r", "g", "b"]}'
+    ```
+
 ## Aggregation
 
 This **mandatory** step turns the data into an `AnnData` object. We can count the transcript inside each cell, and/or average each channel intensity inside each cell boundary.
