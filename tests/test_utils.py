@@ -1,3 +1,6 @@
+import io
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
 from spatialdata.models import PointsModel
@@ -164,3 +167,19 @@ def test_add_spatial_element():
     import shutil
 
     shutil.rmtree("_test_add_spatial_element.zarr")
+
+
+def test_run_process_with_streaming_output():
+    class MockStringIO(io.BytesIO):
+        def __init__(self):
+            super().__init__()
+            self.buffer = self
+
+    # Use patch to temporarily replace sys.stdout with our StringIO object
+    with patch("sys.stdout", new_callable=MockStringIO) as fake_stdout:
+        sopa.utils.utils.run_process_with_streaming_output(["python", "-c", "print(1+1)"])
+
+        # Get the output that was "printed"
+        output = fake_stdout.getvalue().decode("utf-8")
+
+    assert output == "2\n"
