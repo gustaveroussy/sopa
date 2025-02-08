@@ -1,5 +1,4 @@
 import logging
-import sys
 from functools import partial
 from pathlib import Path
 
@@ -111,12 +110,15 @@ class BaysorPatch:
         result = subprocess.run(self.baysor_command.split(), cwd=patch_dir, capture_output=self.capture_output)
 
         if result.returncode != 0 or not (patch_dir / "segmentation_counts.loom").exists():
-            message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"
             if self.force:
-                log.warning(message)
+                log.warning(f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`")
                 return
-            log.error(f"{message}:\n{result.stderr.decode()}")
-            sys.exit(result.returncode)
+            raise subprocess.CalledProcessError(
+                returncode=result.returncode,
+                cmd=self.baysor_command,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
 
 
 def _get_baysor_command(prior_shapes_key: str | None) -> str:
