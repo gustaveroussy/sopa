@@ -113,7 +113,6 @@ class BaysorPatch:
             if self.force:
                 log.warning(f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`")
                 return
-
             raise subprocess.CalledProcessError(
                 returncode=result.returncode,
                 cmd=self.baysor_command,
