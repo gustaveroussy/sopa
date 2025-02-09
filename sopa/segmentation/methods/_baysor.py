@@ -127,19 +127,20 @@ def _get_baysor_command(prior_shapes_key: str | None) -> str:
 def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
     import subprocess
 
-    from packaging.version import Version
+    from packaging.version import InvalidVersion, Version
+
+    result = subprocess.run(
+        [baysor_executable_path, "--version"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
 
     try:
-        res = subprocess.run(
-            [baysor_executable_path, "--version"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-
-        return Version(res.stdout) >= Version("0.7.0")
-    except:
-        return False
+        return Version(result.stdout) >= Version("0.7.0")
+    except InvalidVersion:
+        log.warning("Could not parse the version of baysor. Assumes baysor >= 0.7.0.")
+        return True
 
 
 def _get_baysor_executable_path() -> Path | str:
