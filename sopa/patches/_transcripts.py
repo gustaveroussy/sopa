@@ -120,7 +120,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         add_spatial_element(self.sdata, key_added, geo_df)
 
-        log.info(f"{len(valid_indices)} patche(s) were added to sdata['{key_added}']")
+        log.info(f"Added {len(valid_indices)} patche(s) to sdata['{key_added}']")
 
     def get_patch_path(self, index: int, csv_name: str | None = None) -> Path:
         return self.cache_dir / str(index) / (csv_name or self.csv_name)
