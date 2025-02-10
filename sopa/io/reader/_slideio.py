@@ -93,12 +93,17 @@ class SlideIOStore(Store):
         try:
             x, y, level = _parse_chunk_path(key)
             with self._slide.get_scene(0) as scene:
-                scaling = 1/scene.get_zoom_level_info(level).scale
-                location = self._ref_pos(x, y, level)
-                tile_size = (self._tilesize, self._tilesize)
-                block_size_w = min(int(scaling*self._tilesize), scene.size[0])
-                block_size_h = min(int(scaling*self._tilesize), scene.size[1])
-                tile = scene.read_block(location+(block_size_w,block_size_h), tile_size)
+                scaling = 1 / scene.get_zoom_level_info(level).scale
+                (x_start, y_start) = self._ref_pos(x, y, level)
+                x_end = min(x_start + int(scaling * self._tilesize), scene.size[0])
+                y_end = min(y_start + int(scaling * self._tilesize), scene.size[1])
+                x_width = x_end - x_start
+                y_height = y_end - y_start
+                tile_x = int(np.round(x_width / scaling))
+                tile_y = int(np.round(y_height / scaling))
+                _tile = scene.read_block((x_start, y_start, x_width, y_height), (tile_x, tile_y))
+                tile = np.zeros((self._tilesize, self._tilesize, scene.num_channels), dtype=np.uint8)
+                tile[: _tile.shape[0], : _tile.shape[1], :] = _tile
         except ArgumentError as err:
             # Can occur if trying to read a closed slide
             raise err
@@ -131,7 +136,7 @@ class SlideIOStore(Store):
         self.close()
 
     def _ref_pos(self, x: int, y: int, level: int):
-        dsample = 1/self._slide.get_scene(0).get_zoom_level_info(level).scale
+        dsample = 1 / self._slide.get_scene(0).get_zoom_level_info(level).scale
         xref = int(x * dsample * self._tilesize)
         yref = int(y * dsample * self._tilesize)
         return xref, yref

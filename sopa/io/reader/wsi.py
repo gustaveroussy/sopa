@@ -131,7 +131,7 @@ def _open_wsi(
             consolidated=False,
             mask_and_scale=False,
         )
-        
+
         metadata = {
             "properties": slide.properties,
             "dimensions": slide.dimensions,
@@ -146,7 +146,7 @@ def _open_wsi(
 
         slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store
-        
+
         metadata = {
             "properties": slide.properties,
             "dimensions": slide.dimensions,
@@ -165,12 +165,20 @@ def _open_wsi(
             "properties": {"slideio.objective-power": slide.get_scene(0).magnification},
             "dimensions": slide.get_scene(0).size,
             "level_count": slide.get_scene(0).num_zoom_levels,
-            "level_dimensions": [(slide.get_scene(0).get_zoom_level_info(i).size.width, slide.get_scene(0).get_zoom_level_info(i).size.height) for i in range(slide.get_scene(0).num_zoom_levels)],
-            "level_downsamples": [1/slide.get_scene(0).get_zoom_level_info(i).scale for i in range(slide.get_scene(0).num_zoom_levels)],
+            "level_dimensions": [
+                (
+                    slide.get_scene(0).get_zoom_level_info(i).size.width,
+                    slide.get_scene(0).get_zoom_level_info(i).size.height,
+                )
+                for i in range(slide.get_scene(0).num_zoom_levels)
+            ],
+            "level_downsamples": [
+                1 / slide.get_scene(0).get_zoom_level_info(i).scale for i in range(slide.get_scene(0).num_zoom_levels)
+            ],
         }
     else:
         raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
-    
+
     zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
     return image_name, zarr_img, slide, metadata
