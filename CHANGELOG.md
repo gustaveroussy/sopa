@@ -13,6 +13,7 @@
 - Possibility to choose the table name for `sopa.io.explorer.write` (#183)
 - Can set all `spatialdata_io.xenium` arguments in `sopa.io.xenium`
 - CLI for stardist @jeffquinn-msk (#189)
+- Baysor logs if running on one patch, and return right error code in CLI @jeffquinn-msk (#199)
 
 ### Changed
 - `sopa.io.write_report` is copying the adata to avoid modifying it (#196)
