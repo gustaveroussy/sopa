@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pandas as pd
 import pytest
 from spatialdata.models import PointsModel
@@ -164,3 +166,59 @@ def test_add_spatial_element():
     import shutil
 
     shutil.rmtree("_test_add_spatial_element.zarr")
+
+
+@pytest.fixture
+def mock_spatial_data():
+    class MockSpatialData:
+        def __init__(self, shapes=None):
+            self.shapes = shapes or {}
+
+    return MockSpatialData
+
+
+def test_get_transcripts_patches_dirs_empty_patches(mock_spatial_data):
+    """Test when transcript patches are present but empty"""
+    sdata = mock_spatial_data(
+        shapes={sopa._constants.SopaKeys.TRANSCRIPTS_PATCHES: {sopa._constants.SopaKeys.CACHE_PATH_KEY: []}}
+    )
+
+    result = sopa.utils.utils.get_transcripts_patches_dirs(sdata)
+    assert result == []
+
+
+@pytest.fixture
+def mock_path_exists():
+    with patch("pathlib.Path.exists") as mock:
+        yield mock
+
+
+def test_get_transcripts_patches_dirs_with_invalid_patches(mock_spatial_data, mock_path_exists):
+    """Test when only invalid transcript patches are present"""
+    test_paths = ["/invalid/path/1", "/invalid/path/2"]
+
+    # Configure mock to make all paths invalid
+    mock_path_exists.return_value = False
+
+    sdata = mock_spatial_data(
+        shapes={sopa._constants.SopaKeys.TRANSCRIPTS_PATCHES: {sopa._constants.SopaKeys.CACHE_PATH_KEY: test_paths}}
+    )
+
+    result = sopa.utils.utils.get_transcripts_patches_dirs(sdata)
+    assert result == []
+
+
+def test_get_transcripts_patches_dirs_mixed_validity(mock_spatial_data, mock_path_exists):
+    """Test with a mix of valid and invalid patches"""
+    test_paths = ["/valid/path", "/invalid/path", "/valid/path2"]
+
+    mock_path_exists.side_effect = [True, False, True]
+
+    sdata = mock_spatial_data(
+        shapes={sopa._constants.SopaKeys.TRANSCRIPTS_PATCHES: {sopa._constants.SopaKeys.CACHE_PATH_KEY: test_paths}}
+    )
+
+    result = sopa.utils.utils.get_transcripts_patches_dirs(sdata)
+    assert len(result) == 2
+    assert str(result[0]) == "/valid/path"
+    assert str(result[1]) == "/valid/path2"

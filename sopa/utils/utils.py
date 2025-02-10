@@ -351,7 +351,15 @@ def get_transcripts_patches_dirs(sdata: SpatialData) -> list[Path]:
         sdata: A `SpatialData` object containing the transcript patches.
     """
     assert SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes, "Transcript patches not found in the SpatialData object"
-    return [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+    possible_patch_dirs = [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+
+    valid_patch_dirs = []
+
+    for p in possible_patch_dirs:
+        if (p / "segmentation_polygons_2d.json").exists():
+            valid_patch_dirs.append(p)
+
+    return valid_patch_dirs
 
 
 def delete_transcripts_patches_dirs(sdata: SpatialData):
