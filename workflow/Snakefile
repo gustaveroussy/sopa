@@ -31,8 +31,6 @@ rule to_spatialdata:
         paths.sdata_zgroup if paths.data_path else [],
     conda:
         "sopa"
-    resources:
-        mem_mb=128_000,
     params:
         reader = args['read'].as_cli(),
         data_path = paths.data_path,
@@ -115,14 +113,16 @@ rule patch_segmentation_baysor:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.loom",
     conda:
         "sopa"
-    resources:
-        mem_mb=128_000,
-        runtime=120, # in minutes
     params:
         baysor_config = args["segmentation"]["baysor"].as_cli(keys=["config"]),
         sdata_path = paths.sdata_path,
+    resources:
+        cpus_per_task=1,
     shell:
         """
+        export JULIA_NUM_THREADS={resources.cpus_per_task} # parallelize within each patch for Baysor >= v0.7
+
+
         if command -v module &> /dev/null; then
             module purge
         fi
@@ -138,8 +138,6 @@ rule patch_segmentation_comseg:
         paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.h5ad",
     conda:
         "sopa"
-    resources:
-        mem_mb=128_000,
     params:
         comseg_config = args["segmentation"]["comseg"].as_cli(keys=["config"]),
         sdata_path = paths.sdata_path,
@@ -224,8 +222,6 @@ rule aggregate:
         touch(paths.smk_aggregation),
     conda:
         "sopa"
-    resources:
-        mem_mb=64_000,
     params:
         aggregate = args["aggregate"].as_cli(),
         sdata_path = paths.sdata_path,
@@ -260,9 +256,6 @@ rule image_write:
         paths.explorer_image,
     conda:
         "sopa"
-    resources:
-        mem_mb=64_000,
-        runtime=1500, # in minutes
     params:
         explorer = args["explorer"].as_cli(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize']),
         sdata_path = paths.sdata_path,
@@ -298,8 +291,6 @@ rule explorer:
         paths.explorer_experiment,
     conda:
         "sopa"
-    resources:
-        mem_mb=256_000,
     params:
         explorer = args["explorer"].as_cli(),
         sdata_path = paths.sdata_path,

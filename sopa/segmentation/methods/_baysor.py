@@ -61,7 +61,7 @@ def baysor(
 
     baysor_command = _get_baysor_command(prior_shapes_key)
 
-    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover)
+    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover, capture_output=patch_index is None)
 
     if patch_index is not None:
         patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
@@ -85,11 +85,19 @@ def baysor(
 
 
 class BaysorPatch:
-    def __init__(self, baysor_command: str, config: dict | str, force: bool = False, recover: bool = False):
+    def __init__(
+        self,
+        baysor_command: str,
+        config: dict | str,
+        force: bool = False,
+        recover: bool = False,
+        capture_output: bool = True,
+    ):
         self.baysor_command = baysor_command
         self.config = config
         self.force = force
         self.recover = recover
+        self.capture_output = capture_output
 
     def __call__(self, patch_dir: Path):
         if self.recover and (patch_dir / "segmentation_counts.loom").exists():
@@ -99,16 +107,18 @@ class BaysorPatch:
 
         import subprocess
 
-        result = subprocess.run(
-            self.baysor_command.split(), cwd=patch_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        result = subprocess.run(self.baysor_command.split(), cwd=patch_dir, capture_output=self.capture_output)
 
         if result.returncode != 0 or not (patch_dir / "segmentation_counts.loom").exists():
-            message = f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`"
             if self.force:
-                log.warning(message)
+                log.warning(f"Baysor error on patch {patch_dir.resolve()} with command `{self.baysor_command}`")
                 return
-            raise RuntimeError(f"{message}:\n{result.stderr.decode()}")
+            raise subprocess.CalledProcessError(
+                returncode=result.returncode,
+                cmd=self.baysor_command,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
 
 
 def _get_baysor_command(prior_shapes_key: str | None) -> str:
@@ -127,20 +137,20 @@ def _get_baysor_command(prior_shapes_key: str | None) -> str:
 def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
     import subprocess
 
-    from packaging.version import Version
+    from packaging.version import InvalidVersion, Version
+
+    result = subprocess.run(
+        [baysor_executable_path, "--version"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
 
     try:
-        res = subprocess.run(
-            f"{baysor_executable_path} --version",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-
-        return Version(res.stdout) >= Version("0.7.0")
-    except:
-        return False
+        return Version(result.stdout) >= Version("0.7.0")
+    except InvalidVersion:
+        log.warning("Could not parse the version of baysor. Assumes baysor >= 0.7.0.")
+        return True
 
 
 def _get_baysor_executable_path() -> Path | str:
@@ -153,8 +163,9 @@ def _get_baysor_executable_path() -> Path | str:
     if default_path.exists():
         return default_path
 
+    bin_path = Path.home() / ".local" / "bin" / "baysor"
     raise FileNotFoundError(
-        f"Please install baysor and ensure that either `{default_path}` executes baysor, or `baysor` is an existing shell alias for baysor's executable."
+        f"Please install baysor and ensure that either `{default_path}` executes baysor, or that `baysor` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
     )
 
 
