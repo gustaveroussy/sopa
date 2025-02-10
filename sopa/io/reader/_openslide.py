@@ -79,6 +79,9 @@ class OpenSlideStore(Store):
         self._writeable = False
         self._erasable = False
 
+    def __contains__(self, key):
+        return key in self._store
+
     def __getitem__(self, key: str):
         if key in self._store:
             # key is for metadata
