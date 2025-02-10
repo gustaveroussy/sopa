@@ -1,4 +1,4 @@
-## [2.0.1] - xxxx-xx-xx
+## [2.0.1] - 2025-02-10
 
 ### Fixed
 - Safer check dataframe series is of integer dtype (#179)
