@@ -15,6 +15,7 @@ def stardist(
     sdata: SpatialData,
     model_type: str = "2D_versatile_he",
     image_key: str | None = None,
+    channels: list[str] | str | None = None,
     min_area: int = 0,
     delete_cache: bool = True,
     recover: bool = False,
@@ -35,6 +36,7 @@ def stardist(
         sdata: A `SpatialData` object
         model_type: Stardist model name.
         image_key: Name of the image in `sdata` to be used for segmentation.
+        channels: One or a list of channel names used for segmentation. None assumes RGB image.
         min_area: Minimum area of a cell to be considered.
         delete_cache: Whether to delete the cache after segmentation.
         recover: If `True`, recover the cache from a failed segmentation, and continue.
@@ -56,7 +58,7 @@ def stardist(
     custom_staining_based(
         sdata,
         method,
-        channels=None,
+        channels=channels,
         image_key=image_key,
         min_area=min_area,
         delete_cache=delete_cache,
@@ -73,6 +75,7 @@ def stardist_patch(
     model_type: str = "2D_versatile_he",
     prob_thresh: float = 0.5,
     nms_thresh: float = 0.4,
+    channels: list[str] | str | None = None,  # for the CLI to work, as channels will be sent
     **stardist_eval_kwargs: int,
 ) -> Callable:
     try:

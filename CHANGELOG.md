@@ -1,18 +1,24 @@
-## [2.0.1] - xxxx-xx-xx
+## [2.0.2] - xxxx-xx-xx
+
+
+
+## [2.0.1] - 2025-02-10
 
 ### Fixed
 - Safer check dataframe series is of integer dtype (#179)
-- Ensure `feature_key` is converted correctly to as string (#185)
+- Ensure `feature_key` is converted correctly to a string (#185)
 - Fixed the WSI readers @stergioc (#192)
 - Fixed `points_key` usage in `sopa.aggregate` (#194)
 
 ### Added
-- Aggregation and segmentation now excludes non-interesting gene names (e.g., "blank", "unassigned", ...) (#144)
+- Aggregation and segmentation now exclude non-interesting gene names (e.g., "blank", "unassigned", ...) (#144)
 - Can filter low-quality transcript for transcript-based segmentation (#79)
 - Possibility to choose the table name for the report (#183)
 - Possibility to choose the table name for `sopa.io.explorer.write` (#183)
 - Can set all `spatialdata_io.xenium` arguments in `sopa.io.xenium`
 - CLI for stardist @jeffquinn-msk (#189)
+- Baysor logs if running on one patch, and return the right error code in CLI @jeffquinn-msk (#199)
+- Baysor parallelization per patch @Marius1311 (#203)
 
 ### Changed
 - `sopa.io.write_report` is copying the adata to avoid modifying it (#196)
