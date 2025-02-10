@@ -244,12 +244,18 @@ def baysor(
     scale: float = typer.Option(default=None, help="Baysor scale parameter (for config inference)"),
 ):
     """Perform Baysor segmentation. This can be done on all patches directly, or on one individual patch."""
+    import sys
+    from subprocess import CalledProcessError
+
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation.methods import baysor
 
     sdata = read_zarr_standardized(sdata_path)
 
-    baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
+    try:
+        baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
+    except CalledProcessError as e:
+        sys.exit(e.returncode)
 
     _log_whether_to_resolve(patch_index)
 
