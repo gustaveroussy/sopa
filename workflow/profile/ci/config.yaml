@@ -1,4 +1,1 @@
-default-resources:
-    cpus_per_task: 1
-
 printshellcmds: True

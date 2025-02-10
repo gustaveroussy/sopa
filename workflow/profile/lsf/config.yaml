@@ -4,7 +4,6 @@ executor: lsf
 default-resources:
     mem_mb: 8_000 # default rules memory in MB (you can keep this value)
     gpu: 0
-    cpus_per_task: 1
 
 # other options (you can keep the default values)
 restart-times: 0
