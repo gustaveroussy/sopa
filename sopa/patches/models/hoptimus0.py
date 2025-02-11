@@ -1,4 +1,3 @@
-import timm
 from torch import nn
 from torchvision import transforms
 
@@ -6,6 +5,9 @@ from torchvision import transforms
 class HOPTIMUSFeatures(nn.Module):
     def __init__(self):
         super().__init__()
+
+        import timm
+
         self.model = timm.create_model("hf_hub:bioptimus/H-optimus-0", pretrained=True)
 
     def forward(self, x):
