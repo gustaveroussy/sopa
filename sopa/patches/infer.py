@@ -41,7 +41,7 @@ def compute_embeddings(
 
     Args:
         sdata: A `SpatialData` object
-        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, or `dinov2`).
+        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`).
         patch_width: Width (pixels) of the patches.
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
