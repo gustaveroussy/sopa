@@ -3,6 +3,9 @@
 ### Added
 - Added H-optimus-0 model for H&E patches embeddings @stergioc (#208)
 
+### Fixed
+- Right sorting scales for WSI reader with openslide backend @stergioc (#209)
+
 ## [2.0.1] - 2025-02-10
 
 ### Fixed
