@@ -1,6 +1,7 @@
 ## [2.0.2] - xxxx-xx-xx
 
-
+### Added
+- Added H-optimus-0 model for H&E patches embeddings @stergioc (#208)
 
 ## [2.0.1] - 2025-02-10
 
