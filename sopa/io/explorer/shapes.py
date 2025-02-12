@@ -29,6 +29,13 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = TOLERANC
     n_vertices = len(polygon.exterior.coords)
     assert n_vertices >= 3
 
+    if tolerance > 50:
+        log.warning(
+            f"Polygon with {n_vertices} vertices could not be simplified to {max_vertices} vertices. Using a circle instead."
+        )
+        polygon = polygon.centroid.buffer(np.sqrt(polygon.area) / 2)
+        return pad_polygon(polygon, max_vertices, TOLERANCE_STEP)
+
     coords = polygon.exterior.coords._coords
 
     if n_vertices == max_vertices:
@@ -37,7 +44,6 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = TOLERANC
     if n_vertices < max_vertices:
         return np.pad(coords, ((0, max_vertices - n_vertices), (0, 0)), mode="edge").flatten()
 
-    # TODO: improve it: how to choose the right tolerance?
     polygon = polygon.simplify(tolerance=tolerance)
     return pad_polygon(polygon, max_vertices, tolerance + TOLERANCE_STEP)
 
