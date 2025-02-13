@@ -3,7 +3,7 @@ from pathlib import Path
 
 from spatialdata import SpatialData
 
-from ..._constants import ATTRS_KEY, SopaAttrs
+from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ...utils import ensure_string_channel_names
 from .utils import _default_image_kwargs
 
@@ -20,6 +20,7 @@ def xenium(
     cells_labels: int = False,
     cells_as_circles: int = False,
     nucleus_boundaries: int = False,
+    qv_threshold: int = None,
     **kwargs: int,
 ) -> SpatialData:
     """Read Xenium data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.xenium.html).
@@ -40,6 +41,7 @@ def xenium(
         cells_labels: Whether to read cell labels
         cells_as_circles: Whether to read cells as circles
         nucleus_boundaries: Whether to read nucleus boundaries
+        qv_threshold: Whether to add a "low_quality_transcript" column to transcripts. Rows that are True will not be used during Sopa segmentation.
         kwargs: Additional keyword arguments passed to `spatialdata_io.xenium
 
     Returns:
@@ -78,5 +80,7 @@ def xenium(
 
     if "transcripts" in sdata.points:
         sdata.attrs[SopaAttrs.TRANSCRIPTS] = "transcripts"
+        if qv_threshold:
+            sdata.points["transcripts"][SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY] = sdata.points["transcripts"].qv < qv_threshold
 
     return sdata
