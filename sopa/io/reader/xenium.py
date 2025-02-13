@@ -80,6 +80,10 @@ def xenium(
 
     if "transcripts" in sdata.points:
         sdata.attrs[SopaAttrs.TRANSCRIPTS] = "transcripts"
+        if qv_threshold:
+            sdata.points["transcripts"][SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY] = (
+                sdata.points["transcripts"].qv < qv_threshold
+            )
 
         if qv_threshold is not None:
             assert "qv" in sdata.points["transcripts"].columns, "QV column not found in `sdata['transcripts']`"
