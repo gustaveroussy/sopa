@@ -2,6 +2,11 @@
 
 ### Added
 - Added H-optimus-0 model for H&E patches embeddings @stergioc (#208)
+- Can provide `qv_threshold` argument to the Xenium reader to filter low quality transcripts @callum-jpg (#210)
+
+### Fixed
+- Right sorting scales for WSI reader with openslide backend @stergioc (#209)
+- When a polygon cannot be simplified (for the Xenium Explorer), convert it to a circle (#206)
 
 ## [2.0.1] - 2025-02-10
 
