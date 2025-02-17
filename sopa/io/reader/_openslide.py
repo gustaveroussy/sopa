@@ -79,6 +79,16 @@ class OpenSlideStore(Store):
         self._writeable = False
         self._erasable = False
 
+    def __contains__(self, key: str):
+        if key in self._store:
+            return True
+        else:
+            try:
+                _, _, level = _parse_chunk_path(key)
+                return f"{level}/.zarray" in self._store.keys()
+            except ValueError:
+                return False
+
     def __getitem__(self, key: str):
         if key in self._store:
             # key is for metadata
