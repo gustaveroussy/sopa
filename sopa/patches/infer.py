@@ -1,10 +1,10 @@
 import logging
 from typing import Callable
 
-import numpy as np
 import tqdm
+from anndata import AnnData
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel
+from spatialdata.models import TableModel
 from xarray import DataArray, DataTree
 
 from .._constants import SopaAttrs, SopaKeys
@@ -76,17 +76,23 @@ def compute_embeddings(
     if len(predictions.shape) == 1:
         predictions = torch.unsqueeze(predictions, 1)
 
-    output_image = np.zeros((predictions.shape[1], *patches.shape), dtype=np.float32)
-    for (loc_x, loc_y), pred in zip(patches.ilocs, predictions):
-        output_image[:, loc_y, loc_x] = pred
+    patches.add_shapes(key_added=SopaKeys.EMBEDDINGS_PATCHES)
 
-    output_image = DataArray(output_image, dims=("c", "y", "x"))
-    output_image = Image2DModel.parse(output_image, transformations=infer.get_patches_transformations(patch_overlap))
+    gdf = sdata[SopaKeys.EMBEDDINGS_PATCHES]
+
+    adata = AnnData(predictions.numpy())
+    adata.obs["region"] = SopaKeys.EMBEDDINGS_PATCHES
+    adata.obs["instance"] = gdf.index.values
+    adata = TableModel.parse(
+        adata,
+        region=SopaKeys.EMBEDDINGS_PATCHES,
+        region_key="region",
+        instance_key="instance",
+    )
+    adata.obsm["spatial"] = gdf.centroid.get_coordinates().values
 
     key_added = key_added or f"{infer.model_str}_embeddings"
-    add_spatial_element(sdata, key_added, output_image)
-
-    patches.add_shapes(key_added=SopaKeys.EMBEDDINGS_PATCHES)
+    add_spatial_element(sdata, key_added, adata)
 
 
 def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:

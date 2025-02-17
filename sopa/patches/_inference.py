@@ -3,7 +3,6 @@ from typing import Callable
 
 import numpy as np
 import torch
-from spatialdata.transformations import Scale, Sequence, get_transformation
 from xarray import DataArray, DataTree
 
 from . import models
@@ -75,13 +74,6 @@ class Inference:
         assert len(embedding.shape) == 2, "The model must have the following signature: (B, C, Y, X) -> (B, C)"
 
         return embedding.cpu()  # shape (B, output_dim)
-
-    def get_patches_transformations(self, patch_overlap: float) -> dict[str, Sequence]:
-        image_transformations = get_transformation(self.image, get_all=True)
-
-        patch_step = self.patch_width - patch_overlap
-        to_image = Sequence([Scale([patch_step, patch_step], axes=("x", "y"))])
-        return {cs: to_image.compose_with(t) for cs, t in image_transformations.items()}
 
 
 def _get_extraction_parameters(
