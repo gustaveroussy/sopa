@@ -7,6 +7,7 @@
 ### Fixed
 - Right sorting scales for WSI reader with openslide backend @stergioc (#209)
 - When a polygon cannot be simplified (for the Xenium Explorer), convert it to a circle (#206)
+- `sopa explorer write`: use correct default argument for `table_key` in the CLI (#211)
 
 ## [2.0.1] - 2025-02-10
 
