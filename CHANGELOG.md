@@ -5,7 +5,7 @@
 - Can provide `qv_threshold` argument to the Xenium reader to filter low quality transcripts @callum-jpg (#210)
 
 ### Changed
-- Storing patches embeddings as an `AnnData` object instead of images
+- Storing patches embeddings as an `AnnData` object instead of images (#212)
 
 ### Fixed
 - Right sorting scales for WSI reader with openslide backend @stergioc (#209)
