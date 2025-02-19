@@ -90,7 +90,7 @@ def compute_embeddings(
         instance_key="instance",
     )
     adata.obsm["spatial"] = gdf.centroid.get_coordinates().values
-    adata.uns["emebedding_config"] = {
+    adata.uns["embedding_config"] = {
         "patch_width": patch_width,
         "patch_overlap": patch_overlap,
         "magnification": magnification,
