@@ -91,12 +91,12 @@ def compute_embeddings(
     )
     adata.obsm["spatial"] = gdf.centroid.get_coordinates().values
     adata.uns["emebedding_config"] = {
-        "patch_width":patch_width,
-        "patch_overlap":patch_overlap,
-        "magnification":magnification,
-        "level":infer.level,
-        "resize_factor":infer.resize_factor,
-        "model_str":infer.model_str
+        "patch_width": patch_width,
+        "patch_overlap": patch_overlap,
+        "magnification": magnification,
+        "level": infer.level,
+        "resize_factor": infer.resize_factor,
+        "model_str": infer.model_str,
     }
 
     key_added = key_added or f"{infer.model_str}_embeddings"
