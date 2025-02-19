@@ -44,5 +44,5 @@ def cluster_embeddings(
         assert method in METHODS_DICT, f"Method {method} is not available. Use one of: {', '.join(METHODS_DICT.keys())}"
         method = METHODS_DICT[method]
 
-    element.obs[key_added] = method(element, **method_kwargs)
+    element.obs[key_added] = method(element.X, **method_kwargs)
     element.obs[key_added] = element.obs[key_added].astype("category")
