@@ -83,6 +83,16 @@ class SlideIOStore(Store):
         self._writeable = False
         self._erasable = False
 
+    def __contains__(self, key: str):
+        if key in self._store:
+            return True
+        else:
+            try:
+                _, _, level = _parse_chunk_path(key)
+                return f"{level}/.zarray" in self._store.keys()
+            except ValueError:
+                return False
+
     def __getitem__(self, key: str):
         if key in self._store:
             # key is for metadata
@@ -107,10 +117,11 @@ class SlideIOStore(Store):
         except ArgumentError as err:
             # Can occur if trying to read a closed slide
             raise err
-        except Exception:
+        except Exception as e:
             # TODO: probably need better error handling.
             # If anything goes wrong, we just signal the chunk
             # is missing from the store.
+            print(e)
             raise KeyError(key)
         return np.array(tile)  # .tobytes()
 
