@@ -11,7 +11,7 @@ from spatialdata.models import ShapesModel, SpatialElement
 from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
-from .._constants import EPS, SopaKeys
+from .._constants import SopaKeys
 from ..utils import add_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class Patches1D:
 
     def tight_width(self):
         width = (self.delta + (self._count - 1) * self.patch_overlap) / self._count
-        return ceil(width) if self.int_coords else width + EPS
+        return ceil(width) if self.int_coords else width + 1e-4  # add an epsilon to avoid floating point errors (#214)
 
     def __getitem__(self, i):
         start_delta = i * (self.patch_width - self.patch_overlap)

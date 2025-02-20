@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 import pytest
 from spatialdata import SpatialData
 
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
+from sopa.patches._patches import Patches1D
 
 
 @pytest.fixture
@@ -30,6 +32,15 @@ def test_patchify_inside_tissue_roi(sdata: SpatialData):
     assert len(sdata[SopaKeys.PATCHES]) == 42  # inside the tissue ROI
 
     del sdata.shapes[SopaKeys.ROI]
+
+
+def test_pathify_transcripts():
+    # reproduce issue #214
+
+    xmax = np.float32(11475.797)
+    xmin = np.float32(2.671875)
+
+    Patches1D(xmin=xmin, xmax=xmax, patch_width=300.0, patch_overlap=30.0, tight=True, int_coords=False)
 
 
 def test_patchify_baysor(sdata: SpatialData):

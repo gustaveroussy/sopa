@@ -68,5 +68,4 @@ class SopaFiles:
 
 VALID_DIMENSIONS = ("c", "y", "x")
 LOW_AVERAGE_COUNT = 0.01
-EPS = 1e-5
 ATTRS_KEY = "spatialdata_attrs"

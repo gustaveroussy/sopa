@@ -5,12 +5,14 @@
 - Can provide `qv_threshold` argument to the Xenium reader to filter low quality transcripts @callum-jpg (#210)
 
 ### Changed
-- Storing patches embeddings as an `AnnData` object instead of images (#212)
+- Storing patches embeddings as an `AnnData` object instead of images (#212) (see [updated tuto](https://gustaveroussy.github.io/sopa/tutorials/he/))
 
 ### Fixed
 - Right sorting scales for WSI reader with openslide backend @stergioc (#209)
 - When a polygon cannot be simplified (for the Xenium Explorer), convert it to a circle (#206)
 - `sopa explorer write`: use correct default argument for `table_key` in the CLI (#211)
+- Fix Baysor usage on Windows (#185)
+- Fix tight patches returning a different number of patches (#214)
 
 ## [2.0.1] - 2025-02-10
 
