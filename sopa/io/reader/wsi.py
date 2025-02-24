@@ -12,7 +12,6 @@ from ..._constants import SopaAttrs
 
 def wsi(
     path: str | Path,
-    chunks: tuple[int, int, int] = (3, 256, 256),
     as_image: bool = False,
     backend: Literal["tiffslide", "openslide"] = "tiffslide",
 ) -> SpatialData | DataTree:
@@ -36,7 +35,7 @@ def wsi(
         scale_image = DataArray(
             img[key].transpose("S", f"Y{suffix}", f"X{suffix}"),
             dims=("c", "y", "x"),
-        ).chunk(chunks)
+        )
 
         scale_factor = slide_metadata["level_downsamples"][level]
 
@@ -126,11 +125,6 @@ def _open_wsi(
 
         slide = tiffslide.open_slide(path)
         zarr_store = slide.zarr_group.store
-        zarr_img = xarray.open_zarr(
-            zarr_store,
-            consolidated=False,
-            mask_and_scale=False,
-        )
 
         metadata = {
             "properties": slide.properties,
@@ -179,6 +173,6 @@ def _open_wsi(
     else:
         raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
 
-    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, chunks=None)
 
     return image_name, zarr_img, slide, metadata
