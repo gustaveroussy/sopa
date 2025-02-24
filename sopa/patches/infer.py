@@ -50,6 +50,7 @@ def compute_embeddings(
         image_key: Optional image key of the image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
+        data_parallel: If `True`, the model will be run in data parallel mode. If a list of GPUs is provided, the model will be run in data parallel mode on the specified GPUs.
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
     """
     try:

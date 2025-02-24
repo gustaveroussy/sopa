@@ -13,7 +13,7 @@ from ..._constants import SopaAttrs
 def wsi(
     path: str | Path,
     as_image: bool = False,
-    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
@@ -21,7 +21,7 @@ def wsi(
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
         as_image: If `True`, returns a, image instead of a `SpatialData` object
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"slideio"`.
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`, or just the DataTree if `as_image=True`
@@ -70,7 +70,7 @@ def _get_scale_transformation(scale_factor: float):
 def wsi_autoscale(
     path: str | Path,
     image_model_kwargs: dict | None = None,
-    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object.
 
@@ -80,7 +80,7 @@ def wsi_autoscale(
     Args:
         path: Path to the WSI
         image_model_kwargs: Kwargs provided to the `Image2DModel`
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"slideio"`.
 
     Returns:
         A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
