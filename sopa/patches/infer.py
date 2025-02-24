@@ -31,6 +31,7 @@ def compute_embeddings(
     image_key: str | None = None,
     batch_size: int = 32,
     device: str | None = None,
+    data_parallel: bool | list[int] = False,
     key_added: str | None = None,
 ) -> None:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
@@ -62,7 +63,7 @@ def compute_embeddings(
 
     image = _get_image_for_inference(sdata, image_key)
 
-    infer = Inference(image, model, patch_width, level, magnification, device)
+    infer = Inference(image, model, patch_width, level, magnification, device, data_parallel)
     patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
