@@ -1,30 +1,34 @@
 from typing import Callable
 
-import anndata
-import numpy as np
 import scanpy as sc
+from anndata import AnnData
 from spatialdata import SpatialData
-from xarray import DataArray
-
-from sopa._constants import SopaKeys
 
 
-def leiden_clustering(X: np.ndarray, flavor: str = "igraph", **kwargs):
-    adata = anndata.AnnData(X=X)
+def leiden_clustering(adata: AnnData, flavor: str = "igraph", **kwargs):
+    adata = adata.copy()
     sc.pp.pca(adata)
     sc.pp.neighbors(adata)
     sc.tl.leiden(adata, flavor=flavor, **kwargs)
     return adata.obs["leiden"].values
 
 
+def kmeans_clustering(adata: AnnData, **kwargs):
+    from sklearn.cluster import KMeans
+
+    kmeans = KMeans(**kwargs)
+    return kmeans.fit_predict(adata.X)
+
+
 METHODS_DICT = {
     "leiden": leiden_clustering,
+    "kmeans": kmeans_clustering,
 }
 
 
 def cluster_embeddings(
-    sdata: SpatialData,
-    element: DataArray | str,
+    sdata: SpatialData | None,
+    element: AnnData | str,
     method: Callable | str = "leiden",
     key_added: str = "cluster",
     **method_kwargs: str,
@@ -35,23 +39,18 @@ def cluster_embeddings(
         The clusters are added to the `key_added` column of the "inference_patches" shapes (`key_added='cluster'` by default).
 
     Args:
-        sdata: A `SpatialData` object
-        element: The `DataArray` containing the embeddings, or the name of the element
-        method: Callable that takes as an input an array of size `(n_patches x embedding_size)` and returns an array of clusters of size `n_patches`, or an available method name (`leiden`)
-        key_added: The key containing the clusters to be added to the patches `GeoDataFrame`
+        sdata: A `SpatialData` object. Can be `None` if element is an `AnnData` object.
+        element: The `AnnData` containing the embeddings, or the name of the element
+        method: Callable that takes as an AnnData object and returns an array of clusters of size `n_obs`, or an available method name (`leiden` or `kmeans`)
+        key_added: The key containing the clusters to be added to the `element.obs`
         method_kwargs: kwargs provided to the method callable
     """
     if isinstance(element, str):
-        element: DataArray = sdata.images[element]
+        element: AnnData = sdata.tables[element]
 
     if isinstance(method, str):
         assert method in METHODS_DICT, f"Method {method} is not available. Use one of: {', '.join(METHODS_DICT.keys())}"
         method = METHODS_DICT[method]
 
-    gdf_patches = sdata[SopaKeys.EMBEDDINGS_PATCHES]
-
-    ilocs = np.array(list(gdf_patches.ilocs))
-    embeddings = element.compute().data[:, ilocs[:, 1], ilocs[:, 0]].T
-
-    gdf_patches[key_added] = method(embeddings, **method_kwargs)
-    gdf_patches[key_added] = gdf_patches[key_added].astype("category")
+    element.obs[key_added] = method(element, **method_kwargs)
+    element.obs[key_added] = element.obs[key_added].astype("category")

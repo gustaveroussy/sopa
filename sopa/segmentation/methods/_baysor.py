@@ -107,7 +107,7 @@ class BaysorPatch:
 
         import subprocess
 
-        result = subprocess.run(self.baysor_command.split(), cwd=patch_dir, capture_output=self.capture_output)
+        result = subprocess.run(self.baysor_command, cwd=patch_dir, shell=True, capture_output=self.capture_output)
 
         if result.returncode != 0 or not (patch_dir / "segmentation_counts.loom").exists():
             if self.force:
@@ -140,7 +140,8 @@ def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
     from packaging.version import InvalidVersion, Version
 
     result = subprocess.run(
-        [baysor_executable_path, "--version"],
+        f"{baysor_executable_path} run --version",
+        shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
