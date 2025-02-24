@@ -14,7 +14,7 @@ def write(
     ),
     gene_column: str = typer.Option(None, help="Column name of the points dataframe containing the gene names"),
     table_key: str = typer.Option(
-        None,
+        "table",
         help="Sdata key for the table. By default, uses 'table'.",
     ),
     shapes_key: str = typer.Option(

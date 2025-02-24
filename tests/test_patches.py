@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 import pytest
 from spatialdata import SpatialData
 
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
+from sopa.patches._patches import Patches1D
 
 
 @pytest.fixture
@@ -30,6 +32,15 @@ def test_patchify_inside_tissue_roi(sdata: SpatialData):
     assert len(sdata[SopaKeys.PATCHES]) == 42  # inside the tissue ROI
 
     del sdata.shapes[SopaKeys.ROI]
+
+
+def test_pathify_transcripts():
+    # reproduce issue #214
+
+    xmax = np.float32(11475.797)
+    xmin = np.float32(2.671875)
+
+    Patches1D(xmin=xmin, xmax=xmax, patch_width=300.0, patch_overlap=30.0, tight=True, int_coords=False)
 
 
 def test_patchify_baysor(sdata: SpatialData):
@@ -69,15 +80,15 @@ def test_patches_inference_clustering():
 
     sopa.patches.compute_embeddings(sdata, "dummy", 50, image_key="he_image")
 
-    assert sdata["dummy_embeddings"].shape == (3, 2, 2)
+    assert sdata["dummy_embeddings"].shape == (4, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 25, level=-1, image_key="he_image")
 
-    assert sdata["dummy_embeddings"].shape == (3, 1, 1)
+    assert sdata["dummy_embeddings"].shape == (1, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 13, patch_overlap=3, level=-1, image_key="he_image")
 
-    assert sdata["dummy_embeddings"].shape == (3, 3, 3)
+    assert sdata["dummy_embeddings"].shape == (9, 3)
 
     sdata["he_image"].attrs["backend"] = "test"
     sdata["he_image"].attrs["metadata"] = {
@@ -86,17 +97,17 @@ def test_patches_inference_clustering():
     }
 
     sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (3, 3, 3)
+    assert sdata["dummy_embeddings"].shape == (9, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 11, magnification=10, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (3, 2, 2)
+    assert sdata["dummy_embeddings"].shape == (4, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 50, magnification=100, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (3, 2, 2)
+    assert sdata["dummy_embeddings"].shape == (4, 3)
 
     sopa.patches.cluster_embeddings(sdata, "dummy_embeddings")
 
-    assert "cluster" in sdata["embeddings_patches"].columns
+    assert "cluster" in sdata["dummy_embeddings"].obs
 
 
 def test_gene_exlude_pattern():
