@@ -1,5 +1,12 @@
 ## [2.0.3] - xxxx-xx-xx
 
+### Added
+- `slideio` backend for WSI is now available and allows loading among others the Olympus `.vsi` format @stergioc
+- `nn.DataParallel` for WSI inference now allows using multiple GPUs and larger batch_sizes @stergioc
+
+### Changed
+- Removed chunking for the `io.wsi` reader (leads x10 speedup when reading tiles from the sdata) @stergioc
+
 ## [2.0.2] - 2025-02-21
 
 ### Added
