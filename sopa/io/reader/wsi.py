@@ -173,6 +173,6 @@ def _open_wsi(
     else:
         raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
 
-    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, chunks=None)
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False, chunks=None)
 
     return image_name, zarr_img, slide, metadata
