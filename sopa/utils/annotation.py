@@ -59,6 +59,7 @@ def tangram_annotate(
     reference_preprocessing: str | None = None,
     bag_size: int = 10_000,
     max_obs_reference: int = 10_000,
+    density_prior: str = "uniform",
     **kwargs,
 ):
     """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
@@ -70,6 +71,7 @@ def tangram_annotate(
         reference_preprocessing: Preprocessing method used on the reference. Can be `"log1p"` (normalize_total + log1p) or `"normalized"` (just normalize_total). By default, consider that no processing was applied (raw counts)
         bag_size: Size of each bag on which tangram will be run. Use smaller bags to lower the RAM usage
         max_obs_reference: Maximum number of cells used in `adata_sc` at each level. Decrease it to lower the RAM usage.
+        density_prior: Density prior used in Tangram. Can be `"uniform"` or `"rna_count_based"`.
     """
     assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
 
@@ -82,6 +84,7 @@ def tangram_annotate(
         reference_preprocessing,
         bag_size,
         max_obs_reference,
+        density_prior,
         **kwargs,
     ).run()
 
@@ -95,6 +98,7 @@ class MultiLevelAnnotation:
         reference_preprocessing: str | None,
         bag_size: int,
         max_obs_reference: int,
+        density_prior: str,
         clip_percentile: float = 0.95,
     ):
         self.ad_sp = ad_sp
@@ -110,6 +114,7 @@ class MultiLevelAnnotation:
         self.bag_size = bag_size
         self.max_obs_reference = max_obs_reference
         self.clip_percentile = clip_percentile
+        self.density_prior = density_prior
 
         assert (
             cell_type_key in ad_sc.obs
@@ -174,12 +179,12 @@ class MultiLevelAnnotation:
         self._preprocess(ad_sp_split)
         sc.pp.filter_genes(ad_sp_split, min_cells=1)
 
-        # Calculate uniform density prior as 1/number_of_spots
+        # Calculate uniform density prior as 1/number_of_cells
         ad_sp_split.obs["uniform_density"] = np.ones(ad_sp_split.X.shape[0]) / ad_sp_split.X.shape[0]
 
         # Calculate rna_count_based density prior as % of rna molecule count
-        rna_count_per_spot = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
-        ad_sp_split.obs["rna_count_based_density"] = rna_count_per_spot / np.sum(rna_count_per_spot)
+        rna_count_per_cell = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
+        ad_sp_split.obs["rna_count_based_density"] = rna_count_per_cell / np.sum(rna_count_per_cell)
 
         ad_sp_split.var["counts"] = np.array((ad_sp_split.X > 0).sum(0)).flatten()
         ad_sc_.var["counts"] = np.array((ad_sc_.X > 0).sum(0)).flatten()
@@ -274,11 +279,7 @@ class MultiLevelAnnotation:
 
             ad_sp_split = self.pp_adata(ad_sp_, ad_sc_, split)
 
-            ad_map = tg.map_cells_to_space(
-                ad_sc_,
-                ad_sp_split,
-                device=self.device,
-            )
+            ad_map = tg.map_cells_to_space(ad_sc_, ad_sp_split, device=self.device, density_prior=self.density_prior)
 
             tg.project_cell_annotations(ad_map, ad_sp_split, annotation=self.level_obs_key(level))
 
