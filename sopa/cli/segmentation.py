@@ -13,7 +13,7 @@ def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     diameter: float = typer.Option(help="Cellpose diameter parameter"),
     channels: list[str] = typer.Option(
-        help="Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel"
+        help="Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the cytoplasm and then the nucleus channel"
     ),
     flow_threshold: float = typer.Option(2, help="Cellpose `flow_threshold` parameter"),
     cellprob_threshold: float = typer.Option(-6, help="Cellpose `cellprob_threshold` parameter"),
