@@ -61,7 +61,7 @@ Choose one of the following, depending on your needs (it should take at most a f
 
 ### Snakemake setup
 
-To use Snakemake, in addition to the above `sopa` environment, you'll need to clone a repository containing the Snakemake workflow:
+If you plan to use Snakemake, in addition to the above `sopa` environment, you'll need to clone the `sopa` repository containing the Snakemake workflow:
 
 ```sh
 git clone https://github.com/gustaveroussy/sopa.git
