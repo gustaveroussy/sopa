@@ -80,6 +80,15 @@ build-backend = "poetry.core.masonry.api"
 testpaths = ["tests"]
 python_files = "test_*.py"
 
+[tool.mypy]
+files = ["sopa"]
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+ignore_missing_imports = true
+
 [tool.black]
 line-length = 120
 include = '\.pyi?$'
