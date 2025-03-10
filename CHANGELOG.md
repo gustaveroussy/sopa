@@ -5,6 +5,7 @@
 
 ### Added
 - Run `module load baysor` in Snakemake pipeline if the module is available.
+- Use symlink to Xenium output morphology/transcripts files to avoid duplicating data
 
 ## [2.0.2] - 2025-02-21
 

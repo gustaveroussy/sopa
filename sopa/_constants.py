@@ -53,6 +53,7 @@ class SopaAttrs:
     TRANSCRIPTS = "transcripts_dataframe"
     BOUNDARIES = "boundaries_shapes"
     UID = "sopa_uid"
+    XENIUM_OUTPUT_PATH = "xenium_output_path"
 
 
 class SopaFiles:
