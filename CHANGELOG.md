@@ -1,7 +1,10 @@
 ## [2.0.3] - xxxx-xx-xx
 
-## Changed
+### Changed
 - Using `density_prior = "uniform"` by default for Tangram (#174)
+
+### Added
+- Run `module load baysor` in Snakemake pipeline if the module is available.
 
 ## [2.0.2] - 2025-02-21
 
