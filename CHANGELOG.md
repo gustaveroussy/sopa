@@ -1,11 +1,11 @@
 ## [2.0.3] - xxxx-xx-xx
 
+### Added
+- Use symlink to Xenium output morphology/transcripts files to avoid duplicating data (#221)
+- Run `module load baysor` in Snakemake pipeline if the module is available.
+
 ### Changed
 - Using `density_prior = "uniform"` by default for Tangram (#174)
-
-### Added
-- Run `module load baysor` in Snakemake pipeline if the module is available.
-- Use symlink to Xenium output morphology/transcripts files to avoid duplicating data
 
 ## [2.0.2] - 2025-02-21
 
