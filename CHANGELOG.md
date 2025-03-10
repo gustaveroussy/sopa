@@ -6,6 +6,7 @@
 
 ### Changed
 - Using `density_prior = "uniform"` by default for Tangram (#174)
+- [`spatialdata_plot`](https://spatialdata.scverse.org/projects/plot/en/latest/index.html) is now a default dependency of Sopa
 
 ## [2.0.2] - 2025-02-21
 
