@@ -311,7 +311,7 @@ def get_cache_dir(sdata: SpatialData) -> Path:
         A `Path` to the cache directory.
     """
     if sdata.is_backed():  # inside the zarr directory
-        cache_dir = sdata.path / SopaFiles.SOPA_CACHE_DIR
+        cache_dir = sdata.path.resolve() / SopaFiles.SOPA_CACHE_DIR
     elif SopaAttrs.UID in sdata.attrs:  # existing cache in the home directory
         cache_dir = HOME_CACHE_DIR / sdata.attrs[SopaAttrs.UID]
     else:  # create a new cache directory in the home directory

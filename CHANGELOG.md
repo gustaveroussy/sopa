@@ -4,6 +4,9 @@
 - Use symlink to Xenium output morphology/transcripts files to avoid duplicating data (#221)
 - Run `module load baysor` in Snakemake pipeline if the module is available.
 
+### Fixed
+- Use `sdata.path.resolve()` to compute the cache dir to be robust to execution path change
+
 ### Changed
 - Using `density_prior = "uniform"` by default for Tangram (#174)
 - [`spatialdata_plot`](https://spatialdata.scverse.org/projects/plot/en/latest/index.html) is now a default dependency of Sopa
