@@ -37,7 +37,7 @@ def cellpose(
 
     Args:
         sdata: A `SpatialData` object
-        channels: Name of the channels to be used for segmentation (or list of channel names).
+        channels: Name of the channel(s) to be used for segmentation. If one channel, must be a nucleus channel. If a `list` of channels, it must be a cytoplasmic channel and then a nucleus channel.
         diameter: The Cellpose parameter for the expected cell diameter (in pixel).
         model_type: Cellpose model type.
         image_key: Name of the image in `sdata` to be used for segmentation.
