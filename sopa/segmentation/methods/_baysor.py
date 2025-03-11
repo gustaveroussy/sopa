@@ -61,7 +61,7 @@ def baysor(
 
     baysor_command = _get_baysor_command(prior_shapes_key)
 
-    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover, capture_output=patch_index is None)
+    baysor_patch = BaysorPatch(baysor_command, config, force=force, capture_output=patch_index is None)
 
     if patch_index is not None:
         patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
@@ -69,7 +69,14 @@ def baysor(
         return
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
-    settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in patches_dirs])
+
+    remaining_patches_dirs = (
+        [patch_dir for patch_dir in patches_dirs if not (patch_dir / "segmentation_counts.loom").exists()]
+        if recover
+        else patches_dirs
+    )
+
+    settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in remaining_patches_dirs])
 
     if force:
         patches_dirs = [patch_dir for patch_dir in patches_dirs if (patch_dir / "segmentation_counts.loom").exists()]
@@ -90,19 +97,14 @@ class BaysorPatch:
         baysor_command: str,
         config: dict | str,
         force: bool = False,
-        recover: bool = False,
         capture_output: bool = True,
     ):
         self.baysor_command = baysor_command
         self.config = config
         self.force = force
-        self.recover = recover
         self.capture_output = capture_output
 
     def __call__(self, patch_dir: Path):
-        if self.recover and (patch_dir / "segmentation_counts.loom").exists():
-            return
-
         _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, self.config)
 
         import subprocess
