@@ -192,6 +192,6 @@ class StainingSegmentation:
 
 
 def _channels_average_within_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    channels_average = np.mean(image, axis=(1, 2))
+    channels_average = (image * mask).sum(axis=(1, 2)) / mask.sum().clip(1)
 
     return image * mask + (1 - mask) * channels_average[:, None, None]
