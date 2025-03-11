@@ -10,6 +10,8 @@
 ### Changed
 - Using `density_prior = "uniform"` by default for Tangram (#174)
 - [`spatialdata_plot`](https://spatialdata.scverse.org/projects/plot/en/latest/index.html) is now a default dependency of Sopa
+- Use `prob_thresh=0.2` and `nms_thresh=0.6` by default in `stardist`
+- During segmentation, pixels outside of the ROI / tissue use the mean channels value instead of 0
 
 ## [2.0.2] - 2025-02-21
 
