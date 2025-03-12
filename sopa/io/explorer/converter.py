@@ -4,7 +4,6 @@ from pathlib import Path
 
 import geopandas as gpd
 from anndata import AnnData
-from shapely import Polygon
 from spatialdata import SpatialData
 
 from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
@@ -140,8 +139,6 @@ def write(
 
         if table_key in sdata.tables:
             geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
-
-        assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), "All geometries must be a `shapely.Polygon`"
 
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 

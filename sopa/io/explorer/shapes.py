@@ -5,7 +5,7 @@ from typing import Iterable
 
 import numpy as np
 import zarr
-from shapely.geometry import Polygon
+from shapely.geometry import MultiPolygon, Polygon
 
 from ._constants import FileNames, cell_summary_attrs, group_attrs
 from .utils import explorer_file_path
@@ -64,6 +64,14 @@ def write_polygons(
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
+    assert all(
+        isinstance(geom, (Polygon, MultiPolygon)) for geom in polygons
+    ), "All geometries must be a `shapely.Polygon` or `shapely.MultiPolygon`"
+
+    if any(isinstance(geom, MultiPolygon) for geom in polygons):
+        log.warning("Some cells are MultiPolygons. Only the polygon with the largest area will be kept for each cell.")
+        polygons = [_to_largest_polygon(p) for p in polygons]
+
     path = explorer_file_path(path, FileNames.SHAPES, is_dir)
 
     log.info(f"Writing {len(polygons)} cell polygons")
@@ -119,3 +127,9 @@ def write_polygons(
             dtype="uint32",
             chunks=(cells_half,),
         )
+
+
+def _to_largest_polygon(polygon: Polygon | MultiPolygon) -> Polygon:
+    if isinstance(polygon, Polygon):
+        return polygon
+    return max(polygon.geoms, key=lambda x: x.area)

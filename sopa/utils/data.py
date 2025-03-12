@@ -120,7 +120,7 @@ def toy_dataset(
     points_coords = points_coords.clip(0, length - 1)
 
     if isinstance(genes, int):
-        gene_names = np.random.choice([f"gene_{i}" for i in range(n_genes)], size=n_genes)
+        gene_names = np.random.choice([f"gene_{i}" for i in range(genes)], size=n_genes)
     elif len(genes) and len(genes) >= len(c_coords) - 1:
         gene_names = np.full(n_genes, "", dtype="<U5")
         for i in range(len(genes)):

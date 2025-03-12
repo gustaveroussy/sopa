@@ -6,6 +6,7 @@ from ._tissue import tissue, shapes_bounding_box
 from .methods import cellpose, baysor, custom_staining_based, comseg, stardist, proseg
 from . import methods
 
+
 class Patches2D:
     def __init__(self, *args, **kwargs):
         raise NameError(
