@@ -71,6 +71,12 @@ def make_transcript_patches(
         sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
     )
 
+    if patch_width is None:
+        # TODO: Find a way to make it have the max size
+        # patch_width = sdata.attrs.get(SopaAttrs.PATCH_WIDTH)
+
+        patch_width = max(get_spatial_image(sdata).shape)
+
     patches = OnDiskTranscriptPatches(
         sdata,
         points_key,
