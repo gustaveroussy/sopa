@@ -147,7 +147,7 @@ def toy_dataset(
 
     # apply an arbritrary transformation for a more complete test case
     affine = np.array([[pixel_size, 0, 100], [0, pixel_size, 600], [0, 0, 1]])
-    df[["x", "y", "z_stack"]] = df[["x", "y", "z_stack"]] @ affine.T
+    df[["x", "y"]] = df[["x", "y"]] @ affine[:2, :2].T + affine[:2, 2]
     affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
 
     df = dd.from_pandas(df, chunksize=2_000_000)

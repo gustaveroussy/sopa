@@ -217,9 +217,7 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: aggregate_channels,
         }
 
-        add_standardized_table(
-            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key
-        )
+        self.add_standardized_table(key_added)
 
     def _legacy_arguments(
         self,
@@ -250,6 +248,11 @@ class Aggregator:
             return aggregate_genes, average_intensities
 
         return aggregate_genes, aggregate_channels
+
+    def add_standardized_table(self, key_added: str):
+        add_standardized_table(
+            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key
+        )
 
 
 def add_standardized_table(
