@@ -261,6 +261,40 @@ def baysor(
 
 
 @app_segmentation.command()
+def proseg(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    input_technology: str = typer.Option(
+        "merscope",
+        help="Type of input data. Proseg is compatible with multiple technology inputs, it just needs to be passed as an option. Supported methods are 'merscope', 'cosmx-micron', 'xenium'",
+    ),
+    prior_shapes_key: str = typer.Option(
+        default=None,
+        help="Name of the prior shapes key to use for segmentation. If None, no prior shapes will be used.",
+    ),
+):
+    """Perform Proseg segmentation. This needs to be done on a single
+    patch as proseg is fast enough and doesn't  require parallelization."""
+    import sys
+    from subprocess import CalledProcessError
+
+    from sopa.io.standardize import read_zarr_standardized
+    from sopa.segmentation.methods import proseg
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    try:
+        proseg(
+            sdata,
+            input_technology=input_technology,
+            prior_shapes_key=prior_shapes_key,
+        )
+    except CalledProcessError as e:
+        sys.exit(e.returncode)
+
+    # _log_whether_to_resolve(patch_index)
+
+
+@app_segmentation.command()
 def tissue(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     image_key: str = typer.Option(

@@ -4,3 +4,4 @@ from ._dummy import dummy_method
 from ._baysor import baysor
 from ._custom import custom_staining_based
 from ._stardist import stardist_patch, stardist
+from ._proseg import proseg
