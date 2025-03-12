@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 def make_image_patches(
     sdata: SpatialData,
-    patch_width: int = 2000,
+    patch_width: int | None = 2000,
     patch_overlap: int = 50,
     image_key: str | None = None,
     key_added: str | None = None,
@@ -21,23 +21,21 @@ def make_image_patches(
 
     Args:
         sdata: A `SpatialData` object.
-        patch_width: Width of the patches, in pixels.
+        patch_width: Width of the patches, in pixels. If `None`, creates only one patch.
         patch_overlap: Number of pixels of overlap between patches.
         image_key: Optional key of the image on which the patches will be made. If not provided, it is found automatically.
         key_added: Optional name of the patches to be saved. By default, uses `"image_patches"`.
     """
     image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
 
-    patches = Patches2D(
-        sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap
-    )
+    patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
 
     patches.add_shapes(key_added=key_added)
 
 
 def make_transcript_patches(
     sdata: SpatialData,
-    patch_width: int = 2000,
+    patch_width: float | int | None = 2000,
     patch_overlap: int = 50,
     points_key: str | None = None,
     prior_shapes_key: str | None = None,
@@ -57,7 +55,7 @@ def make_transcript_patches(
 
     Args:
         sdata: A `SpatialData` object.
-        patch_width: Width of the patches, in microns.
+        patch_width: Width of the patches, in microns. If `None`, creates only one patch.
         patch_overlap: Number of microns of overlap between patches.
         points_key: Optional key of the points on which the patches will be made. If not provided, it is found automatically.
         prior_shapes_key: Optional key of `sdata` containing the shapes with the prior segmentation, or column of the points dataframe.
@@ -67,21 +65,13 @@ def make_transcript_patches(
         key_added: Optional name of the patches to be saved. By default, uses `"transcripts_patches"`.
         **kwargs: Additional arguments passed to the `OnDiskTranscriptPatches` class.
     """
-    assert not write_cells_centroids or prior_shapes_key, (
-        "write_cells_centroids argument requires prior_shapes_key"
-    )
+    assert not write_cells_centroids or prior_shapes_key, "write_cells_centroids argument requires prior_shapes_key"
 
     points_key, _ = get_spatial_element(
         sdata.points,
         key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS),
         return_key=True,
     )
-
-    if patch_width is None:
-        # TODO: Find a way to make it have the max size
-        # patch_width = sdata.attrs.get(SopaAttrs.PATCH_WIDTH)
-
-        patch_width = max(get_spatial_image(sdata).shape)
 
     patches = OnDiskTranscriptPatches(
         sdata,
