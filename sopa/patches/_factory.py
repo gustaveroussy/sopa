@@ -28,7 +28,9 @@ def make_image_patches(
     """
     image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
 
-    patches = Patches2D(sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap)
+    patches = Patches2D(
+        sdata, image_key, patch_width=patch_width, patch_overlap=patch_overlap
+    )
 
     patches.add_shapes(key_added=key_added)
 
@@ -65,10 +67,14 @@ def make_transcript_patches(
         key_added: Optional name of the patches to be saved. By default, uses `"transcripts_patches"`.
         **kwargs: Additional arguments passed to the `OnDiskTranscriptPatches` class.
     """
-    assert not write_cells_centroids or prior_shapes_key, "write_cells_centroids argument requires prior_shapes_key"
+    assert not write_cells_centroids or prior_shapes_key, (
+        "write_cells_centroids argument requires prior_shapes_key"
+    )
 
     points_key, _ = get_spatial_element(
-        sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
+        sdata.points,
+        key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS),
+        return_key=True,
     )
 
     if patch_width is None:

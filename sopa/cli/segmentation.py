@@ -16,10 +16,16 @@ def cellpose(
         help="Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the nucleus and then the cytoplasm channel"
     ),
     flow_threshold: float = typer.Option(2, help="Cellpose `flow_threshold` parameter"),
-    cellprob_threshold: float = typer.Option(-6, help="Cellpose `cellprob_threshold` parameter"),
+    cellprob_threshold: float = typer.Option(
+        -6, help="Cellpose `cellprob_threshold` parameter"
+    ),
     model_type: str = typer.Option("cyto3", help="Name of the cellpose model"),
-    pretrained_model: str = typer.Option(None, help="Path to the pretrained model to be loaded"),
-    min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
+    pretrained_model: str = typer.Option(
+        None, help="Path to the pretrained model to be loaded"
+    ),
+    min_area: int = typer.Option(
+        0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
+    ),
     clip_limit: float = typer.Option(
         0.2,
         help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
@@ -88,8 +94,12 @@ def generic_staining(
         callback=ast.literal_eval,
         help="Kwargs for the method. This should be a dictionnary, in inline string format.",
     ),
-    channels: list[str] = typer.Option(None, help="Names of the channels used for segmentation."),
-    min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
+    channels: list[str] = typer.Option(
+        None, help="Names of the channels used for segmentation."
+    ),
+    min_area: int = typer.Option(
+        0, help="Minimum area (in pixels^2) for a cell to be considered as valid"
+    ),
     clip_limit: float = typer.Option(
         0.2,
         help="Parameter for skimage.exposure.equalize_adapthist (applied before running the segmentation method)",
@@ -124,9 +134,9 @@ def generic_staining(
     """
     from sopa.segmentation import methods
 
-    assert hasattr(
-        methods, method_name
-    ), f"'{method_name}' is not a valid method builder under `sopa.segmentation.methods`"
+    assert hasattr(methods, method_name), (
+        f"'{method_name}' is not a valid method builder under `sopa.segmentation.methods`"
+    )
 
     _run_staining_segmentation(
         sdata_path,
@@ -215,7 +225,10 @@ def comseg(
         default=None,
         help="Index of the patch on which the segmentation method should be run.",
     ),
-    min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
+    min_area: float = typer.Option(
+        default=0,
+        help="Minimum area (in micron^2) for a cell to be considered as valid",
+    ),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
     from sopa.io.standardize import read_zarr_standardized
@@ -240,8 +253,13 @@ def baysor(
         default=None,
         help="Index of the patch on which the segmentation method should be run. By default, run on all patches.",
     ),
-    min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
-    scale: float = typer.Option(default=None, help="Baysor scale parameter (for config inference)"),
+    min_area: float = typer.Option(
+        default=0,
+        help="Minimum area (in micron^2) for a cell to be considered as valid",
+    ),
+    scale: float = typer.Option(
+        default=None, help="Baysor scale parameter (for config inference)"
+    ),
 ):
     """Perform Baysor segmentation. This can be done on all patches directly, or on one individual patch."""
     import sys
@@ -253,7 +271,13 @@ def baysor(
     sdata = read_zarr_standardized(sdata_path)
 
     try:
-        baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
+        baysor(
+            sdata,
+            config=config,
+            min_area=min_area,
+            patch_index=patch_index,
+            scale=scale,
+        )
     except CalledProcessError as e:
         sys.exit(e.returncode)
 
@@ -321,4 +345,6 @@ def tissue(
 
     sdata = read_zarr_standardized(sdata_path)
 
-    sopa.segmentation.tissue(sdata, image_key=image_key, level=level, mode=mode, **kwargs)
+    sopa.segmentation.tissue(
+        sdata, image_key=image_key, level=level, mode=mode, **kwargs
+    )
