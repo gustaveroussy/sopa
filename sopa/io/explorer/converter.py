@@ -147,7 +147,7 @@ def write(
     if len(sdata.points):
         df = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
 
-    if _should_save(mode, "t") and df is not None:
+    if _should_save(mode, "t") and not _use_symlink(path, sdata, "transcripts*") and df is not None:
         gene_column = gene_column or get_feature_key(df)
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
@@ -156,7 +156,7 @@ def write(
             log.warning("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
-    if _should_save(mode, "i"):
+    if _should_save(mode, "i") and not _use_symlink(path, sdata, "morphology*"):
         write_image(
             path,
             sdata[image_key],
@@ -171,6 +171,26 @@ def write(
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
+
+
+def _use_symlink(path: Path, sdata: SpatialData, pattern: str) -> bool:
+    """Try using the Xenium output files when existing to avoid re-generating large files."""
+    if SopaAttrs.XENIUM_OUTPUT_PATH not in sdata.attrs:
+        return False
+
+    files = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
+    for file in files:
+        target = path / file.name
+
+        if target.exists():
+            if not target.is_symlink():  # avoid removing non-symlink files
+                return False
+            target.unlink()
+
+        target.symlink_to(file)
+        log.info(f"Created symlink {target} -> {file}")
+
+    return len(files) > 0
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> int:

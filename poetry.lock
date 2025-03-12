@@ -2697,6 +2697,22 @@ files = [
 traitlets = "*"
 
 [[package]]
+name = "matplotlib-scalebar"
+version = "0.9.0"
+description = "Artist for matplotlib to display a scale bar"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "python_version >= \"3.12\" or python_version <= \"3.11\""
+files = [
+    {file = "matplotlib_scalebar-0.9.0-py3-none-any.whl", hash = "sha256:5140525cd4e0c60bcade541b86571dabaf446fa69192530bd82d60b54601aa79"},
+    {file = "matplotlib_scalebar-0.9.0.tar.gz", hash = "sha256:f91adc5e4e67ac920a8fa98a55f904d56e5c2da4d56286748c31ec62146362be"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+
+[[package]]
 name = "mccabe"
 version = "0.7.0"
 description = "McCabe checker, plugin for flake8"
@@ -6178,6 +6194,32 @@ pre = ["spatialdata (>=0.1.0-pre0)"]
 test = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "spatialdata-plot"
+version = "0.2.9"
+description = "Static plotting for spatial data."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "python_version >= \"3.12\" or python_version <= \"3.11\""
+files = [
+    {file = "spatialdata_plot-0.2.9-py3-none-any.whl", hash = "sha256:807efaaca8b021c62eb39b8027f4b7629bbd2d2808a34e7762f3043c477f1ef9"},
+    {file = "spatialdata_plot-0.2.9.tar.gz", hash = "sha256:418fc1f6c642bdbd43c07c4417993e334feb3900c1ba68395e8ad6fe68a5e17d"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+matplotlib-scalebar = "*"
+scanpy = "*"
+scikit-learn = "*"
+spatialdata = ">=0.3.0"
+
+[package.extras]
+dev = ["bump2version"]
+docs = ["ipython (>=8.6.0)", "myst-nb", "sphinx (>=4.5)", "sphinx-autodoc-typehints", "sphinx-book-theme (>=1.0.0)", "sphinx-copybutton", "sphinx-design", "sphinx-rtd-theme", "sphinxcontrib-bibtex (>=1.0.0)"]
+pre = ["spatialdata (>=0.1.0-pre0)"]
+test = ["pooch", "pytest", "pytest-cov"]
+
+[[package]]
 name = "stack-data"
 version = "0.6.3"
 description = "Extract data from python stack frames and tracebacks for informative displays"
@@ -7379,4 +7421,4 @@ wsi = ["igraph", "tiffslide", "torch", "torchvision"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "d3d1c517d3b395c1fcb05c5240d458b38dcab66e5302895b05d9d34b0cb66e49"
+content-hash = "486f68fa945bb3db584adf880bda9dbe3c71e5a7cd174f05468faece7305b693"

@@ -92,4 +92,6 @@ def xenium(
                 sdata.points["transcripts"]["qv"] < qv_threshold
             )
 
+    sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH] = str(Path(path).resolve())
+
     return sdata

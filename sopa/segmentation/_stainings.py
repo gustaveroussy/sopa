@@ -105,7 +105,8 @@ class StainingSegmentation:
             )
 
         if patch.area < box(*bounds).area:
-            image = image * shapes.rasterize(patch, image.shape[1:], bounds)
+            mask = shapes.rasterize(patch, image.shape[1:], bounds)
+            image = _channels_average_within_mask(image, mask)
 
         cells = shapes.vectorize(self.method(image))
         cells.geometry = cells.translate(*bounds[:2])
@@ -188,3 +189,9 @@ class StainingSegmentation:
         add_spatial_element(sdata, key_added, cells)
 
         log.info(f"Added {len(cells)} cell boundaries in sdata['{key_added}']")
+
+
+def _channels_average_within_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    channels_average = (image * mask).sum(axis=(1, 2)) / mask.sum().clip(1)
+
+    return image * mask + (1 - mask) * channels_average[:, None, None]

@@ -125,6 +125,10 @@ rule patch_segmentation_baysor:
 
         if command -v module &> /dev/null; then
             module purge
+
+            if module avail baysor &> /dev/null; then
+                module load baysor
+            fi
         fi
 
         sopa segmentation baysor {params.sdata_path} --patch-index {wildcards.index} {params.baysor_config}
