@@ -46,11 +46,7 @@ def proseg(
         )
 
     settings.parallelization_backend = None
-    settings._run_with_backend(
-        [partial(proseg_run, patch_dir) for patch_dir in patch_dir]
-    )
-
-    # resolve(sdata, gene_column, min_area=min_area, key_added=key_added)
+    proseg_run(patch_dir)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 
