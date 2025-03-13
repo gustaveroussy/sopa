@@ -18,7 +18,15 @@ log = logging.getLogger(__name__)
 
 
 class Patches1D:
-    def __init__(self, xmin, xmax, patch_width, patch_overlap, tight, int_coords):
+    def __init__(
+        self,
+        xmin: float | int,
+        xmax: float | int,
+        patch_width: float | int,
+        patch_overlap: float | int,
+        tight: bool,
+        int_coords: bool,
+    ):
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
 
@@ -71,16 +79,18 @@ class Patches2D:
         self,
         sdata: SpatialData,
         element: SpatialElement | str,
-        patch_width: float | int,
+        patch_width: float | int | None,
         patch_overlap: float | int = 50,
     ):
         """
         Args:
             sdata: A `SpatialData` object
             element: SpatialElement or name of the element on with patches will be made (image or points)
-            patch_width: Width of the patches (in the unit of the coordinate system of the element)
+            patch_width: Width of the patches (in the unit of the coordinate system of the element). If `None`, only one patch will be created
             patch_overlap: Overlap width between the patches
         """
+        patch_width = float("inf") if (patch_width is None or patch_width == -1) else patch_width
+
         assert patch_width > patch_overlap, f"Argument {patch_width=} must be greater than {patch_overlap=}"
 
         self.sdata = sdata

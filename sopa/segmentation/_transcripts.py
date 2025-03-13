@@ -100,7 +100,10 @@ def _read_one_segmented_patch(
 
     adata.obs.rename(columns={"area": SopaKeys.ORIGINAL_AREA_OBS}, inplace=True)
 
-    cells_ids = pd.Series(adata.obs_names if id_as_string else adata.obs["CellID"].astype(int), index=adata.obs_names)
+    cells_ids = pd.Series(
+        adata.obs_names if id_as_string else adata.obs["CellID"].astype(int),
+        index=adata.obs_names,
+    )
     del adata.obs["CellID"]
 
     with open(polygon_file) as f:

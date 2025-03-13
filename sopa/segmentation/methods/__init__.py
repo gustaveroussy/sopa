@@ -1,6 +1,7 @@
-from ._cellpose import cellpose_patch, cellpose
-from ._comseg import comseg
-from ._dummy import dummy_method
 from ._baysor import baysor
+from ._cellpose import cellpose, cellpose_patch
+from ._comseg import comseg
 from ._custom import custom_staining_based
-from ._stardist import stardist_patch, stardist
+from ._dummy import dummy_method
+from ._proseg import proseg
+from ._stardist import stardist, stardist_patch

@@ -43,6 +43,9 @@ class OnDiskTranscriptPatches(Patches2D):
             self.points, dd.DataFrame
         ), "Points should be a dask DataFrame. Please report this issue on Sopa's Github repository."
 
+        if "z" not in self.points.columns:
+            self.points["z"] = 0  # ensure z column is present - needed for proseg
+
         self.prior_shapes_key = prior_shapes_key
         self.unassigned_value = unassigned_value
         self.min_points_per_patch = min_points_per_patch

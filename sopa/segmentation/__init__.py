@@ -3,7 +3,7 @@ from .resolve import solve_conflicts, combine
 from ._aggregation import Aggregator, overlay_segmentation  # deprecated in this module
 from ._stainings import StainingSegmentation
 from ._tissue import tissue, shapes_bounding_box
-from .methods import cellpose, baysor, custom_staining_based, comseg, stardist
+from .methods import cellpose, baysor, custom_staining_based, comseg, stardist, proseg
 from . import methods
 
 

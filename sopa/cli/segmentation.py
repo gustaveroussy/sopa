@@ -261,6 +261,32 @@ def baysor(
 
 
 @app_segmentation.command()
+def proseg(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    command_line_suffix: str = typer.Option(
+        "",
+        help="String suffix to add to the proseg command line. This can be used to add extra parameters to the proseg command line.",
+    ),
+):
+    """Perform Proseg segmentation. This needs to be done on a single
+    patch as proseg is fast enough and doesn't require parallelization."""
+    import sys
+    from subprocess import CalledProcessError
+
+    from sopa.io.standardize import read_zarr_standardized
+    from sopa.segmentation.methods import proseg
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    try:
+        proseg(sdata, command_line_suffix=command_line_suffix)
+    except CalledProcessError as e:
+        sys.exit(e.returncode)
+
+    _log_whether_to_resolve(None)
+
+
+@app_segmentation.command()
 def tissue(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     image_key: str = typer.Option(

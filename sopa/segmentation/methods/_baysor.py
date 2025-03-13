@@ -180,11 +180,7 @@ def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale:
         "   - Provide the `config` argument, containing a valid Baysor config."
     )
 
-    points_key = sdata.attrs.get(SopaAttrs.TRANSCRIPTS)
-    assert (
-        points_key
-    ), f"Transcripts key not found in sdata.attrs['{SopaAttrs.TRANSCRIPTS}'], baysor config can't be inferred."
-
+    points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
     config = {
