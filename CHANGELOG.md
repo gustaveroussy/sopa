@@ -1,7 +1,11 @@
+## [2.0.4] - xxxx-xx-xx
+
+
+
 ## [2.0.3] - 2025-03-13
 
 ### Added
-- Experimental support of [proseg](https://github.com/dcjones/proseg) @lguerard (#223)
+- Experimental support of [proseg](https://github.com/dcjones/proseg) @lguerard (#223) - tutorial coming soon
 - Use symlink to Xenium output morphology/transcripts files to avoid duplicating data (#221)
 - Run `module load baysor` in Snakemake pipeline if the module is available.
 
