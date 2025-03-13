@@ -1,6 +1,7 @@
 import gzip
 import json
 import logging
+import shutil
 from pathlib import Path
 
 import geopandas as gpd
@@ -34,8 +35,11 @@ def proseg(
     !!! warning "Proseg installation"
         Make sure to install [`proseg`](https://github.com/dcjones/proseg) separately before running this function.
 
-    !!! info
-        Contrary to most other segmentation tools, aggregation is not necessary after running `proseg`.
+    !!! info "Proseg usage specificities"
+        Contrary to most other segmentation tools, `proseg` will only run on one patch. I.e., you need
+        to run [`sopa.make_transcript_patches`](../patches/#sopa.make_transcript_patches) with `patch_width=None` and a `prior_shapes_key` before running `proseg`.
+
+        Also, note that aggregation is not necessary after running `proseg`.
 
     Args:
         sdata: A `SpatialData` object.
@@ -43,15 +47,18 @@ def proseg(
         command_line_suffix: Optional suffix to add to the proseg command line.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
     """
+    assert (
+        shutil.which("proseg") is not None
+    ), "Proseg is not installed. Install it according to https://github.com/dcjones/proseg"
+
     _check_transcript_patches(sdata)
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
-    if len(patches_dirs) > 1:
-        raise IndexError(
-            "Proseg is fast enough to work on a single patch. Support for multiple patches is not yet implemented. Rerun the transcript patches step with patch_width=None."
-        )
+    assert (
+        len(patches_dirs) == 1
+    ), "Proseg is fast enough to work on a single patch. Re-run `sopa.make_transcript_patches` with `patch_width=None` and a `prior_shapes_key`."
     patch_dir = Path(patches_dirs[0])
 
     proseg_command = _get_proseg_command(sdata, points_key, command_line_suffix)
@@ -66,7 +73,7 @@ def proseg(
     if delete_cache:
         delete_transcripts_patches_dirs(sdata)
 
-    log.info("Proseg table added (`sopa.aggregate` is not necessary).")
+    log.info("Proseg table and boundaries added (running `sopa.aggregate` is not mandatory).")
 
 
 def _run_proseg(proseg_command: str, patch_dir: str | Path):
@@ -91,7 +98,7 @@ def _run_proseg(proseg_command: str, patch_dir: str | Path):
 def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
     assert (
         SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]
-    ), "Proseg required a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
+    ), "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
 
     prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
