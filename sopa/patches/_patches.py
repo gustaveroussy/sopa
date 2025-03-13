@@ -89,7 +89,7 @@ class Patches2D:
             patch_width: Width of the patches (in the unit of the coordinate system of the element). If `None`, only one patch will be created
             patch_overlap: Overlap width between the patches
         """
-        patch_width = patch_width or float("inf")
+        patch_width = float("inf") if (patch_width is None or patch_width == -1) else patch_width
 
         assert patch_width > patch_overlap, f"Argument {patch_width=} must be greater than {patch_overlap=}"
 

@@ -215,10 +215,7 @@ def comseg(
         default=None,
         help="Index of the patch on which the segmentation method should be run.",
     ),
-    min_area: float = typer.Option(
-        default=0,
-        help="Minimum area (in micron^2) for a cell to be considered as valid",
-    ),
+    min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
 ):
     """Perform ComSeg segmentation. This can be done on all patches directly, or on one individual patch."""
     from sopa.io.standardize import read_zarr_standardized
@@ -243,10 +240,7 @@ def baysor(
         default=None,
         help="Index of the patch on which the segmentation method should be run. By default, run on all patches.",
     ),
-    min_area: float = typer.Option(
-        default=0,
-        help="Minimum area (in micron^2) for a cell to be considered as valid",
-    ),
+    min_area: float = typer.Option(default=0, help="Minimum area (in micron^2) for a cell to be considered as valid"),
     scale: float = typer.Option(default=None, help="Baysor scale parameter (for config inference)"),
 ):
     """Perform Baysor segmentation. This can be done on all patches directly, or on one individual patch."""
@@ -259,13 +253,7 @@ def baysor(
     sdata = read_zarr_standardized(sdata_path)
 
     try:
-        baysor(
-            sdata,
-            config=config,
-            min_area=min_area,
-            patch_index=patch_index,
-            scale=scale,
-        )
+        baysor(sdata, config=config, min_area=min_area, patch_index=patch_index, scale=scale)
     except CalledProcessError as e:
         sys.exit(e.returncode)
 
@@ -275,17 +263,13 @@ def baysor(
 @app_segmentation.command()
 def proseg(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    input_technology: str = typer.Option(
-        "merscope",
-        help="Type of input data. Proseg is compatible with multiple technology inputs, it just needs to be passed as an option. Supported methods are 'merscope', 'cosmx-micron', 'xenium'",
-    ),
-    prior_shapes_key: str = typer.Option(
-        default=None,
-        help="Name of the prior shapes key to use for segmentation. If None, no prior shapes will be used.",
+    command_line_suffix: str = typer.Option(
+        "",
+        help="String suffix to add to the proseg command line. This can be used to add extra parameters to the proseg command line.",
     ),
 ):
     """Perform Proseg segmentation. This needs to be done on a single
-    patch as proseg is fast enough and doesn't  require parallelization."""
+    patch as proseg is fast enough and doesn't require parallelization."""
     import sys
     from subprocess import CalledProcessError
 
@@ -295,15 +279,11 @@ def proseg(
     sdata = read_zarr_standardized(sdata_path)
 
     try:
-        proseg(
-            sdata,
-            input_technology=input_technology,
-            prior_shapes_key=prior_shapes_key,
-        )
+        proseg(sdata, command_line_suffix=command_line_suffix)
     except CalledProcessError as e:
         sys.exit(e.returncode)
 
-    # _log_whether_to_resolve(patch_index)
+    _log_whether_to_resolve(None)
 
 
 @app_segmentation.command()

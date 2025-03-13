@@ -54,6 +54,7 @@ def get_boundaries(
         return get_spatial_element(sdata.shapes, key=key, return_key=return_key)
 
     VALID_BOUNDARIES = [
+        SopaKeys.PROSEG_BOUNDARIES,
         SopaKeys.BAYSOR_BOUNDARIES,
         SopaKeys.STARDIST_BOUNDARIES,
         SopaKeys.COMSEG_BOUNDARIES,
