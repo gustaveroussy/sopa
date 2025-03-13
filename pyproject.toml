@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sopa"
-version = "2.0.2"
+version = "2.0.3"
 description = "Spatial-omics pipeline and analysis"
 documentation = "https://gustaveroussy.github.io/sopa"
 homepage = "https://gustaveroussy.github.io/sopa"

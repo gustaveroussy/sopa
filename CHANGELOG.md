@@ -1,4 +1,4 @@
-## [2.0.3] - xxxx-xx-xx
+## [2.0.3] - 2025-03-13
 
 ### Added
 - Experimental support of [proseg](https://github.com/dcjones/proseg) @lguerard (#223)
