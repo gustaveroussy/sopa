@@ -1,6 +1,12 @@
 ## [2.0.4] - xxxx-xx-xx
 
+### Added
+- Direct stardist CLI/snakemake support (not just via `generic-staining`)
+- Added a snakemake config for Visium HD data (with stardist segmentation)
+- Proseg support for Snakemake
 
+### Changed
+- Snakemake pipeline refactoring to better support the increasing number of segmentation tools
 
 ## [2.0.3] - 2025-03-13
 

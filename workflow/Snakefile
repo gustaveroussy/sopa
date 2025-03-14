@@ -10,7 +10,7 @@ include: "rules/cellpose.smk"
 include: "rules/comseg.smk"
 include: "rules/baysor.smk"
 include: "rules/proseg.smk"
-#include: "rules/stardist.smk"
+include: "rules/stardist.smk"
 
 localrules: all
 

@@ -181,7 +181,7 @@ class SectionBuilder:
 
         return Section("Transcripts", [SubSection("Quality controls", QC_subsubsections)])
 
-    def representation_section(self, max_obs: int = 400_000):
+    def representation_section(self, max_obs: int = 100_000):
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             sc.pp.normalize_total(self.adata)
             sc.pp.log1p(self.adata)
