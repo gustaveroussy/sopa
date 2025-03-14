@@ -14,13 +14,13 @@ segmentation:
 
   cellpose:
     diameter: 35
-    channels: ["DAPI"]
+    channels: [ "DAPI" ]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2500
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   gene_column: genes
 
 annotation:

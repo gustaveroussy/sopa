@@ -29,7 +29,7 @@ segmentation:
       norm_vector: false # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   gene_column: genes
 
 annotation:

@@ -13,7 +13,7 @@ segmentation:
     prior_shapes_key: "cells"
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
 annotation:

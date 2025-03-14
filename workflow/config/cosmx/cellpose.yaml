@@ -11,13 +11,13 @@ patchify:
 segmentation:
   cellpose:
     diameter: 60
-    channels: ["DNA"]
+    channels: [ "DNA" ]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2000
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   gene_column: "target"
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
