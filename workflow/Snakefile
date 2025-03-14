@@ -1,4 +1,4 @@
-from src import WorkflowPaths, Args, validate_config
+from src import WorkflowPaths, Args, validate_config, SEGMENTATION_METHODS
 
 config = validate_config(config) # validate the Snakemake config
 paths = WorkflowPaths(config) # object handling the paths to the files that will be created
@@ -44,7 +44,7 @@ rule tissue_segmentation:
     input:
         paths.sdata_zgroup if paths.data_path else [],
     output:
-        touch(paths.smk_tissue_segmentation),
+        touch(paths.segmentation_done("tissue")),
     conda:
         "sopa"
     params:
@@ -58,7 +58,7 @@ rule tissue_segmentation:
 checkpoint patchify_image:
     input:
         paths.sdata_zgroup,
-        paths.smk_tissue_segmentation if args.tissue_segmentation else [],
+        paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
         patches_file = paths.smk_patches_file_image,
         patches = touch(paths.smk_patches),
@@ -75,8 +75,8 @@ checkpoint patchify_image:
 checkpoint patchify_transcripts:
     input:
         paths.sdata_zgroup,
-        paths.smk_cellpose_boundaries if args.cellpose else [],
-        paths.smk_tissue_segmentation if args.tissue_segmentation else [],
+        paths.segmentation_done("cellpose") if args.use("cellpose") else [],
+        paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
         directory(paths.smk_transcripts_temp_dir),
         patches_file = paths.smk_patches_file_transcripts,
@@ -95,7 +95,7 @@ rule patch_segmentation_cellpose:
         paths.smk_patches_file_image,
         paths.smk_patches,
     output:
-        paths.smk_cellpose_temp_dir / "{index}.parquet",
+        paths.temp_dir("cellpose") / "{index}.parquet",
     conda:
         "sopa"
     params:
@@ -134,6 +134,23 @@ rule patch_segmentation_baysor:
         sopa segmentation baysor {params.sdata_path} --patch-index {wildcards.index} {params.baysor_config}
         """
 
+
+rule patch_segmentation_proseg:
+    input:
+        paths.smk_patches_file_transcripts,
+    output:
+        touch(paths.segmentation_done("proseg")),
+        touch(paths.smk_table),
+    conda:
+        "sopa"
+    params:
+        proseg_config = args["segmentation"]["proseg"].as_cli(keys=["command_line_suffix"]),
+        sdata_path = paths.sdata_path,
+    shell:
+        """
+        sopa segmentation proseg {params.sdata_path} {params.proseg_config}
+        """
+
 rule patch_segmentation_comseg:
     input:
         paths.smk_patches_file_transcripts,
@@ -161,7 +178,7 @@ rule resolve_cellpose:
     input:
         get_input_resolve("image", "cellpose"),
     output:
-        touch(paths.smk_cellpose_boundaries),
+        touch(paths.segmentation_done("cellpose")),
     conda:
         "sopa"
     params:
@@ -175,7 +192,7 @@ rule resolve_baysor:
     input:
         files = get_input_resolve("transcripts", "baysor"),
     output:
-        touch(paths.smk_baysor_boundaries),
+        touch(paths.segmentation_done("baysor")),
         touch(paths.smk_table),
     conda:
         "sopa"
@@ -194,7 +211,7 @@ rule resolve_comseg:
     input:
         files = get_input_resolve("transcripts", "comseg"),
     output:
-        touch(paths.smk_comseg_boundaries),
+        touch(paths.segmentation_done("comseg")),
         touch(paths.smk_table),
     conda:
         "sopa"
@@ -210,14 +227,10 @@ rule resolve_comseg:
         """
 
 def get_smk_boundaries(args):
-    if args.baysor:
-        return paths.smk_baysor_boundaries
-    elif args.comseg:
-        return paths.smk_comseg_boundaries
-    elif args.cellpose:
-        return paths.smk_cellpose_boundaries
-    else:
-        raise ValueError("No segmentation method selected")
+    for method in SEGMENTATION_METHODS:
+        if args.use(method):
+            return paths.segmentation_done(method)
+    raise ValueError("No segmentation method selected")
 
 rule aggregate:
     input:

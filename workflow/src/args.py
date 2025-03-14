@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .constants import TRANSCRIPT_BASED_METHODS
 from .paths import WorkflowPaths
 
 
@@ -12,25 +13,27 @@ class Args:
         self.paths = paths
         self.config = config
 
-        # which segmentation method(s) is/are used
-        self.cellpose = "cellpose" in self.config.get("segmentation", {})
-        self.baysor = "baysor" in self.config.get("segmentation", {})
-        self.comseg = "comseg" in self.config.get("segmentation", {})
-        self.tissue_segmentation = "tissue" in self.config.get("segmentation", {})
-
-        self.transcript_based_method = "comseg" if self.comseg else ("baysor" if self.baysor else None)
+        # which transcript-based segmentation to run (if any)
+        self.transcript_based_method = None
+        for method in TRANSCRIPT_BASED_METHODS:
+            if method in self.config.get("segmentation", {}):
+                self.transcript_based_method = method
+                break
 
         # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
 
+    def use(self, method_name: str) -> bool:
+        return method_name in self.config["segmentation"]
+
     def resolve_transcripts(self) -> str:
         """Arguments for `sopa resolve [baysor/comseg]`"""
-        if self.transcript_based_method is None:
+        if self.transcript_based_method is None or self.transcript_based_method == "proseg":
             return ""
 
-        if "baysor" in self.config["segmentation"]:
+        if self.transcript_based_method == "baysor":
             gene_column = self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
-        elif "comseg" in self.config["segmentation"]:
+        elif self.transcript_based_method == "comseg":
             gene_column = self.config["segmentation"]["comseg"]["config"]["gene_column"]
 
         min_area = self.config["segmentation"].get(self.transcript_based_method, {}).get("min_area", 0)
