@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .constants import TRANSCRIPT_BASED_METHODS
+from .constants import SEGMENTATION_METHODS, TRANSCRIPT_BASED_METHODS
 from .paths import WorkflowPaths
 
 
@@ -25,6 +25,12 @@ class Args:
 
     def use(self, method_name: str) -> bool:
         return method_name in self.config["segmentation"]
+
+    def segmentation_boundaries(self):
+        for method in SEGMENTATION_METHODS:
+            if self.use(method):
+                return self.paths.segmentation_done(method)
+        raise ValueError("No segmentation method selected")
 
     def resolve_transcripts(self) -> str:
         """Arguments for `sopa resolve [baysor/comseg]`"""
