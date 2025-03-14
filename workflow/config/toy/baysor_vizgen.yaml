@@ -14,7 +14,6 @@ segmentation:
   baysor:
     min_area: 10
     prior_shapes_key: "cell_id"
-    unassigned_value: -1
 
     config:
       data:
