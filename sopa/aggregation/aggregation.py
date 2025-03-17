@@ -172,7 +172,10 @@ class Aggregator:
         if aggregate_genes:
             if self.bins_key is not None:
                 self.table = aggregate_bins(
-                    self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 1
+                    self.sdata,
+                    self.shapes_key,
+                    self.bins_key,
+                    expand_radius_ratio=1 if expand_radius_ratio is None else expand_radius_ratio,
                 )
             elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(

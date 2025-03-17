@@ -1,6 +1,7 @@
 ## [2.0.4] - xxxx-xx-xx
 
-
+### Fixed
+- Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
 
 ## [2.0.3] - 2025-03-13
 
