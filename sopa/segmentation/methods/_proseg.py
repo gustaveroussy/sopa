@@ -1,5 +1,4 @@
 import gzip
-import json
 import logging
 import shutil
 from pathlib import Path
@@ -7,7 +6,6 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 from anndata import AnnData
-from shapely.geometry import shape
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
@@ -116,8 +114,7 @@ def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[
     adata = AnnData(counts, obs=obs)
 
     with gzip.open(patch_dir / "cell-polygons.geojson.gz", "rb") as f:
-        polygons_dict = json.loads(f.read().decode("utf-8"))
-    geo_df = gpd.GeoDataFrame(geometry=[shape(i["geometry"]) for i in polygons_dict["features"]])
+        geo_df = gpd.read_file(f)
 
     transformations = get_transformation(sdata[points_key], get_all=True).copy()
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
