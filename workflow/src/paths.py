@@ -54,7 +54,7 @@ class WorkflowPaths:
     def segmentation_done(self, method_name: str) -> Path:
         return self.sopa_cache / f"{method_name}_boundaries_done"
 
-    def temporary_boundaries_paths(self, file_content: str, method_name: str) -> list[Path]:
+    def temporary_boundaries_paths(self, file_content: str, method_name: str) -> list[Path]:  # method-specific
         """Compute the paths to the temporary boundary files
 
         Args:

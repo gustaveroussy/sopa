@@ -17,20 +17,6 @@ def validate_config(config: dict):
 
     check_prior_shapes_key(config)
 
-    if "baysor" in config["segmentation"]:
-        check_baysor_executable_path(config)
-
-    if "proseg" in config["segmentation"]:
-        assert (
-            "prior_shapes_key" in config["segmentation"]["proseg"]
-        ), "Invalid config. Provide a 'prior_shapes_key' key in the 'proseg' section of the config file"
-
-        if "patch_width_microns" in config["patchify"]:
-            assert (
-                config["patchify"]["patch_width_microns"] == -1
-            ), "Invalid config. 'patch_width_microns' must be -1 for 'proseg' segmentation method"
-        config["patchify"]["patch_width_microns"] = -1
-
     return config
 
 
@@ -53,6 +39,22 @@ def check_segmentation_methods(config: dict):
         assert not any(
             method in config["segmentation"] for method in TRANSCRIPT_BASED_METHODS
         ), "Invalid config. 'stardist' cannot be combined with transcript-based methods"
+
+    if "baysor" in config["segmentation"]:
+        check_baysor_executable_path(config)
+
+    if "proseg" in config["segmentation"]:
+        check_proseg_executable_path()
+
+        assert (
+            "prior_shapes_key" in config["segmentation"]["proseg"]
+        ), "Invalid config. Provide a 'prior_shapes_key' key in the 'proseg' section of the config file"
+
+        if "patch_width_microns" in config["patchify"]:
+            assert (
+                config["patchify"]["patch_width_microns"] == -1
+            ), "Invalid config. 'patch_width_microns' must be -1 for 'proseg' segmentation method"
+        config["patchify"]["patch_width_microns"] = -1
 
 
 def check_prior_shapes_key(config: dict):
@@ -104,5 +106,20 @@ def check_baysor_executable_path(config: dict) -> str:
         )
 
     raise KeyError(
-        f"""Baysor executable {default_path} does not exist. Please set a 'baysor' alias. Also check that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor)."""
+        f"""Baysor executable {default_path} does not exist. Check that you have installed the baysor executable (as in https://github.com/kharchenkolab/Baysor), and that the 'baysor' command is available."""
+    )
+
+
+def check_proseg_executable_path() -> str:
+    import shutil
+
+    if shutil.which("proseg") is not None:
+        return
+
+    default_path = Path.home() / ".cargo" / "bin" / "proseg"
+    if default_path.exists():
+        return
+
+    raise KeyError(
+        f"""Proseg executable {default_path} does not exist. Check that you have installed the proseg executable (as in https://github.com/dcjones/proseg), and that the 'proseg' command is available."""
     )

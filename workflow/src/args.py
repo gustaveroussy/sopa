@@ -32,7 +32,7 @@ class Args:
                 return self.paths.segmentation_done(method)
         raise ValueError("No segmentation method selected")
 
-    def resolve_transcripts(self) -> str:
+    def resolve_transcripts(self) -> str:  # method-specific
         """Arguments for `sopa resolve [baysor/comseg]`"""
         if self.transcript_based_method is None or self.transcript_based_method == "proseg":
             return ""
@@ -45,7 +45,7 @@ class Args:
         min_area = self.config["segmentation"].get(self.transcript_based_method, {}).get("min_area", 0)
         return f"--gene-column {gene_column} --min-area {min_area}"
 
-    def patchify_transcripts(self) -> str:
+    def patchify_transcripts(self) -> str:  # method-specific
         """Arguments for `sopa patchify transcripts`"""
         if self.transcript_based_method is None:
             return ""
