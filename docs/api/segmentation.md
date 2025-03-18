@@ -21,3 +21,5 @@
 ## Segmentation utils
 
 ::: sopa.segmentation.combine
+
+::: sopa.overlay_segmentation
