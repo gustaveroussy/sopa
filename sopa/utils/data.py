@@ -34,6 +34,7 @@ def toy_dataset(
     as_output: bool = False,
     transcript_cell_id_as_merscope: bool = False,
     add_nan_gene_name: bool = False,
+    continuous_z_stack: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -136,11 +137,15 @@ def toy_dataset(
         gene_names[3] = np.nan  # Add a nan value for tests
         gene_names[4] = "blank"  # Add a blank value for tests
 
+    z_stack = seed + np.random.randint(-1, 2, len(points_coords))
+    if continuous_z_stack:
+        z_stack = z_stack + np.random.randn(len(points_coords)) / 10
+
     df = pd.DataFrame(
         {
             "x": points_coords[:, 0],
             "y": points_coords[:, 1],
-            "z_stack": seed + np.random.randint(-1, 2, len(points_coords)),
+            "z_stack": z_stack,
             "genes": gene_names,
         }
     )
