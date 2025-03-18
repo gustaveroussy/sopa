@@ -2,6 +2,7 @@
 
 ### Fixed
 - Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
+- Fix CosMX reader when channel names file not exported (#180)
 
 ## [2.0.3] - 2025-03-13
 

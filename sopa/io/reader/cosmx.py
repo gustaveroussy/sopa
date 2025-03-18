@@ -32,7 +32,6 @@ def cosmx(
     This function reads the following files:
         - `*_fov_positions_file.csv` or `*_fov_positions_file.csv.gz`: FOV locations
         - `Morphology2D` directory: all the FOVs morphology images
-        - `Morphology_ChannelID_Dictionary.txt`: Morphology channels names
         - `*_tx_file.csv.gz` or `*_tx_file.csv`: Transcripts location and names
         - If `read_proteins` is `True`, all the images under the nested `ProteinImages` directories will be read
 
@@ -65,7 +64,7 @@ def cosmx(
 
     ### Read image(s)
     images_dir = _find_dir(path, "Morphology2D")
-    morphology_coords = _cosmx_morphology_coords(path)
+    morphology_coords = _cosmx_morphology_coords(images_dir)
 
     if fov is None:
         image, c_coords = _read_stitched_image(
@@ -156,21 +155,22 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
     assert fov_file.exists(), f"Missing field of view file: {fov_file}"
 
     fov_locs = pd.read_csv(fov_file)
-
-    FOV_COLUMNS = ["X_mm", "Y_mm", "FOV"]
-    assert np.isin(
-        FOV_COLUMNS, fov_locs.columns
-    ).all(), f"The file {fov_file} must contain the following columns: {', '.join(FOV_COLUMNS)}. Consider using a different export module."
-
-    fov_locs.index = fov_locs["FOV"]
-
-    pixel_size = 0.120280945  # size of a pixel in microns
-
-    fov_locs["xmin"] = fov_locs["X_mm"] * 1e3 / pixel_size
     fov_locs["xmax"] = 0.0  # will be filled when reading the images
-
     fov_locs["ymin"] = 0.0  # will be filled when reading the images
-    fov_locs["ymax"] = fov_locs["Y_mm"] * 1e3 / pixel_size
+
+    fov_key, x_key, y_key, scale_factor = "fov", "x_global_px", "y_global_px", 1
+
+    if not np.isin([fov_key, x_key, y_key], fov_locs.columns).all():  # try different column names
+        fov_key, x_key, y_key = "FOV", "X_mm", "Y_mm"
+        scale_factor = 1e3 / 0.120280945  # CosMX milimeters to pixels
+
+        assert np.isin(
+            [fov_key, x_key, y_key], fov_locs.columns
+        ).all(), f"The file {fov_file} must contain the following columns: {fov_key}, {x_key}, {y_key}. Consider using a different export module."
+
+    fov_locs.index = fov_locs[fov_key]
+    fov_locs["xmin"] = fov_locs[x_key] * scale_factor
+    fov_locs["ymax"] = fov_locs[y_key] * scale_factor
 
     return fov_locs
 
@@ -251,13 +251,6 @@ def _read_transcripts_csv(path: Path, dataset_id: str) -> pd.DataFrame:
     return df
 
 
-def _cosmx_morphology_coords(path: Path) -> list[str]:
-    channel_ids_path = path / "Morphology_ChannelID_Dictionary.txt"
-
-    assert channel_ids_path.exists(), f"Channel file not found at {channel_ids_path}"
-    return list(pd.read_csv(channel_ids_path, delimiter="\t")["BiologicalTarget"])
-
-
 def _find_dir(path: Path, name: str):
     if (path / name).is_dir():
         return path / name
@@ -266,6 +259,16 @@ def _find_dir(path: Path, name: str):
     assert len(paths) == 1, f"Found {len(paths)} path(s) with name {name} inside {path}"
 
     return paths[0]
+
+
+def _cosmx_morphology_coords(images_dir: Path) -> list[str]:
+    images_paths = list(images_dir.glob("*.TIF"))
+    assert len(images_paths) > 0, f"Expected to find images inside {images_dir}"
+
+    with tifffile.TiffFile(images_paths[0]) as tif:
+        description = tif.pages[0].description
+        substrings = re.findall(r'"BiologicalTarget": "(.*?)",', description)
+        return substrings
 
 
 def _get_cosmx_protein_name(image_path: Path) -> str:
