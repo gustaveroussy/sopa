@@ -45,10 +45,6 @@ def proseg(
         command_line_suffix: Optional suffix to add to the proseg command line.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
     """
-    assert (
-        shutil.which("proseg") is not None
-    ), "Proseg is not installed. Install it according to https://github.com/dcjones/proseg"
-
     _check_transcript_patches(sdata)
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
@@ -93,7 +89,23 @@ def _run_proseg(proseg_command: str, patch_dir: str | Path):
         )
 
 
+def _get_proseg_executable_path() -> Path | str:
+    if shutil.which("proseg") is not None:
+        return "proseg"
+
+    default_path = Path.home() / ".cargo" / "bin" / "proseg"
+    if default_path.exists():
+        return default_path
+
+    bin_path = Path.home() / ".local" / "bin" / "proseg"
+    raise FileNotFoundError(
+        f"Please install proseg and ensure that either `{default_path}` executes proseg, or that `proseg` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
+    )
+
+
 def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
+    proseg_executable = _get_proseg_executable_path()
+
     assert (
         SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]
     ), "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
@@ -102,7 +114,7 @@ def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix
 
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
-    return f"proseg transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {command_line_suffix}"
+    return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {command_line_suffix}"
 
 
 def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[AnnData, gpd.GeoDataFrame]:
