@@ -263,8 +263,8 @@ def _cosmx_morphology_coords(images_dir: Path) -> list[str]:
         description = tif.pages[0].description
         substrings = re.findall(r'"BiologicalTarget": "(.*?)",', description)
         channels = re.findall(r'"ChannelId": "(.*?)",', description)
-        stdorder = ['B', 'G', 'Y', 'R', 'U']
-        dictionary = [channels.index(x) for x in stdorder if x in channels]
+        channel_order = list(re.findall(r'"ChannelOrder": "(.*?)",', description)[0])
+        dictionary = [channels.index(x) for x in channel_order if x in channels]
         return [substrings[i] for i in dictionary]
 
 
