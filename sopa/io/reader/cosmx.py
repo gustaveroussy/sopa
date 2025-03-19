@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 def cosmx(
     path: str | Path,
     dataset_id: Optional[str] = None,
-    fov: int | str | None = None,
+    fov: int | None = None,
     read_proteins: bool = False,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
@@ -40,7 +40,7 @@ def cosmx(
     Args:
         path: Path to the root directory containing *Nanostring* files.
         dataset_id: Optional name of the dataset (needs to be provided if not infered).
-        fov: Name or number of one single field of view to be read. If a string is provided, an example of correct syntax is "F008". By default, reads all FOVs.
+        fov: Number of one single field of view to be read. If not provided, reads all FOVs and create a stitched image.
         read_proteins: Whether to read the proteins or the transcripts.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
@@ -53,7 +53,6 @@ def cosmx(
 
     dataset_id = _infer_dataset_id(path, dataset_id)
     fov_locs = _read_fov_locs(path, dataset_id)
-    fov_id, fov = _check_fov_id(fov)
 
     protein_dir_dict = {}
     if read_proteins:
@@ -76,14 +75,11 @@ def cosmx(
         )
         image_name = "stitched_image"
     else:
-        pattern = f"*{fov_id}.TIF"
-        fov_files = list(images_dir.rglob(pattern))
+        log.info(f"Reading single FOV ({fov}), the image will not be stitched")
+        fov_file = _find_matching_fov_file(images_dir, fov)
 
-        assert len(fov_files), f"No file matches the pattern {pattern} inside {images_dir}"
-        assert len(fov_files) == 1, f"Multiple files match the pattern {pattern}: {', '.join(fov_files)}"
-
-        image, c_coords = _read_fov_image(fov_files[0], protein_dir_dict.get(fov), morphology_coords, **imread_kwargs)
-        image_name = f"{fov}_image"
+        image, c_coords = _read_fov_image(fov_file, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs)
+        image_name = f"F{fov:0>5}_image"
 
     parsed_image = Image2DModel.parse(image, dims=("c", "y", "x"), c_coords=c_coords, **image_models_kwargs)
 
@@ -101,7 +97,7 @@ def cosmx(
     else:
         transcripts_data = transcripts_data[transcripts_data["fov"] == fov]
         coordinates = {"x": "x_local_px", "y": "y_local_px"}
-        points_name = f"{fov}_points"
+        points_name = f"F{fov:0>5}_points"
 
     from spatialdata_io._constants._constants import CosmxKeys
 
@@ -219,18 +215,16 @@ def _read_stitched_image(
     return stitched_image.data, c_coords
 
 
-def _check_fov_id(fov: str | int | None) -> tuple[str, int]:
-    if fov is None:
-        return None, None
+def _find_matching_fov_file(images_dir: Path, fov: str | int) -> Path:
+    assert isinstance(fov, int), "Expected `fov` to be an integer"
 
-    if isinstance(fov, int):
-        return f"F{fov:0>3}", fov
+    pattern = re.compile(rf".*_F0*{fov}\.TIF")
+    fov_files = [file for file in images_dir.rglob("*") if pattern.match(file.name)]
 
-    assert (
-        fov[0] == "F" and len(fov) == 4 and all(c.isdigit() for c in fov[1:])
-    ), f"'fov' needs to start with a F followed by three digits. Found '{fov}'."
+    assert len(fov_files), f"No file matches the pattern {pattern} inside {images_dir}"
+    assert len(fov_files) == 1, f"Multiple files match the pattern {pattern}: {', '.join(map(str, fov_files))}"
 
-    return fov, int(fov[1:])
+    return fov_files[0]
 
 
 def _read_transcripts_csv(path: Path, dataset_id: str) -> pd.DataFrame:

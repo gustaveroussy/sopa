@@ -3,6 +3,7 @@
 ### Fixed
 - Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
 - Fix CosMX reader when channel names file not exported (#180)
+- Fix CosMX reader when FOV names have 5 digits (#227)
 
 ## [2.0.3] - 2025-03-13
 
