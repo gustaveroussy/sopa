@@ -6,24 +6,10 @@ import numpy as np
 import shapely
 import shapely.affinity
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
-from skimage import measure
 from skimage.draw import polygon
+from spatialdata._core.operations.vectorize import _vectorize_mask
 
 log = logging.getLogger(__name__)
-
-
-def _contours(cell_mask: np.ndarray) -> MultiPolygon:
-    """Extract the contours of all cells from a binary mask
-
-    Args:
-        cell_mask: An array representing a cell: 1 where the cell is, 0 elsewhere
-
-    Returns:
-        A shapely MultiPolygon
-    """
-    contours = measure.find_contours(cell_mask, level=0.5)
-
-    return MultiPolygon([Polygon(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4])
 
 
 def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygon:
@@ -73,7 +59,7 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
     """Smoothen a cell polygon
 
     Args:
-        cell_id: ID of the cell to vectorize
+        cell_id: MultiPolygon representing a cell
         smooth_radius: radius used to smooth the cell polygon
         tolerance: tolerance used to simplify the cell polygon
 
@@ -116,9 +102,7 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
         log.warning("No cell was returned by the segmentation")
         return gpd.GeoDataFrame(geometry=[])
 
-    cells = gpd.GeoDataFrame(
-        geometry=[_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
-    )
+    cells = _vectorize_mask(mask)
 
     mean_radius = np.sqrt(cells.area / np.pi).mean()
     smooth_radius = mean_radius * smooth_radius_ratio
