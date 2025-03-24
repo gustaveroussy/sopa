@@ -6,6 +6,8 @@ import numpy as np
 import shapely
 import shapely.affinity
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
+from skimage import measure
+from skimage.draw import polygon
 
 log = logging.getLogger(__name__)
 
@@ -19,10 +21,9 @@ def _contours(cell_mask: np.ndarray) -> MultiPolygon:
     Returns:
         A shapely MultiPolygon
     """
-    import cv2
+    contours = measure.find_contours(cell_mask, level=0.5)
 
-    contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    return MultiPolygon([Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4])
+    return MultiPolygon([Polygon(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4])
 
 
 def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygon:
@@ -145,8 +146,6 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
     Returns:
         The mask array.
     """
-    import cv2
-
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
@@ -155,8 +154,8 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
     rasterized_image = np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8)
 
     for geom in geoms:
-        coords = np.array(geom.exterior.coords)[None, :].astype(np.int32)
-        cv2.fillPoly(rasterized_image, coords, color=1)
+        x, y = geom.exterior.coords.xy
+        rasterized_image[*polygon(y, x)] = 1
 
     return rasterized_image
 
