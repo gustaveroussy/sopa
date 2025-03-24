@@ -261,8 +261,12 @@ def _cosmx_morphology_coords(images_dir: Path) -> list[str]:
 
     with tifffile.TiffFile(images_paths[0]) as tif:
         description = tif.pages[0].description
+
         substrings = re.findall(r'"BiologicalTarget": "(.*?)",', description)
-        return substrings
+        channels = re.findall(r'"ChannelId": "(.*?)",', description)
+        channel_order = list(re.findall(r'"ChannelOrder": "(.*?)",', description)[0])
+
+        return [substrings[channels.index(x)] for x in channel_order if x in channels]
 
 
 def _get_cosmx_protein_name(image_path: Path) -> str:
