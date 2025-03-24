@@ -6,6 +6,6 @@ FROM python:3.10
 
 COPY --from=rust-builder /usr/local/cargo/bin/proseg /usr/local/bin/proseg
 
-RUN pip install sopa
+RUN pip install --no-cache-dir sopa
 
 ENV PYTHONUNBUFFERED=1

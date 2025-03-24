@@ -1,5 +1,7 @@
 FROM python:3.10
 
-RUN pip install sopa[stardist]
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
+RUN pip install --no-cache-dir sopa[stardist]
 
 ENV PYTHONUNBUFFERED=1
