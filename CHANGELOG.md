@@ -4,6 +4,7 @@
 - Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
 - Fix CosMX reader when channel names file not exported (#180)
 - Fix CosMX reader when FOV names have 5 digits (#227)
+- Stardist: use `clip=True` when normalizing images to avoid `-1e20` values
 
 ### Added
 - Direct stardist CLI/snakemake support (not just via `generic-staining`)
