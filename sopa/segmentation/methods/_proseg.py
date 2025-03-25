@@ -34,8 +34,10 @@ def proseg(
         Make sure to install [`proseg`](https://github.com/dcjones/proseg) separately before running this function.
 
     !!! info "Proseg usage specificities"
-        Contrary to most other segmentation tools, `proseg` will only run on one patch. I.e., you need
-        to run [`sopa.make_transcript_patches`](../patches/#sopa.make_transcript_patches) with `patch_width=None` and a `prior_shapes_key` before running `proseg`.
+        Contrary to most other segmentation tools, `proseg` will only
+        run on one patch. I.e., you need to run
+        [`sopa.make_transcript_patches`](../patches/#sopa.make_transcript_patches)
+        with `patch_width=None` and (optionally) a `prior_shapes_key` before running `proseg`.
 
         Also, note that aggregation is not necessary after running `proseg`.
 
@@ -106,11 +108,17 @@ def _get_proseg_executable_path() -> Path | str:
 def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
     proseg_executable = _get_proseg_executable_path()
 
-    assert (
-        SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]
-    ), "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
-
-    prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+    if (
+        SopaKeys.PRIOR_SHAPES_KEY
+        in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]
+    ):
+        prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][
+            SopaKeys.PRIOR_SHAPES_KEY
+        ].iloc[0]
+        prior_command = f"--cell-id-column {prior_shapes_key}"
+    else:
+        prior_shapes_key = None
+        prior_command = ""
 
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
