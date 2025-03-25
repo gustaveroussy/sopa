@@ -64,6 +64,9 @@ def tangram_annotate(
 ):
     """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
 
+    !!! info
+        You need to install `tangram-sc` to use this function. You can install it via `pip install tangram-sc`.
+
     Args:
         sdata: A `SpatialData` object
         adata_sc: A scRNAseq annotated reference
@@ -251,7 +254,7 @@ class MultiLevelAnnotation:
         try:
             import tangram as tg
         except ImportError:
-            raise ImportError("To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'`.")
+            raise ImportError("To use tangram, you need to install it via `pip install tangram-sc`.")
 
         if indices_sp is not None and len(indices_sp) == 0:
             log.warning("No cell annotated in the upper level...")

@@ -38,7 +38,6 @@ tensorflow = { version = ">=2.18.0", optional = true }
 torch = { version = ">=2.0.0, !=2.0.1, !=2.1.0", optional = true }
 toml = { version = ">=0.10.2", optional = true }
 loompy = { version = ">=3.0.7", optional = true }
-tangram-sc = { version = ">=1.0.4", optional = true }
 tiffslide = { version = ">=2.3.1", optional = true }
 igraph = { version = ">=0.11.0", optional = true }
 torchvision = { version = ">=0.20.0", optional = true }
@@ -58,7 +57,6 @@ mypy = { version = "^1.14.1", optional = true }
 cellpose = ["cellpose", "torch"]
 stardist = ["tensorflow", "stardist"]
 baysor = ["toml", "loompy"]
-tangram = ["tangram-sc"]
 wsi = ["tiffslide", "torch", "igraph", "torchvision"]
 dev = [
   "black",

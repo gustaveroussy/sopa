@@ -13,6 +13,7 @@
 
 ### Changed
 - Snakemake pipeline refactoring to better support the increasing number of segmentation tools
+- Tangram now has to be installed via `pip install tangram-sc` rather than via the sopa extra
 
 ## [2.0.3] - 2025-03-13
 

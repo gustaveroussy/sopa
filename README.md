@@ -39,7 +39,7 @@ pip install sopa
 
 To install extras (for example, if you want to use `cellpose`/`baysor`), please run:
 ```sh
-# choose any valid extra among cellpose/baysor/tangram/wsi
+# choose any valid extra among cellpose/baysor/stardist/wsi
 pip install 'sopa[cellpose,baysor]'
 ```
 

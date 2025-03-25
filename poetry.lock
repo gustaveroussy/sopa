@@ -1263,7 +1263,7 @@ description = "A platform independent file lock."
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "filelock-3.16.1-py3-none-any.whl", hash = "sha256:2082e5703d51fbf98ea75855d9d5527e33d8ff23099bec374a134febee6946b0"},
     {file = "filelock-3.16.1.tar.gz", hash = "sha256:c249fbfcd5db47e5e2d6d62198e565475ee65e4831e2561c8e313fa7eb961435"},
@@ -3009,7 +3009,7 @@ description = "Python library for arbitrary-precision floating-point arithmetic"
 optional = true
 python-versions = "*"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "mpmath-1.3.0-py3-none-any.whl", hash = "sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"},
     {file = "mpmath-1.3.0.tar.gz", hash = "sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f"},
@@ -3616,7 +3616,7 @@ description = "CUBLAS native runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0f8aa1706812e00b9f19dfe0cdb3999b092ccb8ca168c0db5b8ea712456fd9b3"},
     {file = "nvidia_cublas_cu12-12.4.5.8-py3-none-manylinux2014_x86_64.whl", hash = "sha256:2fc8da60df463fdefa81e323eef2e36489e1c94335b5358bcb38360adf75ac9b"},
@@ -3630,7 +3630,7 @@ description = "CUDA profiling tools runtime libs."
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:79279b35cf6f91da114182a5ce1864997fd52294a87a16179ce275773799458a"},
     {file = "nvidia_cuda_cupti_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:9dec60f5ac126f7bb551c055072b69d85392b13311fcc1bcda2202d172df30fb"},
@@ -3644,7 +3644,7 @@ description = "NVRTC native runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:0eedf14185e04b76aa05b1fea04133e59f465b6f960c0cbf4e37c3cb6b0ea198"},
     {file = "nvidia_cuda_nvrtc_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a178759ebb095827bd30ef56598ec182b85547f1508941a3d560eb7ea1fbf338"},
@@ -3658,7 +3658,7 @@ description = "CUDA Runtime native Libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:961fe0e2e716a2a1d967aab7caee97512f71767f852f67432d572e36cb3a11f3"},
     {file = "nvidia_cuda_runtime_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:64403288fa2136ee8e467cdc9c9427e0434110899d07c779f25b5c068934faa5"},
@@ -3672,7 +3672,7 @@ description = "cuDNN runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl", hash = "sha256:165764f44ef8c61fcdfdfdbe769d687e06374059fbb388b6c89ecb0e28793a6f"},
     {file = "nvidia_cudnn_cu12-9.1.0.70-py3-none-win_amd64.whl", hash = "sha256:6278562929433d68365a07a4a1546c237ba2849852c0d4b2262a486e805b977a"},
@@ -3688,7 +3688,7 @@ description = "CUFFT native runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_aarch64.whl", hash = "sha256:5dad8008fc7f92f5ddfa2101430917ce2ffacd86824914c82e28990ad7f00399"},
     {file = "nvidia_cufft_cu12-11.2.1.3-py3-none-manylinux2014_x86_64.whl", hash = "sha256:f083fc24912aa410be21fa16d157fed2055dab1cc4b6934a0e03cba69eb242b9"},
@@ -3705,7 +3705,7 @@ description = "CURAND native runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_aarch64.whl", hash = "sha256:1f173f09e3e3c76ab084aba0de819c49e56614feae5c12f69883f4ae9bb5fad9"},
     {file = "nvidia_curand_cu12-10.3.5.147-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a88f583d4e0bb643c49743469964103aa59f7f708d862c3ddb0fc07f851e3b8b"},
@@ -3719,7 +3719,7 @@ description = "CUDA solver native runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d338f155f174f90724bbde3758b7ac375a70ce8e706d70b018dd3375545fc84e"},
     {file = "nvidia_cusolver_cu12-11.6.1.9-py3-none-manylinux2014_x86_64.whl", hash = "sha256:19e33fa442bcfd085b3086c4ebf7e8debc07cfe01e11513cc6d332fd918ac260"},
@@ -3738,7 +3738,7 @@ description = "CUSPARSE native runtime libraries"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_aarch64.whl", hash = "sha256:9d32f62896231ebe0480efd8a7f702e143c98cfaa0e8a76df3386c1ba2b54df3"},
     {file = "nvidia_cusparse_cu12-12.3.1.170-py3-none-manylinux2014_x86_64.whl", hash = "sha256:ea4f11a2904e2a8dc4b1833cc1b5181cde564edd0d5cd33e3c168eff2d1863f1"},
@@ -3755,7 +3755,7 @@ description = "NVIDIA Collective Communication Library (NCCL) Runtime"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_nccl_cu12-2.21.5-py3-none-manylinux2014_x86_64.whl", hash = "sha256:8579076d30a8c24988834445f8d633c697d42397e92ffc3f63fa26766d25e0a0"},
 ]
@@ -3767,7 +3767,7 @@ description = "Nvidia JIT LTO Library"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4abe7fef64914ccfa909bc2ba39739670ecc9e820c83ccc7a6ed414122599b83"},
     {file = "nvidia_nvjitlink_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:06b3b9b25bf3f8af351d664978ca26a16d2c5127dbd53c0497e28d1fb9611d57"},
@@ -3781,7 +3781,7 @@ description = "NVIDIA Tools Extension"
 optional = true
 python-versions = ">=3"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "nvidia_nvtx_cu12-12.4.127-py3-none-manylinux2014_aarch64.whl", hash = "sha256:7959ad635db13edf4fc65c06a6e9f9e55fc2f92596db928d169c0bb031e88ef3"},
     {file = "nvidia_nvtx_cu12-12.4.127-py3-none-manylinux2014_x86_64.whl", hash = "sha256:781e950d9b9f60d8241ccea575b32f5105a5baf4c2351cab5256a24869f12a1a"},
@@ -4366,19 +4366,6 @@ numpy = ">=1.19"
 packaging = "*"
 slicerator = ">=0.9.8"
 tifffile = "*"
-
-[[package]]
-name = "pip"
-version = "24.3.1"
-description = "The PyPA recommended tool for installing Python packages."
-optional = true
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "(python_version >= \"3.12\" or python_version <= \"3.11\") and extra == \"tangram\""
-files = [
-    {file = "pip-24.3.1-py3-none-any.whl", hash = "sha256:3790624780082365f47549d032f3770eeb2b1e8bd1f7b2e02dace1afa361b4ed"},
-    {file = "pip-24.3.1.tar.gz", hash = "sha256:ebcb60557f2aefabc2e0f918751cd24ea0d56d8ec5445fe1807f1d2109660b99"},
-]
 
 [[package]]
 name = "platformdirs"
@@ -6369,7 +6356,7 @@ description = "Computer algebra system (CAS) in Python"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "sympy-1.13.1-py3-none-any.whl", hash = "sha256:db36cdc64bf61b9b24578b6f7bab1ecdd2452cf008f34faa33776680c26d66f8"},
     {file = "sympy-1.13.1.tar.gz", hash = "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f"},
@@ -6380,31 +6367,6 @@ mpmath = ">=1.1.0,<1.4"
 
 [package.extras]
 dev = ["hypothesis (>=6.70.0)", "pytest (>=7.1.0)"]
-
-[[package]]
-name = "tangram-sc"
-version = "1.0.4"
-description = "Spatial alignment of single cell transcriptomic data."
-optional = true
-python-versions = ">=3.8.5"
-groups = ["main"]
-markers = "(python_version >= \"3.12\" or python_version <= \"3.11\") and extra == \"tangram\""
-files = [
-    {file = "tangram-sc-1.0.4.tar.gz", hash = "sha256:6ced24573e288fa01a8070e3c7600058de51296bac1702515db87c310da6ac13"},
-    {file = "tangram_sc-1.0.4-py3-none-any.whl", hash = "sha256:12c1fa121d0ad237465fdad544d5cbe611ad411b5ca89218c6bb68da0723d60c"},
-]
-
-[package.dependencies]
-matplotlib = "*"
-numpy = "*"
-pandas = "*"
-pip = "*"
-scanpy = "*"
-scikit-learn = "*"
-scipy = "*"
-seaborn = "*"
-torch = "*"
-tqdm = "*"
 
 [[package]]
 name = "tblib"
@@ -6701,7 +6663,7 @@ description = "Tensors and Dynamic neural networks in Python with strong GPU acc
 optional = true
 python-versions = ">=3.8.0"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "torch-2.5.1-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:71328e1bbe39d213b8721678f9dcac30dfc452a46d586f1d514a6aa0a99d4744"},
     {file = "torch-2.5.1-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:34bfa1a852e5714cbfa17f27c49d8ce35e1b7af5608c4bc6e81392c352dbc601"},
@@ -6853,7 +6815,7 @@ description = "A language and compiler for custom Deep Learning operations"
 optional = true
 python-versions = "*"
 groups = ["main"]
-markers = "(extra == \"cellpose\" or extra == \"wsi\" or extra == \"tangram\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
+markers = "(extra == \"cellpose\" or extra == \"wsi\") and platform_system == \"Linux\" and platform_machine == \"x86_64\" and (python_version >= \"3.12\" or python_version <= \"3.11\")"
 files = [
     {file = "triton-3.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6b0dd10a925263abbe9fa37dcde67a5e9b2383fc269fdf59f5657cac38c5d1d8"},
     {file = "triton-3.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0f34f6e7885d1bf0eaaf7ba875a5f0ce6f3c13ba98f9503651c1e6dc6757ed5c"},
@@ -7415,10 +7377,9 @@ baysor = ["loompy", "toml"]
 cellpose = ["cellpose", "torch"]
 dev = ["black", "ipykernel", "isort", "mkdocs-jupyter", "mkdocs-material", "mkdocstrings", "mkdocstrings-python", "mypy", "pytest"]
 stardist = ["stardist", "tensorflow"]
-tangram = ["tangram-sc"]
 wsi = ["igraph", "tiffslide", "torch", "torchvision"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "486f68fa945bb3db584adf880bda9dbe3c71e5a7cd174f05468faece7305b693"
+content-hash = "3a2c01215743bae6a9b9880e0008896ed91486cdc8e807b0a2c0409a5f2ce9d2"
