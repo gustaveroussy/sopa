@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-TOY_READERS = ["uniform", "toy_dataset"]
-TRANSCRIPT_BASED_METHODS = ["baysor", "comseg"]
+from .constants import STAINING_BASED_METHODS, TOY_READERS, TRANSCRIPT_BASED_METHODS
 
 
 def validate_config(config: dict):
@@ -12,12 +11,25 @@ def validate_config(config: dict):
         "read" in config and "technology" in config["read"]
     ), "Invalid config. Provide a 'read' section in the config file, and specify the 'technology' key"
 
+    check_segmentation_methods(config)
+
     check_data_paths(config)
 
     check_prior_shapes_key(config)
 
     if "baysor" in config["segmentation"]:
         check_baysor_executable_path(config)
+
+    if "proseg" in config["segmentation"]:
+        assert (
+            "prior_shapes_key" in config["segmentation"]["proseg"]
+        ), "Invalid config. Provide a 'prior_shapes_key' key in the 'proseg' section of the config file"
+
+        if "patch_width_microns" in config["patchify"]:
+            assert (
+                config["patchify"]["patch_width_microns"] == -1
+            ), "Invalid config. 'patch_width_microns' must be -1 for 'proseg' segmentation method"
+        config["patchify"]["patch_width_microns"] = -1
 
     return config
 
@@ -32,6 +44,15 @@ def check_segmentation_methods(config: dict):
     assert (
         sum(method in config["segmentation"] for method in TRANSCRIPT_BASED_METHODS) <= 1
     ), f"Only one of the following methods can be used: {TRANSCRIPT_BASED_METHODS}"
+
+    assert (
+        sum(method in config["segmentation"] for method in STAINING_BASED_METHODS) <= 1
+    ), f"Only one of the following methods can be used: {STAINING_BASED_METHODS}"
+
+    if "stardist" in config["segmentation"]:
+        assert not any(
+            method in config["segmentation"] for method in TRANSCRIPT_BASED_METHODS
+        ), "Invalid config. 'stardist' cannot be combined with transcript-based methods"
 
 
 def check_prior_shapes_key(config: dict):

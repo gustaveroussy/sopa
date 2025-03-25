@@ -27,6 +27,27 @@ def cellpose(
 
 
 @app_resolve.command()
+def stardist(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    cache_dir_name: list[str] = typer.Option(
+        [],
+        help="Name of the directories containing the stardist segmentation on patches (or multiple directories if using multi-step segmentation). By default, uses the `stardist_boundaries` directory",
+    ),
+):
+    """Resolve patches conflicts after stardist segmentation"""
+    from sopa._constants import SopaKeys
+
+    from .utils import _default_boundary_dir
+
+    if not len(cache_dir_name):
+        cache_dir_name = [SopaKeys.STARDIST_BOUNDARIES]
+
+    patch_dir = [_default_boundary_dir(sdata_path, name) for name in cache_dir_name]
+
+    _resolve_generic(sdata_path, patch_dir, SopaKeys.STARDIST_BOUNDARIES)
+
+
+@app_resolve.command()
 def generic(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     method_name: str = typer.Option(

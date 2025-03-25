@@ -11,7 +11,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 30
-    channels: ["DAPI"] # among "DAPI", "ATP1A1/CD45/E-Cadherin", "18S", "AlphaSMA/Vimentin"
+    channels: [ "DAPI" ] # among "DAPI", "ATP1A1/CD45/E-Cadherin", "18S", "AlphaSMA/Vimentin"
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 400
@@ -43,7 +43,7 @@ segmentation:
         cyto_genes: ""
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->

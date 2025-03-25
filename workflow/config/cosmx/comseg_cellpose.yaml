@@ -11,7 +11,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 60
-    channels: ["DNA"]
+    channels: [ "DNA" ]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2000
@@ -25,14 +25,14 @@ segmentation:
         z: 1
       mean_cell_diameter: 8
       max_cell_radius: 15
-      allow_disconnected_polygon : true
+      allow_disconnected_polygon: true
       alpha: 0.5
       min_rna_per_cell: 5
       gene_column: "genes"
       norm_vector: false # [optional] requires exeternal R package '"sctransform"' "feather" and "arrow" to be installed, otherwise set to false
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->

@@ -5,6 +5,14 @@
 - Fix CosMX reader when channel names file not exported (#180)
 - Fix CosMX reader when FOV names have 5 digits (#227)
 
+### Added
+- Direct stardist CLI/snakemake support (not just via `generic-staining`)
+- Added a snakemake config for Visium HD data (with stardist segmentation)
+- Proseg support for Snakemake
+
+### Changed
+- Snakemake pipeline refactoring to better support the increasing number of segmentation tools
+
 ## [2.0.3] - 2025-03-13
 
 ### Added

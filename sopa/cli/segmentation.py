@@ -78,6 +78,61 @@ def cellpose(
 
 
 @app_segmentation.command()
+def stardist(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    model_type: str = typer.Option("2D_versatile_he", help="Name of the stardist model"),
+    prob_thresh: float = typer.Option(0.2, help="Stardist `prob_thresh` parameter."),
+    nms_thresh: float = typer.Option(0.6, help="Stardist `nms_thresh` parameter."),
+    channels: list[str] = typer.Option(None, help="Names of the channels used for segmentation."),
+    min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
+    clip_limit: float = typer.Option(
+        0.2,
+        help="Parameter for skimage.exposure.equalize_adapthist (applied before running the segmentation method)",
+    ),
+    clahe_kernel_size: int = typer.Option(
+        None,
+        help="Parameter for skimage.exposure.equalize_adapthist (applied before running stardist)",
+    ),
+    gaussian_sigma: float = typer.Option(
+        1,
+        help="Parameter for scipy gaussian_filter (applied before running the segmentation method)",
+    ),
+    patch_index: int = typer.Option(
+        default=None,
+        help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['image_patches'])`",
+    ),
+    cache_dir_name: str = typer.Option(
+        default=None,
+        help="Name of the temporary the segmentation method directory inside which we will store each individual patch segmentation. By default, uses the `stardist_boundaries` directory",
+    ),
+    method_kwargs: str = typer.Option(
+        {},
+        callback=ast.literal_eval,
+        help="Kwargs for the method. This should be a dictionnary, in inline string format.",
+    ),
+):
+    """Perform Stardist segmentation. This can be done on all patches directly, or on one individual patch."""
+    from sopa._constants import SopaKeys
+
+    _run_staining_segmentation(
+        sdata_path,
+        "stardist_patch",
+        SopaKeys.STARDIST_BOUNDARIES,
+        channels,
+        min_area,
+        clip_limit,
+        clahe_kernel_size,
+        gaussian_sigma,
+        patch_index,
+        cache_dir_name,
+        prob_thresh=prob_thresh,
+        nms_thresh=nms_thresh,
+        model_type=model_type,
+        **method_kwargs,
+    )
+
+
+@app_segmentation.command()
 def generic_staining(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     method_name: str = typer.Option(
@@ -96,7 +151,7 @@ def generic_staining(
     ),
     clahe_kernel_size: int = typer.Option(
         None,
-        help="Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)",
+        help="Parameter for skimage.exposure.equalize_adapthist (applied before running segmentation)",
     ),
     gaussian_sigma: float = typer.Option(
         1,

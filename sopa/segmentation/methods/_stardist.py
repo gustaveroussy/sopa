@@ -73,9 +73,9 @@ def stardist(
 
 def stardist_patch(
     model_type: str = "2D_versatile_he",
-    prob_thresh: float = 0.5,
-    nms_thresh: float = 0.4,
-    channels: list[str] | str | None = None,  # for the CLI to work, as channels will be sent
+    prob_thresh: float = 0.2,
+    nms_thresh: float = 0.6,
+    channels: list[str] | str | None = None,  # for the CLI to work, as "channels" will be provided
     **stardist_eval_kwargs: int,
 ) -> Callable:
     try:

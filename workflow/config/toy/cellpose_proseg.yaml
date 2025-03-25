@@ -1,12 +1,12 @@
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
   technology: toy_dataset
+  kwargs:
+    genes: 500
 
 patchify:
-  patch_width_pixel: 1200
-  patch_overlap_pixel: 50
-  patch_width_microns: 3000
-  patch_overlap_microns: 40
+  patch_width_microns: -1
+  patch_overlap_microns: 0
 
 segmentation:
   cellpose:
@@ -16,9 +16,12 @@ segmentation:
     cellprob_threshold: -6
     min_area: 2500
 
+  proseg:
+    command_line_suffix: ""
+
 aggregate:
   aggregate_channels: true
-  gene_column: genes
+  min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
 annotation:
   method: fluorescence
@@ -31,4 +34,4 @@ annotation:
 explorer:
   gene_column: "genes"
   ram_threshold_gb: 4
-  pixel_size: 1
+  pixel_size: 0.1

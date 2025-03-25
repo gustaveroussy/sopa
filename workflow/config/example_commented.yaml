@@ -78,7 +78,7 @@ aggregate:
   min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
 
-# [optional] if annotation is desired, choose either 'tangram' or 'fluorescence'. If 'fluorescence' is used, make sure 'average_intensities' is true (see parameter above)
+# [optional] if annotation is desired, choose either 'tangram' or 'fluorescence'. If 'fluorescence' is used, make sure 'aggregate_channels' is true (see parameter above)
 annotation:
 
   # [only if you choose transcript-based annotation with Tangram]
