@@ -31,27 +31,12 @@ The following illustration describes the main steps of `sopa`:
 
 # Installation
 
-### PyPI installation
 Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<=3.12`). On a new environment, run the following command:
 ```sh
 pip install sopa
 ```
 
-To install extras (for example, if you want to use `cellpose`/`baysor`), please run:
-```sh
-# choose any valid extra among cellpose/baysor/stardist/wsi
-pip install 'sopa[cellpose,baysor]'
-```
-
-**Important**: even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official repository](https://github.com/kharchenkolab/Baysor)) if you want to use it.
-
-### Other installation modes
-
-You can clone the repository and run one of these command lines at the root of `sopa`:
-```sh
-pip install -e .  # dev mode installation
-poetry install    # poetry installation
-```
+See the [installation section](https://gustaveroussy.github.io/sopa/getting_started/) from the docs for more details, to install extras or to use other installations modes.
 
 # Features
 Sopa comes in three different flavours, each corresponding to a different use case:
@@ -99,7 +84,7 @@ Below are examples of commands that can be run with the `sopa` CLI. For a comple
 ```
 
 # Cite us
-Our article is published in [Nature Communications](https://www.nature.com/articles/s41467-024-48981-z). You can cite our paper as below:
+Our article is published in [Nature Communications](https://www.nature.com/articles/s41467-024-48981-z). You can cite Sopa as below:
 
 ```txt
 @article{blampey_sopa_2024,
