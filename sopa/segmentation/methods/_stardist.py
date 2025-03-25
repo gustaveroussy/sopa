@@ -94,7 +94,7 @@ def stardist_patch(
         with SuppressPrintsAndWarnings():
             model = StarDist2D.from_pretrained(model_type)
 
-            patch = normalize(patch.transpose(1, 2, 0))
+            patch = normalize(patch.transpose(1, 2, 0), clip=True)
             mask, _ = model.predict_instances(
                 patch, prob_thresh=prob_thresh, nms_thresh=nms_thresh, **stardist_eval_kwargs
             )
