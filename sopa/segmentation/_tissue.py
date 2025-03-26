@@ -150,13 +150,13 @@ class TissueSegmentation:
     def saturation(self) -> np.ndarray:
         assert self.image.sizes["c"] == 3, "The image should be in RGB color space"
 
-        import cv2
+        from skimage.color import rgb2hsv
 
         thumbnail = np.array(self.image.transpose("y", "x", "c"))
 
         assert thumbnail.dtype == np.uint8, "In 'saturation' mode, the image should have the uint8 dtype"
 
-        thumbnail = cv2.cvtColor(thumbnail, cv2.COLOR_RGB2HSV)
+        thumbnail = (rgb2hsv(thumbnail)*255).astype("uint8")
         return thumbnail[:, :, 1]  # saturation channel
 
     def otsu(self, thumbnail_2d: np.ndarray) -> gpd.GeoDataFrame:
@@ -168,30 +168,32 @@ class TissueSegmentation:
         Returns:
             A GeoDataFrame containing the segmented polygon(s).
         """
-        import cv2
+        from skimage.filters import median, threshold_otsu
+        from skimage.morphology import opening, closing
+        from skimage.measure import label, regionprops
 
-        thumbnail_blurred = cv2.medianBlur(thumbnail_2d, self.blur_kernel_size)
-        _, mask = cv2.threshold(thumbnail_blurred, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+        median_footprint = np.ones((self.blur_kernel_size, self.blur_kernel_size))
+        thumbnail_blurred = median(thumbnail_2d, footprint=median_footprint)
+        otsu_threshold = threshold_otsu(thumbnail_blurred)
+        mask = thumbnail_blurred > otsu_threshold
 
-        mask_open = cv2.morphologyEx(
-            mask, cv2.MORPH_OPEN, np.ones((self.open_kernel_size, self.open_kernel_size), np.uint8)
-        )
-        mask_open_close = cv2.morphologyEx(
-            mask_open, cv2.MORPH_CLOSE, np.ones((self.close_kernel_size, self.close_kernel_size), np.uint8)
-        )
+        opening_footprint = np.ones((self.open_kernel_size, self.open_kernel_size))
+        mask_open = opening(mask, opening_footprint).astype(np.uint8)
+        closing_footprint = np.ones((self.close_kernel_size, self.close_kernel_size))
+        mask_open_close = closing(mask_open, closing_footprint).astype(np.uint8)
 
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask_open_close, 4, cv2.CV_32S)
+        # Label connected components
+        labels = label(mask_open_close, connectivity=2)
+        props = regionprops(labels)
 
         contours = []
-        for i in range(1, num_labels):
-            if stats[i, 4] > self.drop_threshold * np.prod(mask_open_close.shape):
-                contours_, _ = cv2.findContours(
-                    np.array(labels == i, dtype=np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
-                )
-                closed_contours = np.array(list(contours_[0]) + [contours_[0][0]])
-                contours.extend([closed_contours.squeeze()])
+        for prop in props:
+            if prop.area > self.drop_threshold * np.prod(mask_open_close.shape):
+                coords = prop.coords
+                closed_contours = np.vstack([coords, coords[0]])  # Close the contour
+                contours.append(closed_contours)
 
-        return gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
+        return gpd.GeoDataFrame(geometry=[Polygon(contour[:, ::-1]) for contour in contours])
 
 
 def hsv_otsu(
