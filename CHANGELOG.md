@@ -10,6 +10,7 @@
 - Direct stardist CLI/snakemake support (not just via `generic-staining`)
 - Added a snakemake config for Visium HD data (with stardist segmentation)
 - Proseg support for Snakemake
+- CLI command `sopa --version` to show the version of Sopa
 
 ### Changed
 - Snakemake pipeline refactoring to better support the increasing number of segmentation tools

@@ -226,3 +226,19 @@ def report(
     sdata = read_zarr_standardized(sdata_path)
 
     write_report(path, sdata, table_key=table_key)
+
+
+def version_callback(value: bool):
+    if value:
+        from sopa import __version__
+
+        typer.echo(__version__)
+        raise typer.Exit()
+
+
+@app.callback()
+def common(
+    ctx: typer.Context,
+    version: bool = typer.Option(None, "--version", callback=version_callback, help="Show the Sopa version and exit."),
+):
+    pass
