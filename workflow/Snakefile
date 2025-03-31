@@ -18,7 +18,7 @@ rule all:
     input:
         paths.annotations if args.annotate else [],
         paths.explorer_experiment,
-        paths.explorer_image,
+        paths.smk_explorer_raw,
         paths.report,
     params:
         sdata_path = paths.sdata_path,
@@ -132,11 +132,11 @@ rule annotate:
         sopa annotate {params.method_name} {params.sdata_path} {params.annotation}
         """
 
-rule image_write:
+rule explorer_raw:
     input:
         paths.sdata_zgroup,
     output:
-        paths.explorer_image,
+        touch(paths.smk_explorer_raw),
     conda:
         "sopa"
     params:
@@ -145,24 +145,7 @@ rule image_write:
         explorer_directory = paths.explorer_directory,
     shell:
         """
-        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "+i" --no-save-h5ad
-        """
-
-rule report:
-    input:
-        args.segmentation_boundaries(),
-        paths.smk_aggregation,
-        paths.annotations if args.annotate else [],
-    output:
-        paths.report,
-    params:
-        sdata_path = paths.sdata_path,
-        report = paths.report,
-    conda:
-        "sopa"
-    shell:
-        """
-        sopa report {params.sdata_path} {params.report}
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "+it" --no-save-h5ad
         """
 
 rule explorer:
@@ -180,5 +163,22 @@ rule explorer:
         explorer_directory = paths.explorer_directory,
     shell:
         """
-        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-i"
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-it"
+        """
+
+rule report:
+    input:
+        args.segmentation_boundaries(),
+        paths.smk_aggregation,
+        paths.annotations if args.annotate else [],
+    output:
+        paths.report,
+    params:
+        sdata_path = paths.sdata_path,
+        report = paths.report,
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa report {params.sdata_path} {params.report}
         """

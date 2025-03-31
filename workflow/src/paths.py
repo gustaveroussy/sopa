@@ -30,6 +30,7 @@ class WorkflowPaths:
         self.smk_patches = self.sopa_cache / "patches"
         self.smk_aggregation = self.sopa_cache / "aggregation"
         self.smk_table = self.sopa_cache / "table"
+        self.smk_explorer_raw = self.sopa_cache / "explorer_raw"
 
         self.smk_transcripts_temp_dir = self.sopa_cache / "transcript_patches"
         self.smk_patches_file_transcripts = self.sopa_cache / "patches_file_transcripts"
@@ -39,7 +40,6 @@ class WorkflowPaths:
         self.explorer_directory = self.sdata_path.with_suffix(".explorer")
         self.explorer_directory.mkdir(parents=True, exist_ok=True)
         self.explorer_experiment = self.explorer_directory / "experiment.xenium"
-        self.explorer_image = self.explorer_directory / "morphology.ome.tif"
         self.report = self.explorer_directory / "analysis_summary.html"
 
         ### Annotation files
