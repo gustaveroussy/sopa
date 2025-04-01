@@ -43,7 +43,7 @@ def merscope(
 
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
-    sdata = merscope_spatialdata_io(
+    sdata: SpatialData = merscope_spatialdata_io(
         path,
         backend=backend,
         z_layers=z_layers,
@@ -72,5 +72,9 @@ def merscope(
     for key in sdata.points.keys():
         if key.endswith("_transcripts"):
             sdata.attrs[SopaAttrs.TRANSCRIPTS] = key
+
+            if "cell_id" in sdata.points[key].columns:
+                sdata.attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ["cell_id", -1]
+            break
 
     return sdata

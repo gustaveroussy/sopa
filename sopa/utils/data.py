@@ -171,7 +171,7 @@ def toy_dataset(
         images=images,
         points=points,
         shapes=shapes,
-        attrs={SopaAttrs.TRANSCRIPTS: "transcripts"},
+        attrs={SopaAttrs.TRANSCRIPTS: "transcripts", SopaAttrs.PRIOR_TUPLE_KEY: ("cell_id", 0)},
     )
 
     if include_image:

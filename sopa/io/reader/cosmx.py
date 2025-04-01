@@ -110,7 +110,11 @@ def cosmx(
     return SpatialData(
         images={image_name: parsed_image},
         points={points_name: transcripts},
-        attrs={SopaAttrs.CELL_SEGMENTATION: image_name, SopaAttrs.TRANSCRIPTS: points_name},
+        attrs={
+            SopaAttrs.CELL_SEGMENTATION: image_name,
+            SopaAttrs.TRANSCRIPTS: points_name,
+            SopaAttrs.PRIOR_TUPLE_KEY: ("unique_cell_id", 0),
+        },
     )
 
 
@@ -241,6 +245,8 @@ def _read_transcripts_csv(path: Path, dataset_id: str) -> pd.DataFrame:
     assert np.isin(
         TRANSCRIPT_COLUMNS, df.columns
     ).all(), f"The file {transcripts_file} must contain the following columns: {', '.join(TRANSCRIPT_COLUMNS)}. Consider using a different export module."
+
+    df["unique_cell_id"] = df["fov"] * (df["cell_ID"].max() + 1) * (df["cell_ID"] > 0) + df["cell_ID"]
 
     return df
 
