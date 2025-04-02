@@ -5,9 +5,11 @@ import geopandas as gpd
 import numpy as np
 import shapely
 import shapely.affinity
+import skimage
+from geopandas import GeoDataFrame
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 from skimage.draw import polygon
-from spatialdata._core.operations.vectorize import _vectorize_mask
+from skimage.measure._regionprops import RegionProperties
 
 log = logging.getLogger(__name__)
 
@@ -115,6 +117,26 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
     return cells
 
 
+def _region_props_to_multipolygon(region_props: RegionProperties) -> MultiPolygon:
+    mask = np.pad(region_props.image, 1)
+    contours = skimage.measure.find_contours(mask, 0.5)
+
+    # shapes with <= 3 vertices, i.e. lines, can't be converted into a polygon
+    polygons = MultiPolygon([Polygon(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4])
+
+    yoff, xoff, *_ = region_props.bbox
+    return shapely.affinity.translate(polygons, xoff - 1, yoff - 1)  # subtract 1 to account for the padding
+
+
+def _vectorize_mask(mask: np.ndarray) -> GeoDataFrame:
+    if mask.max() == 0:
+        return GeoDataFrame(geometry=[])
+
+    regions = skimage.measure.regionprops(mask)
+
+    return GeoDataFrame(geometry=[_region_props_to_multipolygon(region) for region in regions])
+
+
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
 
@@ -135,11 +157,14 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
     geoms = cell_translated.geoms if isinstance(cell_translated, MultiPolygon) else [cell_translated]
 
-    rasterized_image = np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8)
+    shape = (ymax - ymin, xmax - xmin)
+
+    rasterized_image = np.zeros(shape, dtype=np.int8)
 
     for geom in geoms:
         x, y = geom.exterior.coords.xy
-        rasterized_image[*polygon(y, x)] = 1
+
+        rasterized_image[*polygon(y, x, shape)] = 1
 
     return rasterized_image
 
