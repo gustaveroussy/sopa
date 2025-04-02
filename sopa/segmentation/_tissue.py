@@ -6,14 +6,13 @@ import numpy as np
 import skimage
 from shapely.geometry import GeometryCollection, box
 from spatialdata import SpatialData
-from spatialdata._core.operations.vectorize import _vectorize_mask
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
 from .._constants import SopaAttrs, SopaKeys
 from ..utils import add_spatial_element, get_spatial_element
-from .shapes import expand_radius, to_valid_polygons
+from .shapes import _vectorize_mask, expand_radius, to_valid_polygons
 
 log = logging.getLogger(__name__)
 
