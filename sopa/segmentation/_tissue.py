@@ -3,8 +3,10 @@ from enum import Enum
 
 import geopandas as gpd
 import numpy as np
-from shapely.geometry import GeometryCollection, Polygon, box
+import skimage
+from shapely.geometry import GeometryCollection, box
 from spatialdata import SpatialData
+from spatialdata._core.operations.vectorize import _vectorize_mask
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
@@ -156,7 +158,7 @@ class TissueSegmentation:
 
         assert thumbnail.dtype == np.uint8, "In 'saturation' mode, the image should have the uint8 dtype"
 
-        thumbnail = (rgb2hsv(thumbnail)*255).astype("uint8")
+        thumbnail = (rgb2hsv(thumbnail) * 255).astype("uint8")
         return thumbnail[:, :, 1]  # saturation channel
 
     def otsu(self, thumbnail_2d: np.ndarray) -> gpd.GeoDataFrame:
@@ -168,32 +170,20 @@ class TissueSegmentation:
         Returns:
             A GeoDataFrame containing the segmented polygon(s).
         """
-        from skimage.filters import median, threshold_otsu
-        from skimage.morphology import opening, closing
-        from skimage.measure import label, regionprops
-
         median_footprint = np.ones((self.blur_kernel_size, self.blur_kernel_size))
-        thumbnail_blurred = median(thumbnail_2d, footprint=median_footprint)
-        otsu_threshold = threshold_otsu(thumbnail_blurred)
-        mask = thumbnail_blurred > otsu_threshold
+        thumbnail_blurred = skimage.filters.median(thumbnail_2d, footprint=median_footprint)
+
+        mask = thumbnail_blurred > skimage.filters.threshold_otsu(thumbnail_blurred)
 
         opening_footprint = np.ones((self.open_kernel_size, self.open_kernel_size))
-        mask_open = opening(mask, opening_footprint).astype(np.uint8)
+        mask_open = skimage.morphology.opening(mask, opening_footprint).astype(np.uint8)
+
         closing_footprint = np.ones((self.close_kernel_size, self.close_kernel_size))
-        mask_open_close = closing(mask_open, closing_footprint).astype(np.uint8)
+        mask_open_close = skimage.morphology.closing(mask_open, closing_footprint).astype(np.uint8)
 
-        # Label connected components
-        labels = label(mask_open_close, connectivity=2)
-        props = regionprops(labels)
+        labels = skimage.measure.label(mask_open_close, connectivity=2)
 
-        contours = []
-        for prop in props:
-            if prop.area > self.drop_threshold * np.prod(mask_open_close.shape):
-                coords = prop.coords
-                closed_contours = np.vstack([coords, coords[0]])  # Close the contour
-                contours.append(closed_contours)
-
-        return gpd.GeoDataFrame(geometry=[Polygon(contour[:, ::-1]) for contour in contours])
+        return _vectorize_mask(labels)
 
 
 def hsv_otsu(
