@@ -163,8 +163,8 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
 
     for geom in geoms:
         x, y = geom.exterior.coords.xy
-
-        rasterized_image[*polygon(y, x, shape)] = 1
+        rr, cc = polygon(y, x, shape)
+        rasterized_image[rr, cc] = 1
 
     return rasterized_image
 
