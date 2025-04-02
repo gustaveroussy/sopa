@@ -15,14 +15,6 @@ aggregate:
   aggregate_channels: true
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
-# Comment this out if you want to use tangram -->
-
-# annotation:
-#   method: tangram
-#   args:
-#     sc_reference_path: "..."
-#     cell_type_key: ct
-
 explorer:
   gene_column: "gene"
   ram_threshold_gb: 4

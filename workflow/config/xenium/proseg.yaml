@@ -1,4 +1,4 @@
-# Using the 10X Genomics multi-channel segmentation as a prior for Baysor.
+# Using the 10X Genomics multi-channel segmentation as a prior for Proseg.
 
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
@@ -16,14 +16,6 @@ segmentation:
 aggregate:
   aggregate_channels: true
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
-
-# Comment this out if you want to use tangram -->
-
-# annotation:
-#   method: tangram
-#   args:
-#     sc_reference_path: "..."
-#     cell_type_key: ct
 
 explorer:
   gene_column: "feature_name"

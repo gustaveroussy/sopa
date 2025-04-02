@@ -1,3 +1,5 @@
+# Using the Vizgen segmentation as a prior for Proseg.
+
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
 read:
   technology: merscope
