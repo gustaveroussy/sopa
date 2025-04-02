@@ -152,13 +152,11 @@ class TissueSegmentation:
     def saturation(self) -> np.ndarray:
         assert self.image.sizes["c"] == 3, "The image should be in RGB color space"
 
-        from skimage.color import rgb2hsv
-
         thumbnail = np.array(self.image.transpose("y", "x", "c"))
 
         assert thumbnail.dtype == np.uint8, "In 'saturation' mode, the image should have the uint8 dtype"
 
-        thumbnail = (rgb2hsv(thumbnail) * 255).astype("uint8")
+        thumbnail = (skimage.color.rgb2hsv(thumbnail) * 255).astype("uint8")
         return thumbnail[:, :, 1]  # saturation channel
 
     def otsu(self, thumbnail_2d: np.ndarray) -> gpd.GeoDataFrame:
