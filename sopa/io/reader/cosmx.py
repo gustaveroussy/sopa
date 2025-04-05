@@ -25,6 +25,7 @@ def cosmx(
     read_proteins: bool = False,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
+    flip_image_axis: int = 1,
 ) -> SpatialData:
     """
     Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
@@ -44,6 +45,7 @@ def cosmx(
         read_proteins: Whether to read the proteins or the transcripts.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
+        flip_image_axis: Either `1` or `2`. If your FOVs appears flipped, try the other value. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
 
     Returns:
         A `SpatialData` object representing the CosMX experiment
@@ -71,6 +73,7 @@ def cosmx(
             fov_locs,
             protein_dir_dict,
             morphology_coords,
+            flip_image_axis,
             **imread_kwargs,
         )
         image_name = "stitched_image"
@@ -180,6 +183,7 @@ def _read_stitched_image(
     fov_locs: pd.DataFrame,
     protein_dir_dict: dict,
     morphology_coords: list[str],
+    flip_image_axis: int,
     **imread_kwargs,
 ) -> tuple[da.Array, list[str] | None]:
     fov_images = {}
@@ -193,7 +197,7 @@ def _read_stitched_image(
 
             c_coords_dict[fov] = c_coords
 
-            fov_images[fov] = da.flip(image, axis=1)
+            fov_images[fov] = da.flip(image, axis=flip_image_axis)
 
             fov_locs.loc[fov, "xmax"] = fov_locs.loc[fov, "xmin"] + image.shape[2]
             fov_locs.loc[fov, "ymin"] = fov_locs.loc[fov, "ymax"] - image.shape[1]
