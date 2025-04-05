@@ -45,7 +45,7 @@ def cosmx(
         read_proteins: Whether to read the proteins or the transcripts.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
-        flip_image: If your FOVs appears flipped, use `flip_image=True` to fix it. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
+        flip_image: If your FOVs appears flipped after stitching, use `flip_image=True` to fix it. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
 
     Returns:
         A `SpatialData` object representing the CosMX experiment
