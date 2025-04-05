@@ -25,7 +25,7 @@ def cosmx(
     read_proteins: bool = False,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
-    flip_image_axis: int = 1,
+    flip_image: bool = False,
 ) -> SpatialData:
     """
     Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
@@ -45,7 +45,7 @@ def cosmx(
         read_proteins: Whether to read the proteins or the transcripts.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
-        flip_image_axis: Either `1` or `2`. If your FOVs appears flipped, try the other value. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
+        flip_image: If your FOVs appears flipped, use `flip_image=True` to fix it. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
 
     Returns:
         A `SpatialData` object representing the CosMX experiment
@@ -73,7 +73,7 @@ def cosmx(
             fov_locs,
             protein_dir_dict,
             morphology_coords,
-            flip_image_axis,
+            flip_image,
             **imread_kwargs,
         )
         image_name = "stitched_image"
@@ -183,7 +183,7 @@ def _read_stitched_image(
     fov_locs: pd.DataFrame,
     protein_dir_dict: dict,
     morphology_coords: list[str],
-    flip_image_axis: int,
+    flip_image: int,
     **imread_kwargs,
 ) -> tuple[da.Array, list[str] | None]:
     fov_images = {}
@@ -197,7 +197,7 @@ def _read_stitched_image(
 
             c_coords_dict[fov] = c_coords
 
-            fov_images[fov] = da.flip(image, axis=flip_image_axis)
+            fov_images[fov] = da.flip(image, axis=1)
 
             fov_locs.loc[fov, "xmax"] = fov_locs.loc[fov, "xmin"] + image.shape[2]
             fov_locs.loc[fov, "ymin"] = fov_locs.loc[fov, "ymax"] - image.shape[1]
@@ -209,13 +209,20 @@ def _read_stitched_image(
 
     c_coords = list(set.union(*[set(names) for names in c_coords_dict.values()]))
 
-    stitched_image = da.zeros(shape=(len(c_coords), fov_locs["y1"].max(), fov_locs["x1"].max()), dtype=image.dtype)
+    width, height = fov_locs["x1"].max(), fov_locs["y1"].max()
+    stitched_image = da.zeros(shape=(len(c_coords), height, width), dtype=image.dtype)
     stitched_image = xr.DataArray(stitched_image, dims=("c", "y", "x"), coords={"c": c_coords})
 
     for fov, im in fov_images.items():
         xmin, xmax = fov_locs.loc[fov, "x0"], fov_locs.loc[fov, "x1"]
         ymin, ymax = fov_locs.loc[fov, "y0"], fov_locs.loc[fov, "y1"]
-        stitched_image.loc[{"c": c_coords_dict[fov], "y": slice(ymin, ymax), "x": slice(xmin, xmax)}] = im
+
+        if flip_image:
+            y_slice, x_slice = slice(height - ymax, height - ymin), slice(width - xmax, width - xmin)
+        else:
+            y_slice, x_slice = slice(ymin, ymax), slice(xmin, xmax)
+
+        stitched_image.loc[{"c": c_coords_dict[fov], "y": y_slice, "x": x_slice}] = im
 
         if len(c_coords_dict[fov]) < len(c_coords):
             log.warning(f"Missing channels ({len(c_coords) - len(c_coords_dict[fov])}) for FOV {fov}")
