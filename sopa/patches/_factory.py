@@ -59,7 +59,7 @@ def make_transcript_patches(
         patch_width: Width of the patches, in microns. If `None`, creates only one patch.
         patch_overlap: Number of microns of overlap between patches.
         points_key: Optional key of the points on which the patches will be made. If not provided, it is found automatically.
-        prior_shapes_key: Optional key of `sdata` containing the shapes with the prior segmentation, or column of the points dataframe. If `auto`, use the prior column from the technology.
+        prior_shapes_key: Optional key of `sdata` containing the shapes with the prior segmentation, or column of the points dataframe. If `"auto"`, use the prior column from the technology.
         unassigned_value: If `prior_shapes_key` has been provided and corresponds to a points column: this argument is the value given to the transcript that are not inside any cell.
         min_points_per_patch: Minimum number of points/transcripts for a patch to be considered for segmentation.
         write_cells_centroids: If `True`, the centroids of the prior cells will be saved. This is useful for some segmentation tools such as ComSeg.
