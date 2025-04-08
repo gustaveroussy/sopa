@@ -96,7 +96,6 @@ def cosmx(
     transcripts_data = _read_transcripts_csv(path, dataset_id)
 
     if fov is None:
-        print(transcripts_data["y_global_px"].min(), fov_locs["ymin"].min())
         transcripts_data["x"] = transcripts_data["x_global_px"] - fov_locs["xmin"].min()
         transcripts_data["y"] = transcripts_data["y_global_px"] - fov_locs["ymin"].min()
         coordinates = None
