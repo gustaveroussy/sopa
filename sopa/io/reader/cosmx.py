@@ -321,7 +321,7 @@ def _infer_flip_image(path: Path, dataset_id: str) -> bool:
     flip_image = df_["y_local_px"].iloc[0] > df_["y_local_px"].iloc[-1]
 
     log.info(
-        f"Infering argument {flip_image=}. If the image stitching is wrong, please comment this issue: https://github.com/gustaveroussy/sopa/issues/231"
+        f"Inferring argument {flip_image=}. If the image stitching is wrong, please add a comment to https://github.com/gustaveroussy/sopa/issues/231"
     )
 
     return flip_image
