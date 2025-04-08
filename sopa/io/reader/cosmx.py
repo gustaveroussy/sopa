@@ -25,7 +25,7 @@ def cosmx(
     read_proteins: bool = False,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
-    flip_image: bool = False,
+    flip_image: bool | None = None,
 ) -> SpatialData:
     """
     Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
@@ -40,12 +40,12 @@ def cosmx(
 
     Args:
         path: Path to the root directory containing *Nanostring* files.
-        dataset_id: Optional name of the dataset (needs to be provided if not infered).
+        dataset_id: Optional name of the dataset (needs to be provided if not inferred).
         fov: Number of one single field of view to be read. If not provided, reads all FOVs and create a stitched image.
         read_proteins: Whether to read the proteins or the transcripts.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
-        flip_image: If your FOVs appears flipped after stitching, use `flip_image=True` to fix it. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
+        flip_image: For recent AtomX export, `flip_image=True` has to be used for stitching. By default, the value is inferred based on the transcript file. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
 
     Returns:
         A `SpatialData` object representing the CosMX experiment
@@ -62,6 +62,9 @@ def cosmx(
             int(protein_dir.parent.name[3:]): protein_dir for protein_dir in list(path.rglob("**/FOV*/ProteinImages"))
         }
         assert len(protein_dir_dict), f"No directory called 'ProteinImages' was found under {path}"
+
+    if flip_image is None and not read_proteins:
+        flip_image = _infer_flip_image(path, dataset_id)
 
     ### Read image(s)
     images_dir = _find_dir(path, "Morphology2D")
@@ -93,6 +96,7 @@ def cosmx(
     transcripts_data = _read_transcripts_csv(path, dataset_id)
 
     if fov is None:
+        print(transcripts_data["y_global_px"].min(), fov_locs["ymin"].min())
         transcripts_data["x"] = transcripts_data["x_global_px"] - fov_locs["xmin"].min()
         transcripts_data["y"] = transcripts_data["y_global_px"] - fov_locs["ymin"].min()
         coordinates = None
@@ -242,15 +246,15 @@ def _find_matching_fov_file(images_dir: Path, fov: str | int) -> Path:
     return fov_files[0]
 
 
-def _read_transcripts_csv(path: Path, dataset_id: str) -> pd.DataFrame:
+def _read_transcripts_csv(path: Path, dataset_id: str, nrows: int | None = None) -> pd.DataFrame:
     transcripts_file = path / f"{dataset_id}_tx_file.csv.gz"
 
     if transcripts_file.exists():
-        df = pd.read_csv(transcripts_file, compression="gzip")
+        df = pd.read_csv(transcripts_file, compression="gzip", nrows=nrows)
     else:
         transcripts_file = path / f"{dataset_id}_tx_file.csv"
         assert transcripts_file.exists(), f"Transcript file {transcripts_file} not found."
-        df = pd.read_csv(transcripts_file)
+        df = pd.read_csv(transcripts_file, nrows=nrows)
 
     TRANSCRIPT_COLUMNS = ["x_global_px", "y_global_px", "target"]
     assert np.isin(
@@ -299,3 +303,21 @@ def _read_protein_fov(protein_dir: Path) -> tuple[da.Array, list[str]]:
     channel_names = [_get_cosmx_protein_name(image_path) for image_path in images_paths]
 
     return protein_image, channel_names
+
+
+def _infer_flip_image(path: Path, dataset_id: str) -> bool:
+    df_ = _read_transcripts_csv(path, dataset_id, nrows=100)
+
+    fov = df_["fov"].value_counts().sort_values().index[-1]
+    df_ = df_[df_["fov"] == fov].sort_values("y_global_px")
+
+    assert len(df_) > 1, f"Not transcripts in {fov=} to infer `flip_image`. Please provide `flip_image` manually."
+
+    # in recent AtomX exports, y_local_px is negatively correlated with y_global_px
+    flip_image = df_["y_local_px"].iloc[0] > df_["y_local_px"].iloc[-1]
+
+    log.info(
+        f"Infering argument {flip_image=}. If the image stitching is wrong, please comment this issue: https://github.com/gustaveroussy/sopa/issues/231"
+    )
+
+    return flip_image
