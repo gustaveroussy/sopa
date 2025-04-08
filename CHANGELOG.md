@@ -1,15 +1,17 @@
+## [2.0.5] - xxxx-xx-xx
+
 ## [2.0.4] - 2025-04-08
 
 ### Added
-- Add `prior_shapes_key="auto"` to automatically detect the prior propriatery segmentation when making transcripts patches
+- Add `prior_shapes_key="auto"` to automatically detect the prior proprietary segmentation when making transcript patches
 - Direct stardist CLI/snakemake support (not just via `generic-staining`)
 - Added a snakemake config for Visium HD data (with stardist segmentation)
 - Proseg support for Snakemake
 - CLI command `sopa --version` to show the version of Sopa
 
 ### Fixed
-- Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
 - Fix CosMX reader issues related to the channel names, FOV names, and image flipping (#180, #227, #231)
+- Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
 - Stardist: use `clip=True` when normalizing images to avoid `-1e20` values
 
 ### Changed
