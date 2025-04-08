@@ -9,8 +9,7 @@
 
 ### Fixed
 - Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
-- Fix CosMX reader when channel names file not exported (#180)
-- Fix CosMX reader when FOV names have 5 digits (#227)
+- Fix CosMX reader issues related to the channel names, FOV names, and image flipping (#180, #227, #231)
 - Stardist: use `clip=True` when normalizing images to avoid `-1e20` values
 
 ### Changed
