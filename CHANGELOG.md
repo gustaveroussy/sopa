@@ -1,4 +1,4 @@
-## [2.0.4] - xxxx-xx-xx
+## [2.0.4] - 2025-04-08
 
 ### Added
 - Add `prior_shapes_key="auto"` to automatically detect the prior propriatery segmentation when making transcripts patches
