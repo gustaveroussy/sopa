@@ -162,7 +162,7 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
 
     fov_locs = pd.read_csv(fov_file)
     fov_locs["xmax"] = 0.0  # will be filled when reading the images
-    fov_locs["ymin"] = 0.0  # will be filled when reading the images
+    fov_locs["ymax"] = 0.0  # will be filled when reading the images
 
     fov_key, x_key, y_key, scale_factor = "fov", "x_global_px", "y_global_px", 1
 
@@ -176,7 +176,7 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
 
     fov_locs.index = fov_locs[fov_key]
     fov_locs["xmin"] = fov_locs[x_key] * scale_factor
-    fov_locs["ymax"] = fov_locs[y_key] * scale_factor
+    fov_locs["ymin"] = fov_locs[y_key] * scale_factor
 
     return fov_locs
 
@@ -203,7 +203,12 @@ def _read_stitched_image(
             fov_images[fov] = da.flip(image, axis=1)
 
             fov_locs.loc[fov, "xmax"] = fov_locs.loc[fov, "xmin"] + image.shape[2]
-            fov_locs.loc[fov, "ymin"] = fov_locs.loc[fov, "ymax"] - image.shape[1]
+
+            if flip_image:
+                fov_locs.loc[fov, "ymax"] = fov_locs.loc[fov, "ymin"]
+                fov_locs.loc[fov, "ymin"] = fov_locs.loc[fov, "ymax"] - image.shape[1]
+            else:
+                fov_locs.loc[fov, "ymax"] = fov_locs.loc[fov, "ymin"] + image.shape[1]
 
     for dim in ["x", "y"]:
         shift = fov_locs[f"{dim}min"].min()
@@ -212,7 +217,7 @@ def _read_stitched_image(
 
     c_coords = list(set.union(*[set(names) for names in c_coords_dict.values()]))
 
-    width, height = fov_locs["x1"].max(), fov_locs["y1"].max()
+    height, width = fov_locs["y1"].max(), fov_locs["x1"].max()
     stitched_image = da.zeros(shape=(len(c_coords), height, width), dtype=image.dtype)
     stitched_image = xr.DataArray(stitched_image, dims=("c", "y", "x"), coords={"c": c_coords})
 
