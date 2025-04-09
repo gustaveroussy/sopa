@@ -312,7 +312,7 @@ def _read_protein_fov(protein_dir: Path) -> tuple[da.Array, list[str]]:
 def _infer_flip_image(path: Path, dataset_id: str) -> bool:
     df_ = _read_transcripts_csv(path, dataset_id, nrows=100)
 
-    fov = df_["fov"].value_counts().sort_values().index[-1]
+    fov = df_["fov"].value_counts().index[0]
     df_ = df_[df_["fov"] == fov].sort_values("y_global_px")
 
     assert len(df_) > 1, f"Not transcripts in {fov=} to infer `flip_image`. Please provide `flip_image` manually."
