@@ -53,7 +53,7 @@ def comseg(
     if config is None or not len(config):
         config = _get_default_config(sdata, sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES])
     elif isinstance(config, str):
-        with open(config, "r") as f:
+        with open(config) as f:
             config = json.load(f)
 
     assert "gene_column" in config, "'gene_column' not found in config"

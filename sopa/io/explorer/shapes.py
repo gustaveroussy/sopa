@@ -1,7 +1,7 @@
 import logging
+from collections.abc import Iterable
 from math import ceil
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import zarr

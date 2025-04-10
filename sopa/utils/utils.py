@@ -252,7 +252,7 @@ def add_spatial_element(
                 sdata.delete_element_from_disk(element_name)
                 sdata.write_element(element_name, overwrite=overwrite)
             else:
-                log.error(f"Error while saving {element_name} on disk: {e}")
+                raise ValueError(f"Error while saving {element_name} on disk with {overwrite=}: {e}")
 
 
 def set_sopa_attrs(

@@ -42,16 +42,15 @@ tiffslide = { version = ">=2.3.1", optional = true }
 igraph = { version = ">=0.11.0", optional = true }
 torchvision = { version = ">=0.20.0", optional = true }
 
-black = { version = ">=22.8.0", optional = true }
-isort = { version = ">=5.10.1", optional = true }
+ruff = { version = ">=0.11.4", optional = true }
+mypy = { version = "^1.14.1", optional = true }
 pytest = { version = ">=7.1.3", optional = true }
+pytest-cov = { version = ">=4.0.0", optional = true }
 ipykernel = { version = ">=6.25.2", optional = true }
 mkdocs-material = { version = ">=9.3.2", optional = true }
 mkdocs-jupyter = { version = ">=0.24.6", optional = true }
 mkdocstrings = { version = ">=0.23.0", optional = true }
 mkdocstrings-python = { version = ">=1.7.3", optional = true }
-flake8 = { version = ">=7.0.0", optional = true }
-mypy = { version = "^1.14.1", optional = true }
 
 [tool.poetry.extras]
 cellpose = ["cellpose", "torch"]
@@ -59,15 +58,15 @@ stardist = ["tensorflow", "stardist"]
 baysor = ["toml", "loompy"]
 wsi = ["tiffslide", "torch", "igraph", "torchvision"]
 dev = [
-  "black",
-  "isort",
+  "ruff",
+  "mypy",
   "pytest",
+  "pytest-cov",
   "ipykernel",
   "mkdocs-material",
+  "mkdocs-jupyter",
   "mkdocstrings",
   "mkdocstrings-python",
-  "mkdocs-jupyter",
-  "mypy",
 ]
 
 [build-system]
@@ -87,24 +86,75 @@ warn_unused_ignores = true
 show_error_codes = true
 ignore_missing_imports = true
 
-[tool.black]
+[tool.ruff]
+target-version = "py39"
 line-length = 120
-include = '\.pyi?$'
-exclude = '''
-/(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-'''
+fix = true
 
-[tool.isort]
-profile = "black"
-skip_glob = ["*/__init__.py"]
+[tool.ruff.lint]
+select = [
+  # flake8-2020
+  "YTT",
+  # flake8-bandit
+  "S",
+  # flake8-bugbear
+  "B",
+  # flake8-builtins
+  "A",
+  # flake8-comprehensions
+  "C4",
+  # flake8-debugger
+  "T10",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
+  # mccabe
+  "C90",
+  # pycodestyle
+  "E",
+  "W",
+  # pyflakes
+  "F",
+  # pygrep-hooks
+  "PGH",
+  # pyupgrade
+  "UP",
+  # ruff
+  "RUF",
+  # tryceratops
+  "TRY",
+]
+ignore = [
+  # LineTooLong
+  "E501",
+  # DoNotAssignLambda
+  "E731",
+  # DoNotUseAssert
+  "S101",
+  "TRY003",
+  "RUF012",
+  "B904",
+  "E722",
+  "C901",
+  "S314",   # Using `xml` to parse untrusted data is known to be vulnerable to XML attacks; use `defusedxml` equivalents
+  "S602",   # `subprocess` call with `shell=True` identified, security issue
+  "C901",   # Function is too complex (too many arguments)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+"__init__.py" = ["F401", "I001"]
+"main.py" = ["F401"]
+"*.ipynb" = ["F401"]
+"sopa/cli/**" = ["B008"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.coverage.run]
+branch = true
+source = ["sopa"]

@@ -59,7 +59,7 @@ def write(
     polygon_max_vertices: int = 13,
     lazy: bool = True,
     ram_threshold_gb: int | None = 4,
-    mode: str = None,
+    mode: str | None = None,
     save_h5ad: bool = False,
     run_name: str | None = None,
 ) -> None:

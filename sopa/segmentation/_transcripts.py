@@ -60,9 +60,9 @@ def resolve(
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 
-    valid_ids = set(list(geo_df.index))
+    valid_ids = set(geo_df.index)
     table = anndata.concat(
-        [adata[list(valid_ids & set(list(adata.obs_names)))] for adata in adatas] + table_conflicts,
+        [adata[list(valid_ids & set(adata.obs_names))] for adata in adatas] + table_conflicts,
         join="outer",
     )
     table.obs.dropna(axis="columns", inplace=True)

@@ -109,7 +109,7 @@ class Patches2D:
             xmax, ymax = self.element.x.max().compute(), self.element.y.max().compute()
             tight, int_coords = True, False
         else:
-            raise ValueError(f"Invalid element type: {type(self.element)}")
+            raise TypeError(f"Invalid element type: {type(self.element)}")
 
         self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, tight, int_coords)
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
@@ -202,13 +202,11 @@ class Patches2D:
         return geo_df
 
     def as_geodataframe(self) -> gpd.GeoDataFrame:
-        geo_df = gpd.GeoDataFrame(
-            {
-                "geometry": self.polygons,
-                SopaKeys.BOUNDS: self.bboxes.tolist(),
-                SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
-            }
-        )
+        geo_df = gpd.GeoDataFrame({
+            "geometry": self.polygons,
+            SopaKeys.BOUNDS: self.bboxes.tolist(),
+            SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
+        })
 
         return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
 

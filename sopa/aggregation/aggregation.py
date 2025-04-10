@@ -16,9 +16,8 @@ from ..utils import (
     get_spatial_element,
     get_spatial_image,
 )
-from . import aggregate_bins
+from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
-from . import count_transcripts
 
 log = logging.getLogger(__name__)
 
@@ -66,9 +65,7 @@ def aggregate(
         bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
     if (bins_key is None) and (aggregate_genes or (aggregate_genes is None and sdata.points)):
-        assert (
-            sdata.points
-        ), "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
+        assert sdata.points, "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
 
         points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True

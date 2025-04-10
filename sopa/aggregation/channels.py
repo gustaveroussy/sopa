@@ -19,7 +19,7 @@ AVAILABLE_MODES = ["average", "min", "max"]
 
 
 def average_channels(
-    sdata: SpatialData, image_key: str = None, shapes_key: str | None = None, expand_radius_ratio: float = 0
+    sdata: SpatialData, image_key: str | None = None, shapes_key: str | None = None, expand_radius_ratio: float = 0
 ) -> np.ndarray:
     log.warning("average_channels is deprecated and will be removed in sopa==2.1.0, use `aggregate_channels` instead")
     return aggregate_channels(sdata, image_key, shapes_key, expand_radius_ratio, mode="average")

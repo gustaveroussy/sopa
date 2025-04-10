@@ -80,7 +80,7 @@ def convert(
 
     if config_path is not None:
         assert not kwargs, "Provide either a path to a config, or some kwargs, but not both"
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             import yaml
 
             config = yaml.safe_load(f)

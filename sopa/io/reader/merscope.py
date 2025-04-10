@@ -61,7 +61,7 @@ def merscope(
         if not isinstance(z_layers, int) and len(z_layers) == 1:
             z_layers = z_layers[0]
         if isinstance(z_layers, int):
-            for key in sdata.images.keys():
+            for key in sdata.images:
                 if key.endswith(f"_z{z_layers}"):
                     sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = key
         else:
@@ -69,7 +69,7 @@ def merscope(
                 f"Multiple z-layers provided: {z_layers}. Not deciding which image should be used for cell segmentation."
             )
 
-    for key in sdata.points.keys():
+    for key in sdata.points:
         if key.endswith("_transcripts"):
             sdata.attrs[SopaAttrs.TRANSCRIPTS] = key
 

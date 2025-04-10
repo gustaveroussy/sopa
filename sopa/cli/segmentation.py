@@ -1,5 +1,5 @@
 import ast
-from typing import Iterable
+from collections.abc import Iterable
 
 import typer
 

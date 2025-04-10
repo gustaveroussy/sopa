@@ -70,7 +70,7 @@ class Settings:
 
             if ram_per_worker < 4 * 1024**3:
                 log.warning(
-                    f"Each worker has less than 4GB of RAM ({ram_per_worker / 1024**3:.2f}GB), which may not be enough. "
+                    f"Each worker has less than 4GB of RAM ({ram_per_worker / 1024** 3:.2f}GB), which may not be enough. "
                     f"Consider setting `sopa.settings.dask_client_kwargs['n_workers']` to use less workers ({len(client.cluster.workers)} currently)."
                 )
 

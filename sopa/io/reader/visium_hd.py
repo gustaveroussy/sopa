@@ -46,7 +46,7 @@ def visium_hd(
     ensure_string_channel_names(sdata)  # Ensure that channel names are strings
 
     ### Add Sopa attributes to detect the spatial elements
-    for key in sdata.images.keys():
+    for key in sdata.images:
         if key.endswith("_full_image"):
             sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = key
         elif key.endswith("_hires_image"):
@@ -58,7 +58,7 @@ def visium_hd(
         if var_names_make_unique:
             adata.var_names_make_unique()
 
-    for key in sdata.shapes.keys():
+    for key in sdata.shapes:
         if key.endswith("_002um"):
             shapes_bounding_box(sdata, key)
             break

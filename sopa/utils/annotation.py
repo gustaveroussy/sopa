@@ -21,10 +21,7 @@ def preprocess_fluo(adata: AnnData) -> pd.DataFrame:
     Returns:
         A dataframe of preprocessed channels intensities
     """
-    if SopaKeys.INTENSITIES_OBSM in adata.obsm:
-        df = adata.obsm[SopaKeys.INTENSITIES_OBSM]
-    else:
-        df = adata.to_df()
+    df = adata.obsm[SopaKeys.INTENSITIES_OBSM] if SopaKeys.INTENSITIES_OBSM in adata.obsm else adata.to_df()
 
     divider = 5 * np.quantile(df, 0.2, axis=0)
     divider[divider == 0] = df.max(axis=0)[divider == 0]
@@ -229,7 +226,7 @@ class MultiLevelAnnotation:
             obs_key = self.level_obs_key(level)
             self.ad_sp.obs[obs_key] = self.ad_sp.obs[previous_key]
             groups = self.ad_sc.obs.groupby(previous_key)
-            for ct in groups.groups.keys():
+            for ct in groups.groups:
                 group: pd.DataFrame = groups.get_group(ct)
                 indices_sp = self.ad_sp.obs_names[self.ad_sp.obs[previous_key] == ct]
 

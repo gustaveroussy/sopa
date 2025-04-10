@@ -36,7 +36,7 @@ def cells_to_groups(
 
     distances_to_groups = {}
 
-    if not adata.obs[group_key].dtype.name == "category":
+    if adata.obs[group_key].dtype.name != "category":
         log.info(f"Converting adata.obs['{group_key}'] to category")
         adata.obs[group_key] = adata.obs[group_key].astype("category")
 

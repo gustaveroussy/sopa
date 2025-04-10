@@ -56,7 +56,7 @@ class Args:
             params += " --write-cells-centroids"
 
         method_config = self["segmentation"][self.transcript_based_method]
-        return f'{params} {method_config.as_cli(keys=["prior_shapes_key", "unassigned_value"])}'
+        return f"{params} {method_config.as_cli(keys=['prior_shapes_key', 'unassigned_value'])}"
 
     ### The methods below are used to convert the Args object into a string for the Sopa CLI
 
@@ -94,9 +94,9 @@ class Args:
 
         For instance, {"x": 2, "y": False} will be converted to "--x 2 --no-y"
         """
-        return " ".join((res for item in self.config.items() for res in _stringify_item(*item)))
+        return " ".join(res for item in self.config.items() for res in _stringify_item(*item))
 
-    def __getitem__(self, name: str) -> "Args" | bool | str | list:
+    def __getitem__(self, name: str) -> Args | bool | str | list:
         sub_config = self.config.get(name, {})
         if not isinstance(sub_config, dict):
             return sub_config
@@ -122,6 +122,6 @@ def _stringify_item(key: str, value: bool | list | dict | str):
 
 
 def _stringify_value_for_cli(value) -> str:
-    if isinstance(value, str) or isinstance(value, dict):
+    if isinstance(value, (str, dict)):
         return f'"{value}"'
     return str(value)

@@ -32,10 +32,7 @@ def macsima(path: Path, **kwargs: int) -> SpatialData:
 
 def _parse_name_macsima(file):
     match = re.search(r"_A-(.*?)_C-", file.name)
-    if match:
-        antibody = match.group(1)
-    else:
-        antibody = re.search(r"_A-(.*?)\.tif", file.name).group(1)
+    antibody = match.group(1) if match else re.search(r"_A-(.*?)\.tif", file.name).group(1)
     return antibody
 
 

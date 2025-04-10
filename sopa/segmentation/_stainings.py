@@ -1,7 +1,8 @@
 import logging
+from collections.abc import Iterable
 from functools import partial
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable
 
 import geopandas as gpd
 import numpy as np
@@ -93,16 +94,14 @@ class StainingSegmentation:
         if self.gaussian_sigma > 0:
             image = np.stack([gaussian_filter(c, sigma=self.gaussian_sigma) for c in image])
         if self.clip_limit > 0:
-            image = np.stack(
-                [
-                    exposure.equalize_adapthist(
-                        c,
-                        clip_limit=self.clip_limit,
-                        kernel_size=self.clahe_kernel_size,
-                    )
-                    for c in image
-                ]
-            )
+            image = np.stack([
+                exposure.equalize_adapthist(
+                    c,
+                    clip_limit=self.clip_limit,
+                    kernel_size=self.clahe_kernel_size,
+                )
+                for c in image
+            ])
 
         if patch.area < box(*bounds).area:
             mask = shapes.rasterize(patch, image.shape[1:], bounds)

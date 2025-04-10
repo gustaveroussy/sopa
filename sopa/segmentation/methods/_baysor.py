@@ -141,13 +141,7 @@ def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
 
     from packaging.version import InvalidVersion, Version
 
-    result = subprocess.run(
-        f"{baysor_executable_path} run --version",
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
+    result = subprocess.run(f"{baysor_executable_path} run --version", shell=True, capture_output=True, text=True)
 
     try:
         return Version(result.stdout) >= Version("0.7.0")

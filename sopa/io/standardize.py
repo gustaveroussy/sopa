@@ -27,12 +27,11 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
     c_coords = get_channel_names(image)
     assert is_valid_c_coords(c_coords), f"Channel names must be strings, not {c_coords.dtype}"
 
-    if SopaKeys.TABLE in sdata.tables:
-        if delete_table:
-            log.info(
-                f"The table `sdata.tables['{SopaKeys.TABLE}']` will not be saved, since it will be created later by sopa"
-            )
-            del sdata.tables[SopaKeys.TABLE]
+    if SopaKeys.TABLE in sdata.tables and delete_table:
+        log.info(
+            f"The table `sdata.tables['{SopaKeys.TABLE}']` will not be saved, since it will be created later by sopa"
+        )
+        del sdata.tables[SopaKeys.TABLE]
 
 
 def read_zarr_standardized(path: str) -> SpatialData:

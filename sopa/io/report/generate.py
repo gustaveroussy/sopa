@@ -63,11 +63,11 @@ class SectionBuilder:
         self.sdata = sdata
         self.table_key = table_key
 
-        if table_key not in self.sdata.tables.keys():
+        if table_key not in self.sdata.tables:
             log.warning(f"Table key '{table_key}' not found in the SpatialData object")
 
         self.adata = None
-        if table_key in self.sdata.tables.keys():
+        if table_key in self.sdata.tables:
             self.adata: AnnData = self.sdata.tables[table_key].copy()
 
     def _table_has(self, key, default=False):

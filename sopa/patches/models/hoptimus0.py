@@ -17,10 +17,8 @@ class HOPTIMUSFeatures(nn.Module):
     def forward(self, x):
         from torchvision import transforms
 
-        transform = transforms.Compose(
-            [
-                transforms.Normalize(mean=(0.707223, 0.578729, 0.703617), std=(0.211883, 0.230117, 0.177517)),
-            ]
-        )
+        transform = transforms.Compose([
+            transforms.Normalize(mean=(0.707223, 0.578729, 0.703617), std=(0.211883, 0.230117, 0.177517)),
+        ])
 
         return self.model(transform(x))
