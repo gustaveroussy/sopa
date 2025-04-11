@@ -1,7 +1,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import Optional
 
 import dask.array as da
 import numpy as np
@@ -20,7 +19,7 @@ log = logging.getLogger(__name__)
 
 def cosmx(
     path: str | Path,
-    dataset_id: Optional[str] = None,
+    dataset_id: str | None = None,
     fov: int | None = None,
     read_proteins: bool = False,
     image_models_kwargs: dict | None = None,
