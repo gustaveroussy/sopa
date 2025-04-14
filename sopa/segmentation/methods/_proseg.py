@@ -1,6 +1,5 @@
 import gzip
 import logging
-import shutil
 from pathlib import Path
 
 import geopandas as gpd
@@ -12,12 +11,9 @@ from spatialdata.transformations import get_transformation
 
 from ..._constants import SopaAttrs, SopaKeys
 from ...aggregation.aggregation import add_standardized_table
-from ...utils import (
-    delete_transcripts_patches_dirs,
-    get_feature_key,
-    get_transcripts_patches_dirs,
-)
+from ...utils import delete_transcripts_patches_dirs, get_feature_key, get_transcripts_patches_dirs
 from .._transcripts import _check_transcript_patches
+from ._utils import _get_executable_path
 
 log = logging.getLogger(__name__)
 
@@ -89,22 +85,8 @@ def _run_proseg(proseg_command: str, patch_dir: str | Path):
         )
 
 
-def _get_proseg_executable_path() -> Path | str:
-    if shutil.which("proseg") is not None:
-        return "proseg"
-
-    default_path = Path.home() / ".cargo" / "bin" / "proseg"
-    if default_path.exists():
-        return default_path
-
-    bin_path = Path.home() / ".local" / "bin" / "proseg"
-    raise FileNotFoundError(
-        f"Please install proseg and ensure that either `{default_path}` executes proseg, or that `proseg` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
-    )
-
-
 def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
-    proseg_executable = _get_proseg_executable_path()
+    proseg_executable = _get_executable_path("proseg", ".cargo")
 
     assert SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES], (
         "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."

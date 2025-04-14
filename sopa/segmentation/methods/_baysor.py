@@ -6,12 +6,9 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import SopaAttrs, SopaFiles, SopaKeys
-from ...utils import (
-    delete_transcripts_patches_dirs,
-    get_feature_key,
-    get_transcripts_patches_dirs,
-)
+from ...utils import delete_transcripts_patches_dirs, get_feature_key, get_transcripts_patches_dirs
 from .._transcripts import _check_transcript_patches, resolve
+from ._utils import _get_executable_path
 
 log = logging.getLogger(__name__)
 
@@ -124,7 +121,7 @@ class BaysorPatch:
 
 
 def _get_baysor_command(prior_shapes_key: str | None) -> str:
-    baysor_executable_path = _get_baysor_executable_path()
+    baysor_executable_path = _get_executable_path("baysor", ".julia")
 
     use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
     polygon_format = (
@@ -148,22 +145,6 @@ def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
     except InvalidVersion:
         log.warning("Could not parse the version of baysor. Assumes baysor >= 0.7.0.")
         return True
-
-
-def _get_baysor_executable_path() -> Path | str:
-    import shutil
-
-    if shutil.which("baysor") is not None:
-        return "baysor"
-
-    default_path = Path.home() / ".julia" / "bin" / "baysor"
-    if default_path.exists():
-        return default_path
-
-    bin_path = Path.home() / ".local" / "bin" / "baysor"
-    raise FileNotFoundError(
-        f"Please install baysor and ensure that either `{default_path}` executes baysor, or that `baysor` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
-    )
 
 
 def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale: float | None) -> dict:

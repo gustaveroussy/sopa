@@ -5,7 +5,7 @@ from pathlib import Path
 from .constants import STAINING_BASED_METHODS, TOY_READERS, TRANSCRIPT_BASED_METHODS
 
 
-def validate_config(config: dict):
+def validate_config(config: dict) -> dict:
     """Basic config sanity check before running Snakemake"""
     assert "read" in config and "technology" in config["read"], (
         "Invalid config. Provide a 'read' section in the config file, and specify the 'technology' key"
@@ -18,9 +18,11 @@ def validate_config(config: dict):
     check_prior_shapes_key(config)
 
     if "baysor" in config["segmentation"]:
-        check_baysor_executable_path(config)
+        check_executable_path(config, "baysor", ".julia")
 
     if "proseg" in config["segmentation"]:
+        check_executable_path(config, "proseg", ".cargo")
+
         assert "prior_shapes_key" in config["segmentation"]["proseg"], (
             "Invalid config. Provide a 'prior_shapes_key' key in the 'proseg' section of the config file"
         )
@@ -88,21 +90,19 @@ def check_data_paths(config: dict):
         config["data_path"] = []
 
 
-def check_baysor_executable_path(config: dict) -> str:
+def check_executable_path(config: dict, name: str, default_dir: str):
     import shutil
 
-    if shutil.which("baysor") is not None:
+    if shutil.which(name) is not None:
         return
 
-    default_path = Path.home() / ".julia" / "bin" / "baysor"
+    default_path = Path.home() / default_dir / "bin" / name
     if default_path.exists():
         return
 
-    if "executables" in config and "baysor" in config["executables"]:
-        raise ValueError(
-            "The config['executables']['baysor'] argument is deprecated. Please set a 'baysor' alias instead."
-        )
+    bin_path = Path.home() / ".local" / "bin" / name
+    error_message = f"Please install {name} and ensure that either `{default_path}` executes {name}, or that `{name}` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
 
-    raise KeyError(
-        f"""Baysor executable {default_path} does not exist. Please set a 'baysor' alias. Also check that you have installed baysor executable (as in https://github.com/kharchenkolab/Baysor)."""
-    )
+    if "executables" in config and name in config["executables"]:
+        raise ValueError(f"The config['executables']['{name}'] argument is deprecated. {error_message}.")
+    raise KeyError(error_message)
