@@ -1,9 +1,9 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/sopa.png" alt="sopa_logo" width="250"/>
-	<b><i>
-	Spatial omics pipeline and analysis
-	</b></i>
 </p>
+<p align="center"><b><i>
+	Spatial omics pipeline and analysis
+</b></i></p>
 
 <div align="center">
 
