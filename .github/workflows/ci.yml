@@ -1,4 +1,5 @@
 name: ci
+
 on:
   push:
     tags:
@@ -23,15 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
         with:
           python-version: ${{ matrix.python-version }}
-          enable-cache: true
-          cache-dependency-glob: uv.lock
 
-      - name: Install dependencies
-        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install snakemake 'pulp<2.8'
+      - name: Install extra dependencies
+        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install snakemake
 
       - name: Tests
         run: uv run pytest
@@ -39,41 +38,31 @@ jobs:
       - name: Snakemake
         run: cd workflow && uv run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
 
-  docs:
+  deploy-docs:
     needs: [tests]
+    if: contains(github.ref, 'tags')
+    name: "Deploy documentation"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        run: uv python install 3.12
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Build documentation
         run: uv run mkdocs gh-deploy --force
 
-  publish:
+  pypi-release:
     needs: [tests]
     if: contains(github.ref, 'tags')
-    name: "Build and publish release"
+    name: "PyPI release"
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-
-      - name: Set up Python
-        run: uv python install 3.12
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
 
       - name: Build
         run: uv build
