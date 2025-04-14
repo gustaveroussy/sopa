@@ -1,6 +1,6 @@
 ## Installing Sopa
 
-Sopa can be installed on every OS with `pip` or [`poetry`](https://python-poetry.org/docs/). The preferred Python version is `python==3.10`, but we also support `3.11` and `3.12`.
+Sopa can be installed on every OS with `pip`. The preferred Python version is `python==3.10`, but we also support `3.11` and `3.12`.
 
 !!! note "Advice (optional)"
 
@@ -34,13 +34,13 @@ Choose one of the following, depending on your needs:
     pip install -e '.[cellpose,baysor]'
     ```
 
-=== "Poetry (dev mode)"
+=== "uv (dev mode)"
 
     ``` bash
     git clone https://github.com/gustaveroussy/sopa.git
     cd sopa
 
-    poetry install --all-extras
+    uv sync --all-extras --dev
     ```
 
 !!! warning "Extra dependencies"

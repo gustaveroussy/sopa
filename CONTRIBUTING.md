@@ -18,8 +18,8 @@ For this, use one of the two following lines:
 # with pip
 pip install -e '.[dev]'
 
-# or with poetry
-poetry install -E dev
+# or with uv
+uv sync --all-extras --dev
 ```
 
 ## Coding guidelines
