@@ -19,9 +19,9 @@ def sanity_check(sdata: SpatialData, delete_table: bool = False):
     assert len(sdata.images) > 0, "The spatialdata object has no image. Sopa is not designed for this."
 
     image = get_spatial_image(sdata)
-    assert (
-        image.dims == VALID_DIMENSIONS
-    ), f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
+    assert image.dims == VALID_DIMENSIONS, (
+        f"Image must have the following three dimensions: {VALID_DIMENSIONS}. Found {image.dims}"
+    )
     assert_is_integer_dtype(image.dtype)
 
     c_coords = get_channel_names(image)
@@ -46,9 +46,9 @@ def _check_can_write_zarr(sdata_path: str):
     if not sdata_path.exists():
         return
 
-    assert not any(
-        sdata_path.iterdir()
-    ), f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files."
+    assert not any(sdata_path.iterdir()), (
+        f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files."
+    )
 
     sdata_path.rmdir()
 
@@ -56,9 +56,9 @@ def _check_can_write_zarr(sdata_path: str):
 def write_standardized(sdata: SpatialData, sdata_path: str, delete_table: bool = False):
     sanity_check(sdata, delete_table)
 
-    assert (
-        SopaKeys.TABLE not in sdata.tables
-    ), f"sdata.tables['{SopaKeys.TABLE}'] exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
+    assert SopaKeys.TABLE not in sdata.tables, (
+        f"sdata.tables['{SopaKeys.TABLE}'] exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
+    )
 
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
 

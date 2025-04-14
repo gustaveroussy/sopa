@@ -179,9 +179,9 @@ def generic_staining(
     """
     from sopa.segmentation import methods
 
-    assert hasattr(
-        methods, method_name
-    ), f"'{method_name}' is not a valid method builder under `sopa.segmentation.methods`"
+    assert hasattr(methods, method_name), (
+        f"'{method_name}' is not a valid method builder under `sopa.segmentation.methods`"
+    )
 
     _run_staining_segmentation(
         sdata_path,

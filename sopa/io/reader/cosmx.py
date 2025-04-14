@@ -169,9 +169,9 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
         fov_key, x_key, y_key = "FOV", "X_mm", "Y_mm"
         scale_factor = 1e3 / 0.120280945  # CosMX milimeters to pixels
 
-        assert np.isin(
-            [fov_key, x_key, y_key], fov_locs.columns
-        ).all(), f"The file {fov_file} must contain the following columns: {fov_key}, {x_key}, {y_key}. Consider using a different export module."
+        assert np.isin([fov_key, x_key, y_key], fov_locs.columns).all(), (
+            f"The file {fov_file} must contain the following columns: {fov_key}, {x_key}, {y_key}. Consider using a different export module."
+        )
 
     fov_locs.index = fov_locs[fov_key]
     fov_locs["xmin"] = fov_locs[x_key] * scale_factor
@@ -260,9 +260,9 @@ def _read_transcripts_csv(path: Path, dataset_id: str, nrows: int | None = None)
         df = pd.read_csv(transcripts_file, nrows=nrows)
 
     TRANSCRIPT_COLUMNS = ["x_global_px", "y_global_px", "target"]
-    assert np.isin(
-        TRANSCRIPT_COLUMNS, df.columns
-    ).all(), f"The file {transcripts_file} must contain the following columns: {', '.join(TRANSCRIPT_COLUMNS)}. Consider using a different export module."
+    assert np.isin(TRANSCRIPT_COLUMNS, df.columns).all(), (
+        f"The file {transcripts_file} must contain the following columns: {', '.join(TRANSCRIPT_COLUMNS)}. Consider using a different export module."
+    )
 
     df["unique_cell_id"] = df["fov"] * (df["cell_ID"].max() + 1) * (df["cell_ID"] > 0) + df["cell_ID"]
 

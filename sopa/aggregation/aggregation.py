@@ -65,7 +65,9 @@ def aggregate(
         bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
     if (bins_key is None) and (aggregate_genes or (aggregate_genes is None and sdata.points)):
-        assert sdata.points, "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
+        assert sdata.points, (
+            "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
+        )
 
         points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
@@ -162,9 +164,9 @@ class Aggregator:
             log.warning("No image found to aggregate channels. Use `aggregate_channels=False`")
             aggregate_channels = False
 
-        assert (
-            aggregate_genes or aggregate_channels
-        ), "At least one of `aggregate_genes` or `aggregate_channels` must be True"
+        assert aggregate_genes or aggregate_channels, (
+            "At least one of `aggregate_genes` or `aggregate_channels` must be True"
+        )
 
         if aggregate_genes:
             if self.bins_key is not None:

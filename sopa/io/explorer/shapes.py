@@ -64,9 +64,9 @@ def write_polygons(
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
-    assert all(
-        isinstance(geom, (Polygon, MultiPolygon)) for geom in polygons
-    ), "All geometries must be a `shapely.Polygon` or `shapely.MultiPolygon`"
+    assert all(isinstance(geom, (Polygon, MultiPolygon)) for geom in polygons), (
+        "All geometries must be a `shapely.Polygon` or `shapely.MultiPolygon`"
+    )
 
     if any(isinstance(geom, MultiPolygon) for geom in polygons):
         log.warning("Some cells are MultiPolygons. Only the polygon with the largest area will be kept for each cell.")

@@ -110,8 +110,8 @@ def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -
     cell_image = sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION)
     tissue_image = sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION)
 
-    assert (
-        cell_image is None or tissue_image is None or cell_image == tissue_image
-    ), "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+    assert cell_image is None or tissue_image is None or cell_image == tissue_image, (
+        "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+    )
 
     return get_spatial_element(sdata.images, key=cell_image or tissue_image)

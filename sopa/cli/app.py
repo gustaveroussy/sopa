@@ -88,9 +88,9 @@ def convert(
         technology = config["read"]["technology"]
         kwargs = config["read"]["kwargs"]
 
-    assert hasattr(
-        io, technology
-    ), f"Technology {technology} unknown. Currently available: xenium, merscope, visium_hd, cosmx, phenocycler, hyperion, macsima"
+    assert hasattr(io, technology), (
+        f"Technology {technology} unknown. Currently available: xenium, merscope, visium_hd, cosmx, phenocycler, hyperion, macsima"
+    )
 
     sdata = getattr(io, technology)(data_path, **kwargs)
     io.write_standardized(sdata, sdata_path, delete_table=True)
@@ -136,9 +136,9 @@ def crop(
     from sopa.utils.crop import intermediate_selection, polygon_selection
 
     if intermediate_image and intermediate_polygon:
-        assert (
-            sdata_path is None
-        ), "When both --intermediate_image and --intermediate_polygon, sdata_path should not to be provided"
+        assert sdata_path is None, (
+            "When both --intermediate_image and --intermediate_polygon, sdata_path should not to be provided"
+        )
 
         intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
         return

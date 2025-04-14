@@ -50,9 +50,9 @@ def proseg(
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
-    assert (
-        len(patches_dirs) == 1
-    ), "Proseg is fast enough to work on a single patch. Re-run `sopa.make_transcript_patches` with `patch_width=None` and a `prior_shapes_key`."
+    assert len(patches_dirs) == 1, (
+        "Proseg is fast enough to work on a single patch. Re-run `sopa.make_transcript_patches` with `patch_width=None` and a `prior_shapes_key`."
+    )
     patch_dir = Path(patches_dirs[0])
 
     proseg_command = _get_proseg_command(sdata, points_key, command_line_suffix)
@@ -106,9 +106,9 @@ def _get_proseg_executable_path() -> Path | str:
 def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
     proseg_executable = _get_proseg_executable_path()
 
-    assert (
-        SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]
-    ), "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
+    assert SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES], (
+        "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
+    )
 
     prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 

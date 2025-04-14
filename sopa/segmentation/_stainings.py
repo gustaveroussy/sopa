@@ -66,9 +66,9 @@ class StainingSegmentation:
             self.channels = image_channels
         else:
             self.channels = [channels] if isinstance(channels, str) else channels
-            assert np.isin(
-                channels, image_channels
-            ).all(), f"Channel names must be a subset of: {', '.join(image_channels)}"
+            assert np.isin(channels, image_channels).all(), (
+                f"Channel names must be a subset of: {', '.join(image_channels)}"
+            )
 
     def _run_patch(self, patch: Polygon) -> gpd.GeoDataFrame:
         """Run segmentation on one patch
@@ -87,9 +87,9 @@ class StainingSegmentation:
             y=slice(bounds[1], bounds[3]),
         ).values
 
-        assert np.issubdtype(
-            image.dtype, np.integer
-        ), f"Invalid image type {image.dtype}. Transform it to an integer dtype, e.g. `np.uint8`."
+        assert np.issubdtype(image.dtype, np.integer), (
+            f"Invalid image type {image.dtype}. Transform it to an integer dtype, e.g. `np.uint8`."
+        )
 
         if self.gaussian_sigma > 0:
             image = np.stack([gaussian_filter(c, sigma=self.gaussian_sigma) for c in image])

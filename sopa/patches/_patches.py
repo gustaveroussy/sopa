@@ -37,9 +37,9 @@ class Patches1D:
         self._count = self.count()
         if tight:
             self.patch_width = self.tight_width()
-            assert (
-                self._count == self.count()
-            ), f"Invalid patching with {self.delta=}, {self.patch_width=} and {self.patch_overlap=}"
+            assert self._count == self.count(), (
+                f"Invalid patching with {self.delta=}, {self.patch_width=} and {self.patch_overlap=}"
+            )
 
     def count(self):
         if self.patch_width >= self.delta:
@@ -118,9 +118,9 @@ class Patches2D:
         if SopaKeys.ROI in sdata.shapes:
             geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], self.original_element)
 
-            assert all(
-                isinstance(geom, Polygon) for geom in geo_df.geometry
-            ), f"All sdata['{SopaKeys.ROI}'] geometries must be polygons"
+            assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), (
+                f"All sdata['{SopaKeys.ROI}'] geometries must be polygons"
+            )
 
             self.roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
             assert isinstance(self.roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(self.roi)}"

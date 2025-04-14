@@ -180,9 +180,9 @@ def _resolve_patches(
 
 
 def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
-    assert (
-        SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes
-    ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+    assert SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes, (
+        "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+    )
 
     directories = [Path(path) for path in sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
 

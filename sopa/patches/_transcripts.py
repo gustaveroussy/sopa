@@ -39,9 +39,9 @@ class OnDiskTranscriptPatches(Patches2D):
         self.points_key = points_key
         self.points: dd.DataFrame = sdata.points[points_key]
 
-        assert isinstance(
-            self.points, dd.DataFrame
-        ), "Points should be a dask DataFrame. Please report this issue on Sopa's Github repository."
+        assert isinstance(self.points, dd.DataFrame), (
+            "Points should be a dask DataFrame. Please report this issue on Sopa's Github repository."
+        )
 
         if "z" not in self.points.columns:
             self.points["z"] = 0  # ensure z column is present - needed for proseg
@@ -78,17 +78,17 @@ class OnDiskTranscriptPatches(Patches2D):
             return
 
         if self.prior_shapes_key in self.sdata.shapes:
-            assert (
-                self.unassigned_value is None
-            ), "Unassigned value is not needed when using a prior segmentation based on existing shapes"
+            assert self.unassigned_value is None, (
+                "Unassigned value is not needed when using a prior segmentation based on existing shapes"
+            )
 
             return assign_transcript_to_cell(
                 self.sdata, self.points_key, self.prior_shapes_key, self.prior_shapes_key, unassigned_value=0
             )
 
-        assert (
-            self.prior_shapes_key in self.points.columns
-        ), f"Prior-segmentation column {self.prior_shapes_key} not found in sdata['{self.points_key}']"
+        assert self.prior_shapes_key in self.points.columns, (
+            f"Prior-segmentation column {self.prior_shapes_key} not found in sdata['{self.points_key}']"
+        )
 
         self.points[self.prior_shapes_key] = _assign_prior(self.points[self.prior_shapes_key], self.unassigned_value)
 

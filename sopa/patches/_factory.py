@@ -75,9 +75,9 @@ def make_transcript_patches(
     )
 
     if prior_shapes_key == "auto":
-        assert (
-            SopaAttrs.PRIOR_TUPLE_KEY in sdata.attrs
-        ), f"prior_shapes_key='auto' requires a prior segmentation to be present in the points dataframe ('{SopaAttrs.PRIOR_TUPLE_KEY}' must be in `sdata.attrs`)."
+        assert SopaAttrs.PRIOR_TUPLE_KEY in sdata.attrs, (
+            f"prior_shapes_key='auto' requires a prior segmentation to be present in the points dataframe ('{SopaAttrs.PRIOR_TUPLE_KEY}' must be in `sdata.attrs`)."
+        )
         prior_shapes_key, unassigned_value = sdata.attrs[SopaAttrs.PRIOR_TUPLE_KEY]
 
     patches = OnDiskTranscriptPatches(

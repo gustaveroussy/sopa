@@ -116,9 +116,9 @@ class MultiLevelAnnotation:
         self.clip_percentile = clip_percentile
         self.density_prior = density_prior
 
-        assert (
-            cell_type_key in ad_sc.obs
-        ), f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+        assert cell_type_key in ad_sc.obs, (
+            f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+        )
 
         if self.ad_sc.raw is not None:
             del self.ad_sc.raw
@@ -200,9 +200,9 @@ class MultiLevelAnnotation:
             set(ad_sp_split.var_names[ad_sp_split.var.counts > 0]) & set(ad_sc_.var_names[ad_sc_.var.counts > 0])
         )
 
-        assert len(
-            selection
-        ), "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        assert len(selection), (
+            "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        )
         log.info(f"Keeping {len(selection)} shared genes")
 
         for ad_ in [ad_sp_split, ad_sc_]:

@@ -4,7 +4,7 @@ from .dinov2 import DINOv2Features
 from .dummy import DummyFeatures
 from .hoptimus0 import HOPTIMUSFeatures
 
-__all__ = ["Resnet50Features", "HistoSSLFeatures", "DINOv2Features", "DummyFeatures", "HOPTIMUSFeatures"]
+__all__ = ["DINOv2Features", "DummyFeatures", "HOPTIMUSFeatures", "HistoSSLFeatures", "Resnet50Features"]
 
 available_models = {
     "resnet50": Resnet50Features,
