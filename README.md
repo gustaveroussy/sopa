@@ -2,7 +2,12 @@
   <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/sopa.png" alt="sopa_logo" width="250"/>
 </p>
 
-# Spatial omics pipeline and analysis
+<p align="center"><b><i>
+	Spatial omics pipeline and analysis
+</b></i></p>
+
+<div align="center">
+
 [![PyPI](https://img.shields.io/pypi/v/sopa.svg)](https://pypi.org/project/sopa)
 [![Downloads](https://static.pepy.tech/badge/sopa)](https://pepy.tech/project/sopa)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://gustaveroussy.github.io/sopa)
@@ -11,15 +16,17 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+</div>
+
 Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Hyperion. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
 🎉 `sopa==2.0.0` is out! It introduces many new API features; check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
 
-# Documentation
+## Documentation
 
 Check [Sopa's documentation](https://gustaveroussy.github.io/sopa) to get started. It contains installation explanations, CLI/API details, and tutorials.
 
-# Overview
+## Overview
 
 The following illustration describes the main steps of `sopa`:
 
@@ -29,7 +36,7 @@ The following illustration describes the main steps of `sopa`:
 
 > *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
 
-# Installation
+## Installation
 
 Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<=3.12`). On a new environment, run the following command:
 ```sh
@@ -38,7 +45,7 @@ pip install sopa
 
 See the [installation section](https://gustaveroussy.github.io/sopa/getting_started/) from the docs for more details, to install extras or to use other installations modes.
 
-# Features
+## Features
 Sopa comes in three different flavours, each corresponding to a different use case:
 - `API`: use directly `sopa` as a Python package for complete flexibility and customization
 - `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes
@@ -83,7 +90,7 @@ Below are examples of commands that can be run with the `sopa` CLI. For a comple
 > sopa explorer write merscope_directory.zarr # convert for interactive vizualisation
 ```
 
-# Cite us
+## Cite us
 Our article is published in [Nature Communications](https://www.nature.com/articles/s41467-024-48981-z). You can cite Sopa as below:
 
 ```txt
