@@ -15,5 +15,5 @@ docker pull quentinblampey/sopa:2.0.3-proseg # image with sopa+proseg
 
 ### Notes
 - Numba issue (https://github.com/numba/numba/issues/4032) solved via `ENV NUMBA_CACHE_DIR=/tmp/numba_cache`
-- `ffmpeg libsm6 libxext6` were installed because of the `cv2` dependency
-- `procps` was installed so that `nextflow` can use these images
+- `ffmpeg libsm6 libxext6` were installed because of the `cv2` dependency. This can be removed after [#239](https://github.com/gustaveroussy/sopa/pull/239) is merged, as it will remove the `cv2` dependency.
+- `procps` was installed so that `nextflow` can run using these images
