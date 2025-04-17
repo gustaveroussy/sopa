@@ -19,7 +19,7 @@ def molecular_cartography(
     """Read *Molecular Cartography* data from *Resolve Bioscience* as a `SpatialData` object.
 
     Args:
-        path: Path to the directory containing the `.tiff` and `_results.txt` files.
+        path: Path to the directory containing the `.tiff` images and `_results.txt` files.
         region: Name of the region to read. The region name can be found before the `_results.txt` file, e.g. `A2-1`.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
@@ -27,16 +27,10 @@ def molecular_cartography(
     Returns:
         A `SpatialData` object representing the *Resolve Bioscience* experiment
     """
-    path = Path(path)
-
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
-    dataset_ids = [path.name[:-12] for path in path.glob("*_results.txt")]
-    region_to_id = {dataset_id.split("_")[-1]: dataset_id for dataset_id in dataset_ids}
-
-    assert region in region_to_id, f"Region {region} not found. Must be one of {list(region_to_id.keys())}"
-
-    region, dataset_id = region, region_to_id[region]
+    path = Path(path)
+    dataset_id = _get_dataset_id(path, region)
 
     # Read the points
     transcripts = pd.read_csv(path / f"{dataset_id}_results.txt", sep="\t", header=None)
@@ -66,3 +60,12 @@ def molecular_cartography(
             SopaAttrs.TRANSCRIPTS: transcripts_name,
         },
     )
+
+
+def _get_dataset_id(path: Path, region: str) -> str:
+    _dataset_ids = [path.name[:-12] for path in path.glob("*_results.txt")]
+    region_to_id = {dataset_id.split("_")[-1]: dataset_id for dataset_id in _dataset_ids}
+
+    assert region in region_to_id, f"Region {region} not found. Must be one of {list(region_to_id.keys())}"
+
+    return region_to_id[region]
