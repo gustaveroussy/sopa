@@ -1,5 +1,8 @@
 ## [2.0.5] - xxxx-xx-xx
 
+### Added
+- New Resolve Bioscience reader `sopa.io.molecular_cartography` (#240)
+
 ## [2.0.4] - 2025-04-08
 
 ### Added

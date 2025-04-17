@@ -13,6 +13,8 @@ The readers below are used to read your raw spatial data into a `SpatialData` ob
 
 ::: sopa.io.cosmx
 
+::: sopa.io.molecular_cartography
+
 ::: sopa.io.macsima
 
 ::: sopa.io.phenocycler
