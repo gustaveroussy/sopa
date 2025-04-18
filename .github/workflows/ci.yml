@@ -75,3 +75,33 @@ jobs:
 
       - name: Publish
         run: uv publish -t ${{ secrets.PYPI_TOKEN }}
+
+  docker-images-release:
+    needs: [tests]
+    if: contains(github.ref, 'tags')
+    name: "Docker images release"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        extra-name: ["", "baysor", "cellpose", "proseg", "stardist"]
+
+    env:
+      EXTRA_NAME_SUFFIX: ${{ matrix.extra-name == "" && "" || format('-{0}', matrix.extra-name) }}
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          platform: linux/amd64,linux/arm64
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ github.ref_name }}${{ env.EXTRA_NAME_SUFFIX }}
+          context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
