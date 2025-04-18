@@ -104,6 +104,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          platform: linux/amd64,linux/arm64
+          platform: linux/amd64${{ matrix.extra-name != "baysor" && ',linux/arm64' || '' }}
           tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.STRIPPED_TAG_VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
           context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
