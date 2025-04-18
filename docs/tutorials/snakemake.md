@@ -14,7 +14,7 @@ At the end, you should have one `sopa` environment, one one environment with `sn
 
 Our pipeline config is a YAML file that describes all the steps desired for the pipeline. It is flexible; for instance, if you remove the `baysor` section from the config, then it will not run baysor.
 
-You can choose a config among the existing ones [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) or [create your own](./#create-your-own-config).
+You can choose a config among the existing ones [here](https://github.com/gustaveroussy/sopa/tree/main/workflow/config) or [create your own](./#create-your-own-config).
 
 Keep in mind the path of your config (relative to the `workflow` directory) because you'll need it later. For instance, `config/merscope/base.yaml` is a valid relative path. You can also use an absolute path if you prefer.
 
@@ -59,7 +59,7 @@ You can either execute the pipeline locally or on a high-performance-cluster (ch
 
 === "Slurm cluster"
 
-    To fully benefit from Slurm, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Sopa offers a [default Slurm profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/profile/slurm/config.yaml) for you. Make sure you have `snakemake>=8.0.0`, and also install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) with `pip install snakemake-executor-plugin-slurm`.
+    To fully benefit from Slurm, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Sopa offers a [default Slurm profile](https://github.com/gustaveroussy/sopa/blob/main/workflow/profile/slurm/config.yaml) for you. Make sure you have `snakemake>=8.0.0`, and also install the [Slurm plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) with `pip install snakemake-executor-plugin-slurm`.
 
     Then, you can use the Slurm profile as shown below. Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
@@ -78,7 +78,7 @@ You can either execute the pipeline locally or on a high-performance-cluster (ch
     !!! warning
         The LSF profile is experimental. Don't hesitate to open an issue or a PR.
 
-    To fully benefit from LSF, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Sopa offers a [default LSF profile](https://github.com/gustaveroussy/sopa/blob/master/workflow/profile/lsf/config.yaml) for you, but **it is still experimental**. Make sure you have `snakemake>=8.0.0`, and also install the [LSF plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/lsf.html) with `pip install snakemake-executor-plugin-lsf`.
+    To fully benefit from LSF, you'll need a [Snakemake cluster profile](https://snakemake.readthedocs.io/en/stable/executing/cli.html#profiles). Sopa offers a [default LSF profile](https://github.com/gustaveroussy/sopa/blob/main/workflow/profile/lsf/config.yaml) for you, but **it is still experimental**. Make sure you have `snakemake>=8.0.0`, and also install the [LSF plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/lsf.html) with `pip install snakemake-executor-plugin-lsf`.
 
     Then, you can use the LSF profile as shown below. Make sure to replace `data_path` with the path to your raw data directory, and `configfile` with the relative path to your config (as detailed above).
 
@@ -188,7 +188,7 @@ The `.explorer` directory contains the following files:
 
 ### Create your own config
 
-If the existing `config` files are not suited for your project, you can update an existing one or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, remove the section or the argument, and Sopa will not run it.
+If the existing `config` files are not suited for your project, you can update an existing one or create a whole new one. For this, use [this commented config](https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml) to understand the purpose of each argument. Note that some sections are optional: in this case, remove the section or the argument, and Sopa will not run it.
 
 When running snakemake, you will then need to provide the relative or absolute path to your `.yaml` config, for instance `--configfile=/path/to/your/config.yaml`.
 

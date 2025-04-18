@@ -3,7 +3,7 @@
 ### Most of these parameters are optional: don't hesitate to delete those that doesn't interest you
 ###
 ### Before creating your own config, you should check if there is not already an existing
-### config that works for you, see https://github.com/gustaveroussy/sopa/tree/master/workflow/config
+### config that works for you, see https://github.com/gustaveroussy/sopa/tree/main/workflow/config
 
 read:
   technology: merscope # name of the machine, e.g. xenium/merscope/cosmx/phenocycler/macsima/hyperion
@@ -26,7 +26,7 @@ segmentation:
 
   # [only if running cellpose]
   cellpose:
-    diameter: 55 # [important parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/master/workflow/config)
+    diameter: 55 # [important parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/main/workflow/config)
     channels: ["DAPI"] # list of one or two channel(s) used for segmentation. If two channels, provide a cytoplasm staining, and then the nucleus staining
     flow_threshold: 2 # see cellpose parameters
     cellprob_threshold: -6 # see cellpose parameters

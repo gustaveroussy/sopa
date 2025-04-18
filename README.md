@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/sopa.png" alt="sopa_logo" width="250"/>
+  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/main/docs/assets/sopa.png" alt="sopa_logo" width="250"/>
 </p>
 <p align="center"><b><i>
 	Spatial omics pipeline and analysis
@@ -11,7 +11,7 @@
 [![Downloads](https://static.pepy.tech/badge/sopa)](https://pepy.tech/project/sopa)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://gustaveroussy.github.io/sopa)
 ![Build](https://github.com/gustaveroussy/sopa/workflows/ci/badge.svg)
-[![License](https://img.shields.io/pypi/l/sopa.svg)](https://github.com/gustaveroussy/sopa/blob/master/LICENSE)
+[![License](https://img.shields.io/pypi/l/sopa.svg)](https://github.com/gustaveroussy/sopa/blob/main/LICENSE)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
@@ -30,7 +30,7 @@ Check [Sopa's documentation](https://gustaveroussy.github.io/sopa) to get starte
 The following illustration describes the main steps of `sopa`:
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/master/docs/assets/overview_white.png" alt="sopa_overview" width="100%"/>
+  <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/main/docs/assets/overview_white.png" alt="sopa_overview" width="100%"/>
 </p>
 
 > *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
@@ -66,7 +66,7 @@ sopa.aggregate(sdata) # counting the transcripts inside the cells
 
 ### Snakemake pipeline
 
-Clone our repository, choose a config [here](https://github.com/gustaveroussy/sopa/tree/master/workflow/config) (or create your own), and execute our pipeline locally or on a high-performance cluster:
+Clone our repository, choose a config [here](https://github.com/gustaveroussy/sopa/tree/main/workflow/config) (or create your own), and execute our pipeline locally or on a high-performance cluster:
 ```bash
 git clone https://github.com/gustaveroussy/sopa.git
 cd sopa/workflow
