@@ -87,6 +87,8 @@ jobs:
 
     env:
       EXTRA_NAME_SUFFIX: ${{ matrix.extra-name == "" && "" || format('-{0}', matrix.extra-name) }}
+      # Extract the 'v' character from the tag to only keep the version numbers.
+      STRIPPED_TAG_VERSION: ${{ github.ref_name == startsWith(github.ref_name, 'v') && github.ref_name[1:] || github.ref_name }}
 
     steps:
       - name: Login to Docker Hub
@@ -103,5 +105,5 @@ jobs:
         with:
           push: true
           platform: linux/amd64,linux/arm64
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ github.ref_name }}${{ env.EXTRA_NAME_SUFFIX }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.STRIPPED_TAG_VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
           context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
