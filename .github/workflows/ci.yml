@@ -108,5 +108,5 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
           context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
