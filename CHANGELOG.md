@@ -2,6 +2,7 @@
 
 ### Added
 - New Resolve Bioscience reader `sopa.io.molecular_cartography` (#240)
+- Support `python==3.13`
 
 ## [2.0.4] - 2025-04-08
 
