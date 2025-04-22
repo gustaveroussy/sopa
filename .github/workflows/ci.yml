@@ -86,11 +86,14 @@ jobs:
         extra-name: ["", "baysor", "cellpose", "proseg", "stardist"]
 
     env:
-      EXTRA_NAME_SUFFIX: ${{ matrix.extra-name == "" && "" || format('-{0}', matrix.extra-name) }}
-      # Extract the 'v' character from the tag to only keep the version numbers.
-      STRIPPED_TAG_VERSION: ${{ github.ref_name == startsWith(github.ref_name, 'v') && github.ref_name[1:] || github.ref_name }}
+      EXTRA_NAME_SUFFIX: ${{ matrix.extra-name == '' && '' || format('-{0}', matrix.extra-name) }}
 
     steps:
+      - name: Export tag version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "VERSION=$TAG" >> $GITHUB_ENV
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -104,6 +107,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          platform: linux/amd64${{ matrix.extra-name != "baysor" && ',linux/arm64' || '' }}
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.STRIPPED_TAG_VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
+          platforms: linux/amd64
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
           context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
