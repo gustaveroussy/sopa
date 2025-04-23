@@ -81,6 +81,7 @@ class Patches2D:
         element: SpatialElement | str,
         patch_width: float | int | None,
         patch_overlap: float | int = 50,
+        roi_key: str | None = SopaKeys.ROI,
     ):
         """
         Args:
@@ -115,15 +116,15 @@ class Patches2D:
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
         self.roi = None
-        if SopaKeys.ROI in sdata.shapes:
-            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], self.original_element)
+        assert roi_key is None or roi_key in sdata.shapes or roi_key == SopaKeys.ROI
 
-            assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), (
-                f"All sdata['{SopaKeys.ROI}'] geometries must be polygons"
-            )
+        if roi_key is not None and roi_key in sdata.shapes:
+            geo_df = to_intrinsic(sdata, sdata[roi_key], self.original_element)
 
             self.roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
-            assert isinstance(self.roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(self.roi)}"
+            assert isinstance(self.roi, (Polygon, MultiPolygon)), (
+                f"Invalid ROI type: {type(self.roi)}. Must be Polygon or MultiPolygon"
+            )
 
         self._init_patches()
 
@@ -132,6 +133,8 @@ class Patches2D:
 
         for i in range(self.patch_x._count * self.patch_y._count):
             self._try_add_patch(i)
+
+        assert self.ilocs, "No valid patches found inside the provided region of interest."
 
         self.ilocs = np.array(self.ilocs)
         self.bboxes = np.array(self.bboxes)
