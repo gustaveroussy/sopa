@@ -6,7 +6,7 @@
 - Support `python==3.13`
 
 ### Fixed
-- When insalling the `stardist` extra, force `numpy<2.0.0` (#245)
+- When installing the `stardist` extra, force `numpy<2.0.0` (#245)
 
 ## [2.0.4] - 2025-04-08
 
