@@ -11,6 +11,6 @@ RUN apt-get update && apt-get install -y \
 # to avoid permission issues with the numba cache
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 
-RUN pip install --no-cache-dir sopa[cellpose]
+RUN pip install --no-cache-dir sopa[cellpose]==2.0.6
 
 ENV PYTHONUNBUFFERED=1

@@ -8,6 +8,6 @@ ENV PATH="/opt/baysor/bin:${PATH}"
 # to avoid permission issues with the numba cache
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 
-RUN pip install --no-cache-dir sopa[baysor]
+RUN pip install --no-cache-dir sopa[baysor]==2.0.6
 
 ENV PYTHONUNBUFFERED=1
