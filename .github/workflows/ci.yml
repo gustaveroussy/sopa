@@ -77,7 +77,7 @@ jobs:
         run: uv publish -t ${{ secrets.PYPI_TOKEN }}
 
   docker-images-release:
-    needs: [tests]
+    needs: [pypi-release]
     if: contains(github.ref, 'tags')
     name: "Docker images release"
     runs-on: ubuntu-latest
