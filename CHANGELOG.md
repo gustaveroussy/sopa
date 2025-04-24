@@ -1,4 +1,4 @@
-## [2.0.5] - 2025-04-24
+## [2.0.6] - 2025-04-24
 
 ### Added
 - New Resolve Bioscience reader `sopa.io.molecular_cartography` (#240)
@@ -7,6 +7,10 @@
 
 ### Fixed
 - When installing the `stardist` extra, force `numpy<2.0.0` (#245)
+
+## [2.0.5] - 2025-04-24
+
+Yanked release (missing dask distributed, cannot install)
 
 ## [2.0.4] - 2025-04-08
 
