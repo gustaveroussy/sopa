@@ -42,4 +42,4 @@ jobs:
           push: true
           platforms: linux/amd64
           tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
-          context: ./docker/sopa${{ matrix.extra-name }}
+          context: docker/sopa${{ matrix.extra-name }}
