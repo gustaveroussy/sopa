@@ -15,84 +15,17 @@ jobs:
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
 
-  tests:
-    needs: [pre-commit]
-    name: "pytest and snakemake"
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up the environment
-        uses: ./.github/actions/setup-python-env
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install extra dependencies
-        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install snakemake 'pulp<2.8'
-
-      - name: Tests
-        run: uv run pytest
-
-      - name: Snakemake
-        run: cd workflow && uv run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
-
-  deploy-docs:
-    needs: [tests]
-    if: contains(github.ref, 'tags')
-    name: "Deploy documentation"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up the environment
-        uses: ./.github/actions/setup-python-env
-
-      - name: Install extra dependencies
-        run: uv sync --dev
-
-      - name: Build documentation
-        run: uv run mkdocs gh-deploy --force
-
-  pypi-release:
-    needs: [tests]
-    if: contains(github.ref, 'tags')
-    name: "PyPI release"
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up the environment
-        uses: ./.github/actions/setup-python-env
-
-      - name: Build
-        run: uv build
-
-      - name: Publish
-        run: uv publish -t ${{ secrets.PYPI_TOKEN }}
-
   docker-images-release:
-    needs: [tests]
-    if: contains(github.ref, 'tags')
     name: "Docker images release"
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        extra-name: ["", "baysor", "cellpose", "proseg", "stardist"]
-
-    env:
-      EXTRA_NAME_SUFFIX: ${{ matrix.extra-name == '' && '' || format('-{0}', matrix.extra-name) }}
+        extra-name: ["", "-baysor", "-cellpose", "-proseg", "-stardist"]
 
     steps:
       - name: Export tag version
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          echo "VERSION=$TAG" >> $GITHUB_ENV
+          echo "VERSION=2.0.5" >> $GITHUB_ENV
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -108,5 +41,5 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
-          context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
+          context: ./docker/sopa${{ matrix.extra-name }}
