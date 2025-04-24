@@ -5,6 +5,9 @@
 - Adding `roi_key` argument in `sopa.patches.compute_embeddings` to filter the patches by any shapes element (not just the segmented tissue). For instance, keep only the patches behind the cells.
 - Support `python==3.13`
 
+### Fixed
+- When insalling the `stardist` extra, force `numpy<2.0.0` (#245)
+
 ## [2.0.4] - 2025-04-08
 
 ### Added
