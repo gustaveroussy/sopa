@@ -83,16 +83,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        extra-name: ["", "baysor", "cellpose", "proseg", "stardist"]
-
-    env:
-      EXTRA_NAME_SUFFIX: ${{ matrix.extra-name == '' && '' || format('-{0}', matrix.extra-name) }}
+        extra-name: ["", "-baysor", "-cellpose", "-proseg", "-stardist"]
 
     steps:
       - name: Export tag version
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
           echo "VERSION=$TAG" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -108,5 +108,5 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ env.EXTRA_NAME_SUFFIX }}
-          context: docker/sopa${{ env.EXTRA_NAME_SUFFIX }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
+          context: ./docker/sopa${{ matrix.extra-name }}
