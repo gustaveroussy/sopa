@@ -3,7 +3,6 @@
 ### Added
 - New Resolve Bioscience reader `sopa.io.molecular_cartography` (#240)
 - Adding `roi_key` argument in `sopa.patches.compute_embeddings` to filter the patches by any shapes element (not just the segmented tissue). For instance, keep only the patches behind the cells.
-- Support `python==3.13`
 - [Docker images](https://hub.docker.com/r/quentinblampey/sopa) auto build on tag release (#242) @Clemsazert
 
 ### Fixed

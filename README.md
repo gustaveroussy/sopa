@@ -37,7 +37,7 @@ The following illustration describes the main steps of `sopa`:
 
 ## Installation
 
-Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<3.14`). On a new environment, run the following command:
+Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<3.13`). On a new environment, run the following command:
 ```sh
 pip install sopa
 ```
