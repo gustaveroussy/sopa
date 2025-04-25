@@ -167,6 +167,12 @@ class Patches2D:
     def shape(self) -> tuple[int, int]:
         return (self.patch_y._count, self.patch_x._count)
 
+    def centroids(self) -> np.ndarray:
+        x = (self.bboxes[:, 0] + self.bboxes[:, 2]) / 2
+        y = (self.bboxes[:, 1] + self.bboxes[:, 3]) / 2
+
+        return np.column_stack((x, y))
+
     def _bbox_iloc(self, ix: int, iy: int) -> list[int]:
         """Coordinates of the rectangle bounding box of the patch at the given indices
 
