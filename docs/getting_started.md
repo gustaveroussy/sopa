@@ -1,6 +1,6 @@
 ## Installing Sopa
 
-Sopa can be installed on every OS with `pip`. The preferred Python version is `python==3.10`, but we also support `3.11` and `3.12`.
+Sopa can be installed on every OS with `pip`, from `python>=3.10` to `python<3.13`.
 
 !!! note "Advice (optional)"
 

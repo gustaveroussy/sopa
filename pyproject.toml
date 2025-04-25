@@ -1,6 +1,6 @@
 [project]
 name = "sopa"
-version = "2.0.4"
+version = "2.0.6"
 description = "Spatial-omics pipeline and analysis"
 authors = [{ name = "Quentin Blampey", email = "quentin.blampey@gmail.com" }]
 requires-python = ">=3.10,<3.13"
@@ -15,18 +15,19 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-  "spatialdata>=0.3.0",
-  "spatialdata-io>=0.1.7",
-  "spatialdata-plot>=0.2.9",
+  "spatialdata>=0.4.0",
+  "spatialdata-io>=0.2.0",
+  "spatialdata-plot>=0.2.10",
   "scanpy>=1.10.4",
   "anndata>=0.11.0",
   "typer>=0.9.0",
+  "dask[distributed]>=2024.4.1",
   "opencv-python>=4.8.0",
 ]
 
 [project.optional-dependencies]
 cellpose = ["cellpose>=3.0.5", "torch>=2.0.0, !=2.0.1, !=2.1.0"]
-stardist = ["tensorflow>=2.18.0", "stardist>=0.9.1"]
+stardist = ["tensorflow>=2.18.0", "stardist>=0.9.1", "numpy<2.0.0"]
 baysor = ["toml>=0.10.2", "loompy>=3.0.7"]
 wsi = [
   "tiffslide>=2.3.1",

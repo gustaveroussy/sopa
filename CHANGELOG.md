@@ -1,7 +1,16 @@
-## [2.0.5] - xxxx-xx-xx
+## [2.0.6] - 2025-04-24
 
 ### Added
 - New Resolve Bioscience reader `sopa.io.molecular_cartography` (#240)
+- Adding `roi_key` argument in `sopa.patches.compute_embeddings` to filter the patches by any shapes element (not just the segmented tissue). For instance, keep only the patches behind the cells.
+- [Docker images](https://hub.docker.com/r/quentinblampey/sopa) auto build on tag release (#242) @Clemsazert
+
+### Fixed
+- When installing the `stardist` extra, force `numpy<2.0.0` (#245)
+
+## [2.0.5] - 2025-04-24
+
+Yanked release (missing dask distributed, cannot install)
 
 ## [2.0.4] - 2025-04-08
 
