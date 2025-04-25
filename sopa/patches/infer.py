@@ -33,7 +33,7 @@ def compute_embeddings(
     device: str | None = None,
     roi_key: str | None = SopaKeys.ROI,
     key_added: str | None = None,
-) -> None:
+) -> str:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
@@ -52,6 +52,9 @@ def compute_embeddings(
         device: Device used for the computer vision model.
         roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
+
+    Returns:
+        The key of the spatial element that was added to the `SpatialData` object.
     """
     try:
         import torch
@@ -103,6 +106,8 @@ def compute_embeddings(
 
     key_added = key_added or f"{infer.model_str}_embeddings"
     add_spatial_element(sdata, key_added, adata)
+
+    return key_added
 
 
 def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:

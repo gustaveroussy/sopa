@@ -1,3 +1,11 @@
+## [2.0.7] - xxxx-xx-xx
+
+### Added
+- `sopa.patches.compute_embeddings` returns `key_added`
+
+### Fixed
+- Fix patches centroids after using `sopa.patches.compute_embeddings`
+
 ## [2.0.6] - 2025-04-24
 
 ### Added
