@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-ARG SOPA_VERSION="1.0.0"
+ARG SOPA_VERSION
 
 RUN apt-get update && apt-get install -y wget unzip procps && apt-get clean && rm -rf /var/lib/apt/lists/*
 

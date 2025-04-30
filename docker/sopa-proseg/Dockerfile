@@ -4,7 +4,7 @@ RUN cargo install proseg
 
 FROM python:3.10-slim
 
-ARG SOPA_VERSION="1.0.0"
+ARG SOPA_VERSION
 
 COPY --from=rust-builder /usr/local/cargo/bin/proseg /usr/local/bin/proseg
 

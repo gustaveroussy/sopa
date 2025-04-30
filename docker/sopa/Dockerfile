@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-ARG SOPA_VERSION="1.0.0"
+ARG SOPA_VERSION
 
 # needed for the open-cv dependency
 RUN apt-get update && apt-get install -y \
