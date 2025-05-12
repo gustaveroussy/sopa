@@ -1,5 +1,7 @@
 FROM python:3.10-slim
 
+ARG SOPA_VERSION
+
 # needed for the open-cv dependency
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -11,6 +13,6 @@ RUN apt-get update && apt-get install -y \
 # to avoid permission issues with the numba cache
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 
-RUN pip install --no-cache-dir sopa[stardist]
+RUN pip install --no-cache-dir sopa[stardist]==${SOPA_VERSION}
 
 ENV PYTHONUNBUFFERED=1
