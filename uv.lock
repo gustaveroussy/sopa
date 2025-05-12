@@ -3592,7 +3592,7 @@ wheels = [
 
 [[package]]
 name = "sopa"
-version = "2.0.5"
+version = "2.0.6"
 source = { editable = "." }
 dependencies = [
     { name = "anndata" },
@@ -3642,7 +3642,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anndata", specifier = ">=0.11.0" },
-    { name = "cellpose", marker = "extra == 'cellpose'", specifier = ">=3.0.5" },
+    { name = "cellpose", marker = "extra == 'cellpose'", specifier = ">=3.0.5,<4.0.0" },
     { name = "dask", extras = ["distributed"], specifier = ">=2024.4.1" },
     { name = "igraph", marker = "extra == 'wsi'", specifier = ">=0.11.0" },
     { name = "loompy", marker = "extra == 'baysor'", specifier = ">=3.0.7" },

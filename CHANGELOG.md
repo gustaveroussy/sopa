@@ -5,6 +5,8 @@
 
 ### Fixed
 - Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
+- Pin `cellpose<4.0.0` (#252)
+- Force sopa version in Docker images CI @Clemsazert (#251)
 
 ## [2.0.6] - 2025-04-24
 
