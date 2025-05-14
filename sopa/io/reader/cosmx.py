@@ -290,7 +290,7 @@ def _cosmx_morphology_coords(images_dir: Path) -> list[str]:
         channels = re.findall(r'"ChannelId": "(.*?)",', description)
         channel_order = list(re.findall(r'"ChannelOrder": "(.*?)",', description)[0])
 
-        return [substrings[channels.index(x)] for x in channel_order if x in channels]
+        return [substrings[channels.index(x)] if x in channels else x for x in channel_order]
 
 
 def _get_cosmx_protein_name(image_path: Path) -> str:
