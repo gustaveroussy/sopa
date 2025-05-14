@@ -8,6 +8,9 @@
 - Pin `cellpose<4.0.0` (#252)
 - Force sopa version in Docker images CI @Clemsazert (#251)
 
+### Fixed
+- CosmX reader fix when only 4 channels are used instead of 5 @professor-sagittarius (#258)
+
 ## [2.0.6] - 2025-04-24
 
 ### Added
