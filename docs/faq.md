@@ -68,9 +68,9 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
     └─ CCC.ome.tiff
     ```
 === "Others (CZI, ...)"
-    Other file formats (ND2, CZI, LIF, or DV) are supported via the `aicsimageio` reader. In that case, you'll need to add new dependencies: `pip install aicsimageio` (and, for CZI data, also `pip install aicspylibczi`).
+    Other file formats (ND2, CZI, LIF, or DV) are supported via the `bioio` reader. In that case, you'll need to add new dependencies: `pip install bioio` (and potentially some file-format specific dependencies, see [documentation](https://bioio-devs.github.io/bioio/OVERVIEW.html#reader-installation)).
 
-    This reader is called `aicsimageio`, i.e. you can use it via `sopa.io.aicsimageio(data_path)`, where `data_path` is the path to your data file containing your image(s). For the Snakemake pipeline, provide `aicsimageio` as a `technology` in the config file.
+    This reader is called `bioio`, i.e. you can use it via `sopa.io.bioio(data_path)`, where `data_path` is the path to your data file containing your image(s). For the Snakemake pipeline, provide `bioio` as a `technology` in the config file.
 
 ## How to disable the auto-save?
 

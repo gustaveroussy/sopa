@@ -21,6 +21,8 @@ The readers below are used to read your raw spatial data into a `SpatialData` ob
 
 ::: sopa.io.hyperion
 
+::: sopa.io.bioio
+
 ::: sopa.io.aicsimageio
 
 ::: sopa.io.ome_tif

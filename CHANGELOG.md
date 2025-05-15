@@ -2,6 +2,7 @@
 
 ### Added
 - `sopa.patches.compute_embeddings` returns `key_added` for conveniency
+- Added `sopa.io.bioio` generic reader
 
 ### Fixed
 - Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
