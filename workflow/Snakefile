@@ -3,6 +3,7 @@ from src import WorkflowPaths, Args, validate_config
 config = validate_config(config) # validate the Snakemake config
 paths = WorkflowPaths(config) # object handling the paths to the files that will be created
 args = Args(paths, config) # object handling the arguments passed to the workflow
+conda_env = "YOUR_ENVIRONMENT_NAME" # conda environment to use for the rules
 
 ### Segmentation rules
 include: "rules/utils.smk"
@@ -38,7 +39,7 @@ rule to_spatialdata:
     output:
         paths.sdata_zgroup if paths.data_path else [],
     conda:
-        "sopa"
+        conda_env
     params:
         reader = args['read'].as_cli(),
         data_path = paths.data_path,
@@ -54,7 +55,7 @@ rule tissue_segmentation:
     output:
         touch(paths.segmentation_done("tissue")),
     conda:
-        "sopa"
+        conda_env
     params:
         tissue_segmentation = args["segmentation"]["tissue"].as_cli(),
         sdata_path = paths.sdata_path,
@@ -74,7 +75,7 @@ checkpoint patchify_image:
         patchify_image = args["patchify"].as_cli(contains="pixel"),
         sdata_path = paths.sdata_path,
     conda:
-        "sopa"
+        conda_env
     shell:
         """
         sopa patchify image {params.sdata_path} {params.patchify_image}
@@ -92,7 +93,7 @@ checkpoint patchify_transcripts:
         patchify_transcripts = args.patchify_transcripts(),
         sdata_path = paths.sdata_path,
     conda:
-        "sopa"
+        conda_env
     shell:
         """
         sopa patchify transcripts {params.sdata_path} {params.patchify_transcripts}
@@ -104,7 +105,7 @@ rule aggregate:
     output:
         touch(paths.smk_aggregation),
     conda:
-        "sopa"
+        conda_env
     params:
         aggregate = args["aggregate"].as_cli(),
         sdata_path = paths.sdata_path,
@@ -119,7 +120,7 @@ rule annotate:
     output:
         directory(paths.annotations),
     conda:
-        "sopa"
+        conda_env
     resources:
         partition="gpgpuq" if args['annotation']['method'] == "tangram" else "shortq",
         gpu="a100:1" if args['annotation']['method'] == "tangram" else 0,
@@ -138,7 +139,7 @@ rule explorer_raw:
     output:
         touch(paths.smk_explorer_raw),
     conda:
-        "sopa"
+        conda_env
     params:
         explorer = args["explorer"].as_cli(keys=['lazy', 'ram_threshold_gb', 'pixel_size', 'pixelsize']),
         sdata_path = paths.sdata_path,
@@ -156,7 +157,7 @@ rule explorer:
     output:
         paths.explorer_experiment,
     conda:
-        "sopa"
+        conda_env
     params:
         explorer = args["explorer"].as_cli(),
         sdata_path = paths.sdata_path,
@@ -177,7 +178,7 @@ rule report:
         sdata_path = paths.sdata_path,
         report = paths.report,
     conda:
-        "sopa"
+        conda_env
     shell:
         """
         sopa report {params.sdata_path} {params.report}
