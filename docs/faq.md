@@ -163,6 +163,22 @@ Otherwise, if you have inside the tissue some small cells artefacts, `Sopa` offe
 You can use any existing [Cellpose model](https://cellpose.readthedocs.io/en/latest/models.html) with the `model_type` argument (via the API, CLI, or Snakemake pipeline). For the Snakemake pipeline, see [here](https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml) how to set this argument.
 If you have a custom pretrained model, use the `pretrained_model` argument instead of `model_type`, and give the path to your cellpose model.
 
+## How to use the GPU for Cellpose?
+
+You can provide `cellpose_model_kwargs` to provide any argument to a Cellpose Model. Therefore, you can provide `{"gpu": True}` as follow.
+
+!!! Warning
+    If you have many CPU cores and only one GPU, it may be faster to run in parallel on CPUs rather than sequentially using the GPU. Also, if you are on MacOS, you may experience issues because the PyTorch MPS backend doesn't support all features yet.
+
+```python
+import sopa
+
+sdata = sopa.io.toy_dataset()
+sopa.make_image_patches(sdata)
+
+sopa.segmentation.cellpose(sdata, channels="DAPI", diameter=30, cellpose_model_kwargs={"gpu": True})
+```
+
 ## How to provide other arguments to Cellpose?
 
 When using the Snakemake pipeline, you can use `method_kwargs` to provide extra arguments to Cellpose. For instance, we use `resample=False` in the example below, which may significantly speed up the segmentation while not decreasing significantly the segmentation quality:
