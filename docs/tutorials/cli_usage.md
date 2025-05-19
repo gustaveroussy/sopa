@@ -65,10 +65,13 @@ The command below will generate and save it on disk (you can change the path `tu
     # it will generate a '/path/to/sample/directory.zarr' directory
     sopa convert /path/to/sample/directory --technology macsima
     ```
-=== "Hyperion"
+=== "Other"
+    There are also several other readers, such as `hyperion`, or `molecular_cartography`. You can also try generic readers, like `ome_tif`, or even `bioio` which supports many inputs formats. Note that, to use `bioio`, you'll need to `pip install bioio` and potentially other format-specific dependencies as described in their [documentation](https://bioio-devs.github.io/bioio/OVERVIEW.html#reader-installation).
+
+    Replace `<TECHNOLOGY>` by the right name on the following command line:
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
-    sopa convert /path/to/sample/directory --technology hyperion
+    sopa convert /path/to/sample/directory --technology <TECHNOLOGY>
     ```
 
 
