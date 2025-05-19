@@ -18,7 +18,7 @@ segmentation:
 
 aggregate:
   aggregate_channels: true
-  gene_column: "gene"
+  aggregate_genes: true
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->
