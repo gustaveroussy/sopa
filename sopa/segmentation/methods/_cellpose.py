@@ -126,7 +126,7 @@ def cellpose_patch(
         if pretrained_model:
             model = models.CellposeModel(pretrained_model=pretrained_model, **cellpose_model_kwargs)
         else:
-            model = models.Cellpose(model_type=model_type, **cellpose_model_kwargs)
+            model = models.CellposeModel(**cellpose_model_kwargs)
 
         if isinstance(channels, str) or len(channels) == 1:
             channels = [0, 0]  # gray scale
