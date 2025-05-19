@@ -7,7 +7,7 @@ import shapely
 import shapely.affinity
 import skimage
 from geopandas import GeoDataFrame
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, LinearRing
 from skimage.draw import polygon
 from skimage.measure._regionprops import RegionProperties
 
@@ -121,11 +121,25 @@ def _region_props_to_multipolygon(region_props: RegionProperties) -> MultiPolygo
     mask = np.pad(region_props.image, 1)
     contours = skimage.measure.find_contours(mask, 0.5)
 
-    # shapes with <= 3 vertices, i.e. lines, can't be converted into a polygon
-    polygons = MultiPolygon([Polygon(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4])
+    # Convert contours to shapely LinearRings for orientation test
+    rings = [LinearRing(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4]
+
+    # Separate exteriors and holes by orientation
+    exteriors = [ring for ring in rings if ring.is_ccw]
+    holes = [ring for ring in rings if not ring.is_ccw]
+
+    polygons = []
+
+    # For each exterior ring, find holes inside it
+    for exterior in exteriors:
+        exterior_poly = Polygon(exterior)
+        interior_holes = [hole.coords for hole in holes if exterior_poly.contains(Polygon(hole))]
+        polygons.append(Polygon(exterior, holes=interior_holes))
+
+    multipolygon = MultiPolygon(polygons)
 
     yoff, xoff, *_ = region_props.bbox
-    return shapely.affinity.translate(polygons, xoff - 1, yoff - 1)  # subtract 1 to account for the padding
+    return shapely.affinity.translate(multipolygon, xoff - 1, yoff - 1)  # remove padding offset
 
 
 def _vectorize_mask(mask: np.ndarray) -> GeoDataFrame:
