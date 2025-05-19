@@ -13,7 +13,7 @@ def cellpose(
     sdata: SpatialData,
     channels: list[str] | str,
     diameter: int,
-    model_type: str = "cyto3",
+    pretrained_model: str = "cyto3",
     image_key: str | None = None,
     min_area: int | None = None,
     delete_cache: bool = True,
@@ -39,7 +39,7 @@ def cellpose(
         sdata: A `SpatialData` object
         channels: Name of the channel(s) to be used for segmentation. If one channel, must be a nucleus channel. If a `list` of channels, it must be a cytoplasmic channel and then a nucleus channel.
         diameter: The Cellpose parameter for the expected cell diameter (in pixel).
-        model_type: Cellpose model type.
+        pretrained_model: Cellpose pretrained model.
         image_key: Name of the image in `sdata` to be used for segmentation.
         min_area: Minimum area of a cell to be considered. By default, it is calculated based on the `diameter` parameter.
         delete_cache: Whether to delete the cache after segmentation.
@@ -58,7 +58,7 @@ def cellpose(
     method = cellpose_patch(
         diameter=diameter,
         channels=channels,
-        model_type=model_type,
+        pretrained_model=pretrained_model,
         flow_threshold=flow_threshold,
         cellprob_threshold=cellprob_threshold,
         cellpose_model_kwargs=cellpose_model_kwargs,
@@ -87,8 +87,7 @@ def cellpose(
 def cellpose_patch(
     diameter: float,
     channels: list[str],
-    model_type: str = "cyto3",
-    pretrained_model: str | bool = False,
+    pretrained_model: str = "cpsam",
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
 ) -> Callable:
@@ -97,8 +96,7 @@ def cellpose_patch(
     Args:
         diameter: Cellpose diameter parameter
         channels: List of channel names
-        model_type: Cellpose model type
-        pretrained_model: Path to the pretrained model to be loaded, or `False`
+        pretrained_model: Path to the pretrained model to be loaded, by default `cpsam` (Cellpose SAM model).
         cellpose_model_kwargs: Kwargs to be provided to the `cellpose.models.CellposeModel` object
         **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
 
@@ -114,7 +112,6 @@ def cellpose_patch(
         patch: np.ndarray,
         diameter: float,
         channels: list[str],
-        model_type: str,
         pretrained_model: str | bool = False,
         cellpose_model_kwargs: dict | None = None,
         **cellpose_eval_kwargs: int,
@@ -123,10 +120,7 @@ def cellpose_patch(
 
         cellpose_model_kwargs = cellpose_model_kwargs or {}
 
-        if pretrained_model:
-            model = models.CellposeModel(pretrained_model=pretrained_model, **cellpose_model_kwargs)
-        else:
-            model = models.CellposeModel(**cellpose_model_kwargs)
+        model = models.CellposeModel(pretrained_model=pretrained_model, **cellpose_model_kwargs)
 
         if isinstance(channels, str) or len(channels) == 1:
             channels = [0, 0]  # gray scale
@@ -142,7 +136,6 @@ def cellpose_patch(
         _,
         diameter=diameter,
         channels=channels,
-        model_type=model_type,
         pretrained_model=pretrained_model,
         cellpose_model_kwargs=cellpose_model_kwargs,
         **cellpose_eval_kwargs,
