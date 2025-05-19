@@ -1,12 +1,12 @@
-## [2.0.7] - xxxx-xx-xx
+## [2.0.7] - 2025-05-19
 
 ### Added
 - `sopa.patches.compute_embeddings` returns `key_added` for conveniency
 - Added `sopa.io.bioio` generic reader
 
 ### Fixed
-- Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
 - Pin `cellpose<4.0.0` (#252)
+- Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
 - Force sopa version in Docker images CI @Clemsazert (#251)
 
 ### Fixed
