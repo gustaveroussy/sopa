@@ -180,7 +180,7 @@ class TissueSegmentation:
 
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
-        return _vectorize_mask(labels)
+        return _vectorize_mask(labels, allow_holes=True)
 
 
 def hsv_otsu(
