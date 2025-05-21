@@ -14,11 +14,14 @@ from skimage.measure._regionprops import RegionProperties
 log = logging.getLogger(__name__)
 
 
-def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygon:
+def _ensure_polygon(
+    cell: Polygon | MultiPolygon | GeometryCollection, simple_polygon: bool = True
+) -> Polygon | MultiPolygon:
     """Ensures that the provided cell becomes a Polygon
 
     Args:
         cell: A shapely Polygon or MultiPolygon or GeometryCollection
+        simple_polygon: If True, will return a Polygon without holes. Else, allow holes and MultiPolygon.
 
     Returns:
         The shape as a Polygon, or an empty Polygon if the cell was invalid
@@ -26,21 +29,27 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
     cell = shapely.make_valid(cell)
 
     if isinstance(cell, Polygon):
-        if cell.interiors:
+        if simple_polygon and cell.interiors:
             cell = Polygon(list(cell.exterior.coords))
         return cell
 
     if isinstance(cell, MultiPolygon):
-        return max(cell.geoms, key=lambda polygon: polygon.area)
+        return max(cell.geoms, key=lambda polygon: polygon.area) if simple_polygon else cell
 
     if isinstance(cell, GeometryCollection):
         geoms = [geom for geom in cell.geoms if isinstance(geom, Polygon)]
+
+        if len(geoms) > 1 and not simple_polygon:
+            return MultiPolygon(geoms)
 
         if geoms:
             return max(geoms, key=lambda polygon: polygon.area)
 
         geoms = [geom for geom in cell.geoms if isinstance(geom, MultiPolygon)]
         geoms = [polygon for multi_polygon in geoms for polygon in multi_polygon.geoms]
+
+        if len(geoms) > 1 and not simple_polygon:
+            return MultiPolygon(geoms)
 
         if geoms:
             return max(geoms, key=lambda polygon: polygon.area)
@@ -52,8 +61,8 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
     return Polygon()
 
 
-def to_valid_polygons(geo_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    geo_df.geometry = geo_df.geometry.map(_ensure_polygon)
+def to_valid_polygons(geo_df: gpd.GeoDataFrame, simple_polygon: bool = True) -> gpd.GeoDataFrame:
+    geo_df.geometry = geo_df.geometry.map(lambda cell: _ensure_polygon(cell, simple_polygon))
     return geo_df[~geo_df.is_empty]
 
 
