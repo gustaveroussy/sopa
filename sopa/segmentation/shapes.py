@@ -7,7 +7,7 @@ import shapely
 import shapely.affinity
 import skimage
 from geopandas import GeoDataFrame
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, LinearRing
+from shapely.geometry import GeometryCollection, LinearRing, MultiPolygon, Polygon
 from skimage.draw import polygon
 from skimage.measure._regionprops import RegionProperties
 
@@ -117,38 +117,39 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
     return cells
 
 
-def _region_props_to_multipolygon(region_props: RegionProperties) -> MultiPolygon:
+def _region_props_to_multipolygon(region_props: RegionProperties, allow_holes: bool) -> MultiPolygon:
     mask = np.pad(region_props.image, 1)
     contours = skimage.measure.find_contours(mask, 0.5)
 
-    # Convert contours to shapely LinearRings for orientation test
     rings = [LinearRing(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4]
 
-    # Separate exteriors and holes by orientation
     exteriors = [ring for ring in rings if ring.is_ccw]
-    holes = [ring for ring in rings if not ring.is_ccw]
 
-    polygons = []
+    if allow_holes:
+        holes = [ring for ring in rings if not ring.is_ccw]
 
-    # For each exterior ring, find holes inside it
-    for exterior in exteriors:
+    def _to_polygon(exterior: LinearRing) -> Polygon:
         exterior_poly = Polygon(exterior)
-        interior_holes = [hole.coords for hole in holes if exterior_poly.contains(Polygon(hole))]
-        polygons.append(Polygon(exterior, holes=interior_holes))
 
-    multipolygon = MultiPolygon(polygons)
+        _holes = None
+        if allow_holes:
+            _holes = [hole.coords for hole in holes if exterior_poly.contains(Polygon(hole))]
+
+        return Polygon(exterior, holes=_holes)
+
+    multipolygon = MultiPolygon([_to_polygon(exterior) for exterior in exteriors])
 
     yoff, xoff, *_ = region_props.bbox
     return shapely.affinity.translate(multipolygon, xoff - 1, yoff - 1)  # remove padding offset
 
 
-def _vectorize_mask(mask: np.ndarray) -> GeoDataFrame:
+def _vectorize_mask(mask: np.ndarray, allow_holes: bool = False) -> GeoDataFrame:
     if mask.max() == 0:
         return GeoDataFrame(geometry=[])
 
     regions = skimage.measure.regionprops(mask)
 
-    return GeoDataFrame(geometry=[_region_props_to_multipolygon(region) for region in regions])
+    return GeoDataFrame(geometry=[_region_props_to_multipolygon(region, allow_holes) for region in regions])
 
 
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
