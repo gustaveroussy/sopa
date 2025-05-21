@@ -88,7 +88,7 @@ def tissue(
         return
 
     geo_df = expand_radius(geo_df, expand_radius_ratio)
-    geo_df = to_valid_polygons(geo_df)
+    geo_df = to_valid_polygons(geo_df, simple_polygon=False)
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
 
     add_spatial_element(sdata, key_added, geo_df)
