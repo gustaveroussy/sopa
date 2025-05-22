@@ -104,6 +104,7 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
     Args:
         mask: A cell mask. Non-null values correspond to cell ids
         tolerance: Tolerance parameter used by `shapely` during simplification. By default, define the tolerance automatically.
+        smooth_radius_ratio: Ratio of the cell radius used to smooth the cell polygon.
 
     Returns:
         GeoDataFrame of polygons representing each cell ID of the mask
@@ -162,6 +163,15 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
 
 
 def expand_radius(geo_df: gpd.GeoDataFrame, expand_radius_ratio: float | None) -> gpd.GeoDataFrame:
+    """Expand the radius of the cells by a given ratio.
+
+    Args:
+        geo_df: A GeoDataFrame containing the cells or shapes.
+        expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None`, doesn't expand cells.
+
+    Returns:
+        A GeoDataFrame with the expanded cells.
+    """
     if not expand_radius_ratio:
         return geo_df
 
