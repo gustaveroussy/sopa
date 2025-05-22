@@ -1,3 +1,8 @@
+## [2.0.8] - xxxx-xx-xx
+
+### Added
+- Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
+
 ## [2.0.7] - 2025-05-19
 
 ### Added
