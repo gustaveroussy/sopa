@@ -31,6 +31,7 @@ def aggregate_channels(
     shapes_key: str | None = None,
     expand_radius_ratio: float = 0,
     mode: str = "average",
+    no_overlap: bool = False,
 ) -> np.ndarray:
     """Aggregate the channel intensities per cell (either `"average"`, or take the `"min"` / `"max"`).
 
@@ -40,6 +41,7 @@ def aggregate_channels(
         shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
         mode: Aggregation mode. One of `"average"`, `"min"`, `"max"`. By default, average the intensity inside the cell mask.
+        no_overlap: If `True`, the (expanded) cells will not overlap.
 
     Returns:
         A numpy `ndarray` of shape `(n_cells, n_channels)`
@@ -50,7 +52,7 @@ def aggregate_channels(
 
     geo_df = get_boundaries(sdata, key=shapes_key)
     geo_df = to_intrinsic(sdata, geo_df, image)
-    geo_df = expand_radius(geo_df, expand_radius_ratio)
+    geo_df = expand_radius(geo_df, expand_radius_ratio, no_overlap=no_overlap)
 
     return _aggregate_channels_aligned(image, geo_df, mode)
 
