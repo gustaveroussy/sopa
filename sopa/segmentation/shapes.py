@@ -5,6 +5,7 @@ import geopandas as gpd
 import numpy as np
 import shapely
 import shapely.affinity
+from geopandas.geoseries import GeoSeries
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 
 log = logging.getLogger(__name__)
@@ -161,19 +162,55 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
     return rasterized_image
 
 
-def expand_radius(geo_df: gpd.GeoDataFrame, expand_radius_ratio: float | None) -> gpd.GeoDataFrame:
+def expand_radius(
+    geo_df: gpd.GeoDataFrame, expand_radius_ratio: float | None, no_overlap: bool = False, inplace: bool = False
+) -> gpd.GeoDataFrame:
     """Expand the radius of the cells by a given ratio.
 
     Args:
         geo_df: A GeoDataFrame containing the cells or shapes.
         expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None`, doesn't expand cells.
+        no_overlap: *Experimental feature*: if `True`, ensures that the expanded cells do not overlap by computing the Voronoi diagram of the centroids of the cells.
+        inplace: If `True`, modifies the input GeoDataFrame in place. If `False`, returns a new GeoDataFrame.
 
     Returns:
         A GeoDataFrame with the expanded cells.
     """
+    if not inplace:
+        geo_df = geo_df.copy()
+
     if not expand_radius_ratio:
         return geo_df
 
     expand_radius_ = expand_radius_ratio * np.mean(np.sqrt(geo_df.area / np.pi))
     geo_df.geometry = geo_df.buffer(expand_radius_)
+
+    if no_overlap:
+        log.warning(
+            "Computing Voronoi polygons to ensure no overlap between shapes is still experimental. This feature has caveats, see https://github.com/shapely/shapely/issues/2278"
+        )
+        geo_df.geometry = voronoi(geo_df).intersection(geo_df.union_all())
+
     return geo_df
+
+
+def voronoi(gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
+    """Get the Voronoi polygons for the centroids of the geometries in a GeoDataFrame.
+
+    Args:
+        gdf: A GeoDataFrame containing the geometries for which to compute Voronoi polygons.
+
+    Returns:
+        A GeoSeries containing the Voronoi polygons.
+    """
+    geometry_input = shapely.geometrycollections(gdf.geometry.centroid.values._data)
+
+    _voronoi = shapely.voronoi_polygons(
+        geometry_input,
+        tolerance=0,
+        extend_to=None,
+        only_edges=False,
+        ordered=True,
+    )
+
+    return GeoSeries(_voronoi, crs=gdf.crs).explode(ignore_index=True)
