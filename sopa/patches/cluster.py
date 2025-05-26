@@ -1,11 +1,11 @@
-from typing import Callable
+from typing import Callable, Literal
 
 import scanpy as sc
 from anndata import AnnData
 from spatialdata import SpatialData
 
 
-def leiden_clustering(adata: AnnData, flavor: str = "igraph", **kwargs):
+def leiden_clustering(adata: AnnData, flavor: Literal["leidenalg", "igraph"] = "igraph", **kwargs):
     adata = adata.copy()
     sc.pp.pca(adata)
     sc.pp.neighbors(adata)

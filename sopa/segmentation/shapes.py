@@ -122,8 +122,7 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
     mean_radius = np.sqrt(cells.area / np.pi).mean()
     smooth_radius = mean_radius * smooth_radius_ratio
 
-    if tolerance is None:
-        tolerance = _default_tolerance(mean_radius)
+    tolerance = _default_tolerance(mean_radius) if tolerance is None else tolerance
 
     cells.geometry = cells.geometry.map(lambda cell: _smoothen_cell(cell, smooth_radius, tolerance))
     cells = cells[~cells.is_empty]

@@ -30,7 +30,7 @@ class StainingSegmentation:
         method: Callable,
         channels: list[str] | str | None,
         image_key: str | None = None,
-        min_area: float = 0,
+        min_area: int | float = 0,
         clip_limit: float = 0.2,
         clahe_kernel_size: int | Iterable[int] | None = None,
         gaussian_sigma: float = 1,

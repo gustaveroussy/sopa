@@ -1,5 +1,6 @@
 import ast
 from collections.abc import Iterable
+from typing import Any
 
 import typer
 
@@ -11,7 +12,7 @@ app_segmentation = typer.Typer()
 @app_segmentation.command()
 def cellpose(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    diameter: float = typer.Option(help="Cellpose diameter parameter"),
+    diameter: int = typer.Option(help="Cellpose diameter parameter"),
     channels: list[str] = typer.Option(
         help="Names of the channels used for Cellpose. If one channel, then provide just a nucleus channel. If two channels, this is the cytoplasm and then the nucleus channel"
     ),
@@ -209,7 +210,7 @@ def _run_staining_segmentation(
     gaussian_sigma: float,
     patch_index: int | None,
     cache_dir_name: str | None,
-    **method_kwargs: int,
+    **method_kwargs: Any,
 ):
     from sopa.io.standardize import read_zarr_standardized
     from sopa.segmentation import StainingSegmentation, custom_staining_based, methods

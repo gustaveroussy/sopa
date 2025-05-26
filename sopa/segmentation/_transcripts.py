@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 def resolve(
     sdata: SpatialData,
-    patches_dirs: list[str],
+    patches_dirs: list[str | Path],
     gene_column: str,
     min_area: float = 0,
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
