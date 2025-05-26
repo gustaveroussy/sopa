@@ -12,6 +12,7 @@ segmentation:
   proseg:
     prior_shapes_key: cell_id # this allows to use the prior segmentation performed by 10X Genomics
     unassigned_value: UNASSIGNED
+    # command_line_suffix: "--nthreads XXX" # add here any command line suffix to the proseg command
 
 aggregate:
   aggregate_channels: true
