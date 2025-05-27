@@ -1,19 +1,13 @@
 # Adapted from https://github.com/manzt/napari-lazy-openslide/tree/main
+from collections.abc import Mapping, MutableMapping
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any, Dict, Mapping, MutableMapping
+from typing import Any, Dict
 
 import numpy as np
 import slideio
 from slideio import Slide
-from zarr.storage import (
-    KVStore,
-    Store,
-    _path_to_prefix,
-    attrs_key,
-    init_array,
-    init_group,
-)
+from zarr.storage import KVStore, Store, _path_to_prefix, attrs_key, init_array, init_group
 from zarr.util import json_dumps, normalize_shape, normalize_storage_path
 
 
