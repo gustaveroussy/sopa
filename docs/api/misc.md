@@ -48,6 +48,8 @@ Use `sopa.settings.gene_exclude_pattern = None` to keep all genes.
 
 ::: sopa.segmentation.shapes.expand_radius
 
+::: sopa.segmentation.shapes.remove_overlap
+
 ## Xenium Explorer
 
 ::: sopa.io.explorer.write

@@ -5,7 +5,7 @@ import geopandas as gpd
 import numpy as np
 import shapely
 import shapely.affinity
-from geopandas.geoseries import GeoSeries
+from shapely.errors import GEOSException
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 
 log = logging.getLogger(__name__)
@@ -214,31 +214,146 @@ def expand_radius(
     geo_df.geometry = geo_df.buffer(expand_radius_)
 
     if no_overlap:
-        log.warning(
-            "Computing Voronoi polygons to ensure no overlap between shapes is still experimental. This feature has caveats, see https://github.com/shapely/shapely/issues/2278"
-        )
-        geo_df.geometry = voronoi(geo_df).intersection(geo_df.union_all())
+        log.warning("Computing Voronoi polygons to ensure no overlap between shapes is still experimental.")
+        geo_df.geometry = remove_overlap(geo_df, as_gdf=False)
 
     return geo_df
 
 
-def voronoi(gdf: gpd.GeoDataFrame) -> gpd.GeoSeries:
-    """Get the Voronoi polygons for the centroids of the geometries in a GeoDataFrame.
+def remove_overlap(geo_df: gpd.GeoDataFrame, as_gdf: bool = True) -> gpd.GeoSeries | gpd.GeoDataFrame:
+    """Remove overlapping areas from a GeoDataFrame by computing the Voronoi polygons of the shapes.
 
     Args:
-        gdf: A GeoDataFrame containing the geometries for which to compute Voronoi polygons.
+        geo_df: A GeoDataFrame containing the shapes.
+        as_gdf: Whether to return a GeoDataFrame or a GeoSeries.
 
     Returns:
-        A GeoSeries containing the Voronoi polygons.
+        A GeoSeries or GeoDataFrame with the overlapping areas removed.
     """
-    geometry_input = shapely.geometrycollections(gdf.geometry.centroid.values._data)
+    geo_df["_index"] = geo_df.index  # to keep track of the index after the overlay
 
-    _voronoi = shapely.voronoi_polygons(
-        geometry_input,
-        tolerance=0,
-        extend_to=None,
-        only_edges=False,
-        ordered=True,
+    overlay = geo_df.overlay(geo_df, how="intersection")
+    overlap = overlay[overlay["_index_1"] != overlay["_index_2"]].union_all()
+
+    if overlap.is_empty:
+        return geo_df.geometry
+
+    shapes_no_overlap = geo_df.difference(overlap).buffer(-1e-5)
+    _voronoi = voronoi_frames(shapes_no_overlap)
+
+    geometry = geo_df.intersection(_voronoi)
+
+    if not as_gdf:
+        return geometry
+
+    geo_df = geo_df.copy()
+    geo_df.geometry = geometry
+    return geo_df
+
+
+def voronoi_frames(
+    geometry: gpd.GeoSeries | gpd.GeoDataFrame,
+    clip: str | shapely.Geometry | None = "bounding_box",
+    shrink: float = 0,
+    segment: float = 0,
+    grid_size: float = 1e-5,
+) -> gpd.GeoSeries:
+    """
+    Copied and simplified from https://pysal.org/libpysal/generated/libpysal.cg.voronoi_frames.html
+    """
+    # Check if the input geometry is in a geographic CRS
+    if geometry.crs and geometry.crs.is_geographic:
+        raise ValueError(
+            "Geometry is in a geographic CRS. "
+            "Use 'GeoSeries.to_crs()' to re-project geometries to a "
+            "projected CRS before using voronoi_polygons.",
+        )
+
+    # Set precision of the input geometry (avoids GEOS precision issues)
+    objects: gpd.GeoSeries = shapely.set_precision(geometry.geometry.copy(), grid_size)
+
+    geom_types = objects.geom_type
+    mask_poly = geom_types.isin(["Polygon", "MultiPolygon"])
+    mask_line = objects.geom_type.isin(["LineString", "MultiLineString"])
+
+    if mask_poly.any():
+        # Shrink polygons if required
+        if shrink != 0:
+            objects[mask_poly] = objects[mask_poly].buffer(-shrink, cap_style=2, join_style=2)
+        # Segmentize polygons if required
+        if segment != 0:
+            objects.loc[mask_poly] = shapely.segmentize(objects[mask_poly], segment)
+
+    if mask_line.any():
+        if segment != 0:
+            objects.loc[mask_line] = shapely.segmentize(objects[mask_line], segment)
+
+        # Remove duplicate coordinates from lines
+        objects.loc[mask_line] = (
+            objects.loc[mask_line]
+            .get_coordinates(index_parts=True)
+            .drop_duplicates(keep=False)
+            .groupby(level=0)
+            .apply(shapely.multipoints)
+            .values
+        )
+
+    limit = _get_limit(objects, clip)
+
+    # Compute Voronoi polygons
+    voronoi = shapely.voronoi_polygons(shapely.GeometryCollection(objects.values), extend_to=limit)
+    # Get individual polygons out of the collection
+    polygons = gpd.GeoSeries(shapely.make_valid(shapely.get_parts(voronoi)), crs=geometry.crs)
+
+    # temporary fix for libgeos/geos#1062
+    if not (polygons.geom_type == "Polygon").all():
+        polygons = polygons.explode(ignore_index=True)
+        polygons = polygons[polygons.geom_type == "Polygon"]
+
+    ids_objects, ids_polygons = polygons.sindex.query(objects, predicate="intersects")
+
+    if mask_poly.any() or mask_line.any():
+        # Dissolve polygons
+        polygons = polygons.iloc[ids_polygons].groupby(objects.index.take(ids_objects)).agg(_union_with_fallback)
+        if geometry.crs is not None:
+            polygons = polygons.set_crs(geometry.crs)
+    else:
+        polygons = polygons.iloc[ids_polygons].reset_index(drop=True)
+
+    # ensure validity as union can occasionally produce invalid polygons that may
+    # break the intersection below
+    if not polygons.is_valid.all():
+        polygons = polygons.make_valid()
+
+    # Clip polygons if limit is provided
+    if limit is not None:
+        to_be_clipped = polygons.sindex.query(limit.boundary, "intersects")
+        polygons.iloc[to_be_clipped] = polygons.iloc[to_be_clipped].intersection(limit)
+
+    return polygons
+
+
+def _union_with_fallback(arr):
+    """
+    Coverage union is finnicky with floating point precision and tends to occasionally
+    raise an error from within GEOS we have no control over. It is not a data issue
+    typically. Falling back to unary union if that happens.
+    """
+    try:
+        r = shapely.coverage_union_all(arr)
+    except GEOSException:
+        r = shapely.union_all(arr)
+
+    return r
+
+
+def _get_limit(points, clip: shapely.Geometry | str | None | bool) -> shapely.Geometry | None:
+    if isinstance(clip, shapely.Geometry):
+        return clip
+    if clip is None or clip is False:
+        return None
+    if clip.lower() == "bounding_box":
+        return shapely.box(*points.total_bounds)
+    raise ValueError(
+        f"Clip type '{clip}' not understood. Try one of the supported options: [None, 'bounding_box', shapely.Polygon]."
     )
-
-    return GeoSeries(_voronoi, crs=gdf.crs).explode(ignore_index=True)
