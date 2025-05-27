@@ -12,6 +12,7 @@ from ..._constants import SopaAttrs
 
 def wsi(
     path: str | Path,
+    chunks: str | tuple[int, int, int] = "auto",
     as_image: bool = False,
     backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
@@ -35,7 +36,7 @@ def wsi(
         scale_image = DataArray(
             img[key].transpose("S", f"Y{suffix}", f"X{suffix}"),
             dims=("c", "y", "x"),
-        )
+        ).chunk(chunks)
 
         scale_factor = slide_metadata["level_downsamples"][level]
 

@@ -2,6 +2,9 @@
 
 ### Added
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
+- `slideio` backend for WSI is now available and allows loading among others the Olympus `.vsi` format @stergioc
+- `nn.DataParallel` for WSI inference now allows using multiple GPUs and larger batch_sizes @stergioc
+
 
 ## [2.0.7] - 2025-05-19
 
@@ -65,12 +68,6 @@ Yanked release (missing dask distributed, cannot install)
 - Use `prob_thresh=0.2` and `nms_thresh=0.6` by default in `stardist`
 - During segmentation, pixels outside of the ROI / tissue use the mean channels value instead of 0 (#222)
 
-### Added
-- `slideio` backend for WSI is now available and allows loading among others the Olympus `.vsi` format @stergioc
-- `nn.DataParallel` for WSI inference now allows using multiple GPUs and larger batch_sizes @stergioc
-
-### Changed
-- Removed chunking for the `io.wsi` reader (leads x10 speedup when reading tiles from the sdata) @stergioc
 
 ## [2.0.2] - 2025-02-21
 
