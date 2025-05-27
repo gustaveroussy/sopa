@@ -17,6 +17,7 @@ def aggregate_bins(
     shapes_key: str,
     bins_key: str,
     expand_radius_ratio: float = 0,
+    no_overlap: bool = False,
 ) -> AnnData:
     """Aggregate bins (for instance, from Visium HD data) into cells.
 
@@ -25,6 +26,7 @@ def aggregate_bins(
         shapes_key: Key of the shapes containing the cell boundaries
         bins_key: Key of the table containing the bin-by-gene counts
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate bins from the cytoplasm.
+        no_overlap: If `True`, the (expanded) cells will not overlap.
 
     Returns:
         An `AnnData` object of shape with the cell-by-gene count matrix
@@ -37,7 +39,7 @@ def aggregate_bins(
     bins = gpd.GeoDataFrame(geometry=bins.centroid.values)  # bins as points
 
     cells = to_intrinsic(sdata, shapes_key, bins_shapes_key).reset_index(drop=True)
-    cells = expand_radius(cells, expand_radius_ratio)
+    cells = expand_radius(cells, expand_radius_ratio, no_overlap=no_overlap)
 
     bin_within_cell = gpd.sjoin(bins, cells)
 
