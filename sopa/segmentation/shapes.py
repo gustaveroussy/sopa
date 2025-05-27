@@ -235,10 +235,12 @@ def remove_overlap(geo_df: gpd.GeoDataFrame, as_gdf: bool = True) -> gpd.GeoSeri
     overlay = geo_df.overlay(geo_df, how="intersection")
     overlap = overlay[overlay["_index_1"] != overlay["_index_2"]].union_all()
 
+    del geo_df["_index"]
+
     if overlap.is_empty:
         return geo_df.geometry
 
-    shapes_no_overlap = geo_df.difference(overlap).buffer(-1e-5)
+    shapes_no_overlap = geo_df.difference(overlap).buffer(-1e-4)  # to avoid touching polygons on single points
     _voronoi = voronoi_frames(shapes_no_overlap)
 
     geometry = geo_df.intersection(_voronoi)
