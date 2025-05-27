@@ -228,8 +228,6 @@ def remove_overlap(geo_df: gpd.GeoDataFrame, as_gdf: bool = True) -> gpd.GeoSeri
 def voronoi_frames(
     geometry: gpd.GeoSeries | gpd.GeoDataFrame,
     clip: str | shapely.Geometry | None = "bounding_box",
-    shrink: float = 0,
-    segment: float = 0,
     grid_size: float = 1e-5,
 ) -> gpd.GeoSeries:
     """
@@ -247,30 +245,9 @@ def voronoi_frames(
     objects: gpd.GeoSeries = shapely.set_precision(geometry.geometry.copy(), grid_size)
 
     geom_types = objects.geom_type
-    mask_poly = geom_types.isin(["Polygon", "MultiPolygon"])
-    mask_line = objects.geom_type.isin(["LineString", "MultiLineString"])
-
-    if mask_poly.any():
-        # Shrink polygons if required
-        if shrink != 0:
-            objects[mask_poly] = objects[mask_poly].buffer(-shrink, cap_style=2, join_style=2)
-        # Segmentize polygons if required
-        if segment != 0:
-            objects.loc[mask_poly] = shapely.segmentize(objects[mask_poly], segment)
-
-    if mask_line.any():
-        if segment != 0:
-            objects.loc[mask_line] = shapely.segmentize(objects[mask_line], segment)
-
-        # Remove duplicate coordinates from lines
-        objects.loc[mask_line] = (
-            objects.loc[mask_line]
-            .get_coordinates(index_parts=True)
-            .drop_duplicates(keep=False)
-            .groupby(level=0)
-            .apply(shapely.multipoints)
-            .values
-        )
+    assert geom_types.isin(["Polygon", "MultiPolygon"]).all(), (
+        "Only Polygon and MultiPolygon geometries are supported to remove overlaps."
+    )
 
     limit = _get_limit(objects, clip)
 
@@ -286,13 +263,10 @@ def voronoi_frames(
 
     ids_objects, ids_polygons = polygons.sindex.query(objects, predicate="intersects")
 
-    if mask_poly.any() or mask_line.any():
-        # Dissolve polygons
-        polygons = polygons.iloc[ids_polygons].groupby(objects.index.take(ids_objects)).agg(_union_with_fallback)
-        if geometry.crs is not None:
-            polygons = polygons.set_crs(geometry.crs)
-    else:
-        polygons = polygons.iloc[ids_polygons].reset_index(drop=True)
+    # Dissolve polygons
+    polygons = polygons.iloc[ids_polygons].groupby(objects.index.take(ids_objects)).agg(_union_with_fallback)
+    if geometry.crs is not None:
+        polygons = polygons.set_crs(geometry.crs)
 
     # ensure validity as union can occasionally produce invalid polygons that may
     # break the intersection below
