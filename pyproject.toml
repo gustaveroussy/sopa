@@ -1,14 +1,11 @@
-[tool.poetry]
+[project]
 name = "sopa"
-version = "2.0.2"
+version = "2.0.7"
 description = "Spatial-omics pipeline and analysis"
-documentation = "https://gustaveroussy.github.io/sopa"
-homepage = "https://gustaveroussy.github.io/sopa"
-repository = "https://github.com/gustaveroussy/sopa"
-authors = ["Quentin Blampey <quentin.blampey@gmail.com>"]
-packages = [{ include = "sopa" }]
-license = "BSD-3-Clause"
+authors = [{ name = "Quentin Blampey", email = "quentin.blampey@gmail.com" }]
+requires-python = ">=3.10,<3.13"
 readme = "README.md"
+license = "BSD-3-Clause"
 classifiers = [
   "License :: OSI Approved :: BSD License",
   "Operating System :: MacOS :: MacOS X",
@@ -17,86 +14,142 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Topic :: Scientific/Engineering",
 ]
-
-[tool.poetry.scripts]
-sopa = "sopa.main:app"
-
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-spatialdata = ">=0.3.0"
-spatialdata-io = ">=0.1.7"
-scanpy = ">=1.10.4"
-anndata = ">=0.11.0"
-typer = ">=0.9.0"
-opencv-python = ">=4.8.0"
-setuptools = ">=69.2.0"
-
-cellpose = { version = ">=3.0.5", optional = true }
-stardist = { version = ">=0.9.1", optional = true }
-tensorflow = { version = ">=2.18.0", optional = true }
-torch = { version = ">=2.0.0, !=2.0.1, !=2.1.0", optional = true }
-toml = { version = ">=0.10.2", optional = true }
-loompy = { version = ">=3.0.7", optional = true }
-tangram-sc = { version = ">=1.0.4", optional = true }
-tiffslide = { version = ">=2.3.1", optional = true }
-igraph = { version = ">=0.11.0", optional = true }
-torchvision = { version = ">=0.20.0", optional = true }
-
-black = { version = ">=22.8.0", optional = true }
-isort = { version = ">=5.10.1", optional = true }
-pytest = { version = ">=7.1.3", optional = true }
-ipykernel = { version = ">=6.25.2", optional = true }
-mkdocs-material = { version = ">=9.3.2", optional = true }
-mkdocs-jupyter = { version = ">=0.24.6", optional = true }
-mkdocstrings = { version = ">=0.23.0", optional = true }
-mkdocstrings-python = { version = ">=1.7.3", optional = true }
-flake8 = { version = ">=7.0.0", optional = true }
-mypy = { version = "^1.14.1", optional = true }
-
-[tool.poetry.extras]
-cellpose = ["cellpose", "torch"]
-stardist = ["tensorflow", "stardist"]
-baysor = ["toml", "loompy"]
-tangram = ["tangram-sc"]
-wsi = ["tiffslide", "torch", "igraph", "torchvision"]
-dev = [
-  "black",
-  "isort",
-  "pytest",
-  "ipykernel",
-  "mkdocs-material",
-  "mkdocstrings",
-  "mkdocstrings-python",
-  "mkdocs-jupyter",
-  "mypy",
+dependencies = [
+  "spatialdata>=0.4.0",
+  "spatialdata-io>=0.2.0",
+  "spatialdata-plot>=0.2.10",
+  "scanpy>=1.10.4",
+  "anndata>=0.11.0",
+  "typer>=0.9.0",
+  "dask[distributed]>=2024.4.1",
+  "opencv-python>=4.8.0",
 ]
 
+[project.optional-dependencies]
+cellpose = ["cellpose>=3.0.5, <4.0.0", "torch>=2.0.0, !=2.0.1, !=2.1.0"]
+stardist = ["tensorflow>=2.18.0", "stardist>=0.9.1", "numpy<2.0.0"]
+baysor = ["toml>=0.10.2", "loompy>=3.0.7"]
+wsi = [
+  "tiffslide>=2.3.1",
+  "torch>=2.0.0, !=2.0.1, !=2.1.0",
+  "igraph>=0.11.0",
+  "torchvision>=0.20.0",
+]
+
+[dependency-groups]
+dev = [
+  "ruff>=0.11.4",
+  "ty>=0.0.1a6",
+  "pytest>=7.1.3",
+  "pytest-cov>=4.0.0",
+  "ipykernel>=6.25.2",
+  "ipywidgets>=8.1.7",
+  "mkdocs-material>=9.3.2",
+  "mkdocs-jupyter>=0.24.6",
+  "mkdocstrings>=0.23.0",
+  "mkdocstrings-python>=1.7.3",
+]
+
+[project.urls]
+Homepage = "https://gustaveroussy.github.io/sopa"
+Repository = "https://github.com/gustaveroussy/sopa"
+Documentation = "https://gustaveroussy.github.io/sopa"
+
+[project.scripts]
+sopa = "sopa.main:app"
+
+[tool.hatch.build.targets.sdist]
+include = ["sopa"]
+
+[tool.hatch.build.targets.wheel]
+include = ["sopa"]
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 
-[tool.black]
-line-length = 120
-include = '\.pyi?$'
-exclude = '''
-/(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-'''
+[tool.mypy]
+files = ["sopa"]
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+ignore_missing_imports = true
 
-[tool.isort]
-profile = "black"
-skip_glob = ["*/__init__.py"]
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = [
+  # flake8-2020
+  "YTT",
+  # flake8-bandit
+  "S",
+  # flake8-bugbear
+  "B",
+  # flake8-builtins
+  "A",
+  # flake8-comprehensions
+  "C4",
+  # flake8-debugger
+  "T10",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
+  # mccabe
+  "C90",
+  # pycodestyle
+  "E",
+  "W",
+  # pyflakes
+  "F",
+  # pygrep-hooks
+  "PGH",
+  # pyupgrade
+  "UP",
+  # ruff
+  "RUF",
+  # tryceratops
+  "TRY",
+]
+ignore = [
+  # LineTooLong
+  "E501",
+  # DoNotAssignLambda
+  "E731",
+  # DoNotUseAssert
+  "S101",
+  "TRY003",
+  "RUF012",
+  "B904",
+  "E722",
+  "C901",
+  "S314",   # Using `xml` to parse untrusted data is known to be vulnerable to XML attacks; use `defusedxml` equivalents
+  "S602",   # `subprocess` call with `shell=True` identified, security issue
+  "C901",   # Function is too complex (too many arguments)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+"__init__.py" = ["F401", "I001"]
+"main.py" = ["F401"]
+"*.ipynb" = ["F401"]
+"sopa/cli/**" = ["B008"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.coverage.run]
+branch = true
+source = ["sopa"]

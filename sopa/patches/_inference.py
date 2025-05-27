@@ -42,9 +42,9 @@ class Inference:
 
     def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:
         if isinstance(model, str):
-            assert (
-                model in models.available_models
-            ), f"'{model}' is not a valid model name. Valid names are: {', '.join(list(models.available_models.keys()))}"
+            assert model in models.available_models, (
+                f"'{model}' is not a valid model name. Valid names are: {', '.join(list(models.available_models.keys()))}"
+            )
 
             return model, models.available_models[model]()
 

@@ -43,7 +43,7 @@ def merscope(
 
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
 
-    sdata = merscope_spatialdata_io(
+    sdata: SpatialData = merscope_spatialdata_io(
         path,
         backend=backend,
         z_layers=z_layers,
@@ -61,7 +61,7 @@ def merscope(
         if not isinstance(z_layers, int) and len(z_layers) == 1:
             z_layers = z_layers[0]
         if isinstance(z_layers, int):
-            for key in sdata.images.keys():
+            for key in sdata.images:
                 if key.endswith(f"_z{z_layers}"):
                     sdata.attrs[SopaAttrs.CELL_SEGMENTATION] = key
         else:
@@ -69,8 +69,12 @@ def merscope(
                 f"Multiple z-layers provided: {z_layers}. Not deciding which image should be used for cell segmentation."
             )
 
-    for key in sdata.points.keys():
+    for key in sdata.points:
         if key.endswith("_transcripts"):
             sdata.attrs[SopaAttrs.TRANSCRIPTS] = key
+
+            if "cell_id" in sdata.points[key].columns:
+                sdata.attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ["cell_id", -1]
+            break
 
     return sdata

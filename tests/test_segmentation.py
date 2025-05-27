@@ -1,9 +1,23 @@
+import numpy as np
 import shapely
 from geopandas.testing import assert_geodataframe_equal
 from shapely import MultiPolygon
 
 import sopa
 from sopa._constants import SopaKeys
+from sopa.segmentation._stainings import _channels_average_within_mask
+
+
+def test_channels_average_within_mask():
+    image = np.array([[[1, 2, 3], [4, 5, 6], [7, 8, 9]], [[10, 20, 30], [40, 50, 60], [70, 80, 90]]])
+    mask = np.array([[1, 1, 1], [0, 0, 1], [0, 1, 0]])
+
+    expected = np.array([
+        [[1.0, 2.0, 3.0], [4.0, 4.0, 6.0], [4.0, 8.0, 4.0]],
+        [[10.0, 20.0, 30.0], [40.0, 40.0, 60.0], [40.0, 80.0, 40.0]],
+    ])
+
+    assert (_channels_average_within_mask(image, mask) == expected).all()
 
 
 def test_cellpose_segmentation():
@@ -60,5 +74,9 @@ def test_tissue_segmentation():
 
     geo_df = sdata[SopaKeys.ROI].copy()
     m1_default_level0 = MultiPolygon(geo_df.geometry.values)
+
+    assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9
+
+    assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9
 
     assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9

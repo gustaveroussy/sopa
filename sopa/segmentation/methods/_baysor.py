@@ -6,12 +6,9 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ..._constants import SopaAttrs, SopaFiles, SopaKeys
-from ...utils import (
-    delete_transcripts_patches_dirs,
-    get_feature_key,
-    get_transcripts_patches_dirs,
-)
+from ...utils import delete_transcripts_patches_dirs, get_feature_key, get_transcripts_patches_dirs
 from .._transcripts import _check_transcript_patches, resolve
+from ._utils import _get_executable_path
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +58,7 @@ def baysor(
 
     baysor_command = _get_baysor_command(prior_shapes_key)
 
-    baysor_patch = BaysorPatch(baysor_command, config, force=force, recover=recover, capture_output=patch_index is None)
+    baysor_patch = BaysorPatch(baysor_command, config, force=force, capture_output=patch_index is None)
 
     if patch_index is not None:
         patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
@@ -69,7 +66,14 @@ def baysor(
         return
 
     patches_dirs = get_transcripts_patches_dirs(sdata)
-    settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in patches_dirs])
+
+    remaining_patches_dirs = (
+        [patch_dir for patch_dir in patches_dirs if not (patch_dir / "segmentation_counts.loom").exists()]
+        if recover
+        else patches_dirs
+    )
+
+    settings._run_with_backend([partial(baysor_patch, patch_dir) for patch_dir in remaining_patches_dirs])
 
     if force:
         patches_dirs = [patch_dir for patch_dir in patches_dirs if (patch_dir / "segmentation_counts.loom").exists()]
@@ -90,19 +94,14 @@ class BaysorPatch:
         baysor_command: str,
         config: dict | str,
         force: bool = False,
-        recover: bool = False,
         capture_output: bool = True,
     ):
         self.baysor_command = baysor_command
         self.config = config
         self.force = force
-        self.recover = recover
         self.capture_output = capture_output
 
     def __call__(self, patch_dir: Path):
-        if self.recover and (patch_dir / "segmentation_counts.loom").exists():
-            return
-
         _copy_segmentation_config(patch_dir / SopaFiles.TOML_CONFIG_FILE, self.config)
 
         import subprocess
@@ -122,7 +121,7 @@ class BaysorPatch:
 
 
 def _get_baysor_command(prior_shapes_key: str | None) -> str:
-    baysor_executable_path = _get_baysor_executable_path()
+    baysor_executable_path = _get_executable_path("baysor", ".julia")
 
     use_polygons_format_argument = _use_polygons_format_argument(baysor_executable_path)
     polygon_format = (
@@ -139,35 +138,13 @@ def _use_polygons_format_argument(baysor_executable_path: str) -> bool:
 
     from packaging.version import InvalidVersion, Version
 
-    result = subprocess.run(
-        f"{baysor_executable_path} run --version",
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
+    result = subprocess.run(f"{baysor_executable_path} run --version", shell=True, capture_output=True, text=True)
 
     try:
         return Version(result.stdout) >= Version("0.7.0")
     except InvalidVersion:
         log.warning("Could not parse the version of baysor. Assumes baysor >= 0.7.0.")
         return True
-
-
-def _get_baysor_executable_path() -> Path | str:
-    import shutil
-
-    if shutil.which("baysor") is not None:
-        return "baysor"
-
-    default_path = Path.home() / ".julia" / "bin" / "baysor"
-    if default_path.exists():
-        return default_path
-
-    bin_path = Path.home() / ".local" / "bin" / "baysor"
-    raise FileNotFoundError(
-        f"Please install baysor and ensure that either `{default_path}` executes baysor, or that `baysor` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
-    )
 
 
 def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale: float | None) -> dict:
@@ -178,11 +155,7 @@ def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale:
         "   - Provide the `config` argument, containing a valid Baysor config."
     )
 
-    points_key = sdata.attrs.get(SopaAttrs.TRANSCRIPTS)
-    assert (
-        points_key
-    ), f"Transcripts key not found in sdata.attrs['{SopaAttrs.TRANSCRIPTS}'], baysor config can't be inferred."
-
+    points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
     config = {

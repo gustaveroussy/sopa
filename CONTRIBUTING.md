@@ -18,14 +18,13 @@ For this, use one of the two following lines:
 # with pip
 pip install -e '.[dev]'
 
-# or with poetry
-poetry install -E dev
+# or with uv
+uv sync --all-extras --dev
 ```
 
 ## Coding guidelines
 
-- Use the `black` formatter and `isort`. Their usage should be automatic as they are in the `pyproject.toml` file. Depending on your IDE, you can choose to format your code on save.
-- Run `flake8` inside the whole `sopa` directory, i.e. `flake8 sopa`
+- Some code quality controls can be executed via pre-commit. You can install it via `pre-commit install`, and it will run the checks before any commit. You can also run `pre-commit` manually via `pre-commit run --all-files`
 - Follow the [PEP8](https://peps.python.org/pep-0008/) style guide.
 - Provide meaningful names to all your variables and functions.
 - Document your functions and type your function inputs/outputs.
@@ -37,6 +36,9 @@ To add some new code to **sopa**, you should:
 
 1. Fork the repository
 2. Install `sopa` in editable mode with the 'dev' extra (see above)
-3. Create your personal branch from `dev`
+3. Create your personal branch from `main`
 4. Implement your changes
-5. Create a pull request on the `dev` branch. Add explanations about your developed features, and wait for discussion and validation of your pull request
+5. Run tests via `pytest` (for coverage, use `pytest --cov --cov-config=pyproject.toml --cov-report=html` and open it with `open htmlcov/index.html`)
+6. Run `pre-commit run --all-files` to ensure minimal code quality.
+7. Commit and push changes
+8. Create a pull request on the `main` branch. Add explanations about your developed features, and wait for discussion and validation of your pull request

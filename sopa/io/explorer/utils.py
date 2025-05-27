@@ -14,7 +14,7 @@ from ...utils import add_spatial_element, get_spatial_element
 log = logging.getLogger(__name__)
 
 
-def explorer_file_path(path: str, filename: str, is_dir: bool):
+def explorer_file_path(path: str | Path, filename: str, is_dir: bool):
     path: Path = Path(path)
 
     if is_dir:

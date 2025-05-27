@@ -1,5 +1,6 @@
 import logging
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from anndata import AnnData
@@ -15,9 +16,8 @@ from ..utils import (
     get_spatial_element,
     get_spatial_image,
 )
-from . import aggregate_bins
+from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
-from . import count_transcripts
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +65,10 @@ def aggregate(
         bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
     if (bins_key is None) and (aggregate_genes or (aggregate_genes is None and sdata.points)):
+        assert sdata.points, (
+            "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
+        )
+
         points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
         )
@@ -122,7 +126,7 @@ class Aggregator:
         if (key_added not in self.sdata.tables) or (self.sdata[key_added].n_obs != len(self.geo_df)):
             return False
 
-        log.warning("Found existing table, transcripts are not count again.")
+        log.info("Found existing table, transcripts are not count again.")
         self.table = self.sdata[key_added]
 
         return True
@@ -160,14 +164,17 @@ class Aggregator:
             log.warning("No image found to aggregate channels. Use `aggregate_channels=False`")
             aggregate_channels = False
 
-        assert (
-            aggregate_genes or aggregate_channels
-        ), "At least one of `aggregate_genes` or `aggregate_channels` must be True"
+        assert aggregate_genes or aggregate_channels, (
+            "At least one of `aggregate_genes` or `aggregate_channels` must be True"
+        )
 
         if aggregate_genes:
             if self.bins_key is not None:
                 self.table = aggregate_bins(
-                    self.sdata, self.shapes_key, self.bins_key, expand_radius_ratio=expand_radius_ratio or 1
+                    self.sdata,
+                    self.shapes_key,
+                    self.bins_key,
+                    expand_radius_ratio=1 if expand_radius_ratio is None else expand_radius_ratio,
                 )
             elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(
@@ -245,25 +252,38 @@ class Aggregator:
         return aggregate_genes, aggregate_channels
 
     def add_standardized_table(self, key_added: str):
-        self.table.obs_names = list(map(str_cell_id, range(self.table.n_obs)))
-        self.geo_df.index = list(self.table.obs_names)
-
-        add_spatial_element(self.sdata, self.shapes_key, self.geo_df)
-
-        self.table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in self.geo_df.centroid])
-        self.table.obs[SopaKeys.REGION_KEY] = pd.Series(self.shapes_key, index=self.table.obs_names, dtype="category")
-        self.table.obs[SopaKeys.SLIDE_KEY] = pd.Series(self.image_key, index=self.table.obs_names, dtype="category")
-        self.table.obs[SopaKeys.INSTANCE_KEY] = self.geo_df.index
-        self.table.obs[SopaKeys.AREA_OBS] = self.geo_df.area.values
-
-        if ATTRS_KEY in self.table.uns:
-            del self.table.uns[ATTRS_KEY]
-
-        self.table = TableModel.parse(
-            self.table,
-            region_key=SopaKeys.REGION_KEY,
-            region=self.shapes_key,
-            instance_key=SopaKeys.INSTANCE_KEY,
+        add_standardized_table(
+            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key
         )
 
-        add_spatial_element(self.sdata, key_added, self.table)
+
+def add_standardized_table(
+    sdata: SpatialData,
+    table: AnnData,
+    geo_df: gpd.GeoDataFrame,
+    shapes_key: str,
+    table_key: str,
+    image_key: str | None = None,
+):
+    table.obs_names = list(map(str_cell_id, range(table.n_obs)))
+    geo_df.index = list(table.obs_names)
+
+    add_spatial_element(sdata, shapes_key, geo_df)
+
+    table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
+    table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
+    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(image_key or "None", index=table.obs_names, dtype="category")
+    table.obs[SopaKeys.INSTANCE_KEY] = geo_df.index
+    table.obs[SopaKeys.AREA_OBS] = geo_df.area.values
+
+    if ATTRS_KEY in table.uns:
+        del table.uns[ATTRS_KEY]
+
+    table = TableModel.parse(
+        table,
+        region_key=SopaKeys.REGION_KEY,
+        region=shapes_key,
+        instance_key=SopaKeys.INSTANCE_KEY,
+    )
+
+    add_spatial_element(sdata, table_key, table)

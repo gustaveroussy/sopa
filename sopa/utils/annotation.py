@@ -21,10 +21,7 @@ def preprocess_fluo(adata: AnnData) -> pd.DataFrame:
     Returns:
         A dataframe of preprocessed channels intensities
     """
-    if SopaKeys.INTENSITIES_OBSM in adata.obsm:
-        df = adata.obsm[SopaKeys.INTENSITIES_OBSM]
-    else:
-        df = adata.to_df()
+    df = adata.obsm[SopaKeys.INTENSITIES_OBSM] if SopaKeys.INTENSITIES_OBSM in adata.obsm else adata.to_df()
 
     divider = 5 * np.quantile(df, 0.2, axis=0)
     divider[divider == 0] = df.max(axis=0)[divider == 0]
@@ -59,9 +56,13 @@ def tangram_annotate(
     reference_preprocessing: str | None = None,
     bag_size: int = 10_000,
     max_obs_reference: int = 10_000,
+    density_prior: str = "uniform",
     **kwargs,
 ):
     """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
+
+    !!! info
+        You need to install `tangram-sc` to use this function. You can install it via `pip install tangram-sc`.
 
     Args:
         sdata: A `SpatialData` object
@@ -70,6 +71,7 @@ def tangram_annotate(
         reference_preprocessing: Preprocessing method used on the reference. Can be `"log1p"` (normalize_total + log1p) or `"normalized"` (just normalize_total). By default, consider that no processing was applied (raw counts)
         bag_size: Size of each bag on which tangram will be run. Use smaller bags to lower the RAM usage
         max_obs_reference: Maximum number of cells used in `adata_sc` at each level. Decrease it to lower the RAM usage.
+        density_prior: Density prior used in Tangram. Can be `"uniform"` or `"rna_count_based"`.
     """
     assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
 
@@ -82,6 +84,7 @@ def tangram_annotate(
         reference_preprocessing,
         bag_size,
         max_obs_reference,
+        density_prior,
         **kwargs,
     ).run()
 
@@ -95,6 +98,7 @@ class MultiLevelAnnotation:
         reference_preprocessing: str | None,
         bag_size: int,
         max_obs_reference: int,
+        density_prior: str,
         clip_percentile: float = 0.95,
     ):
         self.ad_sp = ad_sp
@@ -110,10 +114,11 @@ class MultiLevelAnnotation:
         self.bag_size = bag_size
         self.max_obs_reference = max_obs_reference
         self.clip_percentile = clip_percentile
+        self.density_prior = density_prior
 
-        assert (
-            cell_type_key in ad_sc.obs
-        ), f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+        assert cell_type_key in ad_sc.obs, (
+            f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+        )
 
         if self.ad_sc.raw is not None:
             del self.ad_sc.raw
@@ -174,12 +179,12 @@ class MultiLevelAnnotation:
         self._preprocess(ad_sp_split)
         sc.pp.filter_genes(ad_sp_split, min_cells=1)
 
-        # Calculate uniform density prior as 1/number_of_spots
+        # Calculate uniform density prior as 1/number_of_cells
         ad_sp_split.obs["uniform_density"] = np.ones(ad_sp_split.X.shape[0]) / ad_sp_split.X.shape[0]
 
         # Calculate rna_count_based density prior as % of rna molecule count
-        rna_count_per_spot = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
-        ad_sp_split.obs["rna_count_based_density"] = rna_count_per_spot / np.sum(rna_count_per_spot)
+        rna_count_per_cell = np.array(ad_sp_split.X.sum(axis=1)).squeeze()
+        ad_sp_split.obs["rna_count_based_density"] = rna_count_per_cell / np.sum(rna_count_per_cell)
 
         ad_sp_split.var["counts"] = np.array((ad_sp_split.X > 0).sum(0)).flatten()
         ad_sc_.var["counts"] = np.array((ad_sc_.X > 0).sum(0)).flatten()
@@ -195,9 +200,9 @@ class MultiLevelAnnotation:
             set(ad_sp_split.var_names[ad_sp_split.var.counts > 0]) & set(ad_sc_.var_names[ad_sc_.var.counts > 0])
         )
 
-        assert len(
-            selection
-        ), "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        assert len(selection), (
+            "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        )
         log.info(f"Keeping {len(selection)} shared genes")
 
         for ad_ in [ad_sp_split, ad_sc_]:
@@ -221,7 +226,7 @@ class MultiLevelAnnotation:
             obs_key = self.level_obs_key(level)
             self.ad_sp.obs[obs_key] = self.ad_sp.obs[previous_key]
             groups = self.ad_sc.obs.groupby(previous_key)
-            for ct in groups.groups.keys():
+            for ct in groups.groups:
                 group: pd.DataFrame = groups.get_group(ct)
                 indices_sp = self.ad_sp.obs_names[self.ad_sp.obs[previous_key] == ct]
 
@@ -246,7 +251,7 @@ class MultiLevelAnnotation:
         try:
             import tangram as tg
         except ImportError:
-            raise ImportError("To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'`.")
+            raise ImportError("To use tangram, you need to install it via `pip install tangram-sc`.")
 
         if indices_sp is not None and len(indices_sp) == 0:
             log.warning("No cell annotated in the upper level...")
@@ -274,11 +279,7 @@ class MultiLevelAnnotation:
 
             ad_sp_split = self.pp_adata(ad_sp_, ad_sc_, split)
 
-            ad_map = tg.map_cells_to_space(
-                ad_sc_,
-                ad_sp_split,
-                device=self.device,
-            )
+            ad_map = tg.map_cells_to_space(ad_sc_, ad_sp_split, device=self.device, density_prior=self.density_prior)
 
             tg.project_cell_annotations(ad_map, ad_sp_split, annotation=self.level_obs_key(level))
 

@@ -100,7 +100,7 @@ class AvailableModes(Enum):
     @classmethod
     def check_available(cls, mode: str | None):
         if mode is not None:
-            available_modes = list(map(lambda c: c.value, cls))
+            available_modes = [c.value for c in cls]
             assert mode in available_modes, f"Mode '{mode}' not available. Available modes are {available_modes}"
 
 
@@ -188,7 +188,7 @@ class TissueSegmentation:
                 contours_, _ = cv2.findContours(
                     np.array(labels == i, dtype=np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
                 )
-                closed_contours = np.array(list(contours_[0]) + [contours_[0][0]])
+                closed_contours = np.array([*list(contours_[0]), contours_[0][0]])
                 contours.extend([closed_contours.squeeze()])
 
         return gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
@@ -222,9 +222,9 @@ def _get_image_and_mode(
     sdata: SpatialData, image_key: str | None, mode: str | None, channel: str | None
 ) -> tuple[DataArray | DataTree, str]:
     AvailableModes.check_available(mode)
-    assert (
-        channel is None or mode != AvailableModes.SATURATION.value
-    ), "The `channel` argument is only used in the `staining` mode"
+    assert channel is None or mode != AvailableModes.SATURATION.value, (
+        "The `channel` argument is only used in the `staining` mode"
+    )
 
     if channel is not None:
         mode = AvailableModes.STAINING.value

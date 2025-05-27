@@ -44,6 +44,10 @@ sopa.settings.gene_exclude_pattern: str | None = "negcontrol.*|blank.*|antisense
 ```
 Use `sopa.settings.gene_exclude_pattern = None` to keep all genes.
 
+## Shapes operations
+
+::: sopa.segmentation.shapes.expand_radius
+
 ## Xenium Explorer
 
 ::: sopa.io.explorer.write

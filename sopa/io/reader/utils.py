@@ -115,7 +115,7 @@ def _ome_channels_names(path: Path | str):
     return [c.attrib["Name"] if "Name" in c.attrib else c.attrib["ID"] for c in channels]
 
 
-def ome_tif(path: Path, as_image: bool = False) -> DataArray | SpatialData:
+def ome_tif(path: str | Path, as_image: bool = False) -> DataArray | SpatialData:
     """Read an `.ome.tif` image. This image should be a 2D image (with possibly multiple channels).
     Typically, this function can be used to open Xenium IF images.
 

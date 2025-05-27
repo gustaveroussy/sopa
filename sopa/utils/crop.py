@@ -35,14 +35,14 @@ def _prepare(sdata: SpatialData, channels: list[str], scale_factor: float):
     image = spatial_image.transpose("y", "x", "c")
 
     if channels is not None and len(channels):
-        assert (
-            len(channels) in VALID_N_CHANNELS
-        ), f"Number of channels provided must be in: {', '.join(VALID_N_CHANNELS)}"
+        assert len(channels) in VALID_N_CHANNELS, (
+            f"Number of channels provided must be in: {', '.join(VALID_N_CHANNELS)}"
+        )
         image = image.sel(c=channels)
     else:
-        assert (
-            len(image.coords["c"]) in VALID_N_CHANNELS
-        ), f"Choose one or three channels among {image.c.values} by using the --channels argument"
+        assert len(image.coords["c"]) in VALID_N_CHANNELS, (
+            f"Choose one or three channels among {image.c.values} by using the --channels argument"
+        )
 
     log.info(f"Resizing image by a factor of {scale_factor}")
     return image_key, _resize_dataarray(image, scale_factor).compute()

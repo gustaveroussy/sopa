@@ -5,6 +5,7 @@ class SopaKeys:
     COMSEG_BOUNDARIES = "comseg_boundaries"
     CUSTOM_BOUNDARIES = "custom_boundaries"
     STARDIST_BOUNDARIES = "stardist_boundaries"
+    PROSEG_BOUNDARIES = "proseg_boundaries"
 
     # Patches keys
     PATCHES = "image_patches"
@@ -53,6 +54,8 @@ class SopaAttrs:
     TRANSCRIPTS = "transcripts_dataframe"
     BOUNDARIES = "boundaries_shapes"
     UID = "sopa_uid"
+    XENIUM_OUTPUT_PATH = "xenium_output_path"
+    PRIOR_TUPLE_KEY = "transcript_to_cell_assignment"
 
 
 class SopaFiles:

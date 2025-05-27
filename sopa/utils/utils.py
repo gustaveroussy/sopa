@@ -54,6 +54,7 @@ def get_boundaries(
         return get_spatial_element(sdata.shapes, key=key, return_key=return_key)
 
     VALID_BOUNDARIES = [
+        SopaKeys.PROSEG_BOUNDARIES,
         SopaKeys.BAYSOR_BOUNDARIES,
         SopaKeys.STARDIST_BOUNDARIES,
         SopaKeys.COMSEG_BOUNDARIES,
@@ -180,12 +181,12 @@ def get_spatial_element(
         assert key in element_dict, f"Spatial element '{key}' not found."
         return _return_element(element_dict, key, return_key, as_spatial_image)
 
-    assert (
-        len(element_dict) > 0
-    ), "No spatial element found. Provide an element key to denote which element you want to use."
-    assert (
-        len(element_dict) == 1
-    ), f"Multiple valid elements found: {', '.join(element_dict.keys())}. Provide an element key to denote which element you want to use."
+    assert len(element_dict) > 0, (
+        "No spatial element found. Provide an element key to denote which element you want to use."
+    )
+    assert len(element_dict) == 1, (
+        f"Multiple valid elements found: {', '.join(element_dict.keys())}. Provide an element key to denote which element you want to use."
+    )
 
     key = next(iter(element_dict.keys()))
 
@@ -235,9 +236,9 @@ def add_spatial_element(
     overwrite: bool = True,
 ):
     assert isinstance(element_name, str)
-    assert (
-        overwrite or element_name not in sdata._shared_keys
-    ), f"Trying to add {element_name=} but it is already existing and {overwrite=}"
+    assert overwrite or element_name not in sdata._shared_keys, (
+        f"Trying to add {element_name=} but it is already existing and {overwrite=}"
+    )
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message=".*already exists. Overwriting it in-memory.")
@@ -251,7 +252,7 @@ def add_spatial_element(
                 sdata.delete_element_from_disk(element_name)
                 sdata.write_element(element_name, overwrite=overwrite)
             else:
-                log.error(f"Error while saving {element_name} on disk: {e}")
+                raise ValueError(f"Error while saving {element_name} on disk with {overwrite=}: {e}")
 
 
 def set_sopa_attrs(
@@ -311,7 +312,7 @@ def get_cache_dir(sdata: SpatialData) -> Path:
         A `Path` to the cache directory.
     """
     if sdata.is_backed():  # inside the zarr directory
-        cache_dir = sdata.path / SopaFiles.SOPA_CACHE_DIR
+        cache_dir = sdata.path.resolve() / SopaFiles.SOPA_CACHE_DIR
     elif SopaAttrs.UID in sdata.attrs:  # existing cache in the home directory
         cache_dir = HOME_CACHE_DIR / sdata.attrs[SopaAttrs.UID]
     else:  # create a new cache directory in the home directory

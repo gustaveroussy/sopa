@@ -1,4 +1,4 @@
-# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml
 read:
   technology: phenocycler
 
@@ -9,13 +9,13 @@ patchify:
 segmentation:
   cellpose:
     diameter: 8
-    channels: ["DAPI"]
+    channels: [ "DAPI" ]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 16
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   min_intensity_ratio: 0.1
   expand_radius_ratio: 0.1
 

@@ -1,10 +1,11 @@
 name: ci
+
 on:
   push:
     tags:
       - v*
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   pre-commit:
@@ -14,61 +15,100 @@ jobs:
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
 
-  build:
+  tests:
     needs: [pre-commit]
+    name: "pytest and snakemake"
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        python-version: ["3.10", "3.11.8", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
+
     steps:
-      #----------------------------------------------
-      #       check-out repo and set-up python
-      #----------------------------------------------
-      - name: Check out repository
-        uses: actions/checkout@v4
-      - name: Set up python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
         with:
           python-version: ${{ matrix.python-version }}
 
-      #----------------------------------------------
-      #         install & configure poetry
-      #----------------------------------------------
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+      - name: Install extra dependencies
+        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install snakemake 'pulp<2.8'
 
-      #----------------------------------------------
-      #             install dependencies
-      #----------------------------------------------
-      - name: Install dependencies
-        run: poetry install --extras "dev cellpose wsi" --no-interaction && poetry run pip install snakemake 'pulp<2.8'
-
-      #----------------------------------------------
-      #              perform tasks
-      #----------------------------------------------
       - name: Tests
-        run: poetry run pytest
+        run: uv run pytest
 
       - name: Snakemake
-        run: cd workflow && poetry run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
+        run: cd workflow && uv run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
 
-      - name: Deploy doc
-        if: contains(github.ref, 'tags')
-        run: poetry run mkdocs gh-deploy --force
-
-  publish:
-    needs: [build]
+  deploy-docs:
+    needs: [tests]
     if: contains(github.ref, 'tags')
+    name: "Deploy documentation"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build and publish to pypi
-        uses: JRubics/poetry-publish@v1.17
+      - uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Install extra dependencies
+        run: uv sync --dev
+
+      - name: Build documentation
+        run: uv run mkdocs gh-deploy --force
+
+  pypi-release:
+    needs: [tests]
+    if: contains(github.ref, 'tags')
+    name: "PyPI release"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Build
+        run: uv build
+
+      - name: Publish
+        run: uv publish -t ${{ secrets.PYPI_TOKEN }}
+
+  docker-images-release:
+    needs: [pypi-release]
+    if: contains(github.ref, 'tags')
+    name: "Docker images release"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        extra-name: ["", "-baysor", "-cellpose", "-proseg", "-stardist"]
+
+    steps:
+      - name: Export tag version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "VERSION=$TAG" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          python_version: "3.10"
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          platforms: linux/amd64
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
+          context: ./docker/sopa${{ matrix.extra-name }}
+          build-args: |
+            SOPA_VERSION=${{ env.VERSION }}

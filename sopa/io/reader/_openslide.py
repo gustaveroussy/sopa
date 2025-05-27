@@ -1,7 +1,8 @@
 # Adapted from https://github.com/manzt/napari-lazy-openslide/tree/main
+from collections.abc import Mapping, MutableMapping
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any, Dict, Mapping, MutableMapping
+from typing import Any
 
 import numpy as np
 from openslide import OpenSlide
@@ -22,9 +23,9 @@ def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str | None
     store[path + attrs_key] = json_dumps(attrs)
 
 
-def create_meta_store(slide: OpenSlide, tilesize: int) -> Dict[str, bytes]:
+def create_meta_store(slide: OpenSlide, tilesize: int) -> dict[str, bytes]:
     """Creates a dict containing the zarr metadata for the multiscale openslide image."""
-    store = dict()
+    store = {}
     root_attrs = {
         "multiscales": [
             {
@@ -103,7 +104,7 @@ class OpenSlideStore(Store):
             tile = self._slide.read_region(location, level, size)
         except ArgumentError as err:
             # Can occur if trying to read a closed slide
-            raise err
+            raise ArgumentError(err)
         except Exception:
             # TODO: probably need better error handling.
             # If anything goes wrong, we just signal the chunk

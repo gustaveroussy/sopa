@@ -29,7 +29,7 @@ def wsi(
     image_name, img, slide, slide_metadata = _open_wsi(path, backend=backend)
 
     images = {}
-    for level, key in enumerate(sorted(list(img.keys()), key=int)):
+    for level, key in enumerate(sorted(img.keys(), key=int)):
         suffix = key if key != "0" else ""
 
         scale_image = DataArray(

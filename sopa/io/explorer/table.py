@@ -27,7 +27,7 @@ def write_gene_counts(path: str, adata: AnnData, layer: str | None = None, is_di
     counts = adata.X if layer is None else adata.layers[layer]
     counts = csr_matrix(counts.T)
 
-    feature_keys = list(adata.var_names) + ["Total transcripts"]
+    feature_keys = [*list(adata.var_names), "Total transcripts"]
     feature_ids = feature_keys
     feature_types = ["gene"] * len(adata.var_names) + ["aggregate_gene"]
 

@@ -19,8 +19,8 @@ def stardist(
     min_area: int = 0,
     delete_cache: bool = True,
     recover: bool = False,
-    prob_thresh: float = 0.5,
-    nms_thresh: float = 0.4,
+    prob_thresh: float = 0.2,
+    nms_thresh: float = 0.6,
     clip_limit: float = 0,
     clahe_kernel_size: int | list[int] | None = None,
     gaussian_sigma: float = 0,
@@ -73,9 +73,9 @@ def stardist(
 
 def stardist_patch(
     model_type: str = "2D_versatile_he",
-    prob_thresh: float = 0.5,
-    nms_thresh: float = 0.4,
-    channels: list[str] | str | None = None,  # for the CLI to work, as channels will be sent
+    prob_thresh: float = 0.2,
+    nms_thresh: float = 0.6,
+    channels: list[str] | str | None = None,  # for the CLI to work, as "channels" will be provided
     **stardist_eval_kwargs: int,
 ) -> Callable:
     try:
@@ -94,7 +94,7 @@ def stardist_patch(
         with SuppressPrintsAndWarnings():
             model = StarDist2D.from_pretrained(model_type)
 
-            patch = normalize(patch.transpose(1, 2, 0))
+            patch = normalize(patch.transpose(1, 2, 0), clip=True)
             mask, _ = model.predict_instances(
                 patch, prob_thresh=prob_thresh, nms_thresh=nms_thresh, **stardist_eval_kwargs
             )

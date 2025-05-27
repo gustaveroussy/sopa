@@ -4,7 +4,6 @@ from pathlib import Path
 
 import geopandas as gpd
 from anndata import AnnData
-from shapely import Polygon
 from spatialdata import SpatialData
 
 from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
@@ -29,9 +28,9 @@ log = logging.getLogger(__name__)
 
 
 def _check_explorer_directory(path: Path):
-    assert (
-        not path.exists() or path.is_dir()
-    ), "A path to an existing file was provided. It should be a path to a directory."
+    assert not path.exists() or path.is_dir(), (
+        "A path to an existing file was provided. It should be a path to a directory."
+    )
     path.mkdir(parents=True, exist_ok=True)
 
 
@@ -60,7 +59,7 @@ def write(
     polygon_max_vertices: int = 13,
     lazy: bool = True,
     ram_threshold_gb: int | None = 4,
-    mode: str = None,
+    mode: str | None = None,
     save_h5ad: bool = False,
     run_name: str | None = None,
 ) -> None:
@@ -115,9 +114,9 @@ def write(
         adata: AnnData = sdata.tables[table_key]
 
         _shapes_key = adata.uns[ATTRS_KEY]["region"]
-        assert (
-            shapes_key is None or _shapes_key == shapes_key
-        ), f"Got {shapes_key=}, while the table corresponds to the shapes {_shapes_key}"
+        assert shapes_key is None or _shapes_key == shapes_key, (
+            f"Got {shapes_key=}, while the table corresponds to the shapes {_shapes_key}"
+        )
         shapes_key = _shapes_key[0] if isinstance(_shapes_key, list) else _shapes_key
 
         geo_df = sdata[shapes_key]
@@ -141,8 +140,6 @@ def write(
         if table_key in sdata.tables:
             geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
 
-        assert all(isinstance(geom, Polygon) for geom in geo_df.geometry), "All geometries must be a `shapely.Polygon`"
-
         write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
 
     ### Saving transcripts
@@ -150,7 +147,7 @@ def write(
     if len(sdata.points):
         df = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
 
-    if _should_save(mode, "t") and df is not None:
+    if _should_save(mode, "t") and not _use_symlink(path, sdata, "transcripts*") and df is not None:
         gene_column = gene_column or get_feature_key(df)
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
@@ -159,7 +156,7 @@ def write(
             log.warning("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
-    if _should_save(mode, "i"):
+    if _should_save(mode, "i") and not _use_symlink(path, sdata, "morphology*"):
         write_image(
             path,
             sdata[image_key],
@@ -174,6 +171,26 @@ def write(
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
+
+
+def _use_symlink(path: Path, sdata: SpatialData, pattern: str) -> bool:
+    """Try using the Xenium output files when existing to avoid re-generating large files."""
+    if SopaAttrs.XENIUM_OUTPUT_PATH not in sdata.attrs:
+        return False
+
+    files = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
+    for file in files:
+        target = path / file.name
+
+        if target.exists():
+            if not target.is_symlink():  # avoid removing non-symlink files
+                return False
+            target.unlink()
+
+        target.symlink_to(file)
+        log.info(f"Created symlink {target} -> {file}")
+
+    return len(files) > 0
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> int:

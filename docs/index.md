@@ -4,7 +4,7 @@
   <img src="./assets/sopa.png" alt="sopa_logo" width="250px"/>
 </p>
 
-Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Hyperion. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
+Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Molecural Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
 🎉 `sopa==2.0.0` is out! It introduces many new API features; check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
 
@@ -16,12 +16,18 @@ The following illustration describes the main steps of `sopa`:
   <img src="./assets/overview.png" alt="sopa_overview" width="100%"/>
 </p>
 
+> *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
+
 ## Why use `sopa`
 
-- `sopa` is designed to be memory-efficient, and it scales to large datasets with millions of cells
-- It's straightforward to move on to another spatial omics technology since `sopa` is general to every spatial omics with single-cell resolution
-- Depending on your need, you can use our Snakemake pipeline, our CLI, or our API
-- You can open any data with the [Xenium Explorer](https://www.10xgenomics.com/support/software/xenium-explorer), which is a user-friendly software with many functions
-- Spatial operations are optimized since geometric operations use `shapely` internally
-- You can customize `sopa` and add your own segmentation or annotation tool if desired
+Sopa is a modern Python toolkit that is easy to use and offers many advantages:
+
+- `sopa` is designed to be memory-efficient, and it scales to slides with millions of cells
+- `sopa` can be used on any spatial technology with single-cell resolution, making it straightforward to apply it to multiple projects
+- Many segmentation tools are implemented in Sopa, so you can try/compare them all easily
+- Depending on your need, you can use our API, CLI, or directly the Snakemake pipeline
+- You can visualize your data in an interactive manner
+- Spatial operations are optimized and use `shapely` internally
 - `sopa` integrates naturally with other community tools such as [Scanpy](https://scanpy.readthedocs.io/en/stable/index.html) or [Squidpy](https://squidpy.readthedocs.io/en/latest/index.html).
+
+Start using Sopa by reading our [getting started](../getting_started) guide!

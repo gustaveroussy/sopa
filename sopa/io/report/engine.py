@@ -40,7 +40,7 @@ class Title(Renderable):
         self.subtitle = subtitle
 
     def __str__(self) -> str:
-        return f"""<h1 class="{'subtitle' if self.subtitle else 'title'} is-{self.level}">{self.text}</h1>"""
+        return f"""<h1 class="{"subtitle" if self.subtitle else "title"} is-{self.level}">{self.text}</h1>"""
 
 
 class Paragraph(Renderable):
@@ -63,7 +63,7 @@ class Message(Renderable):
 
     def __str__(self) -> str:
         return f"""
-        <div class='notification is-{self.color} {'is-light' if self.is_light else ''}'>
+        <div class='notification is-{self.color} {"is-light" if self.is_light else ""}'>
             {self.text}
         </div>
         """
@@ -109,7 +109,7 @@ class ProgressBar(Renderable):
     def __str__(self) -> str:
         return f"""
         {"" if self.text is None else Paragraph(self.text)}
-        <progress class="progress is-{self.color} {'is-light' if self.is_light else ''}"
+        <progress class="progress is-{self.color} {"is-light" if self.is_light else ""}"
             value="{self.value}"
             max="{self.valuemax}">{self.value}
         </progress>
@@ -198,7 +198,7 @@ class Columns(Renderable):
 
     def __str__(self) -> str:
         return f"""
-    <div block style="display: flex; {'justify-content: center;' if self.is_centered else ''}">
+    <div block style="display: flex; {"justify-content: center;" if self.is_centered else ""}">
         {self.children_html}
     </div>
     """

@@ -4,13 +4,21 @@ config = validate_config(config) # validate the Snakemake config
 paths = WorkflowPaths(config) # object handling the paths to the files that will be created
 args = Args(paths, config) # object handling the arguments passed to the workflow
 
+### Segmentation rules
+include: "rules/utils.smk"
+include: "rules/cellpose.smk"
+include: "rules/comseg.smk"
+include: "rules/baysor.smk"
+include: "rules/proseg.smk"
+include: "rules/stardist.smk"
+
 localrules: all
 
 rule all:
     input:
         paths.annotations if args.annotate else [],
         paths.explorer_experiment,
-        paths.explorer_image,
+        paths.smk_explorer_raw,
         paths.report,
     params:
         sdata_path = paths.sdata_path,
@@ -44,7 +52,7 @@ rule tissue_segmentation:
     input:
         paths.sdata_zgroup if paths.data_path else [],
     output:
-        touch(paths.smk_tissue_segmentation),
+        touch(paths.segmentation_done("tissue")),
     conda:
         "sopa"
     params:
@@ -58,7 +66,7 @@ rule tissue_segmentation:
 checkpoint patchify_image:
     input:
         paths.sdata_zgroup,
-        paths.smk_tissue_segmentation if args.tissue_segmentation else [],
+        paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
         patches_file = paths.smk_patches_file_image,
         patches = touch(paths.smk_patches),
@@ -75,8 +83,8 @@ checkpoint patchify_image:
 checkpoint patchify_transcripts:
     input:
         paths.sdata_zgroup,
-        paths.smk_cellpose_boundaries if args.cellpose else [],
-        paths.smk_tissue_segmentation if args.tissue_segmentation else [],
+        paths.segmentation_done("cellpose") if args.use("cellpose") else [],
+        paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
         directory(paths.smk_transcripts_temp_dir),
         patches_file = paths.smk_patches_file_transcripts,
@@ -90,134 +98,9 @@ checkpoint patchify_transcripts:
         sopa patchify transcripts {params.sdata_path} {params.patchify_transcripts}
         """
 
-rule patch_segmentation_cellpose:
-    input:
-        paths.smk_patches_file_image,
-        paths.smk_patches,
-    output:
-        paths.smk_cellpose_temp_dir / "{index}.parquet",
-    conda:
-        "sopa"
-    params:
-        cellpose = args["segmentation"]["cellpose"].as_cli(),
-        sdata_path = paths.sdata_path,
-    shell:
-        """
-        sopa segmentation cellpose {params.sdata_path} --patch-index {wildcards.index} {params.cellpose}
-        """
-
-rule patch_segmentation_baysor:
-    input:
-        paths.smk_patches_file_transcripts,
-    output:
-        paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.loom",
-    conda:
-        "sopa"
-    params:
-        baysor_config = args["segmentation"]["baysor"].as_cli(keys=["config"]),
-        sdata_path = paths.sdata_path,
-    resources:
-        cpus_per_task=1,
-    shell:
-        """
-        export JULIA_NUM_THREADS={resources.cpus_per_task} # parallelize within each patch for Baysor >= v0.7
-
-
-        if command -v module &> /dev/null; then
-            module purge
-        fi
-
-        sopa segmentation baysor {params.sdata_path} --patch-index {wildcards.index} {params.baysor_config}
-        """
-
-rule patch_segmentation_comseg:
-    input:
-        paths.smk_patches_file_transcripts,
-    output:
-        paths.smk_transcripts_temp_dir / "{index}" / "segmentation_polygons.json",
-        paths.smk_transcripts_temp_dir / "{index}" / "segmentation_counts.h5ad",
-    conda:
-        "sopa"
-    params:
-        comseg_config = args["segmentation"]["comseg"].as_cli(keys=["config"]),
-        sdata_path = paths.sdata_path,
-    shell:
-        """
-        sopa segmentation comseg {params.sdata_path} --patch-index {wildcards.index} {params.comseg_config}
-        """
-
-def get_input_resolve(name: str, method_name: str):
-    def _(wilcards):
-        with getattr(checkpoints, f"patchify_{name}").get(**wilcards).output.patches_file.open() as f:
-            resolve_paths = paths.temporary_boundaries_paths(f.read(), method_name)
-            return [str(path.as_posix()) for path in resolve_paths]  # snakemake uses posix paths (fix issue #64)
-    return _
-
-rule resolve_cellpose:
-    input:
-        get_input_resolve("image", "cellpose"),
-    output:
-        touch(paths.smk_cellpose_boundaries),
-    conda:
-        "sopa"
-    params:
-        sdata_path = paths.sdata_path,
-    shell:
-        """
-        sopa resolve cellpose {params.sdata_path}
-        """
-
-rule resolve_baysor:
-    input:
-        files = get_input_resolve("transcripts", "baysor"),
-    output:
-        touch(paths.smk_baysor_boundaries),
-        touch(paths.smk_table),
-    conda:
-        "sopa"
-    params:
-        resolve = args.resolve_transcripts(),
-        sdata_path = paths.sdata_path,
-        smk_transcripts_temp_dir = paths.smk_transcripts_temp_dir,
-    shell:
-        """
-        sopa resolve baysor {params.sdata_path} {params.resolve}
-
-        rm -r {params.smk_transcripts_temp_dir}    # cleanup large baysor files
-        """
-
-rule resolve_comseg:
-    input:
-        files = get_input_resolve("transcripts", "comseg"),
-    output:
-        touch(paths.smk_comseg_boundaries),
-        touch(paths.smk_table),
-    conda:
-        "sopa"
-    params:
-        resolve = args.resolve_transcripts(),
-        sdata_path = paths.sdata_path,
-        smk_transcripts_temp_dir = paths.smk_transcripts_temp_dir,
-    shell:
-        """
-        sopa resolve comseg {params.sdata_path} {params.resolve}
-
-        rm -r {params.smk_transcripts_temp_dir}    # cleanup large comseg files
-        """
-
-def get_smk_boundaries(args):
-    if args.baysor:
-        return paths.smk_baysor_boundaries
-    elif args.comseg:
-        return paths.smk_comseg_boundaries
-    elif args.cellpose:
-        return paths.smk_cellpose_boundaries
-    else:
-        raise ValueError("No segmentation method selected")
-
 rule aggregate:
     input:
-        get_smk_boundaries(args),
+        args.segmentation_boundaries(),
     output:
         touch(paths.smk_aggregation),
     conda:
@@ -249,11 +132,11 @@ rule annotate:
         sopa annotate {params.method_name} {params.sdata_path} {params.annotation}
         """
 
-rule image_write:
+rule explorer_raw:
     input:
         paths.sdata_zgroup,
     output:
-        paths.explorer_image,
+        touch(paths.smk_explorer_raw),
     conda:
         "sopa"
     params:
@@ -262,29 +145,12 @@ rule image_write:
         explorer_directory = paths.explorer_directory,
     shell:
         """
-        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "+i" --no-save-h5ad
-        """
-
-rule report:
-    input:
-        get_smk_boundaries(args),
-        paths.smk_aggregation,
-        paths.annotations if args.annotate else [],
-    output:
-        paths.report,
-    params:
-        sdata_path = paths.sdata_path,
-        report = paths.report,
-    conda:
-        "sopa"
-    shell:
-        """
-        sopa report {params.sdata_path} {params.report}
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "+it" --no-save-h5ad
         """
 
 rule explorer:
     input:
-        get_smk_boundaries(args),
+        args.segmentation_boundaries(),
         paths.smk_aggregation,
         paths.annotations if args.annotate else [],
     output:
@@ -297,5 +163,22 @@ rule explorer:
         explorer_directory = paths.explorer_directory,
     shell:
         """
-        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-i"
+        sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-it"
+        """
+
+rule report:
+    input:
+        args.segmentation_boundaries(),
+        paths.smk_aggregation,
+        paths.annotations if args.annotate else [],
+    output:
+        paths.report,
+    params:
+        sdata_path = paths.sdata_path,
+        report = paths.report,
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa report {params.sdata_path} {params.report}
         """

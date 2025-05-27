@@ -1,10 +1,6 @@
-## Installation
+## Installing Sopa
 
-### Sopa package
-
-Sopa can be installed on every OS with `pip` or [`poetry`](https://python-poetry.org/docs/).
-
-The preferred Python version is `python==3.10`, but we also support `3.11` and `3.12`.
+Sopa can be installed on every OS with `pip`, from `python>=3.10` to `python<3.13`.
 
 !!! note "Advice (optional)"
 
@@ -17,19 +13,12 @@ The preferred Python version is `python==3.10`, but we also support `3.11` and `
     conda activate sopa
     ```
 
-Choose one of the following, depending on your needs (it should take at most a few minutes):
+Choose one of the following, depending on your needs:
 
 === "From PyPI"
 
     ```sh
     pip install sopa
-    ```
-
-    To install extras (for example, if you want to use `cellpose`/`baysor`), please run:
-
-    ```sh
-    # choose any valid extra among cellpose/baysor/tangram/wsi
-    pip install 'sopa[cellpose,baysor]'
     ```
 
 === "Editable mode"
@@ -41,34 +30,86 @@ Choose one of the following, depending on your needs (it should take at most a f
     # no extra
     pip install  -e .
 
-    # or, to install extras, among cellpose/baysor/tangram/wsi:
+    # or, to install extras, among cellpose/baysor/stardist/wsi:
     pip install -e '.[cellpose,baysor]'
     ```
 
-=== "Poetry (dev mode)"
+=== "uv (dev mode)"
 
     ``` bash
     git clone https://github.com/gustaveroussy/sopa.git
     cd sopa
 
-    poetry install --all-extras
+    uv sync --all-extras --dev
     ```
 
-!!! warning "Baysor usage"
-    Even though `pip install 'sopa[baysor]'` will install some dependencies related to baysor, you still have to install the `baysor` command line (see the [official documentation](https://kharchenkolab.github.io/Baysor/dev/installation/)) if you want to use it.
+!!! warning "Extra dependencies"
+    Dependending on the segmentation tool that you use, you'll need extras, as detailed in the next section.
 
-    If the Baysor executable is not at `~/.julia/bin/baysor`, please make the `baysor` command available (e.g., via creating a symlink `~/.local/bin/baysor` pointing to executable), or export the path to the executable via `export baysor=/path/to/baysor/executable`.
+## Extra dependencies
 
-### Snakemake setup
+By default, `sopa` only install the minimal dependencies to avoid a heavy installation. Depending on your usage, you can install some extras. The available extras are listed below.
 
-To use Snakemake, in addition to the above `sopa` environment, you'll need to clone a repository containing the Snakemake workflow:
+=== "Cellpose"
+    If you need to run Cellpose, you can use the corresponding extra:
+
+    ```sh
+    pip install 'sopa[cellpose]'
+
+    # you can also combine extras: pip install 'sopa[cellpose,baysor,wsi,stardist]'
+    ```
+
+=== "Baysor"
+    To use [Baysor](https://kharchenkolab.github.io/Baysor/dev/), you'll first need to install Sopa with the `baysor` extra:
+
+    ```sh
+    pip install 'sopa[baysor]'
+    ```
+
+    **Important**: then, you also have to install the `baysor` command line as detailed in the [official documentation](https://kharchenkolab.github.io/Baysor/dev/installation/).
+
+    !!! info "Executable path"
+        If the Baysor executable is not at `~/.julia/bin/baysor`, please make the `baysor` command available (e.g., via creating a symlink `~/.local/bin/baysor` pointing to the executable), or export the path to the executable via `export baysor=/path/to/baysor/executable`.
+
+
+=== "Proseg"
+    [Proseg](https://github.com/dcjones/proseg) has to be installed independently, this can be done with [`cargo`](https://doc.rust-lang.org/cargo/getting-started/installation.html):
+
+    ```sh
+    cargo install proseg
+    ```
+
+    !!! info "Executable path"
+        If the `proseg` executable is not at `~/.cargo/bin/proseg`, please make the `proseg` command available (e.g., via creating a symlink `~/.local/bin/proseg` pointing to the executable), or export the path to the executable via `export proseg=/path/to/proseg/executable`.
+=== "Stardist"
+    If you need to run [Stardist](https://github.com/stardist/stardist), you can install the corresponding extra:
+
+    ```sh
+    pip install 'sopa[stardist]'
+    ```
+=== "Comseg"
+    If you need to run Comseg, you can install it via pip:
+
+    ```sh
+    pip install comseg
+    ```
+=== "WSI"
+    If you need to work on whole slide images / H&E images, you can install the corresponding extras as below. You can also consider the `stardist` extra, if you want to run cell segmentation on the H&E image.
+
+    ```sh
+    pip install 'sopa[wsi]'
+    ```
+
+## Snakemake setup
+
+If you plan to use Snakemake, in addition to the above `sopa` environment, you'll need to clone the `sopa` repository containing the Snakemake workflow:
 
 ```sh
 git clone https://github.com/gustaveroussy/sopa.git
 cd sopa   # move inside the sopa repository
 ```
 
-Also, make sure you have installed `snakemake>=8.0.0`. This does **not** necessarily have to be inside the `sopa` environment: for instance, you can create a new environment specific to snakemake:
+Also, make sure you have installed `snakemake>=8.0.0`. This does **not** necessarily have to be inside the `sopa` environment — for instance, you can create a new environment specific to snakemake:
 
 ```sh
 # this will create a new environment called "snakemake"

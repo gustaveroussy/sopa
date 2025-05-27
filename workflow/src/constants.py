@@ -1,0 +1,6 @@
+TOY_READERS = ["uniform", "toy_dataset"]
+
+TRANSCRIPT_BASED_METHODS = ["proseg", "baysor", "comseg"]
+STAINING_BASED_METHODS = ["stardist", "cellpose"]
+
+SEGMENTATION_METHODS = TRANSCRIPT_BASED_METHODS + STAINING_BASED_METHODS

@@ -18,7 +18,15 @@ log = logging.getLogger(__name__)
 
 
 class Patches1D:
-    def __init__(self, xmin, xmax, patch_width, patch_overlap, tight, int_coords):
+    def __init__(
+        self,
+        xmin: float | int,
+        xmax: float | int,
+        patch_width: float | int,
+        patch_overlap: float | int,
+        tight: bool,
+        int_coords: bool,
+    ):
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
 
@@ -29,9 +37,9 @@ class Patches1D:
         self._count = self.count()
         if tight:
             self.patch_width = self.tight_width()
-            assert (
-                self._count == self.count()
-            ), f"Invalid patching with {self.delta=}, {self.patch_width=} and {self.patch_overlap=}"
+            assert self._count == self.count(), (
+                f"Invalid patching with {self.delta=}, {self.patch_width=} and {self.patch_overlap=}"
+            )
 
     def count(self):
         if self.patch_width >= self.delta:
@@ -71,16 +79,19 @@ class Patches2D:
         self,
         sdata: SpatialData,
         element: SpatialElement | str,
-        patch_width: float | int,
+        patch_width: float | int | None,
         patch_overlap: float | int = 50,
+        roi_key: str | None = SopaKeys.ROI,
     ):
         """
         Args:
             sdata: A `SpatialData` object
             element: SpatialElement or name of the element on with patches will be made (image or points)
-            patch_width: Width of the patches (in the unit of the coordinate system of the element)
+            patch_width: Width of the patches (in the unit of the coordinate system of the element). If `None`, only one patch will be created
             patch_overlap: Overlap width between the patches
         """
+        patch_width = float("inf") if (patch_width is None or patch_width == -1) else patch_width
+
         assert patch_width > patch_overlap, f"Argument {patch_width=} must be greater than {patch_overlap=}"
 
         self.sdata = sdata
@@ -99,21 +110,21 @@ class Patches2D:
             xmax, ymax = self.element.x.max().compute(), self.element.y.max().compute()
             tight, int_coords = True, False
         else:
-            raise ValueError(f"Invalid element type: {type(self.element)}")
+            raise TypeError(f"Invalid element type: {type(self.element)}")
 
         self.patch_x = Patches1D(xmin, xmax, patch_width, patch_overlap, tight, int_coords)
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
         self.roi = None
-        if SopaKeys.ROI in sdata.shapes:
-            geo_df = to_intrinsic(sdata, sdata[SopaKeys.ROI], self.original_element)
+        assert roi_key is None or roi_key in sdata.shapes or roi_key == SopaKeys.ROI
 
-            assert all(
-                isinstance(geom, Polygon) for geom in geo_df.geometry
-            ), f"All sdata['{SopaKeys.ROI}'] geometries must be polygons"
+        if roi_key is not None and roi_key in sdata.shapes:
+            geo_df = to_intrinsic(sdata, sdata[roi_key], self.original_element)
 
             self.roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
-            assert isinstance(self.roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(self.roi)}"
+            assert isinstance(self.roi, (Polygon, MultiPolygon)), (
+                f"Invalid ROI type: {type(self.roi)}. Must be Polygon or MultiPolygon"
+            )
 
         self._init_patches()
 
@@ -122,6 +133,8 @@ class Patches2D:
 
         for i in range(self.patch_x._count * self.patch_y._count):
             self._try_add_patch(i)
+
+        assert self.ilocs, "No valid patches found inside the provided region of interest."
 
         self.ilocs = np.array(self.ilocs)
         self.bboxes = np.array(self.bboxes)
@@ -156,6 +169,12 @@ class Patches2D:
     @property
     def shape(self) -> tuple[int, int]:
         return (self.patch_y._count, self.patch_x._count)
+
+    def centroids(self) -> np.ndarray:
+        x = (self.bboxes[:, 0] + self.bboxes[:, 2]) / 2
+        y = (self.bboxes[:, 1] + self.bboxes[:, 3]) / 2
+
+        return np.column_stack((x, y))
 
     def _bbox_iloc(self, ix: int, iy: int) -> list[int]:
         """Coordinates of the rectangle bounding box of the patch at the given indices
@@ -192,13 +211,11 @@ class Patches2D:
         return geo_df
 
     def as_geodataframe(self) -> gpd.GeoDataFrame:
-        geo_df = gpd.GeoDataFrame(
-            {
-                "geometry": self.polygons,
-                SopaKeys.BOUNDS: self.bboxes.tolist(),
-                SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
-            }
-        )
+        geo_df = gpd.GeoDataFrame({
+            "geometry": self.polygons,
+            SopaKeys.BOUNDS: self.bboxes.tolist(),
+            SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
+        })
 
         return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
 
