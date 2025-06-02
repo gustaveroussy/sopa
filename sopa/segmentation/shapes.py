@@ -186,7 +186,9 @@ def expand_radius(
     geo_df.geometry = geo_df.buffer(expand_radius_)
 
     if no_overlap:
-        log.warning("Computing Voronoi polygons to ensure no overlap between shapes is still experimental.")
+        log.warning(
+            "Computing Voronoi polygons to ensure no overlap between shapes is still experimental. It can take 10+ minutes for 100k+ shapes."
+        )
         geo_df.geometry = remove_overlap(geo_df, as_gdf=False)
 
     return geo_df
