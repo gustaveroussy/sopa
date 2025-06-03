@@ -5,8 +5,12 @@ import geopandas as gpd
 import numpy as np
 import shapely
 import shapely.affinity
+import skimage
+from geopandas import GeoDataFrame
 from shapely.errors import GEOSException
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
+from shapely.geometry import GeometryCollection, LinearRing, MultiPolygon, Polygon
+from skimage.draw import polygon
+from skimage.measure._regionprops import RegionProperties
 
 log = logging.getLogger(__name__)
 
