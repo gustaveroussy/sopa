@@ -3,8 +3,9 @@ import logging
 import geopandas as gpd
 import numpy as np
 from anndata import AnnData
-from scipy.sparse import coo_matrix, lil_matrix
+from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
 from spatialdata import SpatialData
+from tqdm import tqdm
 
 from ..segmentation.shapes import expand_radius
 from ..utils import to_intrinsic
@@ -72,11 +73,11 @@ def _get_unique_bins_mapping(
     unique_mapping.eliminate_zeros()
     unique_mapping = unique_mapping.tolil()
 
-    adata_unique_mapping = AnnData(unique_mapping @ bins_table.X)
+    adata_unique_map = AnnData(unique_mapping @ bins_table.X)
 
-    X_unique, X_shared = _pca_representation(n_components, adata_unique_mapping.X, bins_table.X[shared_bins])
+    X_unique, X_shared = _pca_representation(n_components, adata_unique_map.X, bins_table.X[shared_bins])
 
-    for bin_index_among_shared, bin_index in enumerate(np.where(shared_bins)[0]):
+    for bin_index_among_shared, bin_index in enumerate(tqdm(np.where(shared_bins)[0])):
         cell_indices = indices_matrix.row[indices_matrix.col == bin_index]
 
         distances: np.ndarray = ((X_unique[cell_indices] - X_shared[bin_index_among_shared]) ** 2).sum(1)
@@ -88,19 +89,22 @@ def _get_unique_bins_mapping(
 
 
 def _pca_representation(
-    n_components: int, table_unique_mapping: np.ndarray, shared_table: np.ndarray
+    n_components: int, adata_unique_map: np.ndarray | csr_matrix, shared_bins: np.ndarray | csr_matrix
 ) -> tuple[np.ndarray, np.ndarray]:
     from sklearn.decomposition import PCA
 
-    n_components = min(n_components, shared_table.shape[1] - 1)
+    n_components = min(n_components, shared_bins.shape[1] - 1, shared_bins.shape[0] - 1, adata_unique_map.shape[0] - 1)
     pca = PCA(n_components=n_components)
 
-    X_unique = pca.fit_transform(_log1p_tpm(table_unique_mapping))
-    X_shared = pca.transform(_log1p_tpm(shared_table))
+    X_unique = pca.fit_transform(_log1p_tpm(adata_unique_map))
+    X_shared = pca.transform(_log1p_tpm(shared_bins))
 
     return X_unique, X_shared
 
 
-def _log1p_tpm(x: np.ndarray) -> np.ndarray:
-    x = x / (x.sum(axis=1, keepdims=True) * 1e6 + 1e-6)
+def _log1p_tpm(x: np.ndarray | csr_matrix) -> np.ndarray:
+    if isinstance(x, np.ndarray):
+        x = x / (x.sum(axis=1, keepdims=True) + 1e-8) * 1e6
+    else:
+        x = x / (x.sum(axis=1) + 1e-8) * 1e6
     return np.log1p(x)
