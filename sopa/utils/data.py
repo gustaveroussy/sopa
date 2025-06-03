@@ -251,11 +251,6 @@ def _he_image(length: int) -> np.ndarray:
     return 255 - image
 
 
-def uniform(*_, **kwargs):
-    log.warning("The `uniform` function is deprecated and will be removed in sopa==2.1.0, use `toy_dataset` instead")
-    return toy_dataset(**kwargs)
-
-
 def blobs(
     *_,
     length: int = 1_024,

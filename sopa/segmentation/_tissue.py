@@ -183,30 +183,6 @@ class TissueSegmentation:
         return _vectorize_mask(labels, allow_holes=True)
 
 
-def hsv_otsu(
-    sdata: SpatialData,
-    image_key: str | None = None,
-    level: int = -1,
-    blur_k: int = 5,
-    open_k: int = 5,
-    close_k: int = 5,
-    drop_threshold: float = 0.01,
-):
-    log.warning(
-        "The hsv_otsu function is deprecated and will be removed in sopa==2.1.0. Use `sopa.segmentation.tissue` instead."
-    )
-    tissue(
-        sdata,
-        image_key=image_key,
-        mode=AvailableModes.SATURATION.value,
-        level=level,
-        blur_kernel_size=blur_k,
-        open_kernel_size=open_k,
-        close_kernel_size=close_k,
-        drop_threshold=drop_threshold,
-    )
-
-
 def _get_image_and_mode(
     sdata: SpatialData, image_key: str | None, mode: str | None, channel: str | None
 ) -> tuple[DataArray | DataTree, str]:

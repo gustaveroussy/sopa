@@ -10,7 +10,7 @@ from spatialdata import SpatialData
 
 from .._constants import SopaAttrs, SopaKeys
 from ..utils import get_feature_key, get_spatial_element, to_intrinsic
-from . import Aggregator
+from .aggregation import Aggregator
 
 log = logging.getLogger(__name__)
 
