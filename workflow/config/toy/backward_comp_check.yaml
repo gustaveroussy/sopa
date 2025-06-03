@@ -10,19 +10,12 @@ patchify:
 
 segmentation:
   proseg:
-    prior_shapes_key: auto
+    cell_key: auto
 
 aggregate:
-  aggregate_channels: true
+  average_intensities: true
   min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
-
-annotation:
-  method: fluorescence
-  args:
-    marker_cell_dict:
-      CK: Tumoral cell
-      CD3: T cell
-      CD20: B cell
+  gene_column: "genes"
 
 explorer:
   gene_column: "genes"

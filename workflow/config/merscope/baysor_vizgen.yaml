@@ -13,8 +13,7 @@ patchify:
 segmentation:
   baysor:
     min_area: 20
-    prior_shapes_key: cell_id # this allows to use the prior segmentation performed by Vizgen
-    unassigned_value: -1
+    prior_shapes_key: auto # this allows to use the prior segmentation performed by Vizgen
 
     config:
       data:
