@@ -7,7 +7,7 @@ import spatialdata
 import xarray as xr
 from anndata import AnnData
 from scipy.sparse import csr_matrix
-from shapely import Polygon, box
+from shapely import Point, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import PointsModel, ShapesModel, TableModel
 
@@ -136,6 +136,49 @@ def test_aggregate_bins():
     assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
 
     assert (adata_aggr.X.toarray() == expected_counts).all()
+
+
+def test_aggregate_bins_unique_mapping():
+    gdf_bins = gpd.GeoDataFrame(geometry=[box(i, j, i + 0.9, j + 0.9) for i in range(4) for j in range(4)])
+    gdf_bins.index = [f"bin{i}" for i in range(len(gdf_bins))]
+    gdf_bins = ShapesModel.parse(gdf_bins)
+
+    counts = np.array([
+        [
+            (i < 2) and (j < 2),
+            1,
+            (i >= 2 and j >= 2),
+            (i < 2 and j >= 2),
+        ]
+        for i in range(4)
+        for j in range(4)
+    ]).astype(int)
+
+    adata = AnnData(counts)
+    adata.var_names = ["gene1", "gene2", "gene3", "gene4"]
+
+    adata.obs["bin_id"] = gdf_bins.index
+    adata.obs["bin_key"] = "bins_2um"
+
+    gdf_cells = gpd.GeoDataFrame(geometry=[Point(0.7, 1.5), Point(1.3, 3), Point(2.5, 3.2)])
+    gdf_cells.geometry = gdf_cells.buffer(0.6)
+    gdf_cells = ShapesModel.parse(gdf_cells)
+
+    adata = TableModel.parse(adata, region="bins_2um", instance_key="bin_id", region_key="bin_key")
+
+    sdata = SpatialData(shapes={"bins_2um": gdf_bins, "cells": gdf_cells}, tables={"table": adata})
+
+    adata_aggr1 = sopa.aggregation.aggregate_bins(
+        sdata, "cells", "table", unique_mapping=False, expand_radius_ratio=1.5
+    )
+
+    adata_aggr = sopa.aggregation.aggregate_bins(sdata, "cells", "table", unique_mapping=True, expand_radius_ratio=1.5)
+
+    assert (adata_aggr.X <= adata_aggr1.X).all()
+
+    assert (np.array([[4, 6, 0, 2], [0, 6, 2, 4], [0, 6, 4, 2]]) == adata_aggr1.X).all()
+
+    assert (np.array([[4, 4, 0, 0], [0, 4, 0, 4], [0, 4, 4, 0]]) == adata_aggr.X).all()
 
 
 def test_overlay():
