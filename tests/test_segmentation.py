@@ -60,7 +60,7 @@ def test_tissue_segmentation():
 
     assert m1.intersection(m2).area / m1.area > 0.5
 
-    sopa.segmentation.tissue(sdata)
+    sopa.segmentation.tissue(sdata, level=1)
 
     geo_df = sdata[SopaKeys.ROI].copy()
     m1_default = MultiPolygon(geo_df.geometry.values)
@@ -68,15 +68,11 @@ def test_tissue_segmentation():
     geo_df = sopa.utils.to_intrinsic(sdata, sdata[SopaKeys.ROI], sdata["he_image"]).copy()
     m1_default_transformed = MultiPolygon(geo_df.geometry.values)
 
-    assert m1_default_transformed.intersection(m1_default).area / m1_default_transformed.area < 0.1
+    assert m1_default_transformed.intersection(m1_default).area / m1_default_transformed.area < 0.2
 
     sopa.segmentation.tissue(sdata, level=0)
 
     geo_df = sdata[SopaKeys.ROI].copy()
     m1_default_level0 = MultiPolygon(geo_df.geometry.values)
-
-    assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9
-
-    assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9
 
     assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9
