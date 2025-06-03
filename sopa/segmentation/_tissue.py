@@ -3,7 +3,8 @@ from enum import Enum
 
 import geopandas as gpd
 import numpy as np
-from shapely.geometry import GeometryCollection, Polygon, box
+import skimage
+from shapely.geometry import GeometryCollection, box
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
@@ -11,7 +12,7 @@ from xarray import DataArray, DataTree
 
 from .._constants import SopaAttrs, SopaKeys
 from ..utils import add_spatial_element, get_spatial_element
-from .shapes import expand_radius, to_valid_polygons
+from .shapes import _vectorize_mask, expand_radius, to_valid_polygons
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ def tissue(
         return
 
     geo_df = expand_radius(geo_df, expand_radius_ratio)
-    geo_df = to_valid_polygons(geo_df)
+    geo_df = to_valid_polygons(geo_df, simple_polygon=False)
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
 
     add_spatial_element(sdata, key_added, geo_df)
@@ -150,13 +151,11 @@ class TissueSegmentation:
     def saturation(self) -> np.ndarray:
         assert self.image.sizes["c"] == 3, "The image should be in RGB color space"
 
-        import cv2
-
         thumbnail = np.array(self.image.transpose("y", "x", "c"))
 
         assert thumbnail.dtype == np.uint8, "In 'saturation' mode, the image should have the uint8 dtype"
 
-        thumbnail = cv2.cvtColor(thumbnail, cv2.COLOR_RGB2HSV)
+        thumbnail = (skimage.color.rgb2hsv(thumbnail) * 255).astype("uint8")
         return thumbnail[:, :, 1]  # saturation channel
 
     def otsu(self, thumbnail_2d: np.ndarray) -> gpd.GeoDataFrame:
@@ -168,30 +167,20 @@ class TissueSegmentation:
         Returns:
             A GeoDataFrame containing the segmented polygon(s).
         """
-        import cv2
+        median_footprint = np.ones((self.blur_kernel_size, self.blur_kernel_size))
+        thumbnail_blurred = skimage.filters.median(thumbnail_2d, footprint=median_footprint)
 
-        thumbnail_blurred = cv2.medianBlur(thumbnail_2d, self.blur_kernel_size)
-        _, mask = cv2.threshold(thumbnail_blurred, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+        mask = thumbnail_blurred > skimage.filters.threshold_otsu(thumbnail_blurred)
 
-        mask_open = cv2.morphologyEx(
-            mask, cv2.MORPH_OPEN, np.ones((self.open_kernel_size, self.open_kernel_size), np.uint8)
-        )
-        mask_open_close = cv2.morphologyEx(
-            mask_open, cv2.MORPH_CLOSE, np.ones((self.close_kernel_size, self.close_kernel_size), np.uint8)
-        )
+        opening_footprint = np.ones((self.open_kernel_size, self.open_kernel_size))
+        mask_open = skimage.morphology.opening(mask, opening_footprint).astype(np.uint8)
 
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask_open_close, 4, cv2.CV_32S)
+        closing_footprint = np.ones((self.close_kernel_size, self.close_kernel_size))
+        mask_open_close = skimage.morphology.closing(mask_open, closing_footprint).astype(np.uint8)
 
-        contours = []
-        for i in range(1, num_labels):
-            if stats[i, 4] > self.drop_threshold * np.prod(mask_open_close.shape):
-                contours_, _ = cv2.findContours(
-                    np.array(labels == i, dtype=np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
-                )
-                closed_contours = np.array([*list(contours_[0]), contours_[0][0]])
-                contours.extend([closed_contours.squeeze()])
+        labels = skimage.measure.label(mask_open_close, connectivity=2)
 
-        return gpd.GeoDataFrame(geometry=[Polygon(contour) for contour in contours])
+        return _vectorize_mask(labels, allow_holes=True)
 
 
 def hsv_otsu(

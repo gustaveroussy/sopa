@@ -5,32 +5,24 @@ import geopandas as gpd
 import numpy as np
 import shapely
 import shapely.affinity
+import skimage
+from geopandas import GeoDataFrame
 from shapely.errors import GEOSException
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
+from shapely.geometry import GeometryCollection, LinearRing, MultiPolygon, Polygon
+from skimage.draw import polygon
+from skimage.measure._regionprops import RegionProperties
 
 log = logging.getLogger(__name__)
 
 
-def _contours(cell_mask: np.ndarray) -> MultiPolygon:
-    """Extract the contours of all cells from a binary mask
-
-    Args:
-        cell_mask: An array representing a cell: 1 where the cell is, 0 elsewhere
-
-    Returns:
-        A shapely MultiPolygon
-    """
-    import cv2
-
-    contours, _ = cv2.findContours(cell_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    return MultiPolygon([Polygon(contour[:, 0, :]) for contour in contours if contour.shape[0] >= 4])
-
-
-def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygon:
+def _ensure_polygon(
+    cell: Polygon | MultiPolygon | GeometryCollection, simple_polygon: bool = True
+) -> Polygon | MultiPolygon:
     """Ensures that the provided cell becomes a Polygon
 
     Args:
         cell: A shapely Polygon or MultiPolygon or GeometryCollection
+        simple_polygon: If True, will return a Polygon without holes. Else, allow holes and MultiPolygon.
 
     Returns:
         The shape as a Polygon, or an empty Polygon if the cell was invalid
@@ -38,21 +30,27 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
     cell = shapely.make_valid(cell)
 
     if isinstance(cell, Polygon):
-        if cell.interiors:
+        if simple_polygon and cell.interiors:
             cell = Polygon(list(cell.exterior.coords))
         return cell
 
     if isinstance(cell, MultiPolygon):
-        return max(cell.geoms, key=lambda polygon: polygon.area)
+        return max(cell.geoms, key=lambda polygon: polygon.area) if simple_polygon else cell
 
     if isinstance(cell, GeometryCollection):
         geoms = [geom for geom in cell.geoms if isinstance(geom, Polygon)]
+
+        if len(geoms) > 1 and not simple_polygon:
+            return MultiPolygon(geoms)
 
         if geoms:
             return max(geoms, key=lambda polygon: polygon.area)
 
         geoms = [geom for geom in cell.geoms if isinstance(geom, MultiPolygon)]
         geoms = [polygon for multi_polygon in geoms for polygon in multi_polygon.geoms]
+
+        if len(geoms) > 1 and not simple_polygon:
+            return MultiPolygon(geoms)
 
         if geoms:
             return max(geoms, key=lambda polygon: polygon.area)
@@ -64,8 +62,8 @@ def _ensure_polygon(cell: Polygon | MultiPolygon | GeometryCollection) -> Polygo
     return Polygon()
 
 
-def to_valid_polygons(geo_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    geo_df.geometry = geo_df.geometry.map(_ensure_polygon)
+def to_valid_polygons(geo_df: gpd.GeoDataFrame, simple_polygon: bool = True) -> gpd.GeoDataFrame:
+    geo_df.geometry = geo_df.geometry.map(lambda cell: _ensure_polygon(cell, simple_polygon))
     return geo_df[~geo_df.is_empty]
 
 
@@ -73,7 +71,7 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
     """Smoothen a cell polygon
 
     Args:
-        cell_id: ID of the cell to vectorize
+        cell_id: MultiPolygon representing a cell
         smooth_radius: radius used to smooth the cell polygon
         tolerance: tolerance used to simplify the cell polygon
 
@@ -116,9 +114,7 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
         log.warning("No cell was returned by the segmentation")
         return gpd.GeoDataFrame(geometry=[])
 
-    cells = gpd.GeoDataFrame(
-        geometry=[_contours((mask == cell_id).astype("uint8")) for cell_id in range(1, max_cells + 1)]
-    )
+    cells = _vectorize_mask(mask)
 
     mean_radius = np.sqrt(cells.area / np.pi).mean()
     smooth_radius = mean_radius * smooth_radius_ratio
@@ -129,6 +125,41 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
     cells = cells[~cells.is_empty]
 
     return cells
+
+
+def _region_props_to_multipolygon(region_props: RegionProperties, allow_holes: bool) -> MultiPolygon:
+    mask = np.pad(region_props.image, 1)
+    contours = skimage.measure.find_contours(mask, 0.5)
+
+    rings = [LinearRing(contour[:, [1, 0]]) for contour in contours if contour.shape[0] >= 4]
+
+    exteriors = [ring for ring in rings if ring.is_ccw]
+
+    if allow_holes:
+        holes = [ring for ring in rings if not ring.is_ccw]
+
+    def _to_polygon(exterior: LinearRing) -> Polygon:
+        exterior_poly = Polygon(exterior)
+
+        _holes = None
+        if allow_holes:
+            _holes = [hole.coords for hole in holes if exterior_poly.contains(Polygon(hole))]
+
+        return Polygon(exterior, holes=_holes)
+
+    multipolygon = MultiPolygon([_to_polygon(exterior) for exterior in exteriors])
+
+    yoff, xoff, *_ = region_props.bbox
+    return shapely.affinity.translate(multipolygon, xoff - 1, yoff - 1)  # remove padding offset
+
+
+def _vectorize_mask(mask: np.ndarray, allow_holes: bool = False) -> GeoDataFrame:
+    if mask.max() == 0:
+        return GeoDataFrame(geometry=[])
+
+    regions = skimage.measure.regionprops(mask)
+
+    return GeoDataFrame(geometry=[_region_props_to_multipolygon(region, allow_holes) for region in regions])
 
 
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
@@ -146,18 +177,19 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
     Returns:
         The mask array.
     """
-    import cv2
-
     xmin, ymin, xmax, ymax = [xy_min[0], xy_min[1], xy_min[0] + shape[1], xy_min[1] + shape[0]]
 
     cell_translated = shapely.affinity.translate(cell, -xmin, -ymin)
     geoms = cell_translated.geoms if isinstance(cell_translated, MultiPolygon) else [cell_translated]
 
-    rasterized_image = np.zeros((ymax - ymin, xmax - xmin), dtype=np.int8)
+    shape = (ymax - ymin, xmax - xmin)
+
+    rasterized_image = np.zeros(shape, dtype=np.int8)
 
     for geom in geoms:
-        coords = np.array(geom.exterior.coords)[None, :].astype(np.int32)
-        cv2.fillPoly(rasterized_image, coords, color=1)
+        x, y = geom.exterior.coords.xy
+        rr, cc = polygon(y, x, shape)
+        rasterized_image[rr, cc] = 1
 
     return rasterized_image
 
