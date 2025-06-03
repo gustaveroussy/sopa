@@ -37,12 +37,6 @@ app.add_typer(
 
 
 @app.command()
-def read(data_path: str = typer.Argument(), technology: str = typer.Option()):
-    """Deprecated and will be removed in sopa==2.1.0. Use `sopa convert` instead."""
-    raise NameError("`sopa read` is deprecated. Use `sopa convert` instead.")
-
-
-@app.command()
 def convert(
     data_path: str = typer.Argument(
         help="Path to one data sample (most of the time, this corresponds to a directory with images files and eventually a transcript file)"
@@ -178,26 +172,12 @@ def aggregate(
     method_name: str = typer.Option(
         None, help="If segmentation was performed with a generic method, this is the name of the method used."
     ),
-    average_intensities: bool = typer.Option(False, help="[Deprecated] Use `aggregate_channels` instead."),
-    gene_column: str = typer.Option(None, help="[Deprecated] Use `aggregate_genes` instead."),
 ):
     """Create an `anndata` table containing the transcript count and/or the channel intensities per cell"""
     import sopa
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
-
-    if gene_column is not None:
-        log.warning(
-            "The `gene_column` argument is deprecated and will be removed in sopa==2.1.0. Use `aggregate_genes` instead."
-        )
-        aggregate_genes = True
-
-    if average_intensities:
-        log.warning(
-            "The `average_intensities` argument is deprecated and will be removed in sopa==2.1.0. Use `aggregate_channels` instead."
-        )
-        aggregate_channels = True
 
     sopa.aggregate(
         sdata,

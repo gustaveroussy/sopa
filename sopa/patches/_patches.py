@@ -194,12 +194,6 @@ class Patches2D:
         """Number of patches"""
         return len(self.bboxes)
 
-    def write(self, *args, **kwargs):
-        log.warning(
-            "Patches2D.write is deprecated and will be removed in sopa==2.1.0. Use Patches2D.add_shapes instead"
-        )
-        self.add_shapes(*args, **kwargs)
-
     def add_shapes(self, key_added: str | None = None, overwrite: bool = True) -> gpd.GeoDataFrame:
         key_added = key_added or SopaKeys.PATCHES
         geo_df = self.as_geodataframe()
@@ -218,13 +212,3 @@ class Patches2D:
         })
 
         return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
-
-    def patchify_transcripts(self, *args, **kwargs):
-        raise NameError(
-            "Patches2D.patchify_transcripts is deprecated and will be removed in sopa==2.1.0. Use `sopa.make_transcript_patches` instead"
-        )
-
-    def patchify_centroids(self, *args, **kwargs) -> list[int]:
-        raise NameError(
-            "Patches2D.patchify_centroids is deprecated and will be removed in sopa==2.1.0. Use `sopa.make_transcript_patches` instead"
-        )

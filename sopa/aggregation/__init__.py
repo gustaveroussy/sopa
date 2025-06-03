@@ -1,5 +1,5 @@
 from .bins import aggregate_bins
-from .channels import average_channels, aggregate_channels
+from .channels import aggregate_channels
 from .transcripts import count_transcripts
-from .aggregation import aggregate, Aggregator
+from .aggregation import aggregate
 from .overlay import overlay_segmentation

@@ -12,5 +12,5 @@ from .reader.generic import aicsimageio, bioio
 from .reader.visium_hd import visium_hd
 from .reader.molecular_cartography import molecular_cartography
 from .report import write_report
-from ..utils.data import blobs, uniform, toy_dataset
+from ..utils.data import blobs, toy_dataset
 from . import explorer

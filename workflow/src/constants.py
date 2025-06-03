@@ -1,4 +1,4 @@
-TOY_READERS = ["uniform", "toy_dataset"]
+TOY_READERS = ["toy_dataset"]
 
 TRANSCRIPT_BASED_METHODS = ["proseg", "baysor", "comseg"]
 STAINING_BASED_METHODS = ["stardist", "cellpose"]
