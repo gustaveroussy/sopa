@@ -8,7 +8,6 @@ from dask.delayed import delayed
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from spatialdata.transformations import Identity
 
 from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
@@ -53,7 +52,6 @@ def phenocycler(
     image = Image2DModel.parse(
         image,
         dims=("c", "y", "x"),
-        transformations={"pixels": Identity()},
         c_coords=names,
         **image_models_kwargs,
     )

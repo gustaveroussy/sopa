@@ -6,7 +6,6 @@ import dask.array as da
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from spatialdata.transformations import Identity
 from xarray import DataArray
 
 from ..._constants import SopaAttrs
@@ -49,7 +48,6 @@ def hyperion(path: Path, image_models_kwargs: dict | None = None, imread_kwargs:
 
     image = Image2DModel.parse(
         image,
-        transformations={"pixels": Identity()},
         c_coords=image.coords["c"].values,
         **image_models_kwargs,
     )
