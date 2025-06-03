@@ -28,9 +28,9 @@ log = logging.getLogger(__name__)
 
 
 def _check_explorer_directory(path: Path):
-    assert (
-        not path.exists() or path.is_dir()
-    ), "A path to an existing file was provided. It should be a path to a directory."
+    assert not path.exists() or path.is_dir(), (
+        "A path to an existing file was provided. It should be a path to a directory."
+    )
     path.mkdir(parents=True, exist_ok=True)
 
 
@@ -59,7 +59,7 @@ def write(
     polygon_max_vertices: int = 13,
     lazy: bool = True,
     ram_threshold_gb: int | None = 4,
-    mode: str = None,
+    mode: str | None = None,
     save_h5ad: bool = False,
     run_name: str | None = None,
 ) -> None:
@@ -114,9 +114,9 @@ def write(
         adata: AnnData = sdata.tables[table_key]
 
         _shapes_key = adata.uns[ATTRS_KEY]["region"]
-        assert (
-            shapes_key is None or _shapes_key == shapes_key
-        ), f"Got {shapes_key=}, while the table corresponds to the shapes {_shapes_key}"
+        assert shapes_key is None or _shapes_key == shapes_key, (
+            f"Got {shapes_key=}, while the table corresponds to the shapes {_shapes_key}"
+        )
         shapes_key = _shapes_key[0] if isinstance(_shapes_key, list) else _shapes_key
 
         geo_df = sdata[shapes_key]

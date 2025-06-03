@@ -36,7 +36,7 @@ def cells_to_groups(
 
     distances_to_groups = {}
 
-    if not adata.obs[group_key].dtype.name == "category":
+    if adata.obs[group_key].dtype.name != "category":
         log.info(f"Converting adata.obs['{group_key}'] to category")
         adata.obs[group_key] = adata.obs[group_key].astype("category")
 
@@ -112,7 +112,7 @@ def prepare_network(
     niche_key: str,
     clip_weight: float = 3,
     node_colors: tuple[str] = ("#5c7dc4", "#f05541"),
-    node_sizes: float = (1.3, 5),
+    node_sizes: tuple[float | int] = (1.3, 5),
 ) -> tuple[pd.DataFrame, dict, dict, dict]:
     """Create a dataframe representing weights between cell-types and/or niches.
     This can be later use to plot a cell-type/niche represention of a whole slide

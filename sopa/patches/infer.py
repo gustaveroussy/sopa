@@ -31,8 +31,9 @@ def compute_embeddings(
     image_key: str | None = None,
     batch_size: int = 32,
     device: str | None = None,
+    roi_key: str | None = SopaKeys.ROI,
     key_added: str | None = None,
-) -> None:
+) -> str:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
     !!! info
@@ -49,7 +50,11 @@ def compute_embeddings(
         image_key: Optional image key of the image, unecessary if there is only one image.
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
+        roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
+
+    Returns:
+        The key of the spatial element that was added to the `SpatialData` object.
     """
     try:
         import torch
@@ -63,7 +68,7 @@ def compute_embeddings(
     image = _get_image_for_inference(sdata, image_key)
 
     infer = Inference(image, model, patch_width, level, magnification, device)
-    patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap)
+    patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap, roi_key=roi_key)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 
@@ -89,7 +94,7 @@ def compute_embeddings(
         region_key="region",
         instance_key="instance",
     )
-    adata.obsm["spatial"] = gdf.centroid.get_coordinates().values
+    adata.obsm["spatial"] = patches.centroids()
     adata.uns["embedding_config"] = {
         "patch_width": patch_width,
         "patch_overlap": patch_overlap,
@@ -102,6 +107,8 @@ def compute_embeddings(
     key_added = key_added or f"{infer.model_str}_embeddings"
     add_spatial_element(sdata, key_added, adata)
 
+    return key_added
+
 
 def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:
     if image_key is not None:
@@ -110,8 +117,8 @@ def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -
     cell_image = sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION)
     tissue_image = sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION)
 
-    assert (
-        cell_image is None or tissue_image is None or cell_image == tissue_image
-    ), "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+    assert cell_image is None or tissue_image is None or cell_image == tissue_image, (
+        "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+    )
 
     return get_spatial_element(sdata.images, key=cell_image or tissue_image)

@@ -1,9 +1,55 @@
-## [2.0.4] - xxxx-xx-xx
+## [2.0.8] - xxxx-xx-xx
+
+### Added
+- Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
+- `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
+- Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
+
+## [2.0.7] - 2025-05-19
+
+### Added
+- `sopa.patches.compute_embeddings` returns `key_added` for conveniency
+- Added `sopa.io.bioio` generic reader
 
 ### Fixed
+- Pin `cellpose<4.0.0` (#252)
+- Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
+- Force sopa version in Docker images CI @Clemsazert (#251)
+
+### Fixed
+- CosmX reader fix when only 4 channels are used instead of 5 @professor-sagittarius (#258)
+
+## [2.0.6] - 2025-04-24
+
+### Added
+- New Resolve Bioscience reader `sopa.io.molecular_cartography` (#240)
+- Adding `roi_key` argument in `sopa.patches.compute_embeddings` to filter the patches by any shapes element (not just the segmented tissue). For instance, keep only the patches behind the cells.
+- [Docker images](https://hub.docker.com/r/quentinblampey/sopa) auto build on tag release (#242) @Clemsazert
+
+### Fixed
+- When installing the `stardist` extra, force `numpy<2.0.0` (#245)
+
+## [2.0.5] - 2025-04-24
+
+Yanked release (missing dask distributed, cannot install)
+
+## [2.0.4] - 2025-04-08
+
+### Added
+- Add `prior_shapes_key="auto"` to automatically detect the prior proprietary segmentation when making transcript patches
+- Direct stardist CLI/snakemake support (not just via `generic-staining`)
+- Added a snakemake config for Visium HD data (with stardist segmentation)
+- Proseg support for Snakemake
+- CLI command `sopa --version` to show the version of Sopa
+
+### Fixed
+- Fix CosMX reader issues related to the channel names, FOV names, and image flipping (#180, #227, #231)
 - Fix `expand_radius_ratio=None` usage for bins aggregation (#226)
-- Fix CosMX reader when channel names file not exported (#180)
-- Fix CosMX reader when FOV names have 5 digits (#227)
+- Stardist: use `clip=True` when normalizing images to avoid `-1e20` values
+
+### Changed
+- Snakemake pipeline refactoring to better support the increasing number of segmentation tools
+- Tangram now has to be installed via `pip install tangram-sc` rather than via the sopa extra
 
 ## [2.0.3] - 2025-03-13
 

@@ -31,9 +31,9 @@ class Settings:
 
     @parallelization_backend.setter
     def parallelization_backend(self, value):
-        assert (
-            value in self.available_parallelization_backends
-        ), f"Invalid parallelization backend. Available options are: {self.available_parallelization_backends}"
+        assert value in self.available_parallelization_backends, (
+            f"Invalid parallelization backend. Available options are: {self.available_parallelization_backends}"
+        )
         self._parallelization_backend = value
 
     def _run_with_backend(self, functions: list[Callable]):

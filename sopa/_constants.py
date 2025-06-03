@@ -55,6 +55,7 @@ class SopaAttrs:
     BOUNDARIES = "boundaries_shapes"
     UID = "sopa_uid"
     XENIUM_OUTPUT_PATH = "xenium_output_path"
+    PRIOR_TUPLE_KEY = "transcript_to_cell_assignment"
 
 
 class SopaFiles:

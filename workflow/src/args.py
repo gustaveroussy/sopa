@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .constants import SEGMENTATION_METHODS, TRANSCRIPT_BASED_METHODS
 from .paths import WorkflowPaths
 
 
@@ -12,25 +13,33 @@ class Args:
         self.paths = paths
         self.config = config
 
-        # which segmentation method(s) is/are used
-        self.cellpose = "cellpose" in self.config.get("segmentation", {})
-        self.baysor = "baysor" in self.config.get("segmentation", {})
-        self.comseg = "comseg" in self.config.get("segmentation", {})
-        self.tissue_segmentation = "tissue" in self.config.get("segmentation", {})
-
-        self.transcript_based_method = "comseg" if self.comseg else ("baysor" if self.baysor else None)
+        # which transcript-based segmentation to run (if any)
+        self.transcript_based_method = None
+        for method in TRANSCRIPT_BASED_METHODS:
+            if method in self.config.get("segmentation", {}):
+                self.transcript_based_method = method
+                break
 
         # whether to run annotation
         self.annotate = "annotation" in self.config and "method" in self.config["annotation"]
 
+    def use(self, method_name: str) -> bool:
+        return method_name in self.config["segmentation"]
+
+    def segmentation_boundaries(self):
+        for method in SEGMENTATION_METHODS:
+            if self.use(method):
+                return self.paths.segmentation_done(method)
+        raise ValueError("No segmentation method selected")
+
     def resolve_transcripts(self) -> str:
         """Arguments for `sopa resolve [baysor/comseg]`"""
-        if self.transcript_based_method is None:
+        if self.transcript_based_method is None or self.transcript_based_method == "proseg":
             return ""
 
-        if "baysor" in self.config["segmentation"]:
+        if self.transcript_based_method == "baysor":
             gene_column = self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
-        elif "comseg" in self.config["segmentation"]:
+        elif self.transcript_based_method == "comseg":
             gene_column = self.config["segmentation"]["comseg"]["config"]["gene_column"]
 
         min_area = self.config["segmentation"].get(self.transcript_based_method, {}).get("min_area", 0)
@@ -47,7 +56,7 @@ class Args:
             params += " --write-cells-centroids"
 
         method_config = self["segmentation"][self.transcript_based_method]
-        return f'{params} {method_config.as_cli(keys=["prior_shapes_key", "unassigned_value"])}'
+        return f"{params} {method_config.as_cli(keys=['prior_shapes_key', 'unassigned_value'])}"
 
     ### The methods below are used to convert the Args object into a string for the Sopa CLI
 
@@ -85,9 +94,9 @@ class Args:
 
         For instance, {"x": 2, "y": False} will be converted to "--x 2 --no-y"
         """
-        return " ".join((res for item in self.config.items() for res in _stringify_item(*item)))
+        return " ".join(res for item in self.config.items() for res in _stringify_item(*item))
 
-    def __getitem__(self, name: str) -> "Args" | bool | str | list:
+    def __getitem__(self, name: str) -> Args | bool | str | list:
         sub_config = self.config.get(name, {})
         if not isinstance(sub_config, dict):
             return sub_config
@@ -113,6 +122,6 @@ def _stringify_item(key: str, value: bool | list | dict | str):
 
 
 def _stringify_value_for_cli(value) -> str:
-    if isinstance(value, str) or isinstance(value, dict):
+    if isinstance(value, (str, dict)):
         return f'"{value}"'
     return str(value)

@@ -5,9 +5,9 @@ Functions for building graphs from spatial coordinates.
 
 import logging
 import warnings
+from collections.abc import Iterable
 from functools import partial
 from itertools import chain
-from typing import Iterable
 
 import numpy as np
 from anndata import AnnData

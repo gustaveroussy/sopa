@@ -85,6 +85,9 @@ def xenium(
                 sdata.points["transcripts"].qv < qv_threshold
             )
 
+        if "cell_id" in sdata.points["transcripts"].columns:
+            sdata.attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ["cell_id", "UNASSIGNED"]
+
         if qv_threshold is not None:
             assert "qv" in sdata.points["transcripts"].columns, "QV column not found in `sdata['transcripts']`"
 

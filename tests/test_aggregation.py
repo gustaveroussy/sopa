@@ -3,11 +3,12 @@ import dask.array as da
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pytest
 import spatialdata
 import xarray as xr
 from anndata import AnnData
 from scipy.sparse import csr_matrix
-from shapely import Polygon, box
+from shapely import Point, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import PointsModel, ShapesModel, TableModel
 
@@ -16,7 +17,7 @@ from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
 
 dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa
+import dask.dataframe as dd  # noqa: E402
 
 
 def test_aggregate_channels_aligned():
@@ -34,15 +35,15 @@ def test_aggregate_channels_aligned():
     min_intensities = _aggregate_channels_aligned(xarr, cells, "min")
     max_intensities = _aggregate_channels_aligned(xarr, cells, "max")
 
-    true_mean_intensities = np.stack(
-        [image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start]
-    )
-    true_min_intensities = np.stack(
-        [image[:, y : y + cell_size, x : x + cell_size].min(axis=(1, 2)) for x, y in cell_start]
-    )
-    true_max_intensities = np.stack(
-        [image[:, y : y + cell_size, x : x + cell_size].max(axis=(1, 2)) for x, y in cell_start]
-    )
+    true_mean_intensities = np.stack([
+        image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start
+    ])
+    true_min_intensities = np.stack([
+        image[:, y : y + cell_size, x : x + cell_size].min(axis=(1, 2)) for x, y in cell_start
+    ])
+    true_max_intensities = np.stack([
+        image[:, y : y + cell_size, x : x + cell_size].max(axis=(1, 2)) for x, y in cell_start
+    ])
 
     assert (mean_intensities == true_mean_intensities).all()
     assert (min_intensities == true_min_intensities).all()
@@ -50,13 +51,11 @@ def test_aggregate_channels_aligned():
 
 
 def test_count_transcripts():
-    df_pandas = pd.DataFrame(
-        {
-            "x": [1, 2, 3, 7, 11, 1, 2, 2, 1],
-            "y": [1, 1, 2, 8, 0, 2, 3, 3, 1],
-            "gene": ["a", "a", "b", "c", "a", "c", "b", "b", "blank"],
-        }
-    )
+    df_pandas = pd.DataFrame({
+        "x": [1, 2, 3, 7, 11, 1, 2, 2, 1],
+        "y": [1, 1, 2, 8, 0, 2, 3, 3, 1],
+        "gene": ["a", "a", "b", "c", "a", "c", "b", "b", "blank"],
+    })
     df_pandas["gene"] = df_pandas["gene"].astype(object)
     df_pandas["gene"].loc[0] = np.nan
 
@@ -99,25 +98,21 @@ def test_aggregate_bins():
     gdf_cells = gpd.GeoDataFrame(geometry=cells)
     gdf_cells = ShapesModel.parse(gdf_cells)
 
-    counts = np.array(
-        [
-            [3, 2, 1],
-            [0, 1, 0],
-            [10, 10, 15],
-            [0, 0, 12],
-            [2, 2, 2],
-            [0, 4, 0],
-            [32, 1, 2],
-        ]
-    )
+    counts = np.array([
+        [3, 2, 1],
+        [0, 1, 0],
+        [10, 10, 15],
+        [0, 0, 12],
+        [2, 2, 2],
+        [0, 4, 0],
+        [32, 1, 2],
+    ])
 
-    expected_counts = np.array(
-        [
-            [3, 2, 1],
-            [13, 13, 16],
-            [34, 7, 16],
-        ]
-    )
+    expected_counts = np.array([
+        [3, 2, 1],
+        [13, 13, 16],
+        [34, 7, 16],
+    ])
 
     adata = AnnData(counts)
     adata.var_names = ["gene1", "gene2", "gene3"]
@@ -133,7 +128,7 @@ def test_aggregate_bins():
 
     assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
 
-    assert (adata_aggr.X == expected_counts).all()
+    assert (expected_counts == adata_aggr.X).all()
 
     sdata.tables["table"].X = csr_matrix(sdata.tables["table"].X)
 
@@ -142,6 +137,56 @@ def test_aggregate_bins():
     assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
 
     assert (adata_aggr.X.toarray() == expected_counts).all()
+
+
+@pytest.mark.parametrize("as_sparse", [True, False])
+def test_aggregate_bins_unique_mapping(as_sparse: bool):
+    gdf_bins = gpd.GeoDataFrame(geometry=[box(i, j, i + 0.9, j + 0.9) for i in range(4) for j in range(4)])
+    gdf_bins.index = [f"bin{i}" for i in range(len(gdf_bins))]
+    gdf_bins = ShapesModel.parse(gdf_bins)
+
+    counts = np.array([
+        [
+            (i < 2) and (j < 2),
+            1,
+            (i >= 2 and j >= 2),
+            (i < 2 and j >= 2),
+        ]
+        for i in range(4)
+        for j in range(4)
+    ]).astype(int)
+
+    if as_sparse:
+        counts = csr_matrix(counts)
+
+    adata = AnnData(counts)
+    adata.var_names = ["gene1", "gene2", "gene3", "gene4"]
+
+    adata.obs["bin_id"] = gdf_bins.index
+    adata.obs["bin_key"] = "bins_2um"
+
+    gdf_cells = gpd.GeoDataFrame(geometry=[Point(0.7, 1.5), Point(1.3, 3), Point(2.5, 3.2)])
+    gdf_cells.geometry = gdf_cells.buffer(0.6)
+    gdf_cells = ShapesModel.parse(gdf_cells)
+
+    adata = TableModel.parse(adata, region="bins_2um", instance_key="bin_id", region_key="bin_key")
+
+    sdata = SpatialData(shapes={"bins_2um": gdf_bins, "cells": gdf_cells}, tables={"table": adata})
+
+    adata_aggr1 = sopa.aggregation.aggregate_bins(
+        sdata, "cells", "table", unique_mapping=False, expand_radius_ratio=1.5
+    )
+
+    adata_aggr2 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", unique_mapping=True, expand_radius_ratio=1.5)
+
+    X1 = adata_aggr1.X.toarray() if as_sparse else adata_aggr1.X
+    X2 = adata_aggr2.X.toarray() if as_sparse else adata_aggr2.X
+
+    assert (X2 <= X1).all()
+
+    assert (np.array([[4, 6, 0, 2], [0, 6, 2, 4], [0, 6, 4, 2]]) == X1).all()
+
+    assert (np.array([[4, 4, 0, 0], [0, 4, 0, 4], [0, 4, 4, 0]]) == X2).all()
 
 
 def test_overlay():
@@ -178,27 +223,23 @@ def test_overlay():
 
     assert (
         sdata["table"].X.toarray()
-        == np.array(
-            [
-                [2, 1, 1],
-                [1, 0, 3],
-                [5, 2, 2],
-                [0, 1, 2],
-            ]
-        )
+        == np.array([
+            [2, 1, 1],
+            [1, 0, 3],
+            [5, 2, 2],
+            [0, 1, 2],
+        ])
     ).all()
 
     sopa.overlay_segmentation(sdata, "selection", area_ratio_threshold=0.5)
 
     assert (
         sdata["table"].X.toarray()
-        == np.array(
-            [
-                [1, 0, 3],
-                [5, 2, 2],
-                [0, 1, 2],
-                [2, 6, 4],
-                [3, 5, 1],
-            ]
-        )
+        == np.array([
+            [1, 0, 3],
+            [5, 2, 2],
+            [0, 1, 2],
+            [2, 6, 4],
+            [3, 5, 1],
+        ])
     ).all()

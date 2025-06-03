@@ -181,12 +181,12 @@ def get_spatial_element(
         assert key in element_dict, f"Spatial element '{key}' not found."
         return _return_element(element_dict, key, return_key, as_spatial_image)
 
-    assert (
-        len(element_dict) > 0
-    ), "No spatial element found. Provide an element key to denote which element you want to use."
-    assert (
-        len(element_dict) == 1
-    ), f"Multiple valid elements found: {', '.join(element_dict.keys())}. Provide an element key to denote which element you want to use."
+    assert len(element_dict) > 0, (
+        "No spatial element found. Provide an element key to denote which element you want to use."
+    )
+    assert len(element_dict) == 1, (
+        f"Multiple valid elements found: {', '.join(element_dict.keys())}. Provide an element key to denote which element you want to use."
+    )
 
     key = next(iter(element_dict.keys()))
 
@@ -236,9 +236,9 @@ def add_spatial_element(
     overwrite: bool = True,
 ):
     assert isinstance(element_name, str)
-    assert (
-        overwrite or element_name not in sdata._shared_keys
-    ), f"Trying to add {element_name=} but it is already existing and {overwrite=}"
+    assert overwrite or element_name not in sdata._shared_keys, (
+        f"Trying to add {element_name=} but it is already existing and {overwrite=}"
+    )
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message=".*already exists. Overwriting it in-memory.")
@@ -252,7 +252,7 @@ def add_spatial_element(
                 sdata.delete_element_from_disk(element_name)
                 sdata.write_element(element_name, overwrite=overwrite)
             else:
-                log.error(f"Error while saving {element_name} on disk: {e}")
+                raise ValueError(f"Error while saving {element_name} on disk with {overwrite=}: {e}")
 
 
 def set_sopa_attrs(

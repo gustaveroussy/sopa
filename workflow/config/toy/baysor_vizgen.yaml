@@ -1,4 +1,4 @@
-# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/master/workflow/config/example_commented.yaml
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml
 read:
   technology: toy_dataset
   kwargs:
@@ -14,7 +14,6 @@ segmentation:
   baysor:
     min_area: 10
     prior_shapes_key: "cell_id"
-    unassigned_value: -1
 
     config:
       data:
@@ -40,7 +39,7 @@ segmentation:
         cyto_genes: ""
 
 aggregate:
-  average_intensities: true
+  aggregate_channels: true
   min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
 annotation:

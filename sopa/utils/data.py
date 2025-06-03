@@ -22,8 +22,8 @@ def toy_dataset(
     length: int = 2_048,
     cell_density: float = 1e-4,
     n_points_per_cell: int = 100,
-    c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],
-    genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],
+    c_coords: list[str] = ["DAPI", "CK", "CD3", "CD20"],  # noqa: B006
+    genes: int | list[str] = ["EPCAM", "CD3E", "CD20", "CXCL4", "CXCL10"],  # noqa: B006
     sigma_factor: float = 0.05,
     pixel_size: float = 0.1,
     seed: int = 0,
@@ -65,7 +65,7 @@ def toy_dataset(
     cell_types_index = np.random.randint(0, max(1, len(c_coords) - 1), n_cells)
 
     log.info(
-        f"Image of size ({len(c_coords), length, length}) with {n_cells} cells and {n_points_per_cell} transcripts per cell"
+        f"Image of size {(len(c_coords), length, length)} with {n_cells} cells and {n_points_per_cell} transcripts per cell"
     )
 
     ### Compute cell vertices (xy array)
@@ -141,14 +141,12 @@ def toy_dataset(
     if continuous_z_stack:
         z_stack = z_stack + np.random.randn(len(points_coords)) / 10
 
-    df = pd.DataFrame(
-        {
-            "x": points_coords[:, 0],
-            "y": points_coords[:, 1],
-            "z_stack": z_stack,
-            "genes": gene_names,
-        }
-    )
+    df = pd.DataFrame({
+        "x": points_coords[:, 0],
+        "y": points_coords[:, 1],
+        "z_stack": z_stack,
+        "genes": gene_names,
+    })
 
     # apply an arbritrary transformation for a more complete test case
     affine = np.array([[pixel_size, 0, 100], [0, pixel_size, 600], [0, 0, 1]])
@@ -171,7 +169,7 @@ def toy_dataset(
         images=images,
         points=points,
         shapes=shapes,
-        attrs={SopaAttrs.TRANSCRIPTS: "transcripts"},
+        attrs={SopaAttrs.TRANSCRIPTS: "transcripts", SopaAttrs.PRIOR_TUPLE_KEY: ("cell_id", 0)},
     )
 
     if include_image:
@@ -222,21 +220,19 @@ def _circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
 def _he_image(length: int) -> np.ndarray:
     from ..segmentation.shapes import rasterize
 
-    coords = np.array(
-        [
-            [0.15, 0.15],
-            [0.15, 0.7],
-            [0.3, 0.8],
-            [0.8, 0.85],
-            [0.8, 0.8],
-            [0.85, 0.12],
-            [0.8, 0.2],
-            [0.7, 0.4],
-            [0.5, 0.5],
-            [0.4, 0.5],
-            [0.2, 0.35],
-        ]
-    )
+    coords = np.array([
+        [0.15, 0.15],
+        [0.15, 0.7],
+        [0.3, 0.8],
+        [0.8, 0.85],
+        [0.8, 0.8],
+        [0.85, 0.12],
+        [0.8, 0.2],
+        [0.7, 0.4],
+        [0.5, 0.5],
+        [0.4, 0.5],
+        [0.2, 0.35],
+    ])
 
     circle_in = Point([0.5 * length, 0.2 * length]).buffer(0.1 * length)
     circle_out = Point([0.7 * length, 0.7 * length]).buffer(0.1 * length)
@@ -264,7 +260,7 @@ def blobs(
     *_,
     length: int = 1_024,
     n_points: int = 10_000,
-    c_coords=["DAPI", "CK", "CD3", "CD20"],
+    c_coords=["DAPI", "CK", "CD3", "CD20"],  # noqa: B006
     **kwargs,
 ) -> SpatialData:
     """Adapts the blobs dataset from SpatialData for sopa. Please refer to the SpatialData documentation"""

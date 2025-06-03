@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 def resolve(
     sdata: SpatialData,
-    patches_dirs: list[str],
+    patches_dirs: list[str | Path],
     gene_column: str,
     min_area: float = 0,
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
@@ -60,9 +60,9 @@ def resolve(
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]
 
-    valid_ids = set(list(geo_df.index))
+    valid_ids = set(geo_df.index)
     table = anndata.concat(
-        [adata[list(valid_ids & set(list(adata.obs_names)))] for adata in adatas] + table_conflicts,
+        [adata[list(valid_ids & set(adata.obs_names))] for adata in adatas] + table_conflicts,
         join="outer",
     )
     table.obs.dropna(axis="columns", inplace=True)
@@ -180,9 +180,9 @@ def _resolve_patches(
 
 
 def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
-    assert (
-        SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes
-    ), "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+    assert SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes, (
+        "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
+    )
 
     directories = [Path(path) for path in sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
 

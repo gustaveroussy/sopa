@@ -89,4 +89,4 @@ def assign_transcript_to_cell(
     if isinstance(df, dd.DataFrame):
         df[key_added] = df.map_partitions(get_cell_id)
     else:
-        raise ValueError(f"Invalid dataframe type: {type(df)}")
+        raise TypeError(f"Invalid dataframe type: {type(df)}")

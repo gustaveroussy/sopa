@@ -1,7 +1,8 @@
 import logging
+from collections.abc import Iterable
 from functools import partial
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable
 
 import geopandas as gpd
 import numpy as np
@@ -29,7 +30,7 @@ class StainingSegmentation:
         method: Callable,
         channels: list[str] | str | None,
         image_key: str | None = None,
-        min_area: float = 0,
+        min_area: int | float = 0,
         clip_limit: float = 0.2,
         clahe_kernel_size: int | Iterable[int] | None = None,
         gaussian_sigma: float = 1,
@@ -65,9 +66,9 @@ class StainingSegmentation:
             self.channels = image_channels
         else:
             self.channels = [channels] if isinstance(channels, str) else channels
-            assert np.isin(
-                channels, image_channels
-            ).all(), f"Channel names must be a subset of: {', '.join(image_channels)}"
+            assert np.isin(channels, image_channels).all(), (
+                f"Channel names must be a subset of: {', '.join(image_channels)}"
+            )
 
     def _run_patch(self, patch: Polygon) -> gpd.GeoDataFrame:
         """Run segmentation on one patch
@@ -86,23 +87,21 @@ class StainingSegmentation:
             y=slice(bounds[1], bounds[3]),
         ).values
 
-        assert np.issubdtype(
-            image.dtype, np.integer
-        ), f"Invalid image type {image.dtype}. Transform it to an integer dtype, e.g. `np.uint8`."
+        assert np.issubdtype(image.dtype, np.integer), (
+            f"Invalid image type {image.dtype}. Transform it to an integer dtype, e.g. `np.uint8`."
+        )
 
         if self.gaussian_sigma > 0:
             image = np.stack([gaussian_filter(c, sigma=self.gaussian_sigma) for c in image])
         if self.clip_limit > 0:
-            image = np.stack(
-                [
-                    exposure.equalize_adapthist(
-                        c,
-                        clip_limit=self.clip_limit,
-                        kernel_size=self.clahe_kernel_size,
-                    )
-                    for c in image
-                ]
-            )
+            image = np.stack([
+                exposure.equalize_adapthist(
+                    c,
+                    clip_limit=self.clip_limit,
+                    kernel_size=self.clahe_kernel_size,
+                )
+                for c in image
+            ])
 
         if patch.area < box(*bounds).area:
             mask = shapes.rasterize(patch, image.shape[1:], bounds)

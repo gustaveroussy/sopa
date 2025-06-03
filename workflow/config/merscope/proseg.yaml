@@ -1,0 +1,21 @@
+# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml
+read:
+  technology: merscope
+
+patchify:
+  patch_width_microns: -1 # only one patch
+  patch_overlap_microns: 0
+
+segmentation:
+  proseg:
+    prior_shapes_key: cell_id # this allows to use the prior segmentation performed by Vizgen
+    unassigned_value: -1
+
+aggregate:
+  aggregate_channels: true
+  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
+
+explorer:
+  gene_column: "gene"
+  ram_threshold_gb: 4
+  pixel_size: 0.108

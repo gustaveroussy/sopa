@@ -10,15 +10,9 @@ from spatialdata.models import TableModel
 
 from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
-from ..utils import (
-    add_spatial_element,
-    get_boundaries,
-    get_spatial_element,
-    get_spatial_image,
-)
-from . import aggregate_bins
+from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
+from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
-from . import count_transcripts
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +29,7 @@ def aggregate(
     expand_radius_ratio: float | None = None,
     min_transcripts: int = 0,
     min_intensity_ratio: float = 0.1,
+    no_overlap: bool = False,
     key_added: str | None = "table",
 ):
     """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
@@ -58,6 +53,7 @@ def aggregate(
         expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None` (default), use 1 if we aggregate bins data, and 0 otherwise.
         min_transcripts: Min number of transcripts to keep a cell.
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
+        no_overlap: *Experimental feature*: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
     """
     assert points_key is None or bins_key is None, "Provide either `points_key` or `bins_key`, not both."
@@ -66,9 +62,9 @@ def aggregate(
         bins_key = bins_key or sdata.attrs.get(SopaAttrs.BINS_TABLE)
 
     if (bins_key is None) and (aggregate_genes or (aggregate_genes is None and sdata.points)):
-        assert (
-            sdata.points
-        ), "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
+        assert sdata.points, (
+            "No points in the SpatialData object. You must have points, or set the `bins_key` argument (for VisiumHD-like data)."
+        )
 
         points_key, _ = get_spatial_element(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
@@ -87,6 +83,7 @@ def aggregate(
         min_transcripts=min_transcripts,
         min_intensity_ratio=min_intensity_ratio,
         gene_column=gene_column,
+        no_overlap=no_overlap,
         key_added=key_added,
     )
 
@@ -155,6 +152,7 @@ class Aggregator:
         min_intensity_ratio: float = 0,
         average_intensities: bool | None = None,  # deprecated argument
         points_key: str | None = None,  # deprecated argument
+        no_overlap: bool = False,
         key_added: str = SopaKeys.TABLE,
     ):
         aggregate_genes, aggregate_channels = self._legacy_arguments(
@@ -165,9 +163,9 @@ class Aggregator:
             log.warning("No image found to aggregate channels. Use `aggregate_channels=False`")
             aggregate_channels = False
 
-        assert (
-            aggregate_genes or aggregate_channels
-        ), "At least one of `aggregate_genes` or `aggregate_channels` must be True"
+        assert aggregate_genes or aggregate_channels, (
+            "At least one of `aggregate_genes` or `aggregate_channels` must be True"
+        )
 
         if aggregate_genes:
             if self.bins_key is not None:
@@ -176,6 +174,7 @@ class Aggregator:
                     self.shapes_key,
                     self.bins_key,
                     expand_radius_ratio=1 if expand_radius_ratio is None else expand_radius_ratio,
+                    unique_mapping=no_overlap,
                 )
             elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(
@@ -191,6 +190,7 @@ class Aggregator:
                 image_key=self.image_key,
                 shapes_key=self.shapes_key,
                 expand_radius_ratio=expand_radius_ratio or 0,
+                no_overlap=no_overlap,
             )
 
             if min_intensity_ratio > 0:

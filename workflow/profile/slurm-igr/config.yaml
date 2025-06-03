@@ -15,6 +15,8 @@ set-resources:
         mem_mb: 128_000
     patch_segmentation_comseg:
         mem_mb: 128_000
+    patch_segmentation_proseg:
+        mem_mb: 256_000
     aggregate:
         mem_mb: 64_000
     patchify_transcripts:

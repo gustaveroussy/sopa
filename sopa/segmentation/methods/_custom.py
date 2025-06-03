@@ -11,9 +11,9 @@ from .. import StainingSegmentation, solve_conflicts
 def custom_staining_based(
     sdata: SpatialData,
     method: Callable,
-    channels: list[str] | str,
+    channels: list[str] | str | None,
     image_key: str | None = None,
-    min_area: int = 0,
+    min_area: float = 0,
     delete_cache: bool = True,
     recover: bool = False,
     clip_limit: float = 0.2,

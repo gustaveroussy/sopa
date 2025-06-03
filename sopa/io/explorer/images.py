@@ -206,7 +206,7 @@ def align(
     image: DataArray,
     transformation_matrix_path: str,
     key_added: str | None = None,
-    image_key: str = None,
+    image_key: str | None = None,
     overwrite: bool = False,
 ):
     """Add an image to the `SpatialData` object after alignment with the Xenium Explorer.
@@ -224,15 +224,13 @@ def align(
     assert key_added is not None, "The image has no name, use the `key_added` argument to provide one"
     assert key_added not in sdata, f"Image '{key_added}' already exists in the `SpatialData` object"
 
-    to_pixel = Sequence(
-        [
-            Affine(
-                np.genfromtxt(transformation_matrix_path, delimiter=","),
-                input_axes=("x", "y"),
-                output_axes=("x", "y"),
-            )
-        ]
-    )
+    to_pixel = Sequence([
+        Affine(
+            np.genfromtxt(transformation_matrix_path, delimiter=","),
+            input_axes=("x", "y"),
+            output_axes=("x", "y"),
+        )
+    ])
 
     default_image = get_spatial_image(sdata, image_key)
 

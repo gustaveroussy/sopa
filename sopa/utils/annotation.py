@@ -21,10 +21,7 @@ def preprocess_fluo(adata: AnnData) -> pd.DataFrame:
     Returns:
         A dataframe of preprocessed channels intensities
     """
-    if SopaKeys.INTENSITIES_OBSM in adata.obsm:
-        df = adata.obsm[SopaKeys.INTENSITIES_OBSM]
-    else:
-        df = adata.to_df()
+    df = adata.obsm[SopaKeys.INTENSITIES_OBSM] if SopaKeys.INTENSITIES_OBSM in adata.obsm else adata.to_df()
 
     divider = 5 * np.quantile(df, 0.2, axis=0)
     divider[divider == 0] = df.max(axis=0)[divider == 0]
@@ -63,6 +60,9 @@ def tangram_annotate(
     **kwargs,
 ):
     """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
+
+    !!! info
+        You need to install `tangram-sc` to use this function. You can install it via `pip install tangram-sc`.
 
     Args:
         sdata: A `SpatialData` object
@@ -116,9 +116,9 @@ class MultiLevelAnnotation:
         self.clip_percentile = clip_percentile
         self.density_prior = density_prior
 
-        assert (
-            cell_type_key in ad_sc.obs
-        ), f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+        assert cell_type_key in ad_sc.obs, (
+            f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
+        )
 
         if self.ad_sc.raw is not None:
             del self.ad_sc.raw
@@ -200,9 +200,9 @@ class MultiLevelAnnotation:
             set(ad_sp_split.var_names[ad_sp_split.var.counts > 0]) & set(ad_sc_.var_names[ad_sc_.var.counts > 0])
         )
 
-        assert len(
-            selection
-        ), "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        assert len(selection), (
+            "No gene in common between the reference and the spatial adata object. Have you run transcript aggregation?"
+        )
         log.info(f"Keeping {len(selection)} shared genes")
 
         for ad_ in [ad_sp_split, ad_sc_]:
@@ -226,7 +226,7 @@ class MultiLevelAnnotation:
             obs_key = self.level_obs_key(level)
             self.ad_sp.obs[obs_key] = self.ad_sp.obs[previous_key]
             groups = self.ad_sc.obs.groupby(previous_key)
-            for ct in groups.groups.keys():
+            for ct in groups.groups:
                 group: pd.DataFrame = groups.get_group(ct)
                 indices_sp = self.ad_sp.obs_names[self.ad_sp.obs[previous_key] == ct]
 
@@ -251,7 +251,7 @@ class MultiLevelAnnotation:
         try:
             import tangram as tg
         except ImportError:
-            raise ImportError("To use tangram, you need its corresponding sopa extra: `pip install 'sopa[tangram]'`.")
+            raise ImportError("To use tangram, you need to install it via `pip install tangram-sc`.")
 
         if indices_sp is not None and len(indices_sp) == 0:
             log.warning("No cell annotated in the upper level...")
