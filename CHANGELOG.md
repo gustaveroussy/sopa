@@ -8,6 +8,7 @@
 ### Changed
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
 - Use `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
+- Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
 
 ### Removed
 - Removed the `open-cv` dependency (#239)
