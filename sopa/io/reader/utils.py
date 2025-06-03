@@ -10,7 +10,6 @@ import xarray as xr
 from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
-from spatialdata.transformations import Identity
 from xarray import DataArray
 
 from ..._constants import SopaAttrs
@@ -72,7 +71,6 @@ def _general_tif_directory_reader(
     image = Image2DModel.parse(
         image,
         dims=("c", "y", "x"),
-        transformations={"pixels": Identity()},
         c_coords=names,
         **image_models_kwargs,
     )
@@ -156,7 +154,6 @@ def ome_tif(path: str | Path, as_image: bool = False) -> DataArray | SpatialData
     image = Image2DModel.parse(
         image,
         c_coords=channel_names,
-        transformations={"pixels": Identity()},
         **image_models_kwargs,
     )
 

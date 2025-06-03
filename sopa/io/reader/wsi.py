@@ -42,7 +42,7 @@ def wsi(
 
         scale_image = Image2DModel.parse(
             scale_image[:3, :, :],
-            transformations={"pixels": _get_scale_transformation(scale_factor)},
+            transformations={"global": _get_scale_transformation(scale_factor)},
             c_coords=("r", "g", "b"),
         )
         scale_image.coords["y"] = scale_factor * scale_image.coords["y"]
@@ -94,7 +94,6 @@ def wsi_autoscale(
 
     multiscale_image = Image2DModel.parse(
         img["0"].transpose("c", "y", "x"),
-        transformations={"pixels": Identity()},
         c_coords=("r", "g", "b"),
         **image_model_kwargs,
     )
