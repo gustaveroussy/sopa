@@ -2,7 +2,8 @@
 
 ### Added
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
-- `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the bins and the channels
+- `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
+- Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
 
 ## [2.0.7] - 2025-05-19
 
