@@ -94,7 +94,7 @@ def compare_cv2_skimage():
             contours_, _ = cv2.findContours(
                 np.array(labels_cv == i, dtype=np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE
             )
-            closed_contours = np.array(list(contours_[0]) + [contours_[0][0]])
+            closed_contours = np.array([*list(contours_[0]), contours_[0][0]])
             contours.extend([closed_contours.squeeze()])
 
     multi_polygon_cv = unary_union(MultiPolygon([Polygon(contour) for contour in contours]))

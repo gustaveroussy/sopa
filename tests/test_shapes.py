@@ -1,7 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import Point, box
 
-from sopa.segmentation.shapes import expand_radius, remove_overlap
+from sopa.shapes import expand_radius, remove_overlap
 
 gdf_squares = gpd.GeoDataFrame(
     {"color": [0, 1, 2, 3, 4]},

@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
 from spatialdata import SpatialData
 from tqdm import tqdm
 
-from ..segmentation.shapes import expand_radius
+from ..shapes import expand_radius
 from ..utils import to_intrinsic
 
 log = logging.getLogger(__name__)

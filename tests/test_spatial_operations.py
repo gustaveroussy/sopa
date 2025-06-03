@@ -9,13 +9,7 @@ from spatialdata.models import ShapesModel
 
 import sopa
 from sopa._constants import SopaKeys
-from sopa.spatial import (
-    cells_to_groups,
-    geometrize_niches,
-    mean_distance,
-    niches_geometry_stats,
-    spatial_neighbors,
-)
+from sopa.spatial import cells_to_groups, mean_distance, niches_geometry_stats, spatial_neighbors, vectorize_niches
 from sopa.spatial.join import _get_cell_id
 
 NICHE_KEY = "niche"
@@ -69,8 +63,8 @@ def test_mean_distance(adata: AnnData):
     assert (df_pairwise_distances.iloc[0] == expected_a).all()
 
 
-def test_geometrize_niches(adata: AnnData):
-    gdf = geometrize_niches(adata, NICHE_KEY, buffer=0)
+def test_vectorize_niches(adata: AnnData):
+    gdf = vectorize_niches(adata, NICHE_KEY, buffer=0)
 
     assert len(gdf) == 4
 

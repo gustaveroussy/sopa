@@ -4,7 +4,7 @@
 
 ::: sopa.spatial.mean_distance
 
-::: sopa.spatial.geometrize_niches
+::: sopa.spatial.vectorize_niches
 
 ::: sopa.spatial.niches_geometry_stats
 
