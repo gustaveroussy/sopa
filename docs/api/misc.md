@@ -46,9 +46,9 @@ Use `sopa.settings.gene_exclude_pattern = None` to keep all genes.
 
 ## Shapes operations
 
-::: sopa.segmentation.shapes.expand_radius
+::: sopa.shapes.expand_radius
 
-::: sopa.segmentation.shapes.remove_overlap
+::: sopa.shapes.remove_overlap
 
 ## Xenium Explorer
 

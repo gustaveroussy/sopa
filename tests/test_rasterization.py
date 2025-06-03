@@ -1,7 +1,7 @@
 import numpy as np
 from shapely.geometry import Polygon
 
-from sopa.segmentation import shapes
+from sopa import shapes
 
 cell = Polygon([[10, 10], [30, 40], [90, 50], [100, 20]])
 image_shape = (70, 120)

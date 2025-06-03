@@ -4,15 +4,14 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import shapely
-import shapely.affinity
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
+from ..shapes import _ensure_polygon
 from ..utils import to_intrinsic
-from .shapes import _ensure_polygon
 
 log = logging.getLogger(__name__)
 

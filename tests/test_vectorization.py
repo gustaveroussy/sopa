@@ -5,7 +5,7 @@ from shapely.affinity import translate
 from shapely.geometry import Polygon
 
 from sopa.segmentation import solve_conflicts
-from sopa.segmentation.shapes import vectorize
+from sopa.shapes import vectorize
 
 
 @pytest.fixture

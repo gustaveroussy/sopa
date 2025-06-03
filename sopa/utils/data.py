@@ -218,7 +218,7 @@ def _circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _he_image(length: int) -> np.ndarray:
-    from ..segmentation.shapes import rasterize
+    from ..shapes import rasterize
 
     coords = np.array([
         [0.15, 0.15],
