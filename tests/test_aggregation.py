@@ -3,6 +3,7 @@ import dask.array as da
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pytest
 import spatialdata
 import xarray as xr
 from anndata import AnnData
@@ -138,7 +139,8 @@ def test_aggregate_bins():
     assert (adata_aggr.X.toarray() == expected_counts).all()
 
 
-def test_aggregate_bins_unique_mapping():
+@pytest.mark.parametrize("as_sparse", [True, False])
+def test_aggregate_bins_unique_mapping(as_sparse: bool):
     gdf_bins = gpd.GeoDataFrame(geometry=[box(i, j, i + 0.9, j + 0.9) for i in range(4) for j in range(4)])
     gdf_bins.index = [f"bin{i}" for i in range(len(gdf_bins))]
     gdf_bins = ShapesModel.parse(gdf_bins)
@@ -153,6 +155,9 @@ def test_aggregate_bins_unique_mapping():
         for i in range(4)
         for j in range(4)
     ]).astype(int)
+
+    if as_sparse:
+        counts = csr_matrix(counts)
 
     adata = AnnData(counts)
     adata.var_names = ["gene1", "gene2", "gene3", "gene4"]
@@ -172,13 +177,16 @@ def test_aggregate_bins_unique_mapping():
         sdata, "cells", "table", unique_mapping=False, expand_radius_ratio=1.5
     )
 
-    adata_aggr = sopa.aggregation.aggregate_bins(sdata, "cells", "table", unique_mapping=True, expand_radius_ratio=1.5)
+    adata_aggr2 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", unique_mapping=True, expand_radius_ratio=1.5)
 
-    assert (adata_aggr.X <= adata_aggr1.X).all()
+    X1 = adata_aggr1.X.toarray() if as_sparse else adata_aggr1.X
+    X2 = adata_aggr2.X.toarray() if as_sparse else adata_aggr2.X
 
-    assert (np.array([[4, 6, 0, 2], [0, 6, 2, 4], [0, 6, 4, 2]]) == adata_aggr1.X).all()
+    assert (X2 <= X1).all()
 
-    assert (np.array([[4, 4, 0, 0], [0, 4, 0, 4], [0, 4, 4, 0]]) == adata_aggr.X).all()
+    assert (np.array([[4, 6, 0, 2], [0, 6, 2, 4], [0, 6, 4, 2]]) == X1).all()
+
+    assert (np.array([[4, 4, 0, 0], [0, 4, 0, 4], [0, 4, 4, 0]]) == X2).all()
 
 
 def test_overlay():
