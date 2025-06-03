@@ -49,6 +49,7 @@ def aggregate_bins(
     )
 
     if unique_mapping:
+        log.warning("Unique bin mapping is currently experimental. Any feedback on GitHub is welcome.")
         indices_matrix = _get_unique_bins_mapping(indices_matrix, bins_table)
 
     adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)
