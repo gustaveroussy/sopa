@@ -1,15 +1,16 @@
 ## [2.1.0] - xxxx-xx-xx
 
 ### Added
-- Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
 - `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
 - Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
+- Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
 
 ### Changed
-- Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system.
+- Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
 
 ### Removed
-- All deprecated functions that were announced to be removed in `sopa==2.1.0`
+- Removed the `open-cv` dependency (#239)
+- Removed all deprecated functions that were announced to be removed in `sopa==2.1.0`
 
 ## [2.0.7] - 2025-05-19
 
