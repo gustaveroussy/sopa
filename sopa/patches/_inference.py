@@ -6,6 +6,7 @@ import torch
 from xarray import DataArray, DataTree
 
 from . import models
+from sopa.io import wsi_reader 
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,9 @@ class Inference:
         device: str | None = None,
         data_parallel: bool | list[int] = False,
     ):
-        self.image, self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
+        self.image = image
+        self.slide = wsi_reader(image.attrs.get("backend"))(image.attrs.get("path"))
+        self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
 
         self.patch_width = int(patch_width / self.resize_factor)
         self.resized_patch_width = patch_width
@@ -61,10 +64,17 @@ class Inference:
         Extract a numpy patch from the image given a bounding box
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
-        image_patch = self.image[:, slice(box[1], box[3]), slice(box[0], box[2])]
+        image_patch = np.array(
+            self.slide.read_region(
+                (box[0], box[1]), 
+                self.level, 
+                (box[2]-box[0], box[3]-box[1])
+            ).convert("RGB")
+        )
 
-        pad_x, pad_y = self.patch_width - image_patch.shape[1], self.patch_width - image_patch.shape[2]
-        return np.pad(image_patch, ((0, 0), (0, pad_x), (0, pad_y)))
+        pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
+        padded_patch = np.pad(image_patch, ((0, pad_x), (0, pad_y), (0, 0)))
+        return np.transpose(padded_patch, (2, 0, 1))
 
     def _torch_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
@@ -104,9 +114,7 @@ def _get_extraction_parameters(
     else:
         level, resize_factor = _get_level_for_magnification(image, magnification)
 
-    image = next(iter(image[f"scale{level}"].values()))
-
-    return image, level, resize_factor
+    return level, resize_factor
 
 
 def _get_level_for_magnification(image: DataArray | DataTree, magnification: int) -> int:

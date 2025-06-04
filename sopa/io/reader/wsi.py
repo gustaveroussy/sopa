@@ -54,6 +54,7 @@ def wsi(
     sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
+    sdata[image_name].attrs["path"] = path
     sdata[image_name].name = image_name
 
     if as_image:
@@ -116,15 +117,28 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
     return image_models_kwargs
 
 
+
+def wsi_reader(backend: str):
+    if backend == "tiffslide":
+        import tiffslide
+        return tiffslide.open_slide
+    elif backend == "openslide":
+        import openslide
+        return openslide.open_slide
+    elif backend == "slideio":
+        import slideio
+        return slideio.open_slide
+    else:
+        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
+
+
 def _open_wsi(
     path: str | Path, backend: Literal["tiffslide", "openslide", "slideio"] = "openslide"
 ) -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
+    slide = wsi_reader(backend)(path)
     if backend == "tiffslide":
-        import tiffslide
-
-        slide = tiffslide.open_slide(path)
         zarr_store = slide.zarr_group.store
 
         metadata = {
@@ -135,11 +149,7 @@ def _open_wsi(
             "level_downsamples": slide.level_downsamples,
         }
     elif backend == "openslide":
-        import openslide
-
         from ._openslide import OpenSlideStore
-
-        slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store
 
         metadata = {
@@ -150,11 +160,7 @@ def _open_wsi(
             "level_downsamples": slide.level_downsamples,
         }
     elif backend == "slideio":
-        import slideio
-
         from ._slideio import SlideIOStore
-
-        slide = slideio.open_slide(path)
         zarr_store = SlideIOStore(path).store
         metadata = {
             "properties": {"slideio.objective-power": slide.get_scene(0).magnification},
@@ -174,6 +180,6 @@ def _open_wsi(
     else:
         raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
 
-    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False, chunks=None)
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
     return image_name, zarr_img, slide, metadata
