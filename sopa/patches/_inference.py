@@ -1,6 +1,7 @@
 import logging
 from typing import Callable
 
+import dask
 import numpy as np
 import torch
 from xarray import DataArray, DataTree
@@ -79,7 +80,8 @@ class Inference:
     def _torch_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
 
-        batch = np.array([self._numpy_patch(box) for box in bboxes])
+        delayed_patches = [dask.delayed(self._numpy_patch)(box) for box in bboxes]
+        batch = np.array(dask.compute(*delayed_patches))
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
         return batch if self.resize_factor == 1 else self._torch_resize(batch)
