@@ -7,9 +7,14 @@ from .constants import STAINING_BASED_METHODS, TOY_READERS, TRANSCRIPT_BASED_MET
 
 def validate_config(config: dict) -> dict:
     """Basic config sanity check before running Snakemake"""
+
     assert "read" in config and "technology" in config["read"], (
         "Invalid config. Provide a 'read' section in the config file, and specify the 'technology' key"
     )
+
+    assert "segmentation" in config, "Invalid config. Provide a 'segmentation' section in the config file"
+
+    backward_compatibility(config)
 
     check_segmentation_methods(config)
 
@@ -37,8 +42,6 @@ def validate_config(config: dict) -> dict:
 
 
 def check_segmentation_methods(config: dict):
-    assert "segmentation" in config, "Invalid config. Provide a 'segmentation' section in the config file"
-
     assert len(config["segmentation"]) > 0, (
         "Invalid config. Provide at least one segmentation method in the 'segmentation' section"
     )
@@ -59,12 +62,8 @@ def check_segmentation_methods(config: dict):
 
 def check_prior_shapes_key(config: dict):
     for method in TRANSCRIPT_BASED_METHODS:
-        if method in config["segmentation"]:
-            if "cellpose" in config["segmentation"]:
-                config["segmentation"][method]["prior_shapes_key"] = "cellpose_boundaries"
-            elif "cell_key" in config["segmentation"][method]:  # backward compatibility
-                print("Snakemake argument 'cell_key' is deprecated. Use 'prior_shapes_key' instead.")
-                config["segmentation"][method]["prior_shapes_key"] = config["segmentation"][method]["cell_key"]
+        if method in config["segmentation"] and "cellpose" in config["segmentation"]:
+            config["segmentation"][method]["prior_shapes_key"] = "cellpose_boundaries"
 
 
 def check_data_paths(config: dict):
@@ -106,3 +105,18 @@ def check_executable_path(config: dict, name: str, default_dir: str):
     if "executables" in config and name in config["executables"]:
         raise ValueError(f"The config['executables']['{name}'] argument is deprecated. {error_message}.")
     raise KeyError(error_message)
+
+
+def backward_compatibility(config: dict) -> None:
+    """Ensure backward compatibility with old config files"""
+
+    for method in TRANSCRIPT_BASED_METHODS:
+        if method in config["segmentation"] and ("cell_key" in config["segmentation"][method]):
+            print("Snakemake argument 'cell_key' is deprecated. Use 'prior_shapes_key' instead.")
+            config["segmentation"][method]["prior_shapes_key"] = config["segmentation"][method]["cell_key"]
+            del config["segmentation"][method]["cell_key"]
+
+    if "aggregate" in config and "average_intensities" in config["aggregate"]:
+        print("Snakemake aggregate argument 'average_intensities' is deprecated. Use 'aggregate_channels' instead.")
+        config["aggregate"]["aggregate_channels"] = config["aggregate"]["average_intensities"]
+        del config["aggregate"]["average_intensities"]

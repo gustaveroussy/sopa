@@ -13,10 +13,11 @@ from spatialdata.models import ShapesModel, TableModel
 from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
+from .. import shapes
 from .._constants import SopaKeys
 from ..aggregation import count_transcripts
 from ..utils import add_spatial_element
-from . import shapes, solve_conflicts
+from . import solve_conflicts
 
 log = logging.getLogger(__name__)
 

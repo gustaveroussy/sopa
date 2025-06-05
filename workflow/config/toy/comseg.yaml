@@ -13,7 +13,7 @@ patchify:
 segmentation:
   comseg:
     min_area: 10
-    prior_shapes_key: cells
+    prior_shapes_key: auto
 
     config:
       dict_scale:

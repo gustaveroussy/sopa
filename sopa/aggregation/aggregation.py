@@ -10,12 +10,7 @@ from spatialdata.models import TableModel
 
 from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
-from ..utils import (
-    add_spatial_element,
-    get_boundaries,
-    get_spatial_element,
-    get_spatial_image,
-)
+from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
 from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
 
@@ -34,6 +29,7 @@ def aggregate(
     expand_radius_ratio: float | None = None,
     min_transcripts: int = 0,
     min_intensity_ratio: float = 0.1,
+    no_overlap: bool = False,
     key_added: str | None = "table",
 ):
     """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
@@ -50,13 +46,14 @@ def aggregate(
         aggregate_genes: Whether to aggregate gene counts. If None, it will be inferred from the data.
         aggregate_channels: Whether to aggregate channel intensities inside cells.
         image_key: Key of `sdata` with the image channels to be averaged. By default, uses the segmentation image.
-        points_key: Key of `sdata` with the points dataframe representing the transcripts.
-        gene_column: Key of `sdata[points_key]` with the gene names.
-        shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries.
-        bins_key: Key of `sdata` with the table corresponding to the bin-by-gene table of gene counts (e.g., for Visium HD data).
+        points_key: Key of `sdata` with the points dataframe representing the transcripts. Inferred by default.
+        gene_column: Key of `sdata[points_key]` with the gene names. Inferred by default.
+        shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries. Inferred by default.
+        bins_key: Key of `sdata` with the table corresponding to the bin-by-gene table of gene counts (e.g., for Visium HD data). Inferred by default.
         expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None` (default), use 1 if we aggregate bins data, and 0 otherwise.
         min_transcripts: Min number of transcripts to keep a cell.
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
+        no_overlap: *Experimental feature*: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
     """
     assert points_key is None or bins_key is None, "Provide either `points_key` or `bins_key`, not both."
@@ -86,6 +83,7 @@ def aggregate(
         min_transcripts=min_transcripts,
         min_intensity_ratio=min_intensity_ratio,
         gene_column=gene_column,
+        no_overlap=no_overlap,
         key_added=key_added,
     )
 
@@ -140,10 +138,6 @@ class Aggregator:
         if self.table is not None:
             self.table = self.table[~where_filter]
 
-    def update_table(self, *args, **kwargs):
-        log.warning("'update_table' is deprecated and will be removed in sopa==2.1.0, use 'compute_table' instead")
-        self.compute_table(*args, **kwargs)
-
     def compute_table(
         self,
         aggregate_genes: bool | None = None,
@@ -152,13 +146,16 @@ class Aggregator:
         expand_radius_ratio: float | None = None,
         min_transcripts: int = 0,
         min_intensity_ratio: float = 0,
-        average_intensities: bool | None = None,  # deprecated argument
-        points_key: str | None = None,  # deprecated argument
+        no_overlap: bool = False,
         key_added: str = SopaKeys.TABLE,
     ):
-        aggregate_genes, aggregate_channels = self._legacy_arguments(
-            points_key, gene_column, aggregate_genes, aggregate_channels, average_intensities
-        )
+        if aggregate_genes is None:
+            aggregate_genes = (
+                (self.table is not None and isinstance(self.table.X, csr_matrix))
+                or gene_column is not None
+                or self.bins_key is not None
+                or self.points_key is not None
+            )
 
         if aggregate_channels and self.image is None:
             log.warning("No image found to aggregate channels. Use `aggregate_channels=False`")
@@ -175,10 +172,11 @@ class Aggregator:
                     self.shapes_key,
                     self.bins_key,
                     expand_radius_ratio=1 if expand_radius_ratio is None else expand_radius_ratio,
+                    unique_mapping=no_overlap,
                 )
             elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(
-                    self.sdata, gene_column, shapes_key=self.shapes_key, points_key=points_key
+                    self.sdata, gene_column, shapes_key=self.shapes_key, points_key=self.points_key
                 )
 
             if min_transcripts > 0:
@@ -190,6 +188,7 @@ class Aggregator:
                 image_key=self.image_key,
                 shapes_key=self.shapes_key,
                 expand_radius_ratio=expand_radius_ratio or 0,
+                no_overlap=no_overlap,
             )
 
             if min_intensity_ratio > 0:
@@ -220,36 +219,6 @@ class Aggregator:
         }
 
         self.add_standardized_table(key_added)
-
-    def _legacy_arguments(
-        self,
-        points_key: str | None,
-        gene_column: str | None,
-        aggregate_genes: bool | None,
-        aggregate_channels: bool,
-        average_intensities: bool | None,
-    ) -> tuple[bool, bool]:
-        if points_key is not None:
-            log.warning(
-                "`points_key` in `compute_table` is deprecated and will be removed in sopa==2.1.0, provide it in the constructor instead"
-            )
-            self.points_key = points_key
-
-        if aggregate_genes is None:
-            aggregate_genes = (
-                (self.table is not None and isinstance(self.table.X, csr_matrix))
-                or gene_column is not None
-                or self.bins_key is not None
-                or self.points_key is not None
-            )
-
-        if average_intensities is not None:
-            log.warning(
-                "`average_intensities` is deprecated and will be removed in sopa==2.1.0, use `aggregate_channels` instead"
-            )
-            return aggregate_genes, average_intensities
-
-        return aggregate_genes, aggregate_channels
 
     def add_standardized_table(self, key_added: str):
         add_standardized_table(

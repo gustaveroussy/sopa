@@ -61,7 +61,6 @@ def add_explorer_selection(
     sdata: SpatialData,
     path: str,
     key_added: str = "explorer_selection",
-    shapes_key: str | None = None,
     image_key: str | None = None,
     pixel_size: float = 0.2125,
 ):
@@ -71,16 +70,9 @@ def add_explorer_selection(
         sdata: A `SpatialData` object
         path: The path to the `coordinates.csv` selection file
         key_added: The name to provide to the selection as shapes
-        shapes_key: Deprecated. Use `key_added` instead.
         image_key: The original image name
         pixel_size: Number of microns in a pixel. It must be the same value as the one used in `sopa.io.write`
     """
-    if shapes_key is not None:
-        log.warning(
-            "The `shapes_key` argument is deprecated and will be removed in sopa==2.1.0. Use `key_added` instead."
-        )
-        key_added = shapes_key
-
     polys = xenium_explorer_selection(path, pixel_size=pixel_size, return_list=True)
     image = get_spatial_element(sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION))
 

@@ -218,7 +218,7 @@ def _circle_coords(radius: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _he_image(length: int) -> np.ndarray:
-    from ..segmentation.shapes import rasterize
+    from ..shapes import rasterize
 
     coords = np.array([
         [0.15, 0.15],
@@ -249,11 +249,6 @@ def _he_image(length: int) -> np.ndarray:
     image[2] += tissue * 40
 
     return 255 - image
-
-
-def uniform(*_, **kwargs):
-    log.warning("The `uniform` function is deprecated and will be removed in sopa==2.1.0, use `toy_dataset` instead")
-    return toy_dataset(**kwargs)
 
 
 def blobs(

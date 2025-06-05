@@ -15,7 +15,7 @@ from ._graph import Component
 log = logging.getLogger(__name__)
 
 
-def geometrize_niches(
+def vectorize_niches(
     adata: AnnData | SpatialData,
     niche_key: str,
     buffer: int | str = "auto",
@@ -26,7 +26,7 @@ def geometrize_niches(
     Plot components:
         You can show niches components with GeoPandas
         ```py
-        gdf = geometrize_niches(adata, niche_key)
+        gdf = vectorize_niches(adata, niche_key)
         gdf.plot(column=niche_key)
         ```
 
@@ -84,6 +84,15 @@ def geometrize_niches(
     return gdf
 
 
+def geometrize_niches(*args, **kwargs):
+    """Alias for `vectorize_niches`"""
+    log.warning(
+        "The function `geometrize_niches` is deprecated and will be removed in a future version. "
+        "Use `vectorize_niches` instead."
+    )
+    return vectorize_niches(*args, **kwargs)
+
+
 def _clean_components(adata: AnnData, gdf: gpd.GeoDataFrame, niche_key: str, buffer: int | str) -> gpd.GeoDataFrame:
     data = {"geometry": [], niche_key: []}
 
@@ -110,7 +119,7 @@ def niches_geometry_stats(
     niche_key: str,
     aggregation: str | list[str] = "min",
     key_added_suffix: str = "_distance_to_niche_",
-    **geometrize_niches_kwargs: str,
+    **vectorize_niches_kwargs: str,
 ) -> gpd.GeoDataFrame:
     """Computes statistics over niches geometries
 
@@ -126,7 +135,7 @@ def niches_geometry_stats(
         niche_key: Key of `adata.obs` containing the niches
         aggregation: Aggregation mode. Either one string such as `"min"`, or a list such as `["mean", "min"]`.
         key_added_suffix: Suffix added in the DataFrame columns. Defaults to "_distance_to_niche_".
-        geometrize_niches_kwargs: Kwargs to the `sopa.spatial.geometrize_niches` function
+        vectorize_niches_kwargs: Kwargs to the `sopa.spatial.vectorize_niches` function
 
     Returns:
         A `DataFrame` of shape `n_niches * n_statistics`
@@ -134,7 +143,7 @@ def niches_geometry_stats(
     if isinstance(adata, SpatialData):
         adata = adata.tables[SopaKeys.TABLE]
 
-    gdf = geometrize_niches(adata, niche_key, **geometrize_niches_kwargs)
+    gdf = vectorize_niches(adata, niche_key, **vectorize_niches_kwargs)
     value_counts = gdf[niche_key].value_counts()
 
     assert len(gdf), "No niche geometry found, stats can't be computed"

@@ -13,6 +13,7 @@ if "--help" not in sys.argv:
 
     from ._settings import settings
     from . import utils
+    from . import shapes
     from . import io
     from . import spatial
     from . import segmentation

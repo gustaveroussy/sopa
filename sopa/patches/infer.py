@@ -14,13 +14,6 @@ from . import Patches2D
 log = logging.getLogger(__name__)
 
 
-def infer_wsi_patches(*args, **kwargs):
-    log.warning(
-        "`infer_wsi_patches` is deprecated and will be removed in sopa==2.1.0, use `sopa.patches.compute_embeddings` instead"
-    )
-    compute_embeddings(*args, **kwargs)
-
-
 def compute_embeddings(
     sdata: SpatialData,
     model: Callable | str,

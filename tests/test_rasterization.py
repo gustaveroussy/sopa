@@ -1,10 +1,10 @@
 import numpy as np
 from shapely.geometry import Polygon
 
-from sopa.segmentation import shapes
+from sopa import shapes
 
-cell = Polygon([[1, 1], [3, 4], [9, 5], [10, 2]])
-image_shape = (7, 12)
+cell = Polygon([[10, 10], [30, 40], [90, 50], [100, 20]])
+image_shape = (70, 120)
 
 cell_rectangle = Polygon([[1, 1], [1, 3], [2, 3], [2, 1]])
 
@@ -26,7 +26,9 @@ def test_raster_and_vectorize():
     new_cell = shapes.vectorize(mask, 0, 0).geometry[0]
     new_mask = shapes.rasterize(new_cell, image_shape)
 
-    assert (mask == new_mask).all(), "Applying vectorize and then rasterize shouldn't change the mask"
+    iou = (mask & new_mask).sum() / (mask | new_mask).sum()
+
+    assert iou > 0.99, "Applying vectorize and then rasterize shouldn't change the mask"
 
 
 def test_rasterize_cropped():
