@@ -1,20 +1,15 @@
-# Adapted from https://github.com/manzt/napari-lazy-openslide/tree/main
 from collections.abc import Mapping, MutableMapping
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import numpy as np
-from openslide import OpenSlide
-from zarr.storage import (
-    KVStore,
-    Store,
-    _path_to_prefix,
-    attrs_key,
-    init_array,
-    init_group,
-)
+import slideio
+from slideio import Slide
+from zarr.storage import KVStore, Store, _path_to_prefix, attrs_key, init_array, init_group
 from zarr.util import json_dumps, normalize_shape, normalize_storage_path
+
+from ._wsi_reader import ReaderBase
 
 
 def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str | None = None):
@@ -23,23 +18,23 @@ def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str | None
     store[path + attrs_key] = json_dumps(attrs)
 
 
-def create_meta_store(slide: OpenSlide, tilesize: int) -> dict[str, bytes]:
+def create_meta_store(reader: ReaderBase, tilesize: int) -> dict[str, bytes]:
     """Creates a dict containing the zarr metadata for the multiscale openslide image."""
     store = {}
     root_attrs = {
         "multiscales": [
             {
-                "name": Path(slide._filename).name,
-                "datasets": [{"path": str(i)} for i in range(slide.level_count)],
+                "name": Path(reader.path).name,
+                "datasets": [{"path": str(i)} for i in range(reader.level_count)],
                 "version": "0.1",
             }
         ],
-        "metadata": dict(slide.properties),
+        "metadata": dict(reader.properties),
     }
     init_group(store)
     init_attrs(store, root_attrs)
 
-    for i, (x, y) in enumerate(slide.level_dimensions):
+    for i, (x, y) in enumerate(reader.level_dimensions):
         init_array(
             store,
             path=str(i),
@@ -61,7 +56,7 @@ def _parse_chunk_path(path: str):
     return x, y, int(level)
 
 
-class OpenSlideStore(Store):
+class WsiStore(Store):
     """Wraps an OpenSlide object as a multiscale Zarr Store.
 
     Parameters
@@ -72,11 +67,10 @@ class OpenSlideStore(Store):
         Desired "chunk" size for zarr store (default: 512).
     """
 
-    def __init__(self, path: str, tilesize: int = 512):
-        self._path = path
-        self._slide = OpenSlide(path)
+    def __init__(self, reader: ReaderBase, tilesize: int = 512):
+        self._reader = reader
         self._tilesize = tilesize
-        self._store = create_meta_store(self._slide, tilesize)
+        self._store = create_meta_store(self._reader, tilesize)
         self._writeable = False
         self._erasable = False
 
@@ -101,7 +95,7 @@ class OpenSlideStore(Store):
             x, y, level = _parse_chunk_path(key)
             location = self._ref_pos(x, y, level)
             size = (self._tilesize, self._tilesize)
-            tile = self._slide.read_region(location, level, size)
+            tile = self._reader.read_region(location, level, size)
         except ArgumentError as err:
             # Can occur if trying to read a closed slide
             raise ArgumentError(err)
@@ -113,7 +107,7 @@ class OpenSlideStore(Store):
         return np.array(tile)  # .tobytes()
 
     def __eq__(self, other):
-        return isinstance(other, OpenSlideStore) and self._slide._filename == other._slide._filename
+        return isinstance(other, WsiStore) and self._reader.path == other._reader.path
 
     def __setitem__(self, key, val):
         raise PermissionError("ZarrStore is read-only")
@@ -134,7 +128,7 @@ class OpenSlideStore(Store):
         self.close()
 
     def _ref_pos(self, x: int, y: int, level: int):
-        dsample = self._slide.level_downsamples[level]
+        dsample = self._reader.level_downsamples[level]
         xref = int(x * dsample * self._tilesize)
         yref = int(y * dsample * self._tilesize)
         return xref, yref
@@ -143,7 +137,7 @@ class OpenSlideStore(Store):
         return self._store.keys()
 
     def close(self):
-        self._slide.close()
+        self._reader.close()
 
     # Retrieved from napari-lazy-openslide PR#16
     def __getstate__(self):

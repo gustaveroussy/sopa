@@ -7,7 +7,7 @@ import torch
 from xarray import DataArray, DataTree
 
 from . import models
-from sopa.io import wsi_reader 
+from ..io.reader._wsi_reader import get_reader
 
 log = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class Inference:
         data_parallel: bool | list[int] = False,
     ):
         self.image = image
-        self.slide = wsi_reader(image.attrs.get("backend"))(image.attrs.get("path"))
+        self.slide = get_reader(image.attrs.get("backend"))(image.attrs.get("path"))
         self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
 
         self.patch_width = int(patch_width / self.resize_factor)
@@ -66,11 +66,7 @@ class Inference:
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
         image_patch = np.array(
-            self.slide.read_region(
-                (box[0], box[1]), 
-                self.level, 
-                (box[2]-box[0], box[3]-box[1])
-            ).convert("RGB")
+            self.slide.read_region((box[0], box[1]), self.level, (box[2] - box[0], box[3] - box[1])).convert("RGB")
         )
 
         pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]

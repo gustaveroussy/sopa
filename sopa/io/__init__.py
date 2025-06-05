@@ -7,7 +7,7 @@ from .reader.macsima import macsima
 from .reader.phenocycler import phenocycler
 from .reader.hyperion import hyperion
 from .reader.utils import ome_tif
-from .reader.wsi import wsi, wsi_autoscale, wsi_reader
+from .reader.wsi import wsi, wsi_autoscale
 from .reader.generic import aicsimageio, bioio
 from .reader.visium_hd import visium_hd
 from .reader.molecular_cartography import molecular_cartography
