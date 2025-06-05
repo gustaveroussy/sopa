@@ -163,7 +163,7 @@ class SlideIOReader(ReaderBase):
 
         dask.config.set(scheduler="single-threaded")
         log.warning(
-            "Setting dask scheduler to single-threaded for SlideIOReader singe it is not multi-threaded compatible."
+            "SlideIOReader is not multi-threaded compatible, setting dask scheduler to single-threaded."
         )
 
         import slideio
