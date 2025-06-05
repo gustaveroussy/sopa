@@ -19,6 +19,7 @@ class Inference:
         level: int | None = 0,
         magnification: int | None = None,
         device: str | None = None,
+        data_parallel: bool | list[int] = False,
     ):
         self.image, self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
 
@@ -30,6 +31,14 @@ class Inference:
         self.device = device
         if self.device is not None:
             self.model.to(device)
+
+        if data_parallel:
+            if isinstance(data_parallel, list):
+                ids = data_parallel
+            else:
+                ids = list(range(torch.cuda.device_count())) if data_parallel else None
+
+            self.model = torch.nn.DataParallel(self.model, device_ids=ids)
 
     def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:
         if isinstance(model, str):

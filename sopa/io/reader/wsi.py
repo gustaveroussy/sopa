@@ -12,9 +12,9 @@ from ..._constants import SopaAttrs
 
 def wsi(
     path: str | Path,
-    chunks: tuple[int, int, int] = (3, 256, 256),
+    chunks: str | tuple[int, int, int] = "auto",
     as_image: bool = False,
-    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
@@ -22,7 +22,7 @@ def wsi(
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
         as_image: If `True`, returns a, image instead of a `SpatialData` object
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"slideio"`.
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`, or just the DataTree if `as_image=True`
@@ -38,7 +38,7 @@ def wsi(
             dims=("c", "y", "x"),
         ).chunk(chunks)
 
-        scale_factor = slide.level_downsamples[level]
+        scale_factor = slide_metadata["level_downsamples"][level]
 
         scale_image = Image2DModel.parse(
             scale_image[:3, :, :],
@@ -71,7 +71,7 @@ def _get_scale_transformation(scale_factor: float):
 def wsi_autoscale(
     path: str | Path,
     image_model_kwargs: dict | None = None,
-    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object.
 
@@ -81,7 +81,7 @@ def wsi_autoscale(
     Args:
         path: Path to the WSI
         image_model_kwargs: Kwargs provided to the `Image2DModel`
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"slideio"`.
 
     Returns:
         A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
@@ -116,7 +116,7 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
 
 
 def _open_wsi(
-    path: str | Path, backend: Literal["tiffslide", "openslide"] = "openslide"
+    path: str | Path, backend: Literal["tiffslide", "openslide", "slideio"] = "openslide"
 ) -> tuple[str, xarray.Dataset, Any, dict]:
     image_name = Path(path).stem
 
@@ -125,11 +125,14 @@ def _open_wsi(
 
         slide = tiffslide.open_slide(path)
         zarr_store = slide.zarr_group.store
-        zarr_img = xarray.open_zarr(
-            zarr_store,
-            consolidated=False,
-            mask_and_scale=False,
-        )
+
+        metadata = {
+            "properties": slide.properties,
+            "dimensions": slide.dimensions,
+            "level_count": slide.level_count,
+            "level_dimensions": slide.level_dimensions,
+            "level_downsamples": slide.level_downsamples,
+        }
     elif backend == "openslide":
         import openslide
 
@@ -137,16 +140,39 @@ def _open_wsi(
 
         slide = openslide.open_slide(path)
         zarr_store = OpenSlideStore(path).store
+
+        metadata = {
+            "properties": slide.properties,
+            "dimensions": slide.dimensions,
+            "level_count": slide.level_count,
+            "level_dimensions": slide.level_dimensions,
+            "level_downsamples": slide.level_downsamples,
+        }
+    elif backend == "slideio":
+        import slideio
+
+        from ._slideio import SlideIOStore
+
+        slide = slideio.open_slide(path)
+        zarr_store = SlideIOStore(path).store
+        metadata = {
+            "properties": {"slideio.objective-power": slide.get_scene(0).magnification},
+            "dimensions": slide.get_scene(0).size,
+            "level_count": slide.get_scene(0).num_zoom_levels,
+            "level_dimensions": [
+                (
+                    slide.get_scene(0).get_zoom_level_info(i).size.width,
+                    slide.get_scene(0).get_zoom_level_info(i).size.height,
+                )
+                for i in range(slide.get_scene(0).num_zoom_levels)
+            ],
+            "level_downsamples": [
+                1 / slide.get_scene(0).get_zoom_level_info(i).scale for i in range(slide.get_scene(0).num_zoom_levels)
+            ],
+        }
     else:
-        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide' and 'tiffslide'")
+        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
 
-    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False, chunks=None)
 
-    metadata = {
-        "properties": slide.properties,
-        "dimensions": slide.dimensions,
-        "level_count": slide.level_count,
-        "level_dimensions": slide.level_dimensions,
-        "level_downsamples": slide.level_downsamples,
-    }
     return image_name, zarr_img, slide, metadata

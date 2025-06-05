@@ -2,18 +2,12 @@
 from collections.abc import Mapping, MutableMapping
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict
 
 import numpy as np
-from openslide import OpenSlide
-from zarr.storage import (
-    KVStore,
-    Store,
-    _path_to_prefix,
-    attrs_key,
-    init_array,
-    init_group,
-)
+import slideio
+from slideio import Slide
+from zarr.storage import KVStore, Store, _path_to_prefix, attrs_key, init_array, init_group
 from zarr.util import json_dumps, normalize_shape, normalize_storage_path
 
 
@@ -23,34 +17,37 @@ def init_attrs(store: MutableMapping, attrs: Mapping[str, Any], path: str | None
     store[path + attrs_key] = json_dumps(attrs)
 
 
-def create_meta_store(slide: OpenSlide, tilesize: int) -> dict[str, bytes]:
+def create_meta_store(slide: Slide, tilesize: int) -> Dict[str, bytes]:
     """Creates a dict containing the zarr metadata for the multiscale openslide image."""
-    store = {}
-    root_attrs = {
-        "multiscales": [
-            {
-                "name": Path(slide._filename).name,
-                "datasets": [{"path": str(i)} for i in range(slide.level_count)],
-                "version": "0.1",
-            }
-        ],
-        "metadata": dict(slide.properties),
-    }
-    init_group(store)
-    init_attrs(store, root_attrs)
+    store = dict()
+    with slide.get_scene(0) as scene:
+        root_attrs = {
+            "multiscales": [
+                {
+                    "name": Path(slide.file_path).name,
+                    "datasets": [{"path": str(i)} for i in range(scene.num_zoom_levels)],
+                    "version": "0.1",
+                }
+            ],
+            "metadata": scene.get_raw_metadata(),
+        }
+        init_group(store)
+        init_attrs(store, root_attrs)
 
-    for i, (x, y) in enumerate(slide.level_dimensions):
-        init_array(
-            store,
-            path=str(i),
-            shape=normalize_shape((y, x, 4)),
-            chunks=(tilesize, tilesize, 4),
-            fill_value=0,
-            dtype="|u1",
-            compressor=None,
-        )
-        suffix = str(i) if i != 0 else ""
-        init_attrs(store, {"_ARRAY_DIMENSIONS": [f"Y{suffix}", f"X{suffix}", "S"]}, path=str(i))
+        for i in range(scene.num_zoom_levels):
+            x = scene.get_zoom_level_info(i).size.height
+            y = scene.get_zoom_level_info(i).size.width
+            init_array(
+                store,
+                path=str(i),
+                shape=normalize_shape((x, y, scene.num_channels)),
+                chunks=(tilesize, tilesize, scene.num_channels),
+                fill_value=0,
+                dtype="|u1",
+                compressor=None,
+            )
+            suffix = str(i) if i != 0 else ""
+            init_attrs(store, {"_ARRAY_DIMENSIONS": [f"Y{suffix}", f"X{suffix}", "S"]}, path=str(i))
     return store
 
 
@@ -61,8 +58,8 @@ def _parse_chunk_path(path: str):
     return x, y, int(level)
 
 
-class OpenSlideStore(Store):
-    """Wraps an OpenSlide object as a multiscale Zarr Store.
+class SlideIOStore(Store):
+    """Wraps an SlideIO object as a multiscale Zarr Store.
 
     Parameters
     ----------
@@ -74,7 +71,7 @@ class OpenSlideStore(Store):
 
     def __init__(self, path: str, tilesize: int = 512):
         self._path = path
-        self._slide = OpenSlide(path)
+        self._slide = slideio.open_slide(path)
         self._tilesize = tilesize
         self._store = create_meta_store(self._slide, tilesize)
         self._writeable = False
@@ -99,21 +96,31 @@ class OpenSlideStore(Store):
         # e.g '3/4.5.0' -> '<level>/<chunk_key>'
         try:
             x, y, level = _parse_chunk_path(key)
-            location = self._ref_pos(x, y, level)
-            size = (self._tilesize, self._tilesize)
-            tile = self._slide.read_region(location, level, size)
+            with self._slide.get_scene(0) as scene:
+                scaling = 1 / scene.get_zoom_level_info(level).scale
+                (x_start, y_start) = self._ref_pos(x, y, level)
+                x_end = min(x_start + int(scaling * self._tilesize), scene.size[0])
+                y_end = min(y_start + int(scaling * self._tilesize), scene.size[1])
+                x_width = x_end - x_start
+                y_height = y_end - y_start
+                tile_x = int(np.round(x_width / scaling))
+                tile_y = int(np.round(y_height / scaling))
+                _tile = scene.read_block((x_start, y_start, x_width, y_height), (tile_x, tile_y))
+                tile = np.zeros((self._tilesize, self._tilesize, scene.num_channels), dtype=np.uint8)
+                tile[: _tile.shape[0], : _tile.shape[1], :] = _tile
         except ArgumentError as err:
             # Can occur if trying to read a closed slide
-            raise ArgumentError(err)
-        except Exception:
+            raise err
+        except Exception as e:
             # TODO: probably need better error handling.
             # If anything goes wrong, we just signal the chunk
             # is missing from the store.
+            print(e)
             raise KeyError(key)
         return np.array(tile)  # .tobytes()
 
     def __eq__(self, other):
-        return isinstance(other, OpenSlideStore) and self._slide._filename == other._slide._filename
+        return isinstance(other, SlideIOStore) and self._slide.file_path == other._slide.file_path
 
     def __setitem__(self, key, val):
         raise PermissionError("ZarrStore is read-only")
@@ -134,7 +141,7 @@ class OpenSlideStore(Store):
         self.close()
 
     def _ref_pos(self, x: int, y: int, level: int):
-        dsample = self._slide.level_downsamples[level]
+        dsample = 1 / self._slide.get_scene(0).get_zoom_level_info(level).scale
         xref = int(x * dsample * self._tilesize)
         yref = int(y * dsample * self._tilesize)
         return xref, yref
@@ -143,7 +150,7 @@ class OpenSlideStore(Store):
         return self._store.keys()
 
     def close(self):
-        self._slide.close()
+        pass
 
     # Retrieved from napari-lazy-openslide PR#16
     def __getstate__(self):

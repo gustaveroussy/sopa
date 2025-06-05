@@ -4,6 +4,9 @@
 - `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
 - Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
+- `slideio` backend for WSI is now available and allows loading among others the Olympus `.vsi` format @stergioc
+- `nn.DataParallel` for WSI inference now allows using multiple GPUs and larger batch_sizes @stergioc
+
 
 ### Changed
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
@@ -75,6 +78,7 @@ Yanked release (missing dask distributed, cannot install)
 - [`spatialdata_plot`](https://spatialdata.scverse.org/projects/plot/en/latest/index.html) is now a default dependency of Sopa
 - Use `prob_thresh=0.2` and `nms_thresh=0.6` by default in `stardist`
 - During segmentation, pixels outside of the ROI / tissue use the mean channels value instead of 0 (#222)
+
 
 ## [2.0.2] - 2025-02-21
 
