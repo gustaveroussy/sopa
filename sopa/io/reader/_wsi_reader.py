@@ -1,3 +1,8 @@
+import logging
+
+log = logging.getLogger(__name__)
+
+
 def get_reader(backend: str):
     """Get a reader for the specified backend."""
     if backend == "openslide":
@@ -73,8 +78,9 @@ class OpenSlideReader(ReaderBase):
         return self.slide.read_region(location, level, size).convert("RGB")
 
     def get_zarr_store(self, tilesize: int = 512):
-        from ._wsi_store import WsiStore
         from zarr.storage import KVStore
+
+        from ._wsi_store import WsiStore
 
         return KVStore(WsiStore(self, tilesize))
 
@@ -153,6 +159,13 @@ class SlideIOReader(ReaderBase):
     """Reader using the SlideIO backend."""
 
     def __init__(self, path: str):
+        import dask
+
+        dask.config.set(scheduler="single-threaded")
+        log.warning(
+            "Setting dask scheduler to single-threaded for SlideIOReader singe it is not multi-threaded compatible."
+        )
+
         import slideio
 
         self.name = "slideio"
@@ -177,8 +190,9 @@ class SlideIOReader(ReaderBase):
         return np.array(tile)
 
     def get_zarr_store(self, tilesize: int = 512):
-        from ._wsi_store import WsiStore
         from zarr.storage import KVStore
+
+        from ._wsi_store import WsiStore
 
         return KVStore(WsiStore(self, tilesize))
 
