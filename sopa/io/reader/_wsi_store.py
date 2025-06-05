@@ -38,8 +38,8 @@ def create_meta_store(reader: ReaderBase, tilesize: int) -> dict[str, bytes]:
         init_array(
             store,
             path=str(i),
-            shape=normalize_shape((y, x, 4)),
-            chunks=(tilesize, tilesize, 4),
+            shape=normalize_shape((y, x, 3)),
+            chunks=(tilesize, tilesize, 3),
             fill_value=0,
             dtype="|u1",
             compressor=None,

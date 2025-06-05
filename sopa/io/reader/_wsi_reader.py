@@ -70,7 +70,7 @@ class OpenSlideReader(ReaderBase):
 
     def read_region(self, location, level, size):
         """Get a region from the slide."""
-        return self.slide.read_region(location, level, size)
+        return self.slide.read_region(location, level, size).convert("RGB")
 
     def get_zarr_store(self, tilesize: int = 512):
         from ._wsi_store import WsiStore
@@ -117,7 +117,7 @@ class TiffSlideReader(ReaderBase):
 
     def read_region(self, location, level, size):
         """Get a region from the slide."""
-        return self.slide.read_region(location, level, size)
+        return self.slide.read_region(location, level, size).convert("RGB")
 
     def get_zarr_store(self, tilesize: int = 512):
         return self.slide.zarr_group.store
@@ -152,7 +152,6 @@ class TiffSlideReader(ReaderBase):
 class SlideIOReader(ReaderBase):
     """Reader using the SlideIO backend."""
 
-
     def __init__(self, path: str):
         import slideio
 
@@ -162,7 +161,7 @@ class SlideIOReader(ReaderBase):
 
     def read_region(self, location, level, size):
         import numpy as np
-        
+
         with self.slide.get_scene(0) as scene:
             scaling = 1 / scene.get_zoom_level_info(level).scale
             (x, y) = location
@@ -173,8 +172,8 @@ class SlideIOReader(ReaderBase):
             tile_x = int(np.round(x_width / scaling))
             tile_y = int(np.round(y_height / scaling))
             _tile = scene.read_block((x, y, x_width, y_height), (tile_x, tile_y))
-            tile = np.zeros((size[0], size[1], scene.num_channels), dtype=np.uint8)
-            tile[: _tile.shape[0], : _tile.shape[1], :] = _tile
+            tile = np.zeros((size[0], size[1], 3), dtype=np.uint8)
+            tile[: _tile.shape[0], : _tile.shape[1], :] = _tile[:, :, :3]  # Ensure RGB format
         return np.array(tile)
 
     def get_zarr_store(self, tilesize: int = 512):

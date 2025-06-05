@@ -66,7 +66,7 @@ class Inference:
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
         image_patch = np.array(
-            self.slide.read_region((box[0], box[1]), self.level, (box[2] - box[0], box[3] - box[1])).convert("RGB")
+            self.slide.read_region((box[0], box[1]), self.level, (box[2] - box[0], box[3] - box[1]))
         )
 
         pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
