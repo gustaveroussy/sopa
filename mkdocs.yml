@@ -8,6 +8,7 @@ theme:
   favicon: assets/sopa_favicon.png
   features:
   - content.code.annotate
+  - content.code.copy
   palette:
     scheme: default
     primary: indigo
