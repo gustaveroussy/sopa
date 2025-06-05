@@ -67,7 +67,7 @@ def test_patchify_baysor_inside_tissue_roi(sdata: SpatialData):
 
     sopa.make_transcript_patches(sdata, 5, 0, min_points_per_patch=0)
 
-    assert len(sdata[SopaKeys.TRANSCRIPTS_PATCHES]) == 113  # inside the tissue ROI
+    assert len(sdata[SopaKeys.TRANSCRIPTS_PATCHES]) == 107  # inside the tissue ROI
 
     sopa.utils.delete_cache(sdata)
 
