@@ -9,6 +9,7 @@ from sopa._constants import ATTRS_KEY, SopaAttrs
 
 def test_make_toy_dataset():
     assert sopa.io.toy_dataset(length=512) is not None
+    assert sopa.io.toy_dataset(as_output=True, length=512) is not None
 
 
 def test_make_blobs():
