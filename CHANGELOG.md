@@ -4,6 +4,7 @@
 - `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
 - Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
+- Support `CONCH` for H&E patches inference.
 
 ### Changed
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system

@@ -33,9 +33,12 @@ def compute_embeddings(
         The image will be saved into the `SpatialData` object with the key `"{model_name}_embeddings"` (see the `model_name` argument below), except if `key_added` is provided.
         The shapes of the patches will be saved with the key `"embeddings_patches"`.
 
+    !!! warning
+        In addition to the WSI extra (`pip install 'sopa[wsi]'`) and depending on the model used, you might need to install additional dependencies. Also, CONCH requires to be logged in Hugging Face and having approved their License.
+
     Args:
         sdata: A `SpatialData` object
-        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`).
+        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`, `conch`).
         patch_width: Width (pixels) of the patches.
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
