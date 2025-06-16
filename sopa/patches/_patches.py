@@ -120,11 +120,7 @@ class Patches2D:
 
         if roi_key is not None and roi_key in sdata.shapes:
             geo_df = to_intrinsic(sdata, sdata[roi_key], self.original_element)
-
-            self.roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
-            assert isinstance(self.roi, (Polygon, MultiPolygon)), (
-                f"Invalid ROI type: {type(self.roi)}. Must be Polygon or MultiPolygon"
-            )
+            self.roi = _get_roi(geo_df)
 
         self._init_patches()
 
@@ -212,3 +208,18 @@ class Patches2D:
         })
 
         return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
+
+
+def _get_roi(geo_df: gpd.GeoDataFrame) -> Polygon | MultiPolygon:
+    roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
+
+    if isinstance(roi, GeometryCollection):
+        _previous_area = roi.area
+
+        geoms = [geom for geom in roi.geoms if isinstance(geom, (Polygon, MultiPolygon))]
+        roi = max(geoms, key=lambda polygon: polygon.area)
+        if roi.area < _previous_area * 0.99:
+            raise ValueError(f"ROI is a GeometryCollection which could not be simplified: {geoms}.")
+
+    assert isinstance(roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(roi)}. Must be Polygon or MultiPolygon"
+    return roi
