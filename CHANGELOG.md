@@ -5,7 +5,7 @@
 - Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
 - Support `CONCH` for H&E patches inference.
-- Support `cellpose>=4.0.0` (#252)
+- Support `cellpose>=4.0.0` @lguerard (#252, #264)
 
 ### Changed
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
