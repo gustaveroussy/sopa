@@ -211,15 +211,15 @@ class Patches2D:
 
 
 def _get_roi(geo_df: gpd.GeoDataFrame) -> Polygon | MultiPolygon:
-    roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
+    """Merge all geometries into a single region-of-interest (as a Polygon or MultiPolygon)"""
+    roi = unary_union(geo_df.geometry)
 
     if isinstance(roi, GeometryCollection):
         _previous_area = roi.area
 
-        geoms = [geom for geom in roi.geoms if isinstance(geom, (Polygon, MultiPolygon))]
-        roi = max(geoms, key=lambda polygon: polygon.area)
-        if roi.area < _previous_area * 0.99:
-            raise ValueError(f"ROI is a GeometryCollection which could not be simplified: {geoms}.")
+        roi = MultiPolygon([geom for geom in roi.geoms if isinstance(geom, Polygon)])
+        if roi.area < _previous_area * 0.999:
+            raise ValueError("ROI is a GeometryCollection that could not be simplified into polygons.")
 
     assert isinstance(roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(roi)}. Must be Polygon or MultiPolygon"
     return roi

@@ -10,7 +10,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
-from ..shapes import _ensure_polygon
+from ..shapes import ensure_polygon
 from ..utils import to_intrinsic
 
 log = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ def solve_conflicts(
 
         intersection = cell1.intersection(cell2).area
         if intersection >= threshold * min(cell1.area, cell2.area):
-            cell = _ensure_polygon(cell1.union(cell2))
+            cell = ensure_polygon(cell1.union(cell2))
             assert not cell.is_empty, "Merged cell is empty"
 
             resolved_indices[np.isin(resolved_indices, [resolved_i1, resolved_i2])] = len(cells)

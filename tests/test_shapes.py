@@ -6,7 +6,7 @@ from geopandas import GeoDataFrame
 from shapely import MultiPolygon, Point, Polygon, box
 
 from sopa.aggregation.channels import _aggregate_channels_aligned
-from sopa.shapes import _ensure_polygon, expand_radius, remove_overlap, to_valid_polygons
+from sopa.shapes import ensure_polygon, expand_radius, remove_overlap, to_valid_polygons
 
 gdf_squares = gpd.GeoDataFrame(
     {"color": [0, 1, 2, 3, 4]},
@@ -64,12 +64,12 @@ def test_to_valid_polygons():
 
     mp = MultiPolygon([box(2, 2, 3, 3), box(-2, -2, 1, 1)])
 
-    assert _ensure_polygon(mp).area == 9
-    assert _ensure_polygon(mp, simple_polygon=False) == mp
+    assert ensure_polygon(mp).area == 9
+    assert ensure_polygon(mp, simple_polygon=False) == mp
 
     ext = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
     interior = [(0.1, 0.1), (0.1, 0.9), (0.9, 0.9), (0.9, 0.1), (0.1, 0.1)]
     polygon = Polygon(ext, [interior])
 
-    assert _ensure_polygon(polygon, False) == polygon
-    assert _ensure_polygon(polygon, True).area == 1
+    assert ensure_polygon(polygon, False) == polygon
+    assert ensure_polygon(polygon, True).area == 1

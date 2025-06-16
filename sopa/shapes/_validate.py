@@ -8,11 +8,11 @@ log = logging.getLogger(__name__)
 
 
 def to_valid_polygons(geo_df: gpd.GeoDataFrame, simple_polygon: bool = True) -> gpd.GeoDataFrame:
-    geo_df.geometry = geo_df.geometry.map(lambda cell: _ensure_polygon(cell, simple_polygon))
+    geo_df.geometry = geo_df.geometry.map(lambda cell: ensure_polygon(cell, simple_polygon))
     return geo_df[~geo_df.is_empty]
 
 
-def _ensure_polygon(
+def ensure_polygon(
     cell: Polygon | MultiPolygon | GeometryCollection, simple_polygon: bool = True
 ) -> Polygon | MultiPolygon:
     """Ensures that the provided cell becomes a Polygon
@@ -43,15 +43,6 @@ def _ensure_polygon(
         if geoms:
             return max(geoms, key=lambda polygon: polygon.area)
 
-        geoms = [geom for geom in cell.geoms if isinstance(geom, MultiPolygon)]
-        geoms = [polygon for multi_polygon in geoms for polygon in multi_polygon.geoms]
-
-        if len(geoms) > 1 and not simple_polygon:
-            return MultiPolygon(geoms)
-
-        if geoms:
-            return max(geoms, key=lambda polygon: polygon.area)
-
         log.warning(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
         return Polygon()
 
@@ -73,7 +64,7 @@ def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -
     cell = cell.buffer(-smooth_radius).buffer(2 * smooth_radius).buffer(-smooth_radius)
     cell = cell.simplify(tolerance)
 
-    return _ensure_polygon(cell)
+    return ensure_polygon(cell)
 
 
 def _default_tolerance(mean_radius: float) -> float:
