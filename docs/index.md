@@ -13,7 +13,7 @@ Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enab
 The following illustration describes the main steps of `sopa`:
 
 <p align="center">
-  <img src="./assets/overview.png" alt="sopa_overview" width="100%"/>
+  <img src="./assets/overview_white.png" alt="sopa_overview" width="100%"/>
 </p>
 
 > *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
