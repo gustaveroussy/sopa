@@ -1,12 +1,16 @@
+import logging
 import warnings
 from functools import partial
 from typing import Callable
 
 import numpy as np
+from packaging.version import Version
 from spatialdata import SpatialData
 
 from ..._constants import SopaKeys
 from ._custom import custom_staining_based
+
+log = logging.getLogger(__name__)
 
 
 def cellpose(
@@ -14,6 +18,8 @@ def cellpose(
     channels: list[str] | str,
     diameter: int,
     model_type: str = "cyto3",
+    pretrained_model: str | None = None,
+    gpu: bool = False,
     image_key: str | None = None,
     min_area: int | None = None,
     delete_cache: bool = True,
@@ -40,6 +46,8 @@ def cellpose(
         channels: Name of the channel(s) to be used for segmentation. If one channel, must be a nucleus channel. If a `list` of channels, it must be a cytoplasmic channel and then a nucleus channel.
         diameter: The Cellpose parameter for the expected cell diameter (in pixel).
         model_type: Cellpose model type.
+        pretrained_model: Path to the pretrained model to be loaded, or `None`
+        gpu: Whether to use GPU for segmentation.
         image_key: Name of the image in `sdata` to be used for segmentation.
         min_area: Minimum area of a cell to be considered. By default, it is calculated based on the `diameter` parameter.
         delete_cache: Whether to delete the cache after segmentation.
@@ -59,6 +67,8 @@ def cellpose(
         diameter=diameter,
         channels=channels,
         model_type=model_type,
+        pretrained_model=pretrained_model,
+        gpu=gpu,
         flow_threshold=flow_threshold,
         cellprob_threshold=cellprob_threshold,
         cellpose_model_kwargs=cellpose_model_kwargs,
@@ -88,7 +98,8 @@ def cellpose_patch(
     diameter: float,
     channels: list[str],
     model_type: str = "cyto3",
-    pretrained_model: str | bool = False,
+    pretrained_model: str | None = None,
+    gpu: bool = False,
     cellpose_model_kwargs: dict | None = None,
     **cellpose_eval_kwargs: int,
 ) -> Callable:
@@ -98,7 +109,8 @@ def cellpose_patch(
         diameter: Cellpose diameter parameter
         channels: List of channel names
         model_type: Cellpose model type
-        pretrained_model: Path to the pretrained model to be loaded, or `False`
+        pretrained_model: Path to the pretrained model to be loaded, or `None`
+        gpu: Whether to use GPU for segmentation.
         cellpose_model_kwargs: Kwargs to be provided to the `cellpose.models.CellposeModel` object
         **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
 
@@ -106,16 +118,26 @@ def cellpose_patch(
         A `callable` whose input is an image of shape `(C, Y, X)` and output is a cell mask of shape `(Y, X)`. Each mask value `>0` represent a unique cell ID
     """
     try:
-        from cellpose import models
+        from cellpose import models, version
     except ImportError:
         raise ImportError("To use cellpose, you need its corresponding sopa extra: `pip install 'sopa[cellpose]'`.")
+
+    if Version(version) >= Version("4.0.0"):
+        if not pretrained_model:
+            log.info(f"You use cellpose={version}, which requires a `pretrained_model`. Defaulting to 'cpsam'.")
+            pretrained_model = "cpsam"
+
+        if not gpu:
+            log.warning(
+                f"You use cellpose={version}, which can be slow without a GPU. Consider using `gpu=True`, or downgrading to `cellpose<4.0.0`."
+            )
 
     def _(
         patch: np.ndarray,
         diameter: float,
         channels: list[str],
         model_type: str,
-        pretrained_model: str | bool = False,
+        pretrained_model: str | None = None,
         cellpose_model_kwargs: dict | None = None,
         **cellpose_eval_kwargs: int,
     ):
@@ -124,9 +146,9 @@ def cellpose_patch(
         cellpose_model_kwargs = cellpose_model_kwargs or {}
 
         if pretrained_model:
-            model = models.CellposeModel(pretrained_model=pretrained_model, **cellpose_model_kwargs)
+            model = models.CellposeModel(gpu=gpu, pretrained_model=pretrained_model, **cellpose_model_kwargs)
         else:
-            model = models.Cellpose(model_type=model_type, **cellpose_model_kwargs)
+            model = models.Cellpose(gpu=gpu, model_type=model_type, **cellpose_model_kwargs)
 
         if isinstance(channels, str) or len(channels) == 1:
             channels = [0, 0]  # gray scale

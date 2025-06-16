@@ -30,7 +30,7 @@ class Patches1D:
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
 
-        self.patch_width = patch_width
+        self.patch_width = int(xmax - xmin + 1) if patch_width == float("inf") else patch_width
         self.patch_overlap = patch_overlap
         self.int_coords = int_coords
 
