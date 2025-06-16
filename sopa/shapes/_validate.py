@@ -28,7 +28,7 @@ def _ensure_polygon(
 
     if isinstance(cell, Polygon):
         if simple_polygon and cell.interiors:
-            cell = Polygon(list(cell.exterior.coords))
+            cell = Polygon(cell.exterior)
         return cell
 
     if isinstance(cell, MultiPolygon):

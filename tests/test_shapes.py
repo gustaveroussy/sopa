@@ -1,7 +1,12 @@
+import dask.array as da
 import geopandas as gpd
-from shapely.geometry import Point, box
+import numpy as np
+import xarray as xr
+from geopandas import GeoDataFrame
+from shapely import MultiPolygon, Point, Polygon, box
 
-from sopa.shapes import expand_radius, remove_overlap
+from sopa.aggregation.channels import _aggregate_channels_aligned
+from sopa.shapes import _ensure_polygon, expand_radius, remove_overlap, to_valid_polygons
 
 gdf_squares = gpd.GeoDataFrame(
     {"color": [0, 1, 2, 3, 4]},
@@ -35,3 +40,36 @@ def test_remove_overlap():
         res.geometry = res.geometry.buffer(-1e-3)
 
         assert len(gpd.sjoin(res, res)) == len(res)
+
+
+def test_remove_overlap_empty():
+    gdf = GeoDataFrame(geometry=[box(-1, -1, 1, 1), Point(0, 0).buffer(0.5)])  # second shape is indluced in the first
+
+    res = remove_overlap(gdf)
+
+    assert res.geometry[1].is_empty
+
+    image = np.random.randint(1, 10, size=(3, 8, 16))
+    arr = da.from_array(image, chunks=(1, 8, 8))
+    xarr = xr.DataArray(arr, dims=["c", "y", "x"])
+
+    # we can still run aggregation on the empty shape
+    X = _aggregate_channels_aligned(xarr, res.geometry, mode="average")
+    assert (X[1] == 0).all()  # should be all zeros for the empty shape
+
+
+def test_to_valid_polygons():
+    gdf = GeoDataFrame(geometry=[Point(0, 0)])
+    assert to_valid_polygons(gdf).empty
+
+    mp = MultiPolygon([box(2, 2, 3, 3), box(-2, -2, 1, 1)])
+
+    assert _ensure_polygon(mp).area == 9
+    assert _ensure_polygon(mp, simple_polygon=False) == mp
+
+    ext = [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+    interior = [(0.1, 0.1), (0.1, 0.9), (0.9, 0.9), (0.9, 0.1), (0.1, 0.1)]
+    polygon = Polygon(ext, [interior])
+
+    assert _ensure_polygon(polygon, False) == polygon
+    assert _ensure_polygon(polygon, True).area == 1
