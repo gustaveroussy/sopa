@@ -12,6 +12,7 @@
 - Use `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
 - Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
 - To use cellpose with GPU, `gpu=True` must be passed directly as an arg/kwarg instead of inside `cellpose_eval_kwargs`
+- Refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
 
 ### Removed
 - Removed the `open-cv` dependency (#239)

@@ -1,11 +1,14 @@
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
+from shapely import Point
 from spatialdata import SpatialData
+from spatialdata.models import Image2DModel, ShapesModel
 
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
-from sopa.patches._patches import Patches1D
+from sopa.patches._patches import Patches1D, Patches2D
 
 
 @pytest.fixture
@@ -134,3 +137,18 @@ def test_gene_exlude_pattern():
     assert len(df) == len(sdata["transcripts"])
 
     sopa.settings.gene_exclude_pattern = _default_gene_exclude_pattern
+
+
+def test_patches_with_without_centroids():
+    gdf = ShapesModel.parse(gpd.GeoDataFrame(geometry=[Point(100, 100).buffer(80)]))
+    im = Image2DModel.parse(np.zeros((1, 200, 200), dtype=np.uint8))
+
+    sdata = SpatialData(images={"im": im}, shapes={"gdf": gdf})
+
+    patches = Patches2D(sdata, element="im", patch_width=67, patch_overlap=0, roi_key="gdf")
+    assert len(patches) == 9
+    assert patches.geo_df.index[0] == 0
+
+    patches = Patches2D(sdata, element="im", patch_width=67, patch_overlap=0, roi_key="gdf", use_roi_centroids=True)
+    assert len(patches) == 1
+    assert patches.geo_df.index[0] == 0
