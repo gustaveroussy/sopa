@@ -1,4 +1,5 @@
 import logging
+from spatialdata import SpatialData
 
 log = logging.getLogger(__name__)
 
@@ -11,10 +12,10 @@ def get_reader(backend: str):
         return TiffSlideReader
     elif backend == "slideio":
         return SlideIOReader
+    elif backend == "zarr":
+        return ZarrSlideReader
     else:
-        raise ValueError(
-            f"Unsupported backend: {backend}. Supported backends are 'openslide', 'tiffslide', and 'slideio'."
-        )
+        raise ValueError(f"Unknown backend: {backend}. Supported backends are: openslide, tiffslide, slideio, zarr.")
 
 
 class ReaderBase:
@@ -228,3 +229,51 @@ class SlideIOReader(ReaderBase):
     def dimensions(self):
         """Get the dimensions of the slide."""
         return self.slide.get_scene(0).size
+
+
+class ZarrSlideReader(ReaderBase):
+    """Reader using the openslide backend."""
+
+    def __init__(self, slide: SpatialData):
+        self.slide = slide
+
+    def read_region(self, location, level, size):
+        """Get a region from the slide."""
+        x_start, y_start = location
+        x_end, y_end = x_start + size[0], y_start + size[1]
+        tile = self.slide[:, slice(x_start, x_end), slice(y_start, y_end)]
+        return tile.transpose('x', 'y', 'c')
+
+    def get_zarr_store(self, tilesize: int = 512):
+        import ipdb; ipdb.set_trace()
+
+    def close(self):
+        """Close the slide."""
+        self.slide.close()
+
+    @property
+    def properties(self):
+        """Get the properties of the slide."""
+        import ipdb; ipdb.set_trace()
+        return self.slide.properties
+
+    @property
+    def level_downsamples(self):
+        import ipdb; ipdb.set_trace()
+        return self.slide.level_downsamples
+
+    @property
+    def level_count(self):
+        import ipdb; ipdb.set_trace()
+        return len(self.slide.level_downsamples)
+
+    @property
+    def level_dimensions(self):
+        import ipdb; ipdb.set_trace()
+        return self.slide.level_dimensions
+
+    @property
+    def dimensions(self):
+        import ipdb; ipdb.set_trace()
+        """Get the dimensions of the slide."""
+        return self.slide.dimensions

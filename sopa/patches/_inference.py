@@ -24,7 +24,7 @@ class Inference:
         data_parallel: bool | list[int] = False,
     ):
         self.image = image
-        self.slide = get_reader(image.attrs.get("backend"))(image.attrs.get("path"))
+        self.slide = get_reader(image.attrs.get("backend"))(image.attrs.get("path")) if image.attrs.get("backend") else get_reader("zarr")(image)
         self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
 
         self.patch_width = int(patch_width / self.resize_factor)
@@ -98,7 +98,7 @@ def _get_extraction_parameters(
 ) -> tuple[DataArray, int, float]:
     if isinstance(image, DataArray):
         assert level == 0, "Level must be 0 when using a DataArray"
-        return image, 0, 1
+        return 0, 1
 
     if level < 0:
         assert isinstance(level, int) and level >= -len(image.keys()), "Invalid level"

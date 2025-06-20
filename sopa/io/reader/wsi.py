@@ -14,7 +14,7 @@ def wsi(
     path: str | Path,
     chunks: str | tuple[int, int, int] = "auto",
     as_image: bool = False,
-    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio", "zarr"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
