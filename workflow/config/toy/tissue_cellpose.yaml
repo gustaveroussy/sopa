@@ -3,8 +3,8 @@ read:
   technology: toy_dataset
 
 patchify:
-  patch_width_pixel: 1200
-  patch_overlap_pixel: 50
+  patch_width_pixel: 500
+  patch_overlap_pixel: 10
   patch_width_microns: 3000
   patch_overlap_microns: 40
 
@@ -14,7 +14,8 @@ segmentation:
 
   cellpose:
     diameter: 35
-    channels: [ "DAPI" ]
+    channels: ["DAPI"]
+    gpu: true
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2500

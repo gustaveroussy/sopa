@@ -20,6 +20,7 @@ def cellpose(
     cellprob_threshold: float = typer.Option(-6, help="Cellpose `cellprob_threshold` parameter"),
     model_type: str = typer.Option("cyto3", help="Name of the cellpose model"),
     pretrained_model: str = typer.Option(None, help="Path to the pretrained model to be loaded"),
+    gpu: bool = typer.Option(False, help="Whether to use the GPU (recommended for cellpose>=4.0.0)"),
     min_area: int = typer.Option(0, help="Minimum area (in pixels^2) for a cell to be considered as valid"),
     clip_limit: float = typer.Option(
         0.2,
@@ -74,6 +75,7 @@ def cellpose(
         cellprob_threshold=cellprob_threshold,
         model_type=model_type,
         pretrained_model=pretrained_model,
+        gpu=gpu,
         **method_kwargs,
     )
 

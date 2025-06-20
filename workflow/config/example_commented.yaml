@@ -25,10 +25,11 @@ segmentation:
   # [only if running cellpose]
   cellpose:
     diameter: 55 # [important parameter] typical size of a cell, in pixels. This depends on the technology resolution (see our config files per technology: https://github.com/gustaveroussy/sopa/tree/main/workflow/config)
-    channels: [ "DAPI" ] # list of one or two channel(s) used for segmentation. If two channels, provide a cytoplasm staining, and then the nucleus staining
-    flow_threshold: 2 # see cellpose parameters
-    cellprob_threshold: -6 # see cellpose parameters
+    channels: ["DAPI"] # list of one or two channel(s) used for segmentation. If two channels, provide a cytoplasm staining, and then the nucleus staining
 
+    gpu: true # [optional] whether to use the gpu
+    flow_threshold: 2 # [optional] see cellpose parameters
+    cellprob_threshold: -6 # [optional] see cellpose parameters
     model_type: "cyto3" # [optional] name of the cellpose model to be used. If you have a custom model, use the "pretrained_model" argument instead, and give the path to your model
     min_area: 1000 # [optional] minimum area (in pixels^2) for a cell to not be filtered
     clip_limit: 0.2 # [optional] value used to increase the contrast of the image. 0 means no change, 1 means high contrast change (see skimage.exposure.equalize_adapthist).
@@ -81,7 +82,6 @@ aggregate:
 
 # [optional] if annotation is desired, choose either 'tangram' or 'fluorescence'. If 'fluorescence' is used, make sure 'aggregate_channels' is true (see parameter above)
 annotation:
-
   # [only if you choose transcript-based annotation with Tangram]
   method: tangram
   args:
@@ -98,7 +98,6 @@ annotation:
   #     FAP: Fibroblast
   #     CD68: Macrophage
   #     CD20: B cell
-
 
 explorer:
   # parameters related to the conversion to the Xenium Explorer (Sopa's visualizer)

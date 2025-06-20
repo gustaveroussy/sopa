@@ -197,7 +197,7 @@ class Patches2D:
 
         add_spatial_element(self.sdata, key_added, self.geo_df, overwrite=overwrite)
 
-        log.info(f"Added {len(self.geo_df)} patche(s) to sdata['{key_added}']")
+        log.info(f"Added {len(self.geo_df)} patch(es) to sdata['{key_added}']")
 
         return self.geo_df
 

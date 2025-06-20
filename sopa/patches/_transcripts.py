@@ -95,6 +95,10 @@ class OnDiskTranscriptPatches(Patches2D):
     def get_prior_centroids(self) -> gpd.GeoDataFrame:
         assert self.prior_shapes_key is not None, "Prior shapes key is required to write cell centroids"
 
+        assert self.prior_shapes_key in self.sdata.shapes, (
+            "When using write_cells_centroids=True, `prior_shapes_key` must be a shape element in `sdata.shapes`."
+        )
+
         centroids = to_intrinsic(self.sdata, self.prior_shapes_key, self.points).geometry.centroid
 
         return gpd.GeoDataFrame(
@@ -123,7 +127,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         add_spatial_element(self.sdata, key_added, geo_df)
 
-        log.info(f"Added {len(valid_indices)} patche(s) to sdata['{key_added}']")
+        log.info(f"Added {len(valid_indices)} patch(es) to sdata['{key_added}']")
 
     def get_patch_path(self, index: int, csv_name: str | None = None) -> Path:
         return self.cache_dir / str(index) / (csv_name or self.csv_name)

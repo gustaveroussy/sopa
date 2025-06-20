@@ -9,9 +9,9 @@
 
 ### Changed
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
-- Use `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
+- Default to `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
+- To use cellpose with GPU, `gpu=True` must be passed directly as an arg/kwarg instead of inside `cellpose_eval_kwargs`, or via `--gpu` for the CLI, or via adding `gpu: true` to the Snakemake config (under the cellpose section).
 - Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
-- To use cellpose with GPU, `gpu=True` must be passed directly as an arg/kwarg instead of inside `cellpose_eval_kwargs`
 - Refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
 
 ### Removed
