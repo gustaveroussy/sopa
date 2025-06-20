@@ -18,7 +18,7 @@ def aggregate_bins(
     shapes_key: str,
     bins_key: str,
     expand_radius_ratio: float = 0,
-    unique_mapping: bool = False,
+    no_overlap: bool = False,
 ) -> AnnData:
     """Aggregate bins (for instance, from Visium HD data) into cells.
 
@@ -27,7 +27,7 @@ def aggregate_bins(
         shapes_key: Key of the shapes containing the cell boundaries
         bins_key: Key of the table containing the bin-by-gene counts
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate bins from the cytoplasm.
-        unique_mapping: If `True`, bins belonging to multiples cells with be assigned to only one, based on transcript-profile proximity.
+        no_overlap: If `True`, bins belonging to multiples cells with be assigned to only one, based on transcript-profile proximity.
 
     Returns:
         An `AnnData` object of shape with the cell-by-gene count matrix
@@ -49,7 +49,7 @@ def aggregate_bins(
         shape=(len(cells), len(bins)),
     )
 
-    if unique_mapping:
+    if no_overlap:
         log.warning("Unique bin mapping is currently experimental. Any feedback on GitHub is welcome.")
         indices_matrix = _get_unique_bins_mapping(indices_matrix, bins_table)
 
@@ -68,12 +68,12 @@ def _get_unique_bins_mapping(
     if not shared_bins.any():
         return indices_matrix
 
-    unique_mapping: coo_matrix = indices_matrix.copy()
-    unique_mapping.data[shared_bins[unique_mapping.col]] = 0
-    unique_mapping.eliminate_zeros()
-    unique_mapping = unique_mapping.tolil()
+    no_overlap: coo_matrix = indices_matrix.copy()
+    no_overlap.data[shared_bins[no_overlap.col]] = 0
+    no_overlap.eliminate_zeros()
+    no_overlap = no_overlap.tolil()
 
-    adata_unique_map = AnnData(unique_mapping @ bins_table.X)
+    adata_unique_map = AnnData(no_overlap @ bins_table.X)
 
     X_unique, X_shared = _pca_representation(n_components, adata_unique_map.X, bins_table.X[shared_bins])
 
@@ -83,9 +83,9 @@ def _get_unique_bins_mapping(
         distances: np.ndarray = ((X_unique[cell_indices] - X_shared[bin_index_among_shared]) ** 2).sum(1)
         cell_index = cell_indices[distances.argmin()]
 
-        unique_mapping[cell_index, bin_index] = 1
+        no_overlap[cell_index, bin_index] = 1
 
-    return unique_mapping
+    return no_overlap
 
 
 def _pca_representation(

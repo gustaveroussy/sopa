@@ -140,7 +140,7 @@ def test_aggregate_bins():
 
 
 @pytest.mark.parametrize("as_sparse", [True, False])
-def test_aggregate_bins_unique_mapping(as_sparse: bool):
+def test_aggregate_bins_no_overlap(as_sparse: bool):
     gdf_bins = gpd.GeoDataFrame(geometry=[box(i, j, i + 0.9, j + 0.9) for i in range(4) for j in range(4)])
     gdf_bins.index = [f"bin{i}" for i in range(len(gdf_bins))]
     gdf_bins = ShapesModel.parse(gdf_bins)
@@ -173,11 +173,9 @@ def test_aggregate_bins_unique_mapping(as_sparse: bool):
 
     sdata = SpatialData(shapes={"bins_2um": gdf_bins, "cells": gdf_cells}, tables={"table": adata})
 
-    adata_aggr1 = sopa.aggregation.aggregate_bins(
-        sdata, "cells", "table", unique_mapping=False, expand_radius_ratio=1.5
-    )
+    adata_aggr1 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", no_overlap=False, expand_radius_ratio=1.5)
 
-    adata_aggr2 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", unique_mapping=True, expand_radius_ratio=1.5)
+    adata_aggr2 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", no_overlap=True, expand_radius_ratio=1.5)
 
     X1 = adata_aggr1.X.toarray() if as_sparse else adata_aggr1.X
     X2 = adata_aggr2.X.toarray() if as_sparse else adata_aggr2.X

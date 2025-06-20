@@ -172,7 +172,7 @@ class Aggregator:
                     self.shapes_key,
                     self.bins_key,
                     expand_radius_ratio=1 if expand_radius_ratio is None else expand_radius_ratio,
-                    unique_mapping=no_overlap,
+                    no_overlap=no_overlap,
                 )
             elif not self.already_has_valid_table(key_added):
                 self.table = count_transcripts(
