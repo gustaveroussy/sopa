@@ -16,8 +16,6 @@ The following illustration describes the main steps of `sopa`:
   <img src="./assets/overview_white.png" alt="sopa_overview" width="100%"/>
 </p>
 
-> *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
-
 ## Why use `sopa`
 
 Sopa is a modern Python toolkit that is easy to use and offers many advantages:

@@ -33,8 +33,6 @@ The following illustration describes the main steps of `sopa`:
   <img src="https://raw.githubusercontent.com/gustaveroussy/sopa/main/docs/assets/overview_white.png" alt="sopa_overview" width="100%"/>
 </p>
 
-> *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
-
 ## Installation
 
 Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<3.13`). On a new environment, run the following command:
