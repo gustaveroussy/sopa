@@ -45,7 +45,7 @@ def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ra
     return cells
 
 
-def _region_props_to_multipolygon(region_props: RegionProperties, allow_holes: bool) -> MultiPolygon:
+def _region_props_to_multipolygon(region_props: RegionProperties, allow_holes: bool) -> Polygon | MultiPolygon:
     mask = np.pad(region_props.image, 1)
     contours = skimage.measure.find_contours(mask, 0.5)
 
@@ -65,10 +65,11 @@ def _region_props_to_multipolygon(region_props: RegionProperties, allow_holes: b
 
         return Polygon(exterior, holes=_holes)
 
-    multipolygon = MultiPolygon([_to_polygon(exterior) for exterior in exteriors])
+    polygon = [_to_polygon(exterior) for exterior in exteriors]
+    polygon = MultiPolygon(polygon) if len(polygon) > 1 else polygon[0]
 
     yoff, xoff, *_ = region_props.bbox
-    return shapely.affinity.translate(multipolygon, xoff - 1, yoff - 1)  # remove padding offset
+    return shapely.affinity.translate(polygon, xoff - 1, yoff - 1)  # remove padding offset
 
 
 def _vectorize_mask(mask: np.ndarray, allow_holes: bool = False) -> GeoDataFrame:
