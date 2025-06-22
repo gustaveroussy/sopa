@@ -44,7 +44,7 @@ def test_cache():
 
 
 def test_sdata_attrs_points():
-    sdata = sopa.io.toy_dataset(length=100)
+    sdata = sopa.io.toy_dataset(length=100, add_second_points_key=True)
 
     points_key, points = sopa.utils.get_spatial_element(
         sdata.points, key=sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
