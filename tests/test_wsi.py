@@ -2,6 +2,7 @@ import pytest
 import requests
 import spatialdata
 from spatialdata import SpatialData
+
 from sopa.io import wsi
 from sopa.patches import compute_embeddings
 
