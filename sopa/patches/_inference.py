@@ -24,7 +24,12 @@ class Inference:
         data_parallel: bool | list[int] = False,
     ):
         self.image = image
-        self.slide = get_reader(image.attrs.get("backend"))(image.attrs.get("path")) if image.attrs.get("backend") else get_reader("zarr")(image)
+        self.slide = (
+            get_reader(image.attrs.get("backend"))(image.attrs.get("path"))
+            if image.attrs.get("backend")
+            else get_reader("zarr")(image)
+        )
+
         self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
 
         self.patch_width = int(patch_width / self.resize_factor)
@@ -65,9 +70,7 @@ class Inference:
         Extract a numpy patch from the image given a bounding box
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
-        image_patch = np.array(
-            self.slide.read_region((box[0], box[1]), self.level, (box[2] - box[0], box[3] - box[1]))
-        )
+        image_patch = np.array(self.slide.read_region((box[0], box[1]), self.level, (box[2] - box[0], box[3] - box[1])))
 
         pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
         padded_patch = np.pad(image_patch, ((0, pad_x), (0, pad_y), (0, 0)))

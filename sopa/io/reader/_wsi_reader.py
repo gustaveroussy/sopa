@@ -163,9 +163,7 @@ class SlideIOReader(ReaderBase):
         import dask
 
         dask.config.set(scheduler="single-threaded")
-        log.warning(
-            "SlideIOReader is not multi-threaded compatible, setting dask scheduler to single-threaded."
-        )
+        log.warning("SlideIOReader is not multi-threaded compatible, setting dask scheduler to single-threaded.")
 
         import slideio
 
@@ -242,38 +240,8 @@ class ZarrSlideReader(ReaderBase):
         x_start, y_start = location
         x_end, y_end = x_start + size[0], y_start + size[1]
         tile = self.slide[:, slice(y_start, y_end), slice(x_start, x_end)]
-        return tile.transpose('x', 'y', 'c')
-
-    def get_zarr_store(self, tilesize: int = 512):
-        import ipdb; ipdb.set_trace()
+        return tile.transpose("x", "y", "c")
 
     def close(self):
         """Close the slide."""
         self.slide.close()
-
-    @property
-    def properties(self):
-        """Get the properties of the slide."""
-        import ipdb; ipdb.set_trace()
-        return self.slide.properties
-
-    @property
-    def level_downsamples(self):
-        import ipdb; ipdb.set_trace()
-        return self.slide.level_downsamples
-
-    @property
-    def level_count(self):
-        import ipdb; ipdb.set_trace()
-        return len(self.slide.level_downsamples)
-
-    @property
-    def level_dimensions(self):
-        import ipdb; ipdb.set_trace()
-        return self.slide.level_dimensions
-
-    @property
-    def dimensions(self):
-        import ipdb; ipdb.set_trace()
-        """Get the dimensions of the slide."""
-        return self.slide.dimensions
