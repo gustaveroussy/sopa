@@ -15,7 +15,7 @@ def svs_file(tmp_path_factory):
     svs_path = tmp_dir / "CMU-1-Small-Region.svs"
 
     if not svs_path.exists():
-        response = requests.get(SVS_URL)
+        response = requests.get(SVS_URL, timeout=5)
         response.raise_for_status()
         svs_path.write_bytes(response.content)
 

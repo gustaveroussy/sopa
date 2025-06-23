@@ -1,4 +1,5 @@
 import logging
+
 from spatialdata import SpatialData
 
 log = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ def get_reader(backend: str):
 
 class ReaderBase:
     path: str
-    name: "base"
+    name = "base"
     slide = None
 
     def read_region(self, location, level, size, **kwargs):

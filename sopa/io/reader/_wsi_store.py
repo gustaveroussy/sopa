@@ -1,11 +1,9 @@
 from collections.abc import Mapping, MutableMapping
 from ctypes import ArgumentError
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
-import slideio
-from slideio import Slide
 from zarr.storage import KVStore, Store, _path_to_prefix, attrs_key, init_array, init_group
 from zarr.util import json_dumps, normalize_shape, normalize_storage_path
 
@@ -80,9 +78,10 @@ class WsiStore(Store):
         else:
             try:
                 _, _, level = _parse_chunk_path(key)
-                return f"{level}/.zarray" in self._store.keys()
             except ValueError:
                 return False
+            else:
+                return f"{level}/.zarray" in self._store
 
     def __getitem__(self, key: str):
         if key in self._store:
