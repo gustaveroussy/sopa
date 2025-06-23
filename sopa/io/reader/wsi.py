@@ -14,7 +14,7 @@ def wsi(
     path: str | Path,
     chunks: str | tuple[int, int, int] = "auto",
     as_image: bool = False,
-    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio", "zarr"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
@@ -54,6 +54,7 @@ def wsi(
     sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
+    sdata[image_name].attrs["path"] = path
     sdata[image_name].name = image_name
 
     if as_image:
@@ -118,61 +119,15 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
 def _open_wsi(
     path: str | Path, backend: Literal["tiffslide", "openslide", "slideio"] = "openslide"
 ) -> tuple[str, xarray.Dataset, Any, dict]:
+    from ._wsi_reader import get_reader
+
     image_name = Path(path).stem
 
-    if backend == "tiffslide":
-        import tiffslide
+    reader = get_reader(backend)(path)
 
-        slide = tiffslide.open_slide(path)
-        zarr_store = slide.zarr_group.store
+    zarr_store = reader.get_zarr_store()
+    metadata = reader.get_metadata()
 
-        metadata = {
-            "properties": slide.properties,
-            "dimensions": slide.dimensions,
-            "level_count": slide.level_count,
-            "level_dimensions": slide.level_dimensions,
-            "level_downsamples": slide.level_downsamples,
-        }
-    elif backend == "openslide":
-        import openslide
+    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
-        from ._openslide import OpenSlideStore
-
-        slide = openslide.open_slide(path)
-        zarr_store = OpenSlideStore(path).store
-
-        metadata = {
-            "properties": slide.properties,
-            "dimensions": slide.dimensions,
-            "level_count": slide.level_count,
-            "level_dimensions": slide.level_dimensions,
-            "level_downsamples": slide.level_downsamples,
-        }
-    elif backend == "slideio":
-        import slideio
-
-        from ._slideio import SlideIOStore
-
-        slide = slideio.open_slide(path)
-        zarr_store = SlideIOStore(path).store
-        metadata = {
-            "properties": {"slideio.objective-power": slide.get_scene(0).magnification},
-            "dimensions": slide.get_scene(0).size,
-            "level_count": slide.get_scene(0).num_zoom_levels,
-            "level_dimensions": [
-                (
-                    slide.get_scene(0).get_zoom_level_info(i).size.width,
-                    slide.get_scene(0).get_zoom_level_info(i).size.height,
-                )
-                for i in range(slide.get_scene(0).num_zoom_levels)
-            ],
-            "level_downsamples": [
-                1 / slide.get_scene(0).get_zoom_level_info(i).scale for i in range(slide.get_scene(0).num_zoom_levels)
-            ],
-        }
-    else:
-        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide', 'tiffslide' and slideio")
-
-    zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False, chunks=None)
-
-    return image_name, zarr_img, slide, metadata
+    return image_name, zarr_img, reader, metadata
