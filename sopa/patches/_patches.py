@@ -4,7 +4,7 @@ from math import ceil
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
-from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
+from shapely.geometry import GeometryCollection, MultiPoint, MultiPolygon, Point, Polygon, box
 from shapely.ops import unary_union
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, SpatialElement
@@ -12,6 +12,7 @@ from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
 from .._constants import SopaKeys
+from ..shapes import to_valid_polygons
 from ..utils import add_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class Patches1D:
         self.xmin, self.xmax = xmin, xmax
         self.delta = self.xmax - self.xmin
 
-        self.patch_width = patch_width
+        self.patch_width = int(xmax - xmin + 1) if patch_width == float("inf") else patch_width
         self.patch_overlap = patch_overlap
         self.int_coords = int_coords
 
@@ -66,14 +67,12 @@ class Patches2D:
     Compute 2D-patches with overlaps. This can be done on an image or a DataFrame.
 
     Attributes:
-        polygons (list[Polygon]): List of `shapely` polygons representing the patches
+        geo_df (GeoDataFrame): GeoPandas dataframe representing the patches
         bboxes (np.ndarray): Array of shape `(n_patches, 4)` containing the (xmin, ymin, xmax, ymax) coordinates of the patches bounding boxes
-        ilocs (np.ndarray): Array of shape `(n_patches, 2)` containing the (x,y) indices of the patches
     """
 
-    polygons: list[Polygon]
     bboxes: np.ndarray
-    ilocs: np.ndarray
+    geo_df: gpd.GeoDataFrame
 
     def __init__(
         self,
@@ -82,6 +81,7 @@ class Patches2D:
         patch_width: float | int | None,
         patch_overlap: float | int = 50,
         roi_key: str | None = SopaKeys.ROI,
+        use_roi_centroids: bool = False,
     ):
         """
         Args:
@@ -89,6 +89,8 @@ class Patches2D:
             element: SpatialElement or name of the element on with patches will be made (image or points)
             patch_width: Width of the patches (in the unit of the coordinate system of the element). If `None`, only one patch will be created
             patch_overlap: Overlap width between the patches
+            roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
+            use_roi_centroids: If `True`, the ROI will be computed from the centroids of the shapes in `roi_key`. If `False`, the ROI will be computed from the shapes themselves.
         """
         patch_width = float("inf") if (patch_width is None or patch_width == -1) else patch_width
 
@@ -119,49 +121,43 @@ class Patches2D:
         assert roi_key is None or roi_key in sdata.shapes or roi_key == SopaKeys.ROI
 
         if roi_key is not None and roi_key in sdata.shapes:
-            geo_df = to_intrinsic(sdata, sdata[roi_key], self.original_element)
+            roi_geo_df = to_intrinsic(sdata, sdata[roi_key], self.original_element)
+            self.roi = _get_roi(roi_geo_df, use_roi_centroids)
 
-            self.roi = unary_union(geo_df.geometry)  # merge polygons into one multi-polygon
-            assert isinstance(self.roi, (Polygon, MultiPolygon)), (
-                f"Invalid ROI type: {type(self.roi)}. Must be Polygon or MultiPolygon"
-            )
+        self.geo_df = self._init_patches(use_roi_centroids)
+        self.bboxes = np.array(self.geo_df[SopaKeys.BOUNDS].to_list())
 
-        self._init_patches()
-
-    def _init_patches(self):
-        self.ilocs, self.polygons, self.bboxes = [], [], []
+    def _init_patches(self, use_roi_centroids: bool) -> gpd.GeoDataFrame:
+        data = {
+            "geometry": [],
+            SopaKeys.PATCHES_ILOCS: [],
+            SopaKeys.BOUNDS: [],
+        }
 
         for i in range(self.patch_x._count * self.patch_y._count):
-            self._try_add_patch(i)
+            iy, ix = divmod(i, self.patch_x._count)
+            bounds = self._bbox_iloc(ix, iy)
+            patch = box(*bounds)
 
-        assert self.ilocs, "No valid patches found inside the provided region of interest."
+            data["geometry"].append(patch)
+            data[SopaKeys.PATCHES_ILOCS].append((ix, iy))
+            data[SopaKeys.BOUNDS].append(bounds)
 
-        self.ilocs = np.array(self.ilocs)
-        self.bboxes = np.array(self.bboxes)
+        geo_df = gpd.GeoDataFrame(data)
 
-    def _try_add_patch(self, i: int):
-        """Check that the patch is valid, and, if valid, add it to the list of valid patches"""
-        iy, ix = divmod(i, self.patch_x._count)
-        bounds = self._bbox_iloc(ix, iy)
-        patch = box(*bounds)
+        if self.roi is not None:
+            if use_roi_centroids:
+                geo_df = geo_df[geo_df.geometry.intersects(self.roi)]
+            else:
+                geo_df.geometry = geo_df.geometry.intersection(self.roi)
+                geo_df = geo_df[~geo_df.is_empty]
 
-        if self.roi is not None and not self.roi.intersects(patch):
-            return
+        geo_df = to_valid_polygons(geo_df, simple_polygon=False)
+        geo_df = geo_df.reset_index(drop=True)
 
-        patch = patch if self.roi is None else patch.intersection(self.roi)
+        assert len(geo_df), "No valid patches found inside the provided region of interest."
 
-        if isinstance(patch, GeometryCollection):
-            geoms = [geom for geom in patch.geoms if isinstance(geom, Polygon)]
-            if not geoms:
-                return
-            patch = max(geoms, key=lambda polygon: polygon.area)
-
-        if not isinstance(patch, (Polygon, MultiPolygon)):
-            return
-
-        self.polygons.append(patch)
-        self.ilocs.append((ix, iy))
-        self.bboxes.append(bounds)
+        return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
 
     def __repr__(self):
         return f"{self.__class__.__name__} object with {len(self)} patches"
@@ -171,6 +167,8 @@ class Patches2D:
         return (self.patch_y._count, self.patch_x._count)
 
     def centroids(self) -> np.ndarray:
+        """Get the centroids of the patches as a numpy array of shape `(n_patches, 2)`.
+        This doesn't take into account the ROI, so it may return centroids outside the ROI."""
         x = (self.bboxes[:, 0] + self.bboxes[:, 2]) / 2
         y = (self.bboxes[:, 1] + self.bboxes[:, 3]) / 2
 
@@ -192,23 +190,34 @@ class Patches2D:
 
     def __len__(self):
         """Number of patches"""
-        return len(self.bboxes)
+        return len(self.geo_df)
 
     def add_shapes(self, key_added: str | None = None, overwrite: bool = True) -> gpd.GeoDataFrame:
         key_added = key_added or SopaKeys.PATCHES
-        geo_df = self.as_geodataframe()
 
-        add_spatial_element(self.sdata, key_added, geo_df, overwrite=overwrite)
+        add_spatial_element(self.sdata, key_added, self.geo_df, overwrite=overwrite)
 
-        log.info(f"Added {len(geo_df)} patche(s) to sdata['{key_added}']")
+        log.info(f"Added {len(self.geo_df)} patch(es) to sdata['{key_added}']")
 
-        return geo_df
+        return self.geo_df
 
-    def as_geodataframe(self) -> gpd.GeoDataFrame:
-        geo_df = gpd.GeoDataFrame({
-            "geometry": self.polygons,
-            SopaKeys.BOUNDS: self.bboxes.tolist(),
-            SopaKeys.PATCHES_ILOCS: self.ilocs.tolist(),
-        })
 
-        return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
+def _get_roi(geo_df: gpd.GeoDataFrame, use_roi_centroids: bool) -> Polygon | MultiPolygon | Point | MultiPoint:
+    """Merge all geometries into a single region-of-interest"""
+    geometry = geo_df.centroid if use_roi_centroids else geo_df.geometry
+    roi = unary_union(geometry)
+
+    if isinstance(roi, GeometryCollection):
+        _previous_area = roi.area
+
+        roi = MultiPolygon([geom for geom in roi.geoms if isinstance(geom, Polygon)])
+        if roi.area < _previous_area * 0.999:
+            raise ValueError("ROI is a GeometryCollection that could not be simplified into polygons.")
+
+    valid_types = (Point, MultiPoint) if use_roi_centroids else (Polygon, MultiPolygon)
+
+    assert isinstance(roi, valid_types), (
+        f"Invalid ROI type: {type(roi)}. Must be one of {[t.__name__ for t in valid_types]} when using {use_roi_centroids:=}"
+    )
+
+    return roi

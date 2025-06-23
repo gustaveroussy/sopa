@@ -35,6 +35,7 @@ def toy_dataset(
     transcript_cell_id_as_merscope: bool = False,
     add_nan_gene_name: bool = False,
     continuous_z_stack: bool = False,
+    add_second_points_key: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -51,6 +52,10 @@ def toy_dataset(
         include_image: Whether to include the image in the spatialdata object
         apply_blur: Whether to apply gaussian blur on the image (without blur, cells are just one pixel)
         as_output: If `True`, the data will have the same format than an output of Sopa
+        transcript_cell_id_as_merscope: If `True`, the cell IDs in the transcripts will start from 0, as in MERSCOPE
+        add_nan_gene_name: If `True`, a NaN value will be added to the gene names for testing purposes
+        continuous_z_stack: If `True`, the z-stack values will be continuous (not integers)
+        add_second_points_key: If `True`, a second points key will be added to the dataset with dummy data for testing purposes
 
     Returns:
         A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `include_vertices` is `True`.
@@ -154,14 +159,17 @@ def toy_dataset(
     affine = Affine(affine, input_axes=["x", "y"], output_axes=["x", "y"]).inverse()
 
     df = dd.from_pandas(df, chunksize=2_000_000)
-    misc_df = pd.DataFrame({"x": [0, 1], "y": [0, 1]})  # dummy dataframe for testing purposes
 
     points = {
         "transcripts": PointsModel.parse(
             df, transformations={"global": affine, "microns": Identity()}, feature_key="genes"
         ),
-        "misc": PointsModel.parse(misc_df, transformations={"global": Identity()}),
     }
+
+    if add_second_points_key:
+        misc_df = pd.DataFrame({"x": [0, 1], "y": [0, 1]})  # dummy dataframe for testing purposes
+        points["misc"] = PointsModel.parse(misc_df, transformations={"global": Identity()})
+
     if include_vertices:
         points["vertices"] = PointsModel.parse(vertices)
 

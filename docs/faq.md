@@ -165,10 +165,10 @@ If you have a custom pretrained model, use the `pretrained_model` argument inste
 
 ## How to use the GPU for Cellpose?
 
-You can provide `cellpose_model_kwargs` to provide any argument to a Cellpose Model. Therefore, you can provide `{"gpu": True}` as follow.
+You can provide `gpu=True` to `sopa.segmentation.cellpose`. This is recommended for `cellpose>=4.0.0`, which supports larger models and may be much faster on GPUs.
 
 !!! Warning
-    If you have many CPU cores and only one GPU, it may be faster to run in parallel on CPUs rather than sequentially using the GPU. Also, if you are on MacOS, you may experience issues because the PyTorch MPS backend doesn't support all features yet.
+    If you have many CPU cores and only one GPU, it may be faster to run in parallel on CPUs rather than sequentially using the GPU (mostly on `cellpose<4.0.0`). Also, if you are on MacOS, you may experience issues because the PyTorch MPS backend doesn't support all features yet.
 
 ```python
 import sopa

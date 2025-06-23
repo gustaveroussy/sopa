@@ -9,6 +9,10 @@ You'll need two things for alignment with the Xenium Explorer:
 - A `SpatialData` object (see [`sopa.io`](../../api/readers)) and it's corresponding Xenium Explorer directory (see next section).
 - An image (usually `.tif` or `.ome.tif`) that you want to align to the `SpatialData` object.
 
+!!! info
+
+  *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
+
 ### Explorer data
 
 If not done yet, convert your `SpatialData` object to the Xenium Explorer's inputs. This can be done as detailed in [this tutorial](../api_usage/#with-the-xenium-explorer). For instance:

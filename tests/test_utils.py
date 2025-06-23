@@ -9,6 +9,7 @@ from sopa._constants import ATTRS_KEY, SopaAttrs
 
 def test_make_toy_dataset():
     assert sopa.io.toy_dataset(length=512) is not None
+    assert sopa.io.toy_dataset(as_output=True, length=512) is not None
 
 
 def test_make_blobs():
@@ -43,7 +44,7 @@ def test_cache():
 
 
 def test_sdata_attrs_points():
-    sdata = sopa.io.toy_dataset(length=100)
+    sdata = sopa.io.toy_dataset(length=100, add_second_points_key=True)
 
     points_key, points = sopa.utils.get_spatial_element(
         sdata.points, key=sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True

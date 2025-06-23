@@ -2,13 +2,17 @@
 
 ### Added
 - `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
-- Add `unique_mapping` argument to map each bin to one unique cell for Visium HD data
+- Add `no_overlap` argument to map each bin to one unique cell for Visium HD data using PCA proximity
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
+- Support `CONCH` for H&E patches inference.
+- Support `cellpose>=4.0.0` @lguerard (#252, #264)
 
 ### Changed
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
-- Use `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
+- Default to `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
+- To use cellpose with GPU, `gpu=True` must be passed directly as an arg/kwarg instead of inside `cellpose_eval_kwargs`, or via `--gpu` for the CLI, or via adding `gpu: true` to the Snakemake config (under the cellpose section).
 - Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
+- Refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
 
 ### Removed
 - Removed the `open-cv` dependency (#239)

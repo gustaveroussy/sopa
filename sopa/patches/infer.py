@@ -27,6 +27,7 @@ def compute_embeddings(
     data_parallel: bool | list[int] = False,
     roi_key: str | None = SopaKeys.ROI,
     key_added: str | None = None,
+    **kwargs: int,
 ) -> str:
     """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
 
@@ -34,9 +35,12 @@ def compute_embeddings(
         The image will be saved into the `SpatialData` object with the key `"{model_name}_embeddings"` (see the `model_name` argument below), except if `key_added` is provided.
         The shapes of the patches will be saved with the key `"embeddings_patches"`.
 
+    !!! warning
+        In addition to the WSI extra (`pip install 'sopa[wsi]'`) and depending on the model used, you might need to install additional dependencies. Also, CONCH requires to be logged in Hugging Face and having approved their License.
+
     Args:
         sdata: A `SpatialData` object
-        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`).
+        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`, `conch`).
         patch_width: Width (pixels) of the patches.
         patch_overlap: Width (pixels) of the overlap between the patches.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
@@ -47,6 +51,7 @@ def compute_embeddings(
         data_parallel: If `True`, the model will be run in data parallel mode. If a list of GPUs is provided, the model will be run in data parallel mode on the specified GPUs.
         roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
+        **kwargs: Additional keyword arguments passed to the `Patches2D` constructor.
 
     Returns:
         The key of the spatial element that was added to the `SpatialData` object.
@@ -63,7 +68,7 @@ def compute_embeddings(
     image = _get_image_for_inference(sdata, image_key)
 
     infer = Inference(image, model, patch_width, level, magnification, device, data_parallel)
-    patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap, roi_key=roi_key)
+    patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap, roi_key=roi_key, **kwargs)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 

@@ -89,7 +89,9 @@ def tissue(
         return
 
     geo_df = expand_radius(geo_df, expand_radius_ratio)
+    geo_df = geo_df.explode(index_parts=False, ignore_index=True)
     geo_df = to_valid_polygons(geo_df, simple_polygon=False)
+
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
 
     add_spatial_element(sdata, key_added, geo_df)
@@ -177,7 +179,8 @@ class TissueSegmentation:
 
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
-        return _vectorize_mask(labels, allow_holes=True)
+        geo_df = _vectorize_mask(labels, allow_holes=True)
+        return gpd.GeoDataFrame(geometry=[geo_df.unary_union])
 
 
 def _get_image_and_mode(

@@ -61,7 +61,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         self.setup_patches_directory()
 
-        patches_geo_df = gpd.GeoDataFrame(geometry=self.polygons)
+        patches_geo_df = self.geo_df.geometry.to_frame()
 
         if self.write_cells_centroids:
             centroids = self.get_prior_centroids()
@@ -95,6 +95,10 @@ class OnDiskTranscriptPatches(Patches2D):
     def get_prior_centroids(self) -> gpd.GeoDataFrame:
         assert self.prior_shapes_key is not None, "Prior shapes key is required to write cell centroids"
 
+        assert self.prior_shapes_key in self.sdata.shapes, (
+            "When using write_cells_centroids=True, `prior_shapes_key` must be a shape element in `sdata.shapes`."
+        )
+
         centroids = to_intrinsic(self.sdata, self.prior_shapes_key, self.points).geometry.centroid
 
         return gpd.GeoDataFrame(
@@ -112,7 +116,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         assert len(valid_indices), "No valid patches found. Check the minimum number of points or cells per patch."
 
-        geo_df = self.as_geodataframe().iloc[valid_indices]
+        geo_df = self.geo_df.iloc[valid_indices]
         geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(self.cache_dir / str(index)))
         geo_df[SopaKeys.POINTS_KEY] = self.points_key
 
@@ -123,7 +127,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         add_spatial_element(self.sdata, key_added, geo_df)
 
-        log.info(f"Added {len(valid_indices)} patche(s) to sdata['{key_added}']")
+        log.info(f"Added {len(valid_indices)} patch(es) to sdata['{key_added}']")
 
     def get_patch_path(self, index: int, csv_name: str | None = None) -> Path:
         return self.cache_dir / str(index) / (csv_name or self.csv_name)

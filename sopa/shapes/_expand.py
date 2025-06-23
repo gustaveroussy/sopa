@@ -65,6 +65,12 @@ def remove_overlap(geo_df: gpd.GeoDataFrame, as_gdf: bool = True) -> gpd.GeoSeri
 
     geometry = geo_df.intersection(_voronoi)
 
+    nan_locs = geometry.type.isna()
+
+    if nan_locs.any():
+        log.warning(f"Found {nan_locs.sum()} NaN geometries after removing the overlap. Replacing with empty polygons.")
+        geometry[nan_locs] = shapely.Polygon()
+
     if not as_gdf:
         return geometry
 

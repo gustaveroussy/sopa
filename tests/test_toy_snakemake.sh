@@ -20,21 +20,22 @@ CONFIG_FILES=(
   config/toy/cellpose.yaml
   config/toy/comseg.yaml
   config/toy/proseg.yaml
+  config/toy/backward_comp_check.yaml
+  config/toy/cellpose_gpu.yaml
   config/toy/tissue_cellpose.yaml
 )
 
-rm -rf tuto.zarr tuto.explorer
 
 for config in "${CONFIG_FILES[@]}"; do
     echo "🐍 Running snakemake with config: $config"
+
+    rm -rf tuto.zarr tuto.explorer
 
     snakemake \
         --config sdata_path=tuto.zarr \
         --configfile=$config \
         --workflow-profile profile/local \
         --cores 1
-
-    rm -rf tuto.zarr tuto.explorer
 
     echo "✅ Pipeline succeeded for $config"
 done
