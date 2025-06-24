@@ -24,12 +24,20 @@ class Inference:
         data_parallel: bool | list[int] = False,
     ):
         self.image, self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
+
         _backend = image.attrs.get("backend")
-        self.slide = (
-            get_reader(image.attrs.get("backend"))(image.attrs.get("path"))
-            if _backend and _backend != "zarr"
-            else get_reader("zarr")(image)
-        )
+        _path = image.attrs.get("path")
+
+        try:
+            if _backend and _backend != "xarray":
+                self.slide = get_reader(_backend)(_path)
+            else:
+                self.slide = get_reader("xarray")(image)
+        except Exception as e:
+            log.warning(
+                f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
+            )
+            self.slide = get_reader("xarray")(image)
 
         self.patch_width = int(patch_width / self.resize_factor)
         self.resized_patch_width = patch_width
@@ -41,11 +49,7 @@ class Inference:
             self.model.to(device)
 
         if data_parallel:
-            if isinstance(data_parallel, list):
-                ids = data_parallel
-            else:
-                ids = list(range(torch.cuda.device_count())) if data_parallel else None
-
+            ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
             self.model = torch.nn.DataParallel(self.model, device_ids=ids)
 
     def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:

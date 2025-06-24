@@ -1,22 +1,21 @@
 import logging
 
-from spatialdata import SpatialData
+from xarray import DataArray, DataTree
 
 log = logging.getLogger(__name__)
 
 
 def get_reader(backend: str):
     """Get a reader for the specified backend."""
-    if backend == "openslide":
-        return OpenSlideReader
-    elif backend == "tiffslide":
-        return TiffSlideReader
-    elif backend == "slideio":
-        return SlideIOReader
-    elif backend == "zarr":
-        return ZarrSlideReader
-    else:
-        raise ValueError(f"Unknown backend: {backend}. Supported backends are: openslide, tiffslide, slideio, zarr.")
+    readers = {
+        "openslide": OpenSlideReader,
+        "tiffslide": TiffSlideReader,
+        "slideio": SlideIOReader,
+        "xarray": XarrayReader,
+    }
+    if backend not in readers:
+        raise ValueError(f"Unknown backend: {backend}. Supported backends are: {', '.join(readers.keys())}.")
+    return readers[backend]
 
 
 class ReaderBase:
@@ -68,10 +67,11 @@ class ReaderBase:
 class OpenSlideReader(ReaderBase):
     """Reader using the openslide backend."""
 
+    name = "openslide"
+
     def __init__(self, path: str):
         from openslide import OpenSlide
 
-        self.name = "openslide"
         self.path = path
         self.slide = OpenSlide(path)
 
@@ -116,10 +116,11 @@ class OpenSlideReader(ReaderBase):
 class TiffSlideReader(ReaderBase):
     """Reader using the tiffslide backend."""
 
+    name = "tiffslide"
+
     def __init__(self, path: str):
         import tiffslide
 
-        self.name = "tiffslide"
         self.path = path
         self.slide = tiffslide.open_slide(path)
 
@@ -160,6 +161,8 @@ class TiffSlideReader(ReaderBase):
 class SlideIOReader(ReaderBase):
     """Reader using the SlideIO backend."""
 
+    name = "slideio"
+
     def __init__(self, path: str):
         import dask
 
@@ -168,7 +171,6 @@ class SlideIOReader(ReaderBase):
 
         import slideio
 
-        self.name = "slideio"
         self.path = path
         self.slide = slideio.open_slide(path)
 
@@ -230,17 +232,19 @@ class SlideIOReader(ReaderBase):
         return self.slide.get_scene(0).size
 
 
-class ZarrSlideReader(ReaderBase):
-    """Reader using the openslide backend."""
+class XarrayReader(ReaderBase):
+    """Reader for xarray data (no backend used)."""
 
-    def __init__(self, slide: SpatialData):
+    name = "xarray"
+
+    def __init__(self, slide: DataArray | DataTree):
         self.slide = slide
 
     def read_region(self, location, level, size):
         """Get a region from the slide."""
         x_start, y_start = location
         x_end, y_end = x_start + size[0], y_start + size[1]
-        image = next(iter(self.slide[f"scale{level}"].values()))
+        image = self.slide[f"scale{level}"].image if isinstance(self.slide, DataTree) else self.slide
         tile = image[:, slice(y_start, y_end), slice(x_start, x_end)]
         return tile.transpose("x", "y", "c")
 

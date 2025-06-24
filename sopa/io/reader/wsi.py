@@ -54,7 +54,7 @@ def wsi(
     sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
-    sdata[image_name].attrs["path"] = path
+    sdata[image_name].attrs["path"] = str(path)
     sdata[image_name].name = image_name
 
     if as_image:
