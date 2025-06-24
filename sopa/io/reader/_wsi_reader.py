@@ -240,7 +240,8 @@ class ZarrSlideReader(ReaderBase):
         """Get a region from the slide."""
         x_start, y_start = location
         x_end, y_end = x_start + size[0], y_start + size[1]
-        tile = self.slide[:, slice(y_start, y_end), slice(x_start, x_end)]
+        image = next(iter(self.slide[f"scale{level}"].values()))
+        tile = image[:, slice(y_start, y_end), slice(x_start, x_end)]
         return tile.transpose("x", "y", "c")
 
     def close(self):
