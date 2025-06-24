@@ -24,9 +24,10 @@ class Inference:
         data_parallel: bool | list[int] = False,
     ):
         self.image, self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
+        _backend = image.attrs.get("backend")
         self.slide = (
             get_reader(image.attrs.get("backend"))(image.attrs.get("path"))
-            if image.attrs.get("backend")
+            if _backend and _backend != "zarr"
             else get_reader("zarr")(image)
         )
 
