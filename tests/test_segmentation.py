@@ -53,7 +53,7 @@ def test_tissue_segmentation():
 
     sopa.segmentation.tissue(sdata, mode="staining", level=0)
 
-    m1 = MultiPolygon(sdata[SopaKeys.ROI].geometry.values)
+    m1 = sdata["cells"].union_all()
     m2 = shapely.make_valid(MultiPolygon(sdata["cells"].geometry.values))
 
     assert m2.intersection(m1).area / m2.area > 0.99

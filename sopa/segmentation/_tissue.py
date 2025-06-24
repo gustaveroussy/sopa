@@ -180,7 +180,7 @@ class TissueSegmentation:
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
         geo_df = _vectorize_mask(labels, allow_holes=True)
-        return gpd.GeoDataFrame(geometry=[geo_df.unary_union])
+        return gpd.GeoDataFrame(geometry=[geo_df.union_all()])
 
 
 def _get_image_and_mode(

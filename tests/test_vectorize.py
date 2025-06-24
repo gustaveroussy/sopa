@@ -39,8 +39,8 @@ def test_vectorize_with_holes():
     mask[3:6, 10:16] = 0  # hole 1
     mask[8:14, 8:14] = 0  # hole 2
 
-    res = _vectorize_mask(mask, allow_holes=False).geometry[0]
-    assert len(res.geoms[0].interiors) == 0
+    res: Polygon = _vectorize_mask(mask, allow_holes=False).geometry[0]
+    assert len(res.interiors) == 0
 
-    res = _vectorize_mask(mask, allow_holes=True).geometry[0]
-    assert len(res.geoms[0].interiors) == 2
+    res: Polygon = _vectorize_mask(mask, allow_holes=True).geometry[0]
+    assert len(res.interiors) == 2

@@ -5,7 +5,6 @@ import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 from shapely.geometry import GeometryCollection, MultiPoint, MultiPolygon, Point, Polygon, box
-from shapely.ops import unary_union
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, SpatialElement
 from spatialdata.transformations import get_transformation
@@ -205,7 +204,7 @@ class Patches2D:
 def _get_roi(geo_df: gpd.GeoDataFrame, use_roi_centroids: bool) -> Polygon | MultiPolygon | Point | MultiPoint:
     """Merge all geometries into a single region-of-interest"""
     geometry = geo_df.centroid if use_roi_centroids else geo_df.geometry
-    roi = unary_union(geometry)
+    roi = geometry.union_all()
 
     if isinstance(roi, GeometryCollection):
         _previous_area = roi.area
