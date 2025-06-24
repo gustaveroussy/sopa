@@ -14,6 +14,9 @@
 - Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
 - Refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
 
+### Fixed
+- Fixed report (transcript section) when `adata.X` is not sparse + add spatial count distribution
+
 ### Removed
 - Removed the `open-cv` dependency (#239)
 - Removed all deprecated functions that were announced to be removed in `sopa==2.1.0`

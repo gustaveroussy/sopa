@@ -10,16 +10,7 @@ from spatialdata import SpatialData
 
 from ..._constants import LOW_AVERAGE_COUNT, SopaKeys
 from ...utils import get_boundaries, get_intensities, get_spatial_image
-from .engine import (
-    CodeBlock,
-    Columns,
-    Image,
-    Message,
-    Paragraph,
-    Root,
-    Section,
-    SubSection,
-)
+from .engine import CodeBlock, Columns, Image, Message, Paragraph, Root, Section, SubSection
 
 log = logging.getLogger(__name__)
 
@@ -157,7 +148,7 @@ class SectionBuilder:
         if not self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             return None
 
-        mean_transcript_count = self.adata.X.mean(0).A1
+        mean_transcript_count = _to_array(self.adata.X.mean(0))
         low_average = mean_transcript_count < LOW_AVERAGE_COUNT
 
         QC_subsubsections = []
@@ -167,19 +158,37 @@ class SectionBuilder:
                     f"{low_average.sum()} genes have a low count (less than {LOW_AVERAGE_COUNT} per cell, on average):"
                 )
             )
-            QC_subsubsections.append(Message(", ".join(self.adata.var_names[low_average]), color="danger"))
+            genes = self.adata.var_names[low_average].tolist()
+            if len(genes) > 50:
+                genes = genes[:50] + [f"and {len(genes) - 50} others..."]
+            QC_subsubsections.append(Message(", ".join(genes), color="danger"))
 
         fig1 = plt.figure()
         _kdeplot_vmax_quantile(mean_transcript_count)
         plt.xlabel("Count per transcript (average / cells)")
 
+        counts = _to_array(self.adata.X.sum(1))
+        self.adata.obs["transcript_counts"] = counts
+
         fig2 = plt.figure()
-        _kdeplot_vmax_quantile(self.adata.X.sum(1).A1)
+        _kdeplot_vmax_quantile(counts)
         plt.xlabel("Transcript count per cell")
 
         QC_subsubsections.append(Columns([Image(fig1), Image(fig2)]))
 
-        return Section("Transcripts", [SubSection("Quality controls", QC_subsubsections)])
+        x, y = self.adata.obsm["spatial"].T
+        spot_size = np.sqrt((x.max() - x.min()) * (y.max() - y.min()) / self.adata.n_obs)  # visually pleasing
+        fig3 = sc.pl.spatial(
+            self.adata, color="transcript_counts", spot_size=spot_size, return_fig=True, show=False, vmin=0, vmax="p95"
+        )
+
+        return Section(
+            "Transcripts",
+            [
+                SubSection("Quality controls", QC_subsubsections),
+                SubSection("Spatial distribution", Columns([Image(fig3)])),
+            ],
+        )
 
     def representation_section(self, max_obs: int = 100_000):
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
@@ -217,3 +226,11 @@ class SectionBuilder:
                 log.warning(f"Section {name} failed with error {e}")
 
         return [section for section in sections if section is not None]
+
+
+def _to_array(value: np.ndarray | np.matrix) -> np.ndarray:
+    if isinstance(value, np.matrix):
+        return value.A1
+    if isinstance(value, np.ndarray):
+        return value
+    raise TypeError(f"Unsupported type: {type(value)}")
