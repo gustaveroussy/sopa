@@ -11,8 +11,8 @@
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
 - Default to `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
 - To use cellpose with GPU, `gpu=True` must be passed directly as an arg/kwarg instead of inside `cellpose_eval_kwargs`, or via `--gpu` for the CLI, or via adding `gpu: true` to the Snakemake config (under the cellpose section).
-- Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
-- Refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
+- (Internal) use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
+- (Internal) refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
 
 ### Fixed
 - Fixed report (transcript section) when `adata.X` is not sparse + add spatial count distribution
@@ -20,7 +20,7 @@
 
 ### Removed
 - Removed the `open-cv` dependency (#239)
-- Removed all deprecated functions that were announced to be removed in `sopa==2.1.0`
+- Removed all deprecated functions that were announced to be removed in this version
 
 ## [2.0.7] - 2025-05-19
 
