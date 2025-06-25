@@ -16,6 +16,7 @@
 
 ### Fixed
 - Fixed report (transcript section) when `adata.X` is not sparse + add spatial count distribution
+- Support `x/y_global_mm` for transcripts in the CosMx reader (#274)
 
 ### Removed
 - Removed the `open-cv` dependency (#239)

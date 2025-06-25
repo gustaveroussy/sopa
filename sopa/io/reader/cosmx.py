@@ -163,21 +163,26 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
     fov_locs["xmax"] = 0.0  # will be filled when reading the images
     fov_locs["ymax"] = 0.0  # will be filled when reading the images
 
-    fov_key, x_key, y_key, scale_factor = "fov", "x_global_px", "y_global_px", 1
+    valid_keys = [
+        ["fov", "x_global_px", "y_global_px"],
+        ["FOV", "X_mm", "Y_mm"],
+        ["FOV", "x_global_mm", "y_global_mm"],
+    ]
+    mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMX
 
-    if not np.isin([fov_key, x_key, y_key], fov_locs.columns).all():  # try different column names
-        fov_key, x_key, y_key = "FOV", "X_mm", "Y_mm"
-        scale_factor = 1e3 / 0.120280945  # CosMX milimeters to pixels
+    for (fov_key, x_key, y_key), scale_factor in zip(valid_keys, [1, mm_to_pixels, mm_to_pixels]):
+        if not np.isin([fov_key, x_key, y_key], fov_locs.columns).all():  # try different column names
+            continue
 
-        assert np.isin([fov_key, x_key, y_key], fov_locs.columns).all(), (
-            f"The file {fov_file} must contain the following columns: {fov_key}, {x_key}, {y_key}. Consider using a different export module."
-        )
+        fov_locs.index = fov_locs[fov_key]
+        fov_locs["xmin"] = fov_locs[x_key] * scale_factor
+        fov_locs["ymin"] = fov_locs[y_key] * scale_factor
 
-    fov_locs.index = fov_locs[fov_key]
-    fov_locs["xmin"] = fov_locs[x_key] * scale_factor
-    fov_locs["ymin"] = fov_locs[y_key] * scale_factor
+        return fov_locs
 
-    return fov_locs
+    raise ValueError(
+        f"The FOV positions file must contain one of the following sets of columns: {', or '.join(list(map(str, valid_keys)))}"
+    )
 
 
 def _read_stitched_image(
