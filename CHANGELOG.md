@@ -1,8 +1,8 @@
 ## [2.1.0] - xxxx-xx-xx
 
 ### Added
-- `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
-- Add `no_overlap` argument to map each bin to one unique cell for Visium HD data using PCA proximity
+- Add `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels/bins
+- Map each VisiumHD bin to one unique cell using PCA proximity (see `no_overlap` argument)
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
 - Support `CONCH` for H&E patches inference.
 - Support `cellpose>=4.0.0` @lguerard (#252, #264)
@@ -32,8 +32,6 @@
 - Pin `cellpose<4.0.0` (#252)
 - Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
 - Force sopa version in Docker images CI @Clemsazert (#251)
-
-### Fixed
 - CosmX reader fix when only 4 channels are used instead of 5 @professor-sagittarius (#258)
 
 ## [2.0.6] - 2025-04-24
