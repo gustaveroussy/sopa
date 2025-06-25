@@ -160,13 +160,14 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
     assert fov_file.exists(), f"Missing field of view file: {fov_file}"
 
     fov_locs = pd.read_csv(fov_file)
+    fov_locs.columns = fov_locs.columns.str.lower()
     fov_locs["xmax"] = 0.0  # will be filled when reading the images
     fov_locs["ymax"] = 0.0  # will be filled when reading the images
 
     valid_keys = [
         ["fov", "x_global_px", "y_global_px"],
-        ["FOV", "X_mm", "Y_mm"],
-        ["FOV", "x_global_mm", "y_global_mm"],
+        ["fov", "x_mm", "y_mm"],
+        ["fov", "x_global_mm", "y_global_mm"],
     ]
     mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMX
 
