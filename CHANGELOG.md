@@ -1,4 +1,7 @@
-## [2.1.0] - xxxx-xx-xx
+## [2.1.1] - xxxx-xx-xx
+
+
+## [2.1.0] - 2025-06-27
 
 ### Added
 - Add `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels/bins
