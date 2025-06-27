@@ -4,7 +4,7 @@ from math import ceil
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
-from shapely.geometry import GeometryCollection, MultiPoint, MultiPolygon, Point, Polygon, box
+from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, SpatialElement
 from spatialdata.transformations import get_transformation
@@ -72,6 +72,7 @@ class Patches2D:
 
     bboxes: np.ndarray
     geo_df: gpd.GeoDataFrame
+    roi: Polygon | MultiPolygon | gpd.GeoDataFrame | None
 
     def __init__(
         self,
@@ -146,7 +147,8 @@ class Patches2D:
 
         if self.roi is not None:
             if use_roi_centroids:
-                geo_df = geo_df[geo_df.geometry.intersects(self.roi)]
+                indices = gpd.sjoin(geo_df, self.roi).index.unique()
+                geo_df = geo_df.loc[indices]
             else:
                 geo_df.geometry = geo_df.geometry.intersection(self.roi)
                 geo_df = geo_df[~geo_df.is_empty]
@@ -201,10 +203,12 @@ class Patches2D:
         return self.geo_df
 
 
-def _get_roi(geo_df: gpd.GeoDataFrame, use_roi_centroids: bool) -> Polygon | MultiPolygon | Point | MultiPoint:
+def _get_roi(geo_df: gpd.GeoDataFrame, use_roi_centroids: bool) -> Polygon | MultiPolygon | gpd.GeoDataFrame:
     """Merge all geometries into a single region-of-interest"""
-    geometry = geo_df.centroid if use_roi_centroids else geo_df.geometry
-    roi = geometry.union_all()
+    if use_roi_centroids:
+        return geo_df.centroid.to_frame()
+
+    roi = geo_df.geometry.union_all()
 
     if isinstance(roi, GeometryCollection):
         _previous_area = roi.area
@@ -213,10 +217,6 @@ def _get_roi(geo_df: gpd.GeoDataFrame, use_roi_centroids: bool) -> Polygon | Mul
         if roi.area < _previous_area * 0.999:
             raise ValueError("ROI is a GeometryCollection that could not be simplified into polygons.")
 
-    valid_types = (Point, MultiPoint) if use_roi_centroids else (Polygon, MultiPolygon)
-
-    assert isinstance(roi, valid_types), (
-        f"Invalid ROI type: {type(roi)}. Must be one of {[t.__name__ for t in valid_types]} when using {use_roi_centroids:=}"
-    )
+    assert isinstance(roi, (Polygon, MultiPolygon)), f"Invalid ROI type: {type(roi)}. Must be Polygon or MultiPolygon"
 
     return roi

@@ -1,8 +1,11 @@
-## [2.1.0] - xxxx-xx-xx
+## [2.1.1] - xxxx-xx-xx
+
+
+## [2.1.0] - 2025-06-27
 
 ### Added
-- `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels
-- Add `no_overlap` argument to map each bin to one unique cell for Visium HD data using PCA proximity
+- Add `no_overlap` argument in `sopa.aggregate` to avoid cells from overlapping when aggregating the channels/bins
+- Map each VisiumHD bin to one unique cell using PCA proximity (see `no_overlap` argument)
 - Better documentation for `sopa.io.visium_hd` and a warning if the full res image is not loaded (#254)
 - Support `CONCH` for H&E patches inference.
 - Support `cellpose>=4.0.0` @lguerard (#252, #264)
@@ -11,15 +14,16 @@
 - Use the `global` coordinate system by default in the remaining readers that were still using the `pixels` coordinate system
 - Default to `prior_shapes_key: auto` in all Snakemake config - it will automatically find the right key based on the technology
 - To use cellpose with GPU, `gpu=True` must be passed directly as an arg/kwarg instead of inside `cellpose_eval_kwargs`, or via `--gpu` for the CLI, or via adding `gpu: true` to the Snakemake config (under the cellpose section).
-- Use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
-- Refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
+- (Internal) use `disk` from `skimage` for opening/closing in `sopa.segmentation.tissue`
+- (Internal) refactor `Patches2D` to make it faster when the ROI is complex with 100,000+ shapes
 
 ### Fixed
 - Fixed report (transcript section) when `adata.X` is not sparse + add spatial count distribution
+- Support `x/y_global_mm` for transcripts in the CosMx reader (#274)
 
 ### Removed
 - Removed the `open-cv` dependency (#239)
-- Removed all deprecated functions that were announced to be removed in `sopa==2.1.0`
+- Removed all deprecated functions that were announced to be removed in this version
 
 ## [2.0.7] - 2025-05-19
 
@@ -31,8 +35,6 @@
 - Pin `cellpose<4.0.0` (#252)
 - Using bounding boxes center instead of the shape centroids for patches location in `adata.obsm` after using `sopa.patches.compute_embeddings`
 - Force sopa version in Docker images CI @Clemsazert (#251)
-
-### Fixed
 - CosmX reader fix when only 4 channels are used instead of 5 @professor-sagittarius (#258)
 
 ## [2.0.6] - 2025-04-24

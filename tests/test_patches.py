@@ -139,7 +139,7 @@ def test_gene_exlude_pattern():
     sopa.settings.gene_exclude_pattern = _default_gene_exclude_pattern
 
 
-def test_patches_with_without_centroids():
+def test_patches_with_and_without_centroids():
     gdf = ShapesModel.parse(gpd.GeoDataFrame(geometry=[Point(100, 100).buffer(80)]))
     im = Image2DModel.parse(np.zeros((1, 200, 200), dtype=np.uint8))
 
