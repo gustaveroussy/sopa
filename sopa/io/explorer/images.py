@@ -6,12 +6,7 @@ import numpy as np
 import tifffile as tf
 from multiscale_spatial_image import to_multiscale
 from spatialdata import SpatialData
-from spatialdata.transformations import (
-    Affine,
-    Sequence,
-    get_transformation,
-    set_transformation,
-)
+from spatialdata.transformations import Affine, Sequence, get_transformation, set_transformation
 from tqdm import tqdm
 from xarray import DataArray, DataTree
 
@@ -181,7 +176,7 @@ def write_image(
     Args:
         path: Path to the Xenium Explorer directory where the image will be written
         image: Image of shape `(C, Y, X)`
-        lazy: If `False`, the image will not be read in-memory (except if the image size is below `ram_threshold_gb`). If `True`, all the images levels are always loaded in-memory.
+        lazy: If `True`, the image will not be read in-memory (except if the image size is below `ram_threshold_gb`). If `False`, all the images levels are always loaded in-memory.
         tile_width: Xenium tile width (do not update).
         n_subscales: Number of sub-scales in the pyramidal image.
         pixel_size: Xenium pixel size (do not update).
