@@ -24,7 +24,7 @@ def cosmx(
     read_proteins: bool = False,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
-    flip_image: bool | None = None,
+    flip_image: bool = False,
 ) -> SpatialData:
     """
     Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
@@ -44,7 +44,7 @@ def cosmx(
         read_proteins: Whether to read the proteins or the transcripts.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
-        flip_image: For some buggy AtomX exports, `flip_image=True` has to be used for stitching. By default, the value is inferred based on the transcript file. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
+        flip_image: For some buggy exports of AtomX 1.3.2, `flip_image=True` has to be used for stitching. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
 
     Returns:
         A `SpatialData` object representing the CosMX experiment
@@ -61,9 +61,6 @@ def cosmx(
             int(protein_dir.parent.name[3:]): protein_dir for protein_dir in list(path.rglob("**/FOV*/ProteinImages"))
         }
         assert len(protein_dir_dict), f"No directory called 'ProteinImages' was found under {path}"
-
-    if flip_image is None and not read_proteins:
-        flip_image = _infer_flip_image(path, dataset_id)
 
     ### Read image(s)
     images_dir = _find_dir(path, "Morphology2D")
@@ -312,21 +309,3 @@ def _read_protein_fov(protein_dir: Path) -> tuple[da.Array, list[str]]:
     channel_names = [_get_cosmx_protein_name(image_path) for image_path in images_paths]
 
     return protein_image, channel_names
-
-
-def _infer_flip_image(path: Path, dataset_id: str) -> bool:
-    df_ = _read_transcripts_csv(path, dataset_id, nrows=100)
-
-    fov = df_["fov"].value_counts().index[0]
-    df_ = df_[df_["fov"] == fov].sort_values("y_global_px")
-
-    assert len(df_) > 1, f"Not transcripts in {fov=} to infer `flip_image`. Please provide `flip_image` manually."
-
-    # in recent AtomX exports, y_local_px is negatively correlated with y_global_px
-    flip_image = df_["y_local_px"].iloc[0] > df_["y_local_px"].iloc[-1]
-
-    log.info(
-        f"Inferring argument {flip_image=}. If the image stitching is wrong, please add a comment to https://github.com/gustaveroussy/sopa/issues/231"
-    )
-
-    return flip_image

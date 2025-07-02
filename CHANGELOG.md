@@ -1,5 +1,7 @@
 ## [2.1.1] - xxxx-xx-xx
 
+### Changed
+- CosMx reader: use `flip_image=False` by default (#231)
 
 ## [2.1.0] - 2025-06-27
 
