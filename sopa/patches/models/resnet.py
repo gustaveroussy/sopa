@@ -8,7 +8,7 @@ class Resnet50Features(nn.Module):
         from torchvision import transforms
         from torchvision.models import resnet50
 
-        resnet = resnet50(weights="IMAGENET1K_V2")
+        resnet = resnet50()
 
         self.features = nn.Sequential(
             resnet.conv1,
