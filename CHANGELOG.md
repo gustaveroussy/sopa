@@ -1,5 +1,8 @@
 ## [2.1.1] - xxxx-xx-xx
 
+### Added
+- Log a warning in `sopa.io.visium_hd` if the fullres image is too small (potentially a user error)
+
 ### Changed
 - CosMx reader: use `flip_image=False` by default (#231)
 

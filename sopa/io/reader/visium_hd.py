@@ -5,7 +5,7 @@ from spatialdata import SpatialData
 
 from ..._constants import SopaAttrs
 from ...segmentation import shapes_bounding_box
-from ...utils import ensure_string_channel_names
+from ...utils import ensure_string_channel_names, get_spatial_image
 from .utils import _default_image_kwargs
 
 log = logging.getLogger(__name__)
@@ -58,10 +58,7 @@ def visium_hd(
         elif key.endswith("_hires_image"):
             sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = key
 
-    if SopaAttrs.CELL_SEGMENTATION not in sdata.attrs:
-        log.warning(
-            "The full-resolution image was not found, you'll not be able to run cell segmentation.\nPlease set the `fullres_image_file` argument to the path of the full-resolution image."
-        )
+    _sanity_check_images(sdata)
 
     for key, adata in sdata.tables.items():
         if key.endswith("_002um"):
@@ -75,3 +72,23 @@ def visium_hd(
             break
 
     return sdata
+
+
+def _sanity_check_images(sdata: SpatialData) -> None:
+    if SopaAttrs.CELL_SEGMENTATION not in sdata.attrs:
+        log.warning(
+            "The full-resolution image was not found, you'll not be able to run cell segmentation.\nPlease set the `fullres_image_file` argument to the path of the full-resolution image."
+        )
+        return
+
+    if SopaAttrs.TISSUE_SEGMENTATION not in sdata.attrs:
+        log.warning("The high-resolution image was not found, you'll not be able to run tissue segmentation.")
+        return
+
+    shape1 = get_spatial_image(sdata, sdata.attrs[SopaAttrs.CELL_SEGMENTATION]).shape
+    shape2 = get_spatial_image(sdata, sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION]).shape
+
+    if (shape1[1] * shape1[2]) < 5_000**2 or (shape1[1] * shape1[2]) / (shape2[1] * shape2[2]) < 4:
+        log.warning(
+            f"The full-resolution image has a shape {shape1} which seems small. Ensure it is the full-resolution microscopy image (usually a file of 1GB+), not the CytAssist hires image."
+        )
