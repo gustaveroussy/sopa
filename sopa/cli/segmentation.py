@@ -34,7 +34,7 @@ def cellpose(
         1, help="Parameter for scipy gaussian_filter (applied before running cellpose)"
     ),
     min_patch_size: int = typer.Option(
-        5,
+        10,
         help="Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.",
     ),
     patch_index: int = typer.Option(
@@ -106,7 +106,7 @@ def stardist(
         help="Parameter for scipy gaussian_filter (applied before running the segmentation method)",
     ),
     min_patch_size: int = typer.Option(
-        5,
+        10,
         help="Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.",
     ),
     patch_index: int = typer.Option(
@@ -171,7 +171,7 @@ def generic_staining(
         help="Parameter for scipy gaussian_filter (applied before running the segmentation method)",
     ),
     min_patch_size: int = typer.Option(
-        5,
+        10,
         help="Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.",
     ),
     patch_index: int = typer.Option(
@@ -227,7 +227,7 @@ def _run_staining_segmentation(
     gaussian_sigma: float,
     patch_index: int | None,
     cache_dir_name: str | None,
-    min_patch_size: int = 5,
+    min_patch_size: int = 10,
     **method_kwargs: Any,
 ):
     from sopa.io.standardize import read_zarr_standardized

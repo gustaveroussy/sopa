@@ -33,7 +33,7 @@ class StainingSegmentation:
         clip_limit: float = 0.2,
         clahe_kernel_size: int | Iterable[int] | None = None,
         gaussian_sigma: float = 1,
-        min_patch_size: int = 5,
+        min_patch_size: int = 10,
     ):
         """Generalized staining-based segmentation class
 

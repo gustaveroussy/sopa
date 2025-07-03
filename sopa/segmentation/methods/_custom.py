@@ -21,7 +21,7 @@ def custom_staining_based(
     gaussian_sigma: float = 1,
     cache_dir_name: str = SopaKeys.CUSTOM_BOUNDARIES,
     key_added: str = SopaKeys.CUSTOM_BOUNDARIES,
-    min_patch_size: int = 5,
+    min_patch_size: int = 10,
 ):
     """Run a generic staining-based segmentation model, and add a GeoDataFrame containing the cell boundaries.
 
