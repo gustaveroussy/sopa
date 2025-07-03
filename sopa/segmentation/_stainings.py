@@ -33,6 +33,7 @@ class StainingSegmentation:
         clip_limit: float = 0.2,
         clahe_kernel_size: int | Iterable[int] | None = None,
         gaussian_sigma: float = 1,
+        min_patch_size: int = 5,
     ):
         """Generalized staining-based segmentation class
 
@@ -45,6 +46,7 @@ class StainingSegmentation:
             clip_limit: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
             clahe_kernel_size: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
             gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
+            min_patch_size: Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.
         """
         assert SopaKeys.PATCHES in sdata.shapes, "Run `sopa.make_image_patches` before running segmentation"
 
@@ -55,6 +57,7 @@ class StainingSegmentation:
         self.clip_limit = clip_limit
         self.clahe_kernel_size = clahe_kernel_size
         self.gaussian_sigma = gaussian_sigma
+        self.min_patch_size = min_patch_size
 
         self.image_key, self.image = get_spatial_image(sdata, key=image_key, return_key=True)
 
@@ -79,6 +82,19 @@ class StainingSegmentation:
             A list of cells, represented as polygons
         """
         bounds = [int(x) for x in patch.bounds]
+
+        # Check minimum patch size to avoid resize errors
+        patch_width = bounds[2] - bounds[0]
+        patch_height = bounds[3] - bounds[1]
+
+        if patch_width < self.min_patch_size or patch_height < self.min_patch_size:
+            log.warning(
+                "Skipping patch with dimensions %dx%d (smaller than min_patch_size=%d)",
+                patch_width,
+                patch_height,
+                self.min_patch_size,
+            )
+            return gpd.GeoDataFrame(columns=["geometry"], geometry=[])
 
         image = self.image.sel(
             c=self.channels,
