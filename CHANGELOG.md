@@ -2,6 +2,7 @@
 
 ### Added
 - Log a warning in `sopa.io.visium_hd` if the fullres image is too small (potentially a user error)
+- Added a `allow_holes` argument to `sopa.segmentation.tissue` to decide whether to keep holes or not
 
 ### Changed
 - CosMx reader: use `flip_image=False` by default (#231)
