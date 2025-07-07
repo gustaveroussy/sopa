@@ -5,7 +5,6 @@ import geopandas as gpd
 import numpy as np
 import skimage
 from shapely.geometry import GeometryCollection, box
-from skimage.morphology import disk
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
@@ -175,12 +174,16 @@ class TissueSegmentation:
         Returns:
             A GeoDataFrame containing the segmented polygon(s).
         """
-        thumbnail_blurred = skimage.filters.median(thumbnail_2d, footprint=disk(self.blur_kernel_size))
+        median_footprint = np.ones((self.blur_kernel_size, self.blur_kernel_size))
+        thumbnail_blurred = skimage.filters.median(thumbnail_2d, footprint=median_footprint)
 
         mask = thumbnail_blurred > skimage.filters.threshold_otsu(thumbnail_blurred)
 
-        mask_open = skimage.morphology.opening(mask, footprint=disk(self.open_kernel_size)).astype(np.uint8)
-        mask_open_close = skimage.morphology.closing(mask_open, footprint=disk(self.close_kernel_size)).astype(np.uint8)
+        opening_footprint = np.ones((self.open_kernel_size, self.open_kernel_size))
+        mask_open = skimage.morphology.opening(mask, opening_footprint).astype(np.uint8)
+
+        closing_footprint = np.ones((self.close_kernel_size, self.close_kernel_size))
+        mask_open_close = skimage.morphology.closing(mask_open, closing_footprint).astype(np.uint8)
 
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
