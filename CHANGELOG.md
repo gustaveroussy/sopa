@@ -7,6 +7,9 @@
 ### Changed
 - CosMx reader: use `flip_image=False` by default (#231)
 
+### Fixed
+- `_smoothen_cell` returns empty polygon if the cell can't be smoothen (#279)
+
 ## [2.1.0] - 2025-06-27
 
 ### Added
