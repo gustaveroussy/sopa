@@ -24,7 +24,7 @@ def cells_to_groups(
         adata: An `AnnData` object, or a `SpatialData object`
         group_key: Key of `adata.obs` containing the groups
         key_added_prefix: Prefix to the key added in `adata.obsm`. If `None`, will return the `DataFrame` instead of saving it.
-        ignore_zeros: If `True`, a cell distance to its own group is 0.
+        ignore_zeros: If `True`, a cell distance to its own group is not 0, but the distance to the closest other cell of the same group.
 
     Returns:
         A `Dataframe` of shape `n_obs * n_groups`, or `None` if `key_added_prefix` was provided (in this case, the dataframe is saved in `"{key_added_prefix}{group_key}"`)
@@ -73,9 +73,17 @@ def cells_to_groups(
 
 
 def mean_distance(
-    adata: AnnData, group_key: str, target_group_key: str | None = None, ignore_zeros: bool = False
+    adata: AnnData,
+    group_key: str,
+    target_group_key: str | None = None,
+    ignore_zeros: bool = False,
+    correction: bool = False,
+    relative_change: bool = False,
 ) -> pd.DataFrame:
-    """Mean distance between two groups (typically, between cell-types, or between cell-types and domains)
+    """Mean distance between two groups (typically, between cell-types, or between cell-types and domains).
+
+    !!! warning
+        When computing distances for multiple slides, differences in cell-type proportions can introduce bias. For example, if group G is more abundant in one slide, the average distance from other groups to G will naturally appear smaller in that slide, simply due to higher local density. If you want to perform fair comparisons across samples, consider using the `correction` argument to adjust for this bias.
 
     Note:
         The distance is a number of hops, i.e. a distance of 10 between a pDC and a T cell means that there are 10 cells on the closest path from one to the other cell.
@@ -84,7 +92,9 @@ def mean_distance(
         adata: An `AnnData` object, or a `SpatialData object`
         group_key: Key of `adata.obs` containing the groups
         target_group_key: Key of `adata.obs` containing the target groups (by default, uses `group_key`)
-        ignore_zeros: If `True`, a cell distance to its own group is 0.
+        ignore_zeros: If `True`, a cell distance to its own group is not 0, but the distance to the closest other cell of the same group.
+        correction: If `True`, the computed distance is corrected by subtracting the expected distance under a null model where target labels are randomly distributed on a grid. This correction accounts for uneven label representation, which could otherwise deflate distances to more abundant target cell types.
+        relative_change: Only used if `correction` is `True`. If `True`, the correction is applied as a relative change, i.e. the distance difference is also divided by the expected distance under the null model defined previously.
 
     Returns:
         `DataFrame` of shape `n_groups * n_groups_target` of mean hop-distances
@@ -103,7 +113,34 @@ def mean_distance(
     df_distances = df_distances.groupby(group_key, observed=False).mean()
     df_distances.columns.name = target_group_key
 
+    if correction:
+        proportions = adata.obs[target_group_key].value_counts(normalize=True)
+        likelihood = proportions.map(lambda p: _random_distance_likelihood(p, ignore_zeros))
+
+        df_distances -= likelihood
+        if relative_change:
+            df_distances /= likelihood
+
+        if (not ignore_zeros) and (group_key == target_group_key):
+            # distance to cell to same group is 0, we don't correct it
+            df_distances.values[np.diag_indices_from(df_distances)] = 0
+
     return df_distances
+
+
+def _random_distance_likelihood(proportion: float, ignore_zeros: bool, n_max: int = 30) -> float:
+    """Compute the expected minimum between between a random cell and a cell-label with a given proportion of cells.
+
+    It assumes cells are arranged in a grid, and the distance is the number of hops between two cells.
+
+    E(D) = sum_{d=1}^{inf} d * ((1 - p)^{4*d(d-1)} - (1 - p)^{4*d(d+1)})
+    """
+    distances = np.arange(1, n_max)
+
+    left = 4 * distances * (distances - 1) + int(not ignore_zeros)
+    right = 4 * distances * (distances + 1) + int(not ignore_zeros)
+
+    return (distances * ((1 - proportion) ** left - (1 - proportion) ** right)).sum()
 
 
 def prepare_network(
