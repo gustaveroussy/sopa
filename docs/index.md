@@ -28,4 +28,4 @@ Sopa is a modern Python toolkit that is easy to use and offers many advantages:
 - Spatial operations are optimized and use `shapely` internally
 - `sopa` integrates naturally with other community tools such as [Scanpy](https://scanpy.readthedocs.io/en/stable/index.html) or [Squidpy](https://squidpy.readthedocs.io/en/latest/index.html).
 
-Start using Sopa by reading our [getting started](../getting_started) guide!
+Start using Sopa by reading our [getting started](getting_started) guide!
