@@ -108,7 +108,9 @@ jobs:
         with:
           push: true
           platforms: linux/amd64
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
+            ${{ vars.DOCKERHUB_USERNAME }}/sopa:latest${{ matrix.extra-name }}
           context: ./docker/sopa${{ matrix.extra-name }}
           build-args: |
             SOPA_VERSION=${{ env.VERSION }}
