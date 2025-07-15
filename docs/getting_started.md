@@ -59,6 +59,16 @@ By default, `sopa` only install the minimal dependencies to avoid a heavy instal
     # you can also combine extras: pip install 'sopa[cellpose,baysor,wsi,stardist]'
     ```
 
+=== "Proseg"
+    [Proseg](https://github.com/dcjones/proseg) has to be installed independently, this can be done with [`cargo`](https://doc.rust-lang.org/cargo/getting-started/installation.html):
+
+    ```sh
+    cargo install proseg
+    ```
+
+    !!! info "Executable path"
+        If the `proseg` executable is not at `~/.cargo/bin/proseg`, please make the `proseg` command available (e.g., via creating a symlink `~/.local/bin/proseg` pointing to the executable), or export the path to the executable via `export proseg=/path/to/proseg/executable`.
+
 === "Baysor"
     To use [Baysor](https://kharchenkolab.github.io/Baysor/dev/), you'll first need to install Sopa with the `baysor` extra:
 
@@ -72,15 +82,6 @@ By default, `sopa` only install the minimal dependencies to avoid a heavy instal
         If the Baysor executable is not at `~/.julia/bin/baysor`, please make the `baysor` command available (e.g., via creating a symlink `~/.local/bin/baysor` pointing to the executable), or export the path to the executable via `export baysor=/path/to/baysor/executable`.
 
 
-=== "Proseg"
-    [Proseg](https://github.com/dcjones/proseg) has to be installed independently, this can be done with [`cargo`](https://doc.rust-lang.org/cargo/getting-started/installation.html):
-
-    ```sh
-    cargo install proseg
-    ```
-
-    !!! info "Executable path"
-        If the `proseg` executable is not at `~/.cargo/bin/proseg`, please make the `proseg` command available (e.g., via creating a symlink `~/.local/bin/proseg` pointing to the executable), or export the path to the executable via `export proseg=/path/to/proseg/executable`.
 === "Stardist"
     If you need to run [Stardist](https://github.com/stardist/stardist), you can install the corresponding extra:
 

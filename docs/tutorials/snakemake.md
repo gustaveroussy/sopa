@@ -136,7 +136,19 @@ Make sure you have installed everything as detailed in this tutorial, and then r
         --workflow-profile profile/local \
         --cores 1
     ```
+=== "Proseg usage"
+    Make sure you have installed the `proseg` command (refer to our getting started).
+    ```sh
+    conda activate snakemake    # or any environment that has `snakemake`
+    cd workflow   # move to the workflow directory inside the sopa repository
 
+    # you can replace tuto.zarr by another path where the data will be saved
+    snakemake \
+        --config sdata_path=tuto.zarr \
+        --configfile=config/toy/proseg.yaml \
+        --workflow-profile profile/local \
+        --cores 1
+    ```
 === "Baysor usage"
     Make sure you have installed sopa with the `baysor` extra, and that you have installed the `baysor` command (refer to our getting started).
     ```sh
