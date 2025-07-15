@@ -10,6 +10,7 @@
 
 ### Fixed
 - `_smoothen_cell` returns empty polygon if the cell can't be smoothen (#279)
+- Remove NaN genes before transcript-based segmentation (#283)
 - Broken link in the docs @ChristopherBottomsOMRF (#284)
 - Added again command `ps` to all Docker images for Nextflow
 

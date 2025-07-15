@@ -20,7 +20,7 @@ class Settings:
     dask_client_kwargs: dict = {}
 
     ### Segmentation or aggregation
-    gene_exclude_pattern: str | None = "negcontrol.*|blank.*|antisense.*|unassigned.*|deprecated.*|intergenic.*"
+    gene_exclude_pattern: str | None = "<NA>|negcontrol.*|blank.*|antisense.*|unassigned.*|deprecated.*|intergenic.*"
 
     def __init__(self):
         self.parallelization_backend = os.environ.get("SOPA_PARALLELIZATION_BACKEND", None)

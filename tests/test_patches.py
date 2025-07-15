@@ -124,7 +124,7 @@ def test_gene_exlude_pattern():
         sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE
     )
 
-    assert len(df) == len(sdata["transcripts"]) - 1
+    assert len(df) == len(sdata["transcripts"]) - 2  # remove blank and nan genes (one each)
 
     sopa.settings.gene_exclude_pattern = None
 
