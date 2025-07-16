@@ -213,10 +213,6 @@ Some CLI arguments are optionnal dictionnaries. For instance, `sopa convert` has
 
 If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, the `rioxarray` will be used by default by the reader (no change needed, it will be detected automatically).
 
-## What about Nextflow?
-
-Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).
-
 ## How to remove the logs?
 
 You can change the level of `logging` for sopa, e.g. you can run the lines below to set the logging level to show only errors:

@@ -19,8 +19,6 @@
 
 Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Molecural Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
-🎉 `sopa==2.0.0` is out! Check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
-
 ## Documentation
 
 Check [Sopa's documentation](https://gustaveroussy.github.io/sopa) to get started. It contains installation explanations, CLI/API details, and tutorials.
@@ -40,7 +38,8 @@ Sopa can be installed via `PyPI` on all operating systems, with the only require
 pip install sopa
 ```
 
-See the [installation section](https://gustaveroussy.github.io/sopa/getting_started/) from the docs for more details, to install extras or to use other installations modes.
+> [!NOTE]
+> See this [installation section](https://gustaveroussy.github.io/sopa/getting_started/) for more details about extras and other installations modes.
 
 ## Features
 Sopa comes in four different flavours, each corresponding to a different use case:
