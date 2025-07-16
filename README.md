@@ -43,9 +43,10 @@ pip install sopa
 See the [installation section](https://gustaveroussy.github.io/sopa/getting_started/) from the docs for more details, to install extras or to use other installations modes.
 
 ## Features
-Sopa comes in three different flavours, each corresponding to a different use case:
+Sopa comes in four different flavours, each corresponding to a different use case:
 - `API`: use directly `sopa` as a Python package for complete flexibility and customization
 - `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes
+- `nf-core/sopa`: run Sopa with Nextflow (see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage))
 - `CLI`: use our command-line-interface for prototyping quickly your own pipeline
 
 ### API

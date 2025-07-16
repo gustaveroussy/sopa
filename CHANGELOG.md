@@ -1,6 +1,7 @@
 ## [2.1.2] - xxxx-xx-xx
 
 ### Added
+- Sopa is now also available on 🍏 `nf-core` - see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)
 - Added a `sopa:latest-tangram` Docker image for cell-type annotation
 
 ## [2.1.1] - 2025-07-16
