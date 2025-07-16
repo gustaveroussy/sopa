@@ -114,6 +114,7 @@ def mean_distance(
     df_distances.columns.name = target_group_key
 
     if correction:
+        log.info("Correcting the distances is still experimental, don't hesitate to report issues or feedback")
         proportions = adata.obs[target_group_key].value_counts(normalize=True)
         likelihood = proportions.map(lambda p: _random_distance_likelihood(p, ignore_zeros))
 
