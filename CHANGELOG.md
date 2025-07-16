@@ -1,5 +1,8 @@
 ## [2.1.2] - xxxx-xx-xx
 
+### Added
+- Added a `sopa:latest-tangram` Docker image for cell-type annotation
+
 ## [2.1.1] - 2025-07-16
 
 ### Added

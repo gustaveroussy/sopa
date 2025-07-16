@@ -83,7 +83,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        extra-name: ["", "-baysor", "-cellpose", "-proseg", "-stardist"]
+        extra-name:
+          ["", "-baysor", "-cellpose", "-proseg", "-stardist", "-tangram"]
 
     steps:
       - name: Export tag version
