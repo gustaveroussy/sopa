@@ -1,19 +1,21 @@
+## [2.1.2] - xxxx-xx-xx
+
 ## [2.1.1] - 2025-07-16
 
 ### Added
 - Log a warning in `sopa.io.visium_hd` if the fullres image is too small (potentially a user error)
 - Added a `allow_holes` argument to `sopa.segmentation.tissue` to decide whether to keep holes or not
-- `correction` argument in `sopa.spatial.mean_distance` to account for the bias related to groups proportions (experimental)
+- `correction` argument in `sopa.spatial.mean_distance` to account for the bias related to group proportions (experimental)
 - The Docker CI now also pushes the images with the `latest` tag
 
 ### Changed
 - CosMx reader: use `flip_image=False` by default (#231)
 
 ### Fixed
-- `_smoothen_cell` returns empty polygon if the cell can't be smoothen (#279)
+- `_smoothen_cell` returns an empty polygon if the cell can't be smoothened (#279)
 - Remove NaN genes before transcript-based segmentation (#283)
 - Broken link in the docs @ChristopherBottomsOMRF (#284)
-- Added again command `ps` to all Docker images for Nextflow
+- Added again the command `ps` to all Docker images for Nextflow
 
 ## [2.1.0] - 2025-06-27
 
