@@ -8,7 +8,7 @@ __version__ = importlib.metadata.version("sopa")
 log = logging.getLogger("sopa")
 configure_logger(log)
 
-if "--help" not in sys.argv:
+if not any(f"--{option}" in sys.argv for option in ["version", "help"]):  # no import for cli helpers
     from spatialdata import read_zarr  # will set `dataframe.query-planning` to False
 
     from ._settings import settings

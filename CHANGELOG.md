@@ -6,6 +6,9 @@
 - Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level.
 - Docs clarifications, e.g., how to use `dataset_id` for Visium HD data, and others improvements.
 
+### Fixed
+- `sopa --version` faster and returns no warning (prevent it from importing sopa)
+
 ## [2.1.1] - 2025-07-16
 
 ### Added
