@@ -7,20 +7,8 @@ from anndata import AnnData
 from spatialdata import SpatialData
 
 from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
-from ...utils import (
-    get_boundaries,
-    get_feature_key,
-    get_spatial_element,
-    get_spatial_image,
-    to_intrinsic,
-)
-from . import (
-    write_cell_categories,
-    write_gene_counts,
-    write_image,
-    write_polygons,
-    write_transcripts,
-)
+from ...utils import get_boundaries, get_feature_key, get_spatial_element, get_spatial_image, to_intrinsic
+from . import write_cell_categories, write_gene_counts, write_image, write_polygons, write_transcripts
 from ._constants import FileNames, experiment_dict
 from .utils import explorer_file_path
 
@@ -64,11 +52,12 @@ def write(
     run_name: str | None = None,
 ) -> None:
     """
-    Transform a SpatialData object into inputs for the Xenium Explorer.
-    After running this function, double-click on the `experiment.xenium` file to open it.
+    Transform a SpatialData object into inputs for the Xenium Explorer - it can be [downloaded for free here](https://www.10xgenomics.com/support/software/xenium-explorer).
+    After running this function, double-click on the `experiment.xenium` file to open the explorer.
 
-    !!! note "Software download"
-        Make sure you have the latest version of the [Xenium Explorer](https://www.10xgenomics.com/support/software/xenium-explorer)
+    !!! note "Quick explorer update"
+        If you have already run this function but updated/filtered your table and cells,
+        you can simply provide `mode="-it"` to prevent from writing the image and transcript files again, since they are the same.
 
     Note:
         This function will create up to 7 files, depending on the `SpatialData` object and the arguments:
@@ -99,8 +88,8 @@ def write(
         layer: Layer of the AnnData table where the gene counts are saved. If `None`, uses `table.X`.
         polygon_max_vertices: Maximum number of vertices for the cell polygons.
         lazy: If `True`, will not load the full images in memory (except if the image memory is below `ram_threshold_gb`).
-        ram_threshold_gb: Threshold (in gygabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
-        mode: string that indicated which files should be created. "-ib" means everything except images and boundaries, while "+tocm" means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything.
+        ram_threshold_gb: Threshold (in gigabytes) from which image can be loaded in memory. If `None`, the image is never loaded in memory.
+        mode: String that indicates which files should be created. For instance, `"-it"` means everything except **i**mages and **t**ranscripts, while `"+bocm"` means only **b**oundaries/**o**bservations/**c**ounts/**m**etadata (each letter corresponds to one explorer file). By default, keeps everything.
         save_h5ad: Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)
         run_name: Name of the run displayed in the Xenium Explorer. If `None`, uses the `image_key`.
     """

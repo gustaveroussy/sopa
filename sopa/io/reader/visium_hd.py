@@ -14,6 +14,7 @@ log = logging.getLogger(__name__)
 def visium_hd(
     path: str | Path,
     fullres_image_file: str | Path | None = None,
+    dataset_id: str | None = None,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
     var_names_make_unique: bool = True,
@@ -27,6 +28,7 @@ def visium_hd(
     Args:
         path: Path to the Visium HD directory containing all the experiment files
         fullres_image_file: Path to the full-resolution image. By default the image is searched in the `'microscope_image'` directory.
+        dataset_id: Identifier of the dataset. By default, inferred from the prefix of the input files. If the files have no prefix (e.g., `feature_slice.h5`), use `dataset_id=""`.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
         var_names_make_unique: If True, ensure that the var names are unique.
@@ -43,6 +45,7 @@ def visium_hd(
 
     sdata: SpatialData = visium_hd_spatialdata_io(
         path,
+        dataset_id=dataset_id,
         fullres_image_file=fullres_image_file,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
