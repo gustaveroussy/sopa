@@ -7,6 +7,7 @@
 - Docs clarifications, e.g., how to use `dataset_id` for Visium HD data, and others improvements.
 
 ### Fixed
+- Preserve cell ids when converting to the explorer. Better interchangeability after filtering cells.
 - `sopa --version` faster and returns no warning (prevent it from importing sopa)
 
 ## [2.1.1] - 2025-07-16

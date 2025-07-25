@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import geopandas as gpd
+import pandas as pd
 from anndata import AnnData
 from spatialdata import SpatialData
 
@@ -10,7 +11,7 @@ from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ...utils import get_boundaries, get_feature_key, get_spatial_element, get_spatial_image, to_intrinsic
 from . import write_cell_categories, write_gene_counts, write_image, write_polygons, write_transcripts
 from ._constants import FileNames, experiment_dict
-from .utils import explorer_file_path
+from .utils import explorer_file_path, is_valid_explorer_id
 
 log = logging.getLogger(__name__)
 
@@ -97,6 +98,7 @@ def write(
     _check_explorer_directory(path)
 
     image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
+    preserve_ids: bool | None = None
 
     ### Saving table / cell categories / gene counts
     if table_key in sdata.tables:
@@ -110,8 +112,10 @@ def write(
 
         geo_df = sdata[shapes_key]
 
+        preserve_ids = _update_preserve_ids(adata.obs_names, geo_df.index)
+
         if _should_save(mode, "c"):
-            write_gene_counts(path, adata, layer=layer)
+            write_gene_counts(path, adata, layer=layer, preserve_ids=preserve_ids)
         if _should_save(mode, "o"):
             write_cell_categories(path, adata)
         if save_h5ad:
@@ -129,7 +133,10 @@ def write(
         if table_key in sdata.tables:
             geo_df = geo_df.loc[adata.obs[adata.uns[ATTRS_KEY]["instance_key"]]]
 
-        write_polygons(path, geo_df.geometry, polygon_max_vertices, pixel_size=pixel_size)
+        if preserve_ids is None:
+            preserve_ids = _update_preserve_ids(geo_df.index)
+
+        write_polygons(path, geo_df, polygon_max_vertices, pixel_size=pixel_size, preserve_ids=preserve_ids)
 
     ### Saving transcripts
     df = None
@@ -214,3 +221,14 @@ def write_metadata(
     with open(path, "w") as f:
         metadata = experiment_dict(run_name, shapes_key, n_obs, pixel_size)
         json.dump(metadata, f, indent=4)
+
+
+def _update_preserve_ids(*indices: pd.Index) -> bool:
+    if all(index.map(is_valid_explorer_id).all() for index in indices):
+        return True
+
+    log.warning(
+        "The cell IDs in the table or shapes are not valid Xenium Explorer IDs. "
+        "They will be replaced by integers starting from 0 in the output files."
+    )
+    return False
