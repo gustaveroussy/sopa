@@ -57,25 +57,37 @@ def tangram_annotate(
     bag_size: int = 10_000,
     max_obs_reference: int = 10_000,
     density_prior: str = "uniform",
-    **kwargs,
+    clip_percentile: float = 0.95,
+    table_key: str = SopaKeys.TABLE,
 ):
     """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
 
     !!! info
         You need to install `tangram-sc` to use this function. You can install it via `pip install tangram-sc`.
 
+    !!! info "Multi-level annotation"
+        If multi-level annotation is used (see `cell_type_key` argument), Tangram is first run on level 0. Then, for each cell-type, Tangram is run again within its annotated subset to assign subtypes. This process continues recursively, with each level processed within the cells labeled at the previous level.
+
     Args:
-        sdata: A `SpatialData` object
-        adata_sc: A scRNAseq annotated reference
-        cell_type_key: Key of `adata_sc.obs` containing the cell types. For multi-level annotation, provide other levels like such: if `cell_type_key = "ct"`, then `"ct_level1"` and `"ct_level2"` are the two next levels
-        reference_preprocessing: Preprocessing method used on the reference. Can be `"log1p"` (normalize_total + log1p) or `"normalized"` (just normalize_total). By default, consider that no processing was applied (raw counts)
-        bag_size: Size of each bag on which tangram will be run. Use smaller bags to lower the RAM usage
+        sdata: A `SpatialData` object containing an AnnData table.
+        adata_sc: A scRNAseq annotated reference containing cell types in `adata_sc.obs[cell_type_key]`. If it has been pre-processed, you can provide the `reference_preprocessing` argument to apply the same preprocessing on the spatial data. If containing raw counts, the spatial table should also contain raw counts.
+        cell_type_key: Key of `adata_sc.obs` containing the cell types. For multi-level annotation, provide other levels like such: if `cell_type_key = "ct"`, then `"ct_level1"` and `"ct_level2"` are the two next levels.
+        reference_preprocessing: Preprocessing method that was already applied on the reference. Can be `"log1p"` (normalize_total + log1p) or `"normalized"` (just normalize_total). If provided, it will apply the same preprocessing on the spatial data before running Tangram. By default, no preprocessing is applied.
+        bag_size: Size of each bag on which tangram will be run. Use smaller bags to lower the RAM usage. If `bag_size` is too small, it might create less consistent results across bags.
         max_obs_reference: Maximum number of cells used in `adata_sc` at each level. Decrease it to lower the RAM usage.
         density_prior: Density prior used in Tangram. Can be `"uniform"` or `"rna_count_based"`.
+        clip_percentile: Percentile used to clip the probabilities before taking the maximum (to obtain hard cell-type labels from probabilities).
+        table_key: Key of the `sdata.tables` where the AnnData table is stored. By default, uses `"table"`.
     """
-    assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' found in sdata.tables"
+    assert table_key in sdata.tables, f"No '{table_key}' table found in sdata.tables"
 
-    ad_sp = sdata.tables[SopaKeys.TABLE]
+    ad_sp = sdata.tables[table_key]
+
+    if reference_preprocessing is None and sum(adata.X.max() > 10 for adata in [ad_sp, adata_sc]) == 1:
+        log.warning(
+            "It seems that the spatial data is not pre-processed the same way as the reference, but `reference_preprocessing` is not set. "
+            "Either provide the `reference_preprocessing` argument or pre-process both AnnData the same way before running Tangram."
+        )
 
     MultiLevelAnnotation(
         ad_sp,
@@ -85,7 +97,7 @@ def tangram_annotate(
         bag_size,
         max_obs_reference,
         density_prior,
-        **kwargs,
+        clip_percentile,
     ).run()
 
 
@@ -99,7 +111,7 @@ class MultiLevelAnnotation:
         bag_size: int,
         max_obs_reference: int,
         density_prior: str,
-        clip_percentile: float = 0.95,
+        clip_percentile: float,
     ):
         self.ad_sp = ad_sp
         self.ad_sc = ad_sc
@@ -116,11 +128,10 @@ class MultiLevelAnnotation:
         self.clip_percentile = clip_percentile
         self.density_prior = density_prior
 
-        assert cell_type_key in ad_sc.obs, (
-            f"Cell-type key {cell_type_key} must be in the reference observations (adata.obs)"
-        )
+        self.check_reference_annotation()
 
         if self.ad_sc.raw is not None:
+            log.warning("The reference adata_sc has a raw attribute. Deleting it to use adata_sc.X instead.")
             del self.ad_sc.raw
 
         import torch
@@ -137,7 +148,9 @@ class MultiLevelAnnotation:
             log.info("Performing normalize_total on the spatial adata object")
             sc.pp.normalize_total(adata)
         else:
-            log.info("Using raw counts for the spatial adata object")
+            log.info(
+                "Not applying pre-processing on the spatial adata object (assuming it was pre-processed the same way as the reference)"
+            )
 
     def _level_suffix(self, level: int) -> str:
         return "" if level == 0 else f"_level{level}"
@@ -210,6 +223,22 @@ class MultiLevelAnnotation:
                 ad_.uns[uns_key] = selection
 
         return ad_sp_split
+
+    def check_reference_annotation(self):
+        assert self.cell_type_key in self.ad_sc.obs, (
+            f"Cell-type key {self.cell_type_key} must be in the reference observations (adata_sc.obs)"
+        )
+
+        for level in range(1, self.levels):
+            ct_key = self.level_obs_key(level)
+            parent_key = self.level_obs_key(level - 1)
+
+            for ct in self.ad_sc.obs[ct_key].unique():
+                unique_parents = self.ad_sc.obs.loc[self.ad_sc.obs[ct_key] == ct, parent_key].unique()
+                if len(unique_parents) != 1:
+                    log.warning(
+                        f"Cell-type {ct} in level {level} should have only one parent, found {list(unique_parents)}"
+                    )
 
     def run(self):
         for level in range(self.levels):
