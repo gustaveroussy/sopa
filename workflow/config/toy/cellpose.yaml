@@ -5,20 +5,17 @@ read:
 patchify:
   patch_width_pixel: 1200
   patch_overlap_pixel: 50
-  patch_width_microns: 3000
-  patch_overlap_microns: 40
 
 segmentation:
   cellpose:
     diameter: 35
-    channels: [ "DAPI" ]
+    channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2500
 
 aggregate:
   aggregate_channels: true
-  gene_column: genes
 
 annotation:
   method: fluorescence
@@ -29,6 +26,5 @@ annotation:
       CD20: B cell
 
 explorer:
-  gene_column: "genes"
   ram_threshold_gb: 4
   pixel_size: 1

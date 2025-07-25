@@ -11,7 +11,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 60
-    channels: [ "DAPI" ]
+    channels: ["DAPI"]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2000
@@ -21,7 +21,6 @@ segmentation:
 
     config:
       data:
-        exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
         min_molecules_per_cell: 10
         x: "x"
@@ -56,6 +55,5 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "gene"
   ram_threshold_gb: 4
   pixel_size: 0.108

@@ -11,7 +11,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 30
-    channels: [ "DAPI" ] # among "DAPI", "ATP1A1/CD45/E-Cadherin", "18S", "AlphaSMA/Vimentin"
+    channels: ["DAPI"] # among "DAPI", "ATP1A1/CD45/E-Cadherin", "18S", "AlphaSMA/Vimentin"
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 400
@@ -55,5 +55,4 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "feature_name"
   ram_threshold_gb: 4

@@ -11,7 +11,7 @@ patchify:
 segmentation:
   cellpose:
     diameter: 60
-    channels: [ "DNA" ]
+    channels: ["DNA"]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2000
@@ -55,5 +55,4 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "target"
   ram_threshold_gb: 4

@@ -49,5 +49,4 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "feature_name"
   ram_threshold_gb: 4
