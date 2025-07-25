@@ -3,7 +3,7 @@
 ### Added
 - Sopa is now also available on 🍏 `nf-core` - see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)
 - Added a `sopa:latest-tangram` Docker image for cell-type annotation
-- Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level. Also support other table names.
+- Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level.
 
 ## [2.1.1] - 2025-07-16
 

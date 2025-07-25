@@ -50,7 +50,7 @@ def higher_z_score(adata: AnnData, marker_cell_dict: dict, cell_type_key: str = 
 
 
 def tangram_annotate(
-    sdata: SpatialData,
+    sdata: SpatialData | AnnData,
     adata_sc: AnnData,
     cell_type_key: str,
     reference_preprocessing: str | None = None,
@@ -58,7 +58,6 @@ def tangram_annotate(
     max_obs_reference: int = 10_000,
     density_prior: str = "uniform",
     clip_percentile: float = 0.95,
-    table_key: str = SopaKeys.TABLE,
 ):
     """Tangram multi-level annotation. Tangram is run on multiple bags of cells to decrease the RAM usage.
 
@@ -69,7 +68,7 @@ def tangram_annotate(
         If multi-level annotation is used (see `cell_type_key` argument), Tangram is first run on level 0. Then, for each cell-type, Tangram is run again within its annotated subset to assign subtypes. This process continues recursively, with each level processed within the cells labeled at the previous level.
 
     Args:
-        sdata: A `SpatialData` object containing an AnnData table.
+        sdata: A `SpatialData` object containing an AnnData table, or the AnnData table itself.
         adata_sc: A scRNAseq annotated reference containing cell types in `adata_sc.obs[cell_type_key]`. If it has been pre-processed, you can provide the `reference_preprocessing` argument to apply the same preprocessing on the spatial data. If containing raw counts, the spatial table should also contain raw counts.
         cell_type_key: Key of `adata_sc.obs` containing the cell types. For multi-level annotation, provide other levels like such: if `cell_type_key = "ct"`, then `"ct_level1"` and `"ct_level2"` are the two next levels.
         reference_preprocessing: Preprocessing method that was already applied on the reference. Can be `"log1p"` (normalize_total + log1p) or `"normalized"` (just normalize_total). If provided, it will apply the same preprocessing on the spatial data before running Tangram. By default, no preprocessing is applied.
@@ -77,11 +76,13 @@ def tangram_annotate(
         max_obs_reference: Maximum number of cells used in `adata_sc` at each level. Decrease it to lower the RAM usage.
         density_prior: Density prior used in Tangram. Can be `"uniform"` or `"rna_count_based"`.
         clip_percentile: Percentile used to clip the probabilities before taking the maximum (to obtain hard cell-type labels from probabilities).
-        table_key: Key of the `sdata.tables` where the AnnData table is stored. By default, uses `"table"`.
     """
-    assert table_key in sdata.tables, f"No '{table_key}' table found in sdata.tables"
-
-    ad_sp = sdata.tables[table_key]
+    if isinstance(sdata, SpatialData):
+        assert SopaKeys.TABLE in sdata.tables, f"No '{SopaKeys.TABLE}' table found in sdata.tables"
+        ad_sp = sdata.tables[SopaKeys.TABLE]
+    else:
+        assert isinstance(sdata, AnnData), "sdata must be a SpatialData object or an AnnData object"
+        ad_sp = sdata
 
     if reference_preprocessing is None and sum(adata.X.max() > 10 for adata in [ad_sp, adata_sc]) == 1:
         log.warning(
