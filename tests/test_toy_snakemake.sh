@@ -3,6 +3,7 @@
 ##############################################################
 ###   This script has to be executed at the root of the    ###
 ### repository, on a environment with snakemake installed. ###
+###             sh tests/test_toy_snakemake.sh             ###
 ##############################################################
 
 set -e # Exit immediately if any command fails

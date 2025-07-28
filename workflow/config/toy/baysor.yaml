@@ -3,8 +3,6 @@ read:
   technology: toy_dataset
 
 patchify:
-  patch_width_pixel: 1200
-  patch_overlap_pixel: 50
   patch_width_microns: 400
   patch_overlap_microns: 20
 
@@ -48,6 +46,5 @@ annotation:
       CD20: B cell
 
 explorer:
-  gene_column: "genes"
   ram_threshold_gb: 4
   pixel_size: 0.1

@@ -7,8 +7,6 @@ read:
 patchify:
   patch_width_pixel: 6000
   patch_overlap_pixel: 150
-  patch_width_microns: 1000
-  patch_overlap_microns: 20
 
 segmentation:
   baysor:
@@ -17,7 +15,6 @@ segmentation:
 
     config:
       data:
-        exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
         min_molecules_per_cell: 10
         x: "x"
@@ -52,6 +49,5 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "gene"
   ram_threshold_gb: 4
   pixel_size: 0.108

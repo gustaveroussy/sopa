@@ -5,8 +5,6 @@ read:
 patchify:
   patch_width_pixel: 4000
   patch_overlap_pixel: 50
-  patch_width_microns: 3000
-  patch_overlap_microns: 40
 
 segmentation:
   cellpose:
@@ -30,6 +28,5 @@ annotation:
       CD20: B cell
 
 explorer:
-  gene_column: "genes"
   ram_threshold_gb: 4
   pixel_size: 1

@@ -6,6 +6,9 @@
 - Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level.
 - Docs clarifications, e.g., how to use `dataset_id` for Visium HD data, and others improvements.
 
+### Changed
+- Minor Snakemake files simplification (e.g., no need to provide the gene column name anymore)
+
 ### Fixed
 - Preserve cell ids when converting to the explorer. Better interchangeability after filtering cells.
 - `sopa --version` faster and returns no warning (prevent it from importing sopa)
