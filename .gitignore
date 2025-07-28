@@ -9,6 +9,7 @@ sandbox
 *.html
 .env
 *.h5ad
+!tests/toy_tangram_ref.h5ad
 *.zarr
 *.explorer
 *.tif
