@@ -25,10 +25,11 @@ def cosmx(
     path: str | Path,
     dataset_id: str | None = None,
     fov: int | None = None,
+    read_image: bool = True,
     read_proteins: bool = False,
-    read_labels: bool = False,
-    read_table: bool = False,
-    read_polygons: bool = False,
+    cells_labels: bool = False,
+    cells_table: bool = False,
+    cells_polygons: bool = False,
     image_models_kwargs: dict | None = None,
     labels_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
@@ -49,7 +50,11 @@ def cosmx(
         path: Path to the root directory containing *Nanostring* files.
         dataset_id: Optional name of the dataset (needs to be provided if not inferred).
         fov: Number of one single field of view to be read. If not provided, reads all FOVs and create a stitched image.
+        read_image: Whether to read the images or not.
         read_proteins: Whether to read the proteins or the transcripts.
+        cells_labels: Whether to read the cell labels or not.
+        cells_table: Whether to read the cell table or not.
+        cells_polygons: Whether to read the cell polygons or not.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
         flip_image: For some buggy exports of AtomX 1.3.2, `flip_image=True` has to be used for stitching. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
@@ -65,26 +70,27 @@ def cosmx(
     dataset_id = _infer_dataset_id(path, dataset_id)
 
     _reader = _CosMXReader(path, dataset_id, fov, flip_image)
+    attrs = {}
 
     ### Read elements
-    images = _reader.read_images(
-        read_proteins=read_proteins,
-        imread_kwargs=imread_kwargs,
-        image_models_kwargs=image_models_kwargs,
-    )
+    images = {}
+    if read_image:
+        images = _reader.read_images(
+            read_proteins=read_proteins,
+            imread_kwargs=imread_kwargs,
+            image_models_kwargs=image_models_kwargs,
+        )
+        attrs[SopaAttrs.CELL_SEGMENTATION] = next(iter(images))
 
     labels = (
         _reader.read_labels(imread_kwargs=imread_kwargs, labels_models_kwargs=labels_models_kwargs)
-        if read_labels
+        if cells_labels
         else {}
     )
+    tables = _reader.read_tables() if cells_table else {}
+    shapes = _reader.read_shapes() if cells_polygons else {}
 
     points = _reader.read_transcripts() if not read_proteins else {}
-    tables = _reader.read_tables() if read_table else {}
-    shapes = _reader.read_shapes() if read_polygons else {}
-
-    ### Create attrs
-    attrs = {SopaAttrs.CELL_SEGMENTATION: next(iter(images))}
     if points:
         attrs[SopaAttrs.TRANSCRIPTS] = next(iter(points.keys()))
         attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ("unique_cell_id", 0)
@@ -100,6 +106,9 @@ class _CosMXReader:
         self.flip_image = flip_image
 
         self.fov_locs = self._read_fov_locs()
+
+        if self.fov is not None:
+            log.info(f"Reading single FOV ({self.fov}), the image will not be stitched")
 
     def read_transcripts(self):
         transcripts_file = self.path / f"{self.dataset_id}_tx_file.csv.gz"
@@ -190,7 +199,7 @@ class _CosMXReader:
         if not polygon_file.exists():
             polygon_file = self.path / f"{self.dataset_id}-polygons.csv"
             if not polygon_file.exists():
-                assert polygon_file.exists(), f"Polygon file {polygon_file} not found."
+                raise FileNotFoundError(f"Polygon file {polygon_file} not found.")
 
         df_poly = pd.read_csv(polygon_file)
         df_poly.rename(columns={"cellID": "cell_ID"}, inplace=True)
@@ -227,7 +236,7 @@ class _CosMXReader:
 
         if self.fov is None:
             return {
-                "stitched_image": self.read_stitched_image(
+                "stitched_image": self._read_stitched_image(
                     images_dir,
                     protein_dir_dict=protein_dir_dict,
                     morphology_coords=morphology_coords,
@@ -235,8 +244,6 @@ class _CosMXReader:
                     image_models_kwargs=image_models_kwargs,
                 )
             }
-
-        log.info(f"Reading single FOV ({self.fov}), the image will not be stitched")
 
         fov_file = _find_matching_fov_file(images_dir, self.fov)
         image, c_coords = _read_fov_image(fov_file, protein_dir_dict.get(self.fov), morphology_coords, **imread_kwargs)
