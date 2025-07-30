@@ -87,13 +87,15 @@ def cosmx(
         if cells_labels
         else {}
     )
-    tables = _reader.read_tables() if cells_table else {}
     shapes = _reader.read_shapes() if cells_polygons else {}
 
-    points = _reader.read_transcripts() if not read_proteins else {}
+    region = next(iter(shapes)) if cells_polygons else (next(iter(labels)) if cells_labels else None)
+    tables = _reader.read_tables(region) if cells_table else {}
+
+    points = {}  # _reader.read_transcripts() if not read_proteins else {}
     if points:
         attrs[SopaAttrs.TRANSCRIPTS] = next(iter(points.keys()))
-        attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ("unique_cell_id", 0)
+        attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ("global_cell_id", 0)
 
     return SpatialData(images=images, labels=labels, points=points, tables=tables, shapes=shapes, attrs=attrs)
 
@@ -125,7 +127,7 @@ class _CosMXReader:
             f"The file {transcripts_file} must contain the following columns: {', '.join(TRANSCRIPT_COLUMNS)}. Consider using a different export module."
         )
 
-        df["unique_cell_id"] = self._get_unique_cell_id(df)
+        df["global_cell_id"] = self._get_global_cell_id(df)
 
         if self.fov is None:
             df["x"] = df["x_global_px"] - self.fov_locs["xmin"].min()
@@ -151,13 +153,13 @@ class _CosMXReader:
             raise FileNotFoundError(f"Metadata file not found: {meta_file}.")
 
         metadata = pd.read_csv(meta_file)
-        metadata.index = self._get_unique_cell_id(metadata)
+        metadata.index = self._get_global_cell_id(metadata)
 
         del metadata["cell_id"]
 
         return metadata
 
-    def read_tables(self) -> dict[str, AnnData]:
+    def read_tables(self, region: str | None) -> dict[str, AnnData]:
         from spatialdata_io._constants._constants import CosmxKeys
 
         counts_file = self.path / f"{self.dataset_id}_{CosmxKeys.COUNTS_SUFFIX}.gz"
@@ -167,7 +169,7 @@ class _CosMXReader:
                 raise FileNotFoundError(f"Counts file not found: {counts_file}.")
 
         counts = pd.read_csv(counts_file)
-        counts.index = self._get_unique_cell_id(counts)
+        counts.index = self._get_global_cell_id(counts)
         counts.drop(columns=["fov", "cell_ID"], inplace=True)
 
         obs = self._read_cell_metadata()
@@ -175,17 +177,18 @@ class _CosMXReader:
         assert (obs.index == counts.index).all(), "The cell IDs in the metadata and counts files do not match."
 
         obs[CosmxKeys.FOV] = pd.Categorical(obs[CosmxKeys.FOV].astype(str))
-        obs[CosmxKeys.INSTANCE_KEY] = obs.index.astype(str)
-        obs[CosmxKeys.REGION_KEY] = "fov_labels" if self.fov is None else f"F{self.fov:0>5}_labels"
-        obs[CosmxKeys.REGION_KEY] = pd.Categorical(obs[CosmxKeys.REGION_KEY])
+        if region is not None:
+            obs["region_key"] = pd.Series(region, index=obs.index, dtype="category")
+            obs["global_cell_id"] = obs.index
+        obs.index = obs.index.astype(str)
 
         adata = AnnData(csr_matrix(counts.values), obs=obs, var=pd.DataFrame(index=counts.columns))
 
         table = TableModel.parse(
             adata,
-            region=adata.obs[CosmxKeys.REGION_KEY].iloc[0],
-            region_key=CosmxKeys.REGION_KEY.value,
-            instance_key=CosmxKeys.INSTANCE_KEY.value,
+            region=region,
+            region_key="region_key" if region is not None else None,
+            instance_key="global_cell_id" if region is not None else None,
         )
 
         table.obsm["spatial"] = table.obs[[CosmxKeys.X_GLOBAL_CELL, CosmxKeys.Y_GLOBAL_CELL]].to_numpy()
@@ -205,7 +208,7 @@ class _CosMXReader:
         df_poly.rename(columns={"cellID": "cell_ID"}, inplace=True)
 
         if self.fov is None:
-            df_poly.index = self._get_unique_cell_id(df_poly)
+            df_poly.index = self._get_global_cell_id(df_poly)
             xy_keys = ["x_global_px", "y_global_px"]
         else:
             df_poly = df_poly[df_poly["fov"] == self.fov]
@@ -236,7 +239,7 @@ class _CosMXReader:
 
         if self.fov is None:
             return {
-                "stitched_image": self._read_stitched_image(
+                "stitched_image": self._stitch_tifffiles(
                     images_dir,
                     protein_dir_dict=protein_dir_dict,
                     morphology_coords=morphology_coords,
@@ -256,7 +259,7 @@ class _CosMXReader:
 
         if self.fov is None:
             return {
-                "stitched_labels": self._read_stitched_image(
+                "stitched_labels": self._stitch_tifffiles(
                     labels_dir,
                     labels=True,
                     imread_kwargs=imread_kwargs,
@@ -270,7 +273,7 @@ class _CosMXReader:
 
         return {f"F{self.fov:0>5}_labels": labels}
 
-    def _read_stitched_image(
+    def _stitch_tifffiles(
         self,
         images_dir: Path,
         imread_kwargs: dict,
@@ -296,12 +299,14 @@ class _CosMXReader:
                     image_path, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs
                 )
 
-                if labels:
-                    sub_obs = obs[obs["fov"] == fov]
-                    mapping = np.zeros(sub_obs["cell_ID"].max() + 1, dtype=int)
-                    mapping[sub_obs["cell_ID"].values] = sub_obs.index
+                if labels and (max_label := image.max().compute()) > 0:
+                    fov_obs = obs[obs["fov"] == fov]
+                    local_ids, global_ids = fov_obs["cell_ID"], fov_obs.index
 
-                    image = da.map_blocks(mapping.__getitem__, image, dtype=image.dtype)
+                    mapping = np.zeros(max(max_label, local_ids.max()) + 1, dtype=int)
+                    mapping[local_ids] = global_ids
+
+                    image = da.map_blocks(mapping.__getitem__, image, dtype=int)
 
                 c_coords_dict[fov] = c_coords
 
@@ -387,7 +392,7 @@ class _CosMXReader:
             f"The FOV positions file must contain one of the following sets of columns: {', or '.join(list(map(str, valid_keys)))}"
         )
 
-    def _get_unique_cell_id(self, df: pd.DataFrame) -> None:
+    def _get_global_cell_id(self, df: pd.DataFrame) -> pd.Series:
         max_cell_id = df["cell_ID"].max()
 
         if hasattr(self, "max_cell_id"):
