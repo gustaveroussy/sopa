@@ -92,7 +92,7 @@ def cosmx(
     region = next(iter(shapes)) if cells_polygons else (next(iter(labels)) if cells_labels else None)
     tables = _reader.read_tables(region) if cells_table else {}
 
-    points = {}  # _reader.read_transcripts() if not read_proteins else {}
+    points = _reader.read_transcripts() if not read_proteins else {}
     if points:
         attrs[SopaAttrs.TRANSCRIPTS] = next(iter(points.keys()))
         attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ("global_cell_id", 0)
@@ -206,6 +206,12 @@ class _CosMXReader:
 
         df_poly = pd.read_csv(polygon_file)
         df_poly.rename(columns={"cellID": "cell_ID"}, inplace=True)
+
+        if self.flip_image:
+            x_origin = self.fov_locs.loc[df_poly["fov"], "xmin"].values
+            y_origin = self.fov_locs.loc[df_poly["fov"], "ymin"].values
+            df_poly["x_global_px"] = x_origin + (x_origin - df_poly["x_global_px"])
+            df_poly["y_global_px"] = y_origin + (y_origin - df_poly["y_global_px"])
 
         if self.fov is None:
             df_poly.index = self._get_global_cell_id(df_poly)
