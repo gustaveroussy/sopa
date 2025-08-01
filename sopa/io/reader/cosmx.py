@@ -73,6 +73,9 @@ def cosmx(
     attrs = {}
 
     ### Read elements
+    region = _reader.shapes_key if cells_polygons else (_reader.labels_key if cells_labels else None)
+    tables = _reader.read_tables(region) if cells_table else {}
+
     images = {}
     if read_image:
         images = _reader.read_images(
@@ -88,9 +91,6 @@ def cosmx(
         else {}
     )
     shapes = _reader.read_shapes() if cells_polygons else {}
-
-    region = next(iter(shapes)) if cells_polygons else (next(iter(labels)) if cells_labels else None)
-    tables = _reader.read_tables(region) if cells_table else {}
 
     points = _reader.read_transcripts() if not read_proteins else {}
     if points:
@@ -148,11 +148,7 @@ class _CosMXReader:
     def _read_cell_metadata(self) -> pd.DataFrame:
         from spatialdata_io._constants._constants import CosmxKeys
 
-        meta_file = self.path / f"{self.dataset_id}_{CosmxKeys.METADATA_SUFFIX}"
-        if not meta_file.exists():
-            raise FileNotFoundError(f"Metadata file not found: {meta_file}.")
-
-        metadata = pd.read_csv(meta_file)
+        metadata = self._read_csv_gz(f"{self.dataset_id}_{CosmxKeys.METADATA_SUFFIX}")
         metadata.index = self._get_global_cell_id(metadata)
 
         del metadata["cell_id"]
@@ -162,13 +158,7 @@ class _CosMXReader:
     def read_tables(self, region: str | None) -> dict[str, AnnData]:
         from spatialdata_io._constants._constants import CosmxKeys
 
-        counts_file = self.path / f"{self.dataset_id}_{CosmxKeys.COUNTS_SUFFIX}.gz"
-        if not counts_file.exists():
-            counts_file = self.path / f"{self.dataset_id}_{CosmxKeys.COUNTS_SUFFIX}"
-            if not counts_file.exists():
-                raise FileNotFoundError(f"Counts file not found: {counts_file}.")
-
-        counts = pd.read_csv(counts_file)
+        counts = self._read_csv_gz(f"{self.dataset_id}_{CosmxKeys.COUNTS_SUFFIX}")
         counts.index = self._get_global_cell_id(counts)
         counts.drop(columns=["fov", "cell_ID"], inplace=True)
 
@@ -197,14 +187,7 @@ class _CosMXReader:
         return {"table": table}
 
     def read_shapes(self) -> dict[str, gpd.GeoDataFrame]:
-        polygon_file = self.path / f"{self.dataset_id}-polygons.csv.gz"
-
-        if not polygon_file.exists():
-            polygon_file = self.path / f"{self.dataset_id}-polygons.csv"
-            if not polygon_file.exists():
-                raise FileNotFoundError(f"Polygon file {polygon_file} not found.")
-
-        df_poly = pd.read_csv(polygon_file)
+        df_poly = self._read_csv_gz(f"{self.dataset_id}-polygons.csv")
         df_poly.rename(columns={"cellID": "cell_ID"}, inplace=True)
 
         if self.flip_image:
@@ -227,7 +210,15 @@ class _CosMXReader:
         if self.fov is None:
             gdf.geometry = gdf.geometry.translate(-self.fov_locs["xmin"].min(), -self.fov_locs["ymin"].min())
 
-        return {"cell_polygons": ShapesModel.parse(gdf)}
+        return {self.shapes_key: ShapesModel.parse(gdf)}
+
+    @property
+    def shapes_key(self) -> str:
+        return f"F{self.fov:0>5}_cells_polygons" if self.fov is not None else "cells_polygons"
+
+    @property
+    def labels_key(self) -> str:
+        return f"F{self.fov:0>5}_labels" if self.fov is not None else "stitched_labels"
 
     def read_images(
         self, read_proteins: bool, imread_kwargs: dict, image_models_kwargs: dict
@@ -265,7 +256,7 @@ class _CosMXReader:
 
         if self.fov is None:
             return {
-                "stitched_labels": self._stitch_tifffiles(
+                self.labels_key: self._stitch_tifffiles(
                     labels_dir,
                     labels=True,
                     imread_kwargs=imread_kwargs,
@@ -277,7 +268,7 @@ class _CosMXReader:
         labels, _ = _read_fov_image(fov_file, None, [], **imread_kwargs)
         labels = Labels2DModel.parse(labels[0], dims=("y", "x"), **labels_models_kwargs)
 
-        return {f"F{self.fov:0>5}_labels": labels}
+        return {self.labels_key: labels}
 
     def _stitch_tifffiles(
         self,
@@ -408,6 +399,13 @@ class _CosMXReader:
         self.max_cell_id = max_cell_id
 
         return df["fov"] * (self.max_cell_id + 1) * (df["cell_ID"] > 0) + df["cell_ID"]
+
+    def _read_csv_gz(self, name: str) -> pd.DataFrame:
+        for extension in [".gz", ""]:
+            file = self.path / f"{name}{extension}"
+            if file.exists():
+                return pd.read_csv(file)
+        raise FileNotFoundError(f"Input file not found: {self.path / f'{name}.gz'}")
 
 
 def _infer_dataset_id(path: Path, dataset_id: str | None) -> str:
