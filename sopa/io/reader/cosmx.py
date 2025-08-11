@@ -149,7 +149,6 @@ class _CosMXReader:
         from spatialdata_io._constants._constants import CosmxKeys
 
         metadata = self._read_csv_gz(f"{self.dataset_id}_{CosmxKeys.METADATA_SUFFIX}")
-        metadata = metadata[metadata["cell_ID"] != 0]  # remove background
         metadata.index = self._get_global_cell_id(metadata)
 
         if "cell_id" in metadata.columns:
@@ -161,6 +160,7 @@ class _CosMXReader:
         from spatialdata_io._constants._constants import CosmxKeys
 
         counts = self._read_csv_gz(f"{self.dataset_id}_{CosmxKeys.COUNTS_SUFFIX}")
+        counts = counts[counts["cell_ID"] != 0]  # remove background
         counts.index = self._get_global_cell_id(counts)
         counts.drop(columns=["fov", "cell_ID"], inplace=True)
 
