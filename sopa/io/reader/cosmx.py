@@ -149,9 +149,11 @@ class _CosMXReader:
         from spatialdata_io._constants._constants import CosmxKeys
 
         metadata = self._read_csv_gz(f"{self.dataset_id}_{CosmxKeys.METADATA_SUFFIX}")
+        metadata = metadata[metadata["cell_ID"] != 0]  # remove background
         metadata.index = self._get_global_cell_id(metadata)
 
-        del metadata["cell_id"]
+        if "cell_id" in metadata.columns:
+            del metadata["cell_id"]
 
         return metadata
 
