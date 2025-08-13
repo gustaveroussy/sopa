@@ -1,5 +1,6 @@
 import pandas as pd
 
+import sopa
 from sopa.io.explorer.utils import int_cell_id, is_valid_explorer_id, str_cell_id
 
 
@@ -41,3 +42,9 @@ def test_convert_ids():
             "aaaaaaba-1",
         ]
     ).all()
+
+
+def test_explorer_write():
+    sdata = sopa.io.toy_dataset(as_output=True)
+
+    sopa.io.explorer.write("tests/out.explorer", sdata)
