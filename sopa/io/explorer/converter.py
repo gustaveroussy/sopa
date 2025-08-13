@@ -122,7 +122,9 @@ def write(
             adata.write_h5ad(path / FileNames.H5AD)
 
     ### Saving cell boundaries
-    if shapes_key is None:
+    if not _should_save(mode, "b") and not _should_save(mode, "m"):
+        shapes_key, geo_df = None, None
+    elif shapes_key is None:
         shapes_key, geo_df = get_boundaries(sdata, return_key=True, warn=True)
     else:
         geo_df = sdata[shapes_key]
@@ -216,10 +218,29 @@ def write_metadata(
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
+    path = Path(path)
+
+    additional_images = {}
+    if is_dir:
+        mip_file: Path = path / "morphology_mip.ome.tif"
+
+        if mip_file.exists():
+            additional_images["morphology_mip_filepath"] = mip_file.name
+
+        focus_file: Path = path / "morphology_focus.ome.tif"
+        if focus_file.exists():
+            additional_images["morphology_focus_filepath"] = focus_file.name
+        else:
+            focus_file: Path = path / "morphology_focus" / "morphology_focus_0000.ome.tif"
+            if focus_file.exists():
+                additional_images["morphology_focus_filepath"] = "morphology_focus/morphology_focus_0000.ome.tif"
+
     path = explorer_file_path(path, FileNames.METADATA, is_dir)
 
+    metadata = experiment_dict(run_name, shapes_key, n_obs, pixel_size)
+    metadata["images"] |= additional_images
+
     with open(path, "w") as f:
-        metadata = experiment_dict(run_name, shapes_key, n_obs, pixel_size)
         json.dump(metadata, f, indent=4)
 
 
