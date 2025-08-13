@@ -12,7 +12,7 @@
 ### Fixed
 - Preserve cell ids when converting to the explorer. Better interchangeability after filtering cells.
 - `sopa --version` faster and returns no warning (prevent it from importing sopa)
-- Preserve Xenium region_name and morphology_focus/mip files (via a symlink) when using `sopa.io.explorer.write`
+- Preserve Xenium region_name and morphology_focus/mip files (via a symlink at the file level) when using `sopa.io.explorer.write`
 - Remove warning in `sopa.io.explorer.write` when `mode="+it"` and used before running Sopa (typically, when running the Snakemake or Nextflow pipeline)
 
 ## [2.1.1] - 2025-07-16

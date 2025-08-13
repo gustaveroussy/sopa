@@ -183,24 +183,42 @@ def _get_region_name(sdata: SpatialData, shapes_key: str) -> str:
         return shapes_key
 
 
-def _use_symlink(path: Path, sdata: SpatialData, pattern: str) -> bool:
+def _use_symlink(dst: Path, sdata: SpatialData, pattern: str) -> bool:
     """Try using the Xenium output files when existing to avoid re-generating large files."""
     if SopaAttrs.XENIUM_OUTPUT_PATH not in sdata.attrs:
         return False
 
-    files = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
-    for file in files:
-        target = path / file.name
+    sources = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
 
-        if target.exists():
-            if not target.is_symlink():  # avoid removing non-symlink files
-                return False
-            target.unlink()
+    for src in sources:
+        target = dst / src.name
 
-        target.symlink_to(file)
-        log.info(f"Created symlink {target} -> {file}")
+        if src.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
 
-    return len(files) > 0
+            for sub_src in src.iterdir():
+                if not sub_src.is_file():
+                    continue
+
+                sub_target = target / sub_src.name
+
+                if sub_target.exists():
+                    if not sub_target.is_symlink():
+                        return False
+                    sub_target.unlink()
+
+                sub_target.symlink_to(sub_src.resolve())
+                log.info(f"Created symlink {sub_target} -> {sub_src.resolve()}")
+        else:
+            if target.exists():
+                if not target.is_symlink():  # avoid removing non-symlink files
+                    return False
+                target.unlink()
+
+            target.symlink_to(src.resolve())
+            log.info(f"Created symlink {target} -> {src.resolve()}")
+
+    return len(sources) > 0
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> int:
