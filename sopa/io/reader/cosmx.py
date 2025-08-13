@@ -34,6 +34,7 @@ def cosmx(
     labels_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
     flip_image: bool = False,
+    fov_shift: bool | None = None,
 ) -> SpatialData:
     """
     Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
@@ -58,18 +59,21 @@ def cosmx(
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
         flip_image: For some buggy exports of AtomX 1.3.2, `flip_image=True` has to be used for stitching. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
+        fov_shift: Whether to apply FOV shift correction. For some datasets, there is a one-FOV shift in the y direction between the image and the polygons/transcripts. If `None`, it will be inferred automatically based on the FOV positions file and the polygons files.
 
     Returns:
         A `SpatialData` object representing the CosMX experiment
     """
     path = Path(path)
 
+    assert read_image or cells_labels, "At least one of `read_image` or `cells_labels` must be True."
+
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
     labels_models_kwargs = {"chunks": (4256, 4256)} if labels_models_kwargs is None else labels_models_kwargs
 
     dataset_id = _infer_dataset_id(path, dataset_id)
 
-    _reader = _CosMXReader(path, dataset_id, fov, flip_image)
+    _reader = _CosMXReader(path, dataset_id, fov, flip_image, fov_shift)
     attrs = {}
 
     ### Read elements
@@ -101,16 +105,22 @@ def cosmx(
 
 
 class _CosMXReader:
-    def __init__(self, path: Path, dataset_id: str, fov: int | None, flip_image: bool):
+    def __init__(self, path: Path, dataset_id: str, fov: int | None, flip_image: bool, fov_shift: bool | None):
         self.path = path
         self.dataset_id = dataset_id
         self.fov = fov
         self.flip_image = flip_image
+        self.fov_shift = fov_shift
 
         self.fov_locs = self._read_fov_locs()
 
         if self.fov is not None:
             log.info(f"Reading single FOV ({self.fov}), the image will not be stitched")
+        elif fov_shift is None:
+            self.fov_shift = self._infer_fov_shift()
+            log.info(
+                f"FOV shift correction is {'enabled' if self.fov_shift else 'disabled'} (if this is not correct, please set `fov_shift` manually)"
+            )
 
     def read_transcripts(self):
         transcripts_file = self.path / f"{self.dataset_id}_tx_file.csv.gz"
@@ -188,8 +198,28 @@ class _CosMXReader:
 
         return {"table": table}
 
+    def _infer_fov_shift(self) -> bool:
+        if self.flip_image:
+            return True
+
+        try:
+            df_poly = self.df_poly
+        except FileNotFoundError:
+            log.warning("Polygons file not found, cannot infer FOV shift.")
+            return False
+
+        fov_y_min = df_poly.groupby("fov")["y_global_px"].min()
+
+        return (fov_y_min < self.fov_locs.loc[fov_y_min.index, "y"]).mean() > 0.1
+
+    @property
+    def df_poly(self) -> pd.DataFrame:
+        if not hasattr(self, "_df_poly"):
+            self._df_poly = self._read_csv_gz(f"{self.dataset_id}-polygons.csv")
+        return self._df_poly
+
     def read_shapes(self) -> dict[str, gpd.GeoDataFrame]:
-        df_poly = self._read_csv_gz(f"{self.dataset_id}-polygons.csv")
+        df_poly = self.df_poly
         df_poly.rename(columns={"cellID": "cell_ID"}, inplace=True)
 
         if self.flip_image:
@@ -281,6 +311,11 @@ class _CosMXReader:
         morphology_coords: list[str] | None = None,
         labels: bool = False,
     ) -> xr.DataArray | xr.DataTree:
+        images_paths = list(images_dir.glob("*.[Tt][Ii][Ff]"))
+        shape = imread(images_paths[0]).shape[1:]
+
+        self._set_fov_locs_bounding_boxes(shape)
+
         fov_images, c_coords_dict = {}, {}
         pattern = re.compile(r".*_F(\d+)")
 
@@ -290,39 +325,25 @@ class _CosMXReader:
         if labels:
             obs = self._read_cell_metadata()
 
-        for image_path in images_dir.iterdir():
-            if image_path.suffix.lower() == ".tif":
-                fov = int(pattern.findall(image_path.name)[0])
+        for image_path in images_paths:
+            fov = int(pattern.findall(image_path.name)[0])
 
-                image, c_coords = _read_fov_image(
-                    image_path, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs
-                )
+            image, c_coords = _read_fov_image(image_path, protein_dir_dict.get(fov), morphology_coords, **imread_kwargs)
+            assert image.shape[1:] == shape, (
+                f"Expected all images to have the same shape {shape}, but found {image.shape[1:]} for FOV {fov}."
+            )
 
-                if labels and (max_label := image.max().compute()) > 0:
-                    fov_obs = obs[obs["fov"] == fov]
-                    local_ids, global_ids = fov_obs["cell_ID"], fov_obs.index
+            if labels and (max_label := image.max().compute()) > 0:
+                fov_obs = obs[obs["fov"] == fov]
+                local_ids, global_ids = fov_obs["cell_ID"], fov_obs.index
 
-                    mapping = np.zeros(max(max_label, local_ids.max()) + 1, dtype=int)
-                    mapping[local_ids] = global_ids
+                mapping = np.zeros(max(max_label, local_ids.max()) + 1, dtype=int)
+                mapping[local_ids] = global_ids
 
-                    image = da.map_blocks(mapping.__getitem__, image, dtype=int)
+                image = da.map_blocks(mapping.__getitem__, image, dtype=int)
 
-                c_coords_dict[fov] = c_coords
-
-                fov_images[fov] = da.flip(image, axis=1)
-
-                self.fov_locs.loc[fov, "xmax"] = self.fov_locs.loc[fov, "xmin"] + image.shape[2]
-
-                if self.flip_image:
-                    self.fov_locs.loc[fov, "ymax"] = self.fov_locs.loc[fov, "ymin"]
-                    self.fov_locs.loc[fov, "ymin"] = self.fov_locs.loc[fov, "ymax"] - image.shape[1]
-                else:
-                    self.fov_locs.loc[fov, "ymax"] = self.fov_locs.loc[fov, "ymin"] + image.shape[1]
-
-        for dim in ["x", "y"]:
-            shift = self.fov_locs[f"{dim}min"].min()
-            self.fov_locs[f"{dim}0"] = (self.fov_locs[f"{dim}min"] - shift).round().astype(int)
-            self.fov_locs[f"{dim}1"] = (self.fov_locs[f"{dim}max"] - shift).round().astype(int)
+            fov_images[fov] = da.flip(image, axis=1)
+            c_coords_dict[fov] = c_coords
 
         height, width = self.fov_locs["y1"].max(), self.fov_locs["x1"].max()
 
@@ -357,6 +378,18 @@ class _CosMXReader:
         else:
             return Image2DModel.parse(stitched_image, c_coords=c_coords, **image_models_kwargs)
 
+    def _set_fov_locs_bounding_boxes(self, shape: tuple[int, int]) -> None:
+        self.fov_locs["xmin"] = self.fov_locs["x"]
+        self.fov_locs["xmax"] = self.fov_locs["x"] + shape[1]
+
+        self.fov_locs["ymin"] = self.fov_locs["y"] - shape[0] * self.fov_shift
+        self.fov_locs["ymax"] = self.fov_locs["y"] + shape[0] * (1 - self.fov_shift)
+
+        for dim in ["x", "y"]:
+            origin = self.fov_locs[f"{dim}min"].min()
+            self.fov_locs[f"{dim}0"] = (self.fov_locs[f"{dim}min"] - origin).round().astype(int)
+            self.fov_locs[f"{dim}1"] = (self.fov_locs[f"{dim}max"] - origin).round().astype(int)
+
     def _read_fov_locs(self) -> pd.DataFrame:
         fov_file = self.path / f"{self.dataset_id}_fov_positions_file.csv"
 
@@ -367,8 +400,6 @@ class _CosMXReader:
 
         fov_locs = pd.read_csv(fov_file)
         fov_locs.columns = fov_locs.columns.str.lower()
-        fov_locs["xmax"] = 0.0  # will be filled when reading the images
-        fov_locs["ymax"] = 0.0  # will be filled when reading the images
 
         valid_keys = [
             ["fov", "x_global_px", "y_global_px"],
@@ -382,8 +413,8 @@ class _CosMXReader:
                 continue
 
             fov_locs.index = fov_locs[fov_key]
-            fov_locs["xmin"] = fov_locs[x_key] * scale_factor
-            fov_locs["ymin"] = fov_locs[y_key] * scale_factor
+            fov_locs["x"] = fov_locs[x_key] * scale_factor
+            fov_locs["y"] = fov_locs[y_key] * scale_factor
 
             return fov_locs
 
@@ -439,7 +470,7 @@ def _read_fov_image(
 
 
 def _read_protein_fov(protein_dir: Path) -> tuple[da.Array, list[str]]:
-    images_paths = list(protein_dir.rglob("*.TIF"))
+    images_paths = list(protein_dir.rglob("*.[Tt][Ii][Ff]"))
     protein_image = da.concatenate([imread(image_path) for image_path in images_paths], axis=0)
     channel_names = [_get_protein_name(image_path) for image_path in images_paths]
 
@@ -469,7 +500,7 @@ def _find_dir(path: Path, name: str):
 
 
 def _get_morphology_coords(images_dir: Path) -> list[str]:
-    images_paths = list(images_dir.glob("*.TIF"))
+    images_paths = list(images_dir.glob("*.[Tt][Ii][Ff]"))
     assert len(images_paths) > 0, f"Expected to find images inside {images_dir}"
 
     with tifffile.TiffFile(images_paths[0]) as tif:

@@ -12,6 +12,7 @@
 ### Fixed
 - Preserve cell ids when converting to the explorer. Better interchangeability after filtering cells.
 - `sopa --version` faster and returns no warning (prevent it from importing sopa)
+- Fixed FOV shift in some CosMX versions (#286)
 
 ## [2.1.1] - 2025-07-16
 
