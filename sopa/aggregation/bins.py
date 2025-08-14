@@ -55,6 +55,7 @@ def aggregate_bins(
 
     adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)
     adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
+    adata.obsm["bins_mapping"] = indices_matrix.tocsr()
     return adata
 
 
