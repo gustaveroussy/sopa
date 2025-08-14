@@ -64,6 +64,8 @@ Use `sopa.settings.gene_exclude_pattern = None` to keep all genes.
 
 ::: sopa.io.explorer.write_image
 
+::: sopa.io.explorer.write_cell_categories
+
 ::: sopa.io.explorer.save_column_csv
 
 ## Report
