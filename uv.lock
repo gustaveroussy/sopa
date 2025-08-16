@@ -3826,7 +3826,7 @@ wheels = [
 
 [[package]]
 name = "sopa"
-version = "2.1.1"
+version = "2.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "anndata" },
@@ -3885,7 +3885,7 @@ requires-dist = [
     { name = "opencv-python", marker = "extra == 'cellpose'", specifier = ">=4.8.0" },
     { name = "scanpy", specifier = ">=1.10.4" },
     { name = "spatialdata", specifier = ">=0.4.0" },
-    { name = "spatialdata-io", specifier = ">=0.2.0" },
+    { name = "spatialdata-io", specifier = ">=0.3.0" },
     { name = "spatialdata-plot", specifier = ">=0.2.10" },
     { name = "stardist", marker = "extra == 'stardist'", specifier = ">=0.9.1" },
     { name = "tensorflow", marker = "extra == 'stardist'", specifier = ">=2.18.0" },
@@ -3986,7 +3986,7 @@ wheels = [
 
 [[package]]
 name = "spatialdata-io"
-version = "0.2.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anndata" },
@@ -4004,9 +4004,9 @@ dependencies = [
     { name = "spatialdata" },
     { name = "tifffile" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/fb/7154946fa6eea75930c7737445bf38add7463165919fd17fcfe1d50fd36c/spatialdata_io-0.2.0.tar.gz", hash = "sha256:9f4d89974271731653fe0ffbb407e02784055ff9bcf24dc6c68a5b9cda4ab9e0", size = 80975 }
+sdist = { url = "https://files.pythonhosted.org/packages/4c/7d/19792b9da1c371d805155f284da576dafe72024dd62ced6d7cc6ce4411c1/spatialdata_io-0.3.0.tar.gz", hash = "sha256:c8ba30e442fffd6e6ce6d11b558f6e7c7845532dc506e9d534561de051277d37", size = 81394 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/56/5f0790668cefb8fec0860e5324fccb2ebb94d041cc45b98fa27ed7402fc8/spatialdata_io-0.2.0-py3-none-any.whl", hash = "sha256:76ab752045b4144b78c38462d85eab34b9c9d53d104c5e624078a191f1ef2201", size = 85708 },
+    { url = "https://files.pythonhosted.org/packages/e6/11/ffc9812999d8fd5e70c8d3e63fefca502c4249acbb233f4a7e35d84a715a/spatialdata_io-0.3.0-py3-none-any.whl", hash = "sha256:6574aacdafff8af2d3cae85e2318b4efb7a2e1e23fdaf856c907a081e6de28a0", size = 86388 },
 ]
 
 [[package]]

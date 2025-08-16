@@ -1,11 +1,13 @@
-## [2.1.2] - xxxx-xx-xx
+## [2.1.3] - xxxx-xx-xx
+
+## [2.1.2] - 2025-08-16
 
 ### Added
 - Sopa is now also available on 🍏 `nf-core` (still in dev mode) - see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)
 - Added a `sopa:latest-tangram` Docker image for cell-type annotation
 - Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level.
 - Docs clarifications, e.g., how to use `dataset_id` for Visium HD data, and others improvements.
-- Store the cell to bins mapping in `adata.obsm["bins_mapping"]` during bins aggregation (#291)
+- Store the cell to bins mapping in `adata.obsm["bins_assignments"]` during bins aggregation (#291)
 
 ### Changed
 - Minor Snakemake files simplification (e.g., no need to provide the gene column name anymore)

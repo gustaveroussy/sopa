@@ -1,6 +1,6 @@
 [project]
 name = "sopa"
-version = "2.1.1"
+version = "2.1.2"
 description = "Spatial-omics pipeline and analysis"
 authors = [{ name = "Quentin Blampey", email = "quentin.blampey@gmail.com" }]
 requires-python = ">=3.10,<3.13"
@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
   "spatialdata>=0.4.0",
-  "spatialdata-io>=0.2.0",
+  "spatialdata-io>=0.3.0",
   "spatialdata-plot>=0.2.10",
   "scanpy>=1.10.4",
   "anndata>=0.11.0",
