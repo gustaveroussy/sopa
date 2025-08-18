@@ -1,5 +1,8 @@
 ## [2.1.3] - xxxx-xx-xx
 
+### Fixed
+- Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameter (#294)
+
 ## [2.1.2] - 2025-08-16
 
 ### Added
