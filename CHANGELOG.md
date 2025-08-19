@@ -3,6 +3,9 @@
 ### Added
 - Add support for the new proseg version `>=3.0.0`
 
+### Fixed
+- Avoid loosing prior cell `0` in prior assignment when `unassigned_value != 0`
+
 ## [2.1.2] - 2025-08-16
 
 ### Added

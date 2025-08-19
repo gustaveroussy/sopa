@@ -1,3 +1,4 @@
+import dask
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -9,6 +10,10 @@ from spatialdata.models import Image2DModel, ShapesModel
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
 from sopa.patches._patches import Patches1D, Patches2D
+from sopa.patches._transcripts import _unassigned_to_zero
+
+dask.config.set({"dataframe.query-planning": False})
+import dask.dataframe as dd  # noqa: E402
 
 
 @pytest.fixture
@@ -152,3 +157,12 @@ def test_patches_with_and_without_centroids():
     patches = Patches2D(sdata, element="im", patch_width=67, patch_overlap=0, roi_key="gdf", use_roi_centroids=True)
     assert len(patches) == 1
     assert patches.geo_df.index[0] == 0
+
+
+def test_unassigned_to_zero():
+    df = pd.DataFrame({"col1": ["a", "b", "zero", "b"], "col2": [-1, 0, 1, 2], "col3": [0, 1, 2, 10]})
+    df = dd.from_pandas(df, npartitions=1)
+
+    assert (_unassigned_to_zero(df["col1"], "zero").compute() == [1, 2, 0, 2]).all()
+    assert (_unassigned_to_zero(df["col2"], -1).compute() == [0, 9223372036854775806, 1, 2]).all()
+    assert (_unassigned_to_zero(df["col3"], 0).compute() == [0, 1, 2, 10]).all()
