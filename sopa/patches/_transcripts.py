@@ -118,7 +118,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         assert len(valid_indices), "No valid patches found. Check the minimum number of points or cells per patch."
 
-        geo_df = self.geo_df.iloc[valid_indices]
+        geo_df = self.geo_df.iloc[valid_indices].copy()
         geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(self.cache_dir / str(index)))
         geo_df[SopaKeys.POINTS_KEY] = self.points_key
 
@@ -151,7 +151,7 @@ class OnDiskTranscriptPatches(Patches2D):
                     yield index
                     continue
 
-                log.info(f"Patch {index} is out for segmentation (less than {self.min_cells_per_patch} cells).")
+                log.info(f"Patch {index} is out for segmentation (less than {self.min_cells_per_patch} prior cells).")
                 continue
 
             log.info(f"Patch {index} is out for segmentation (less than {self.min_points_per_patch} transcripts).")
@@ -183,7 +183,7 @@ def _check_min_lines(path: str, n: int) -> bool:
     if not Path(path).exists():  # empty file are not written at all
         return False
     with open(path) as f:
-        return any(count + 1 >= n for count, _ in enumerate(f))
+        return any(count >= n for count, _ in enumerate(f))
 
 
 def _unassigned_to_zero(series: dd.Series, unassigned_value: int | str | None) -> dd.Series:
