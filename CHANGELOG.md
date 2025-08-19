@@ -4,6 +4,7 @@
 - Add support for the new proseg version `>=3.0.0`
 
 ### Fixed
+- Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameter (#294)
 - Avoid loosing prior cell `0` in prior assignment when `unassigned_value != 0`
 
 ## [2.1.2] - 2025-08-16
