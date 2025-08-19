@@ -1,4 +1,4 @@
-FROM rust:1-slim-bullseye AS rust-builder
+FROM rust:latest AS rust-builder
 
 RUN cargo install proseg
 
