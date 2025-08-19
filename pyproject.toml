@@ -29,9 +29,10 @@ cellpose = ["cellpose>=3.0.5", "torch>=2.1.1", "opencv-python>=4.8.0"]
 stardist = [
   "tensorflow>=2.18.0",
   "stardist>=0.9.1",
-  "numpy<2.0.0",
-  "spatialdata<0.5.0",
-  "multiscale-spatial-image<2.0.3",
+  "numpy<2.0.0",                    # TODO: remove this one numpy>=2.0.0 is supported by stardist
+  "spatialdata<0.5.0",              # same as above
+  "multiscale-spatial-image<2.0.3", # same as above
+  "spatial-image<1.2.2",            # same as above
 ]
 baysor = ["toml>=0.10.2", "loompy>=3.0.7"]
 wsi = [
