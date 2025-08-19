@@ -1,5 +1,8 @@
 ## [2.1.3] - xxxx-xx-xx
 
+### Added
+- Add support for the new proseg version `>=3.0.0`
+
 ## [2.1.2] - 2025-08-16
 
 ### Added
