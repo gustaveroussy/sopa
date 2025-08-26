@@ -2,6 +2,7 @@
 
 ### Added
 - Add support for the new proseg version `>=3.0.0`
+- Added sopa-comseg Docker image for ComSeg support in `nf-core/sopa`
 
 ### Fixed
 - Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameter (#294)

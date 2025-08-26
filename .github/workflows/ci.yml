@@ -84,7 +84,15 @@ jobs:
     strategy:
       matrix:
         extra-name:
-          ["", "-baysor", "-cellpose", "-proseg", "-stardist", "-tangram"]
+          [
+            "",
+            "-baysor",
+            "-cellpose",
+            "-comseg",
+            "-proseg",
+            "-stardist",
+            "-tangram",
+          ]
 
     steps:
       - name: Export tag version
