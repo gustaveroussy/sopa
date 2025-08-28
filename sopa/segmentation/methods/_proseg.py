@@ -109,7 +109,6 @@ def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[
         _sdata = spatialdata.read_zarr(zarr_output)
         adata, geo_df = _sdata.tables["table"], _sdata.shapes["cell_boundaries"]
 
-        geo_df.crs = None
         del geo_df.attrs["transform"]
     else:
         counts = pd.read_csv(patch_dir / "expected-counts.csv.gz")
@@ -121,6 +120,8 @@ def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[
 
         with gzip.open(patch_dir / "cell-polygons.geojson.gz", "rb") as f:
             geo_df = gpd.read_file(f)
+
+    geo_df.crs = None
 
     transformations = get_transformation(sdata[points_key], get_all=True).copy()
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
