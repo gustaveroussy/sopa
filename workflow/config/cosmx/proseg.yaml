@@ -1,4 +1,4 @@
-# Using the CosMX default segmentation as a prior for Proseg.
+# Using the CosMx default segmentation as a prior for Proseg.
 
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml
 read:
@@ -10,7 +10,7 @@ patchify:
 
 segmentation:
   proseg:
-    prior_shapes_key: auto # this allows to use the prior segmentation performed when using the CosMX
+    prior_shapes_key: auto # this allows to use the prior segmentation performed when using the CosMx
     # command_line_suffix: "--nthreads XXX" # add here any command line suffix to the proseg command
 
 aggregate:

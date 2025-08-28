@@ -19,9 +19,9 @@ If using [Baysor](../../api/segmentation/#sopa.segmentation.baysor), you can als
 
 To filter low-quality cells, you can provide `min_transcripts=20` to the [aggregation](../../api/aggregation/#sopa.aggregate).
 
-## CosMX
+## CosMx
 
-For CosMX data, the same advice as above is applicable, although you may experience some issues when reading the data with `sopa.io.cosmx` due to some frequent changes in the AtoMX exports. If so, please [open an issue](https://github.com/gustaveroussy/sopa/issues) to improve this.
+For CosMx data, the same advice as above is applicable, although you may experience some issues when reading the data with `sopa.io.cosmx` due to some frequent changes in the AtoMX exports. If so, please [open an issue](https://github.com/gustaveroussy/sopa/issues) to improve this.
 
 ## Visium HD
 

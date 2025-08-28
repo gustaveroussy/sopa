@@ -50,7 +50,7 @@ The command below will generate and save it on disk (you can change the path `tu
     # it will generate a '/path/to/sample/directory.zarr' directory
     sopa convert /path/to/sample/directory --technology merscope
     ```
-=== "CosMX"
+=== "CosMx"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
     sopa convert /path/to/sample/directory --technology cosmx

@@ -47,7 +47,7 @@ def cosmx(
         flip_image: For some buggy exports of AtomX 1.3.2, `flip_image=True` has to be used for stitching. See [this](https://github.com/gustaveroussy/sopa/issues/231) issue.
 
     Returns:
-        A `SpatialData` object representing the CosMX experiment
+        A `SpatialData` object representing the CosMx experiment
     """
     path = Path(path)
     image_models_kwargs, imread_kwargs = _default_image_kwargs(image_models_kwargs, imread_kwargs)
@@ -166,7 +166,7 @@ def _read_fov_locs(path: Path, dataset_id: str) -> pd.DataFrame:
         ["fov", "x_mm", "y_mm"],
         ["fov", "x_global_mm", "y_global_mm"],
     ]
-    mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMX
+    mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMx
 
     for (fov_key, x_key, y_key), scale_factor in zip(valid_keys, [1, mm_to_pixels, mm_to_pixels]):
         if not np.isin([fov_key, x_key, y_key], fov_locs.columns).all():  # try different column names
