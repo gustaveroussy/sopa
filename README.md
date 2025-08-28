@@ -75,7 +75,7 @@ For more details on `snakemake` configuration and how to properly setup your env
 
 ### CLI
 
-Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).
+Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/cli_usage/).
 
 ```bash
 > sopa --help # show command names and arguments
