@@ -50,7 +50,7 @@ Sopa comes in four different flavours, each corresponding to a different use cas
 
 ### API
 
-Below is an example of a minimal API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
+Below is an example of a minimal API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/api_usage/).
 
 ```python
 import sopa
