@@ -37,7 +37,7 @@ def cosmx(
     fov_shift: bool | None = None,
 ) -> SpatialData:
     """
-    Read *Cosmx Nanostring* data. The fields of view are stitched together, except if `fov` is provided.
+    Read *CosMx Nanostring / Bruker* data. The fields of view are stitched together, except if `fov` is provided.
 
     This function reads the following files:
         - `*_fov_positions_file.csv` or `*_fov_positions_file.csv.gz`: FOV locations
