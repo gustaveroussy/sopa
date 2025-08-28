@@ -14,7 +14,7 @@ Our article is published in [Nature Communications](https://www.nature.com/artic
 }
 ```
 
-This library has been developed by Quentin Blampey, PhD student in Biomathematics / Deep Learning. The following institutions funded this work:
+This library has been developed by Quentin Blampey, PhD researcher in biomathematics and deep learning. The following institutions funded this work:
 
-- Lab of Mathematics and Computer Science (MICS), **CentraleSupélec** (Engineering School, Paris-Saclay University).
-- PRISM center, **Gustave Roussy Institute** (Cancer campus, Paris-Saclay University).
+- [Lab of Mathematics and Computer Science](https://biomathematics.mics.centralesupelec.fr/) (MICS), CentraleSupélec (Engineering School, Paris-Saclay University).
+- PRISM center, [Gustave Roussy Institute](https://www.gustaveroussy.fr/en) (Cancer campus, Paris-Saclay University).

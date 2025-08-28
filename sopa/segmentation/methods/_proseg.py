@@ -4,6 +4,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import spatialdata
 from anndata import AnnData
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
@@ -96,21 +97,49 @@ def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix
 
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
-    return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {command_line_suffix}"
+    use_zarr = _use_zarr_output(proseg_executable)
+
+    return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
 
 
 def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[AnnData, gpd.GeoDataFrame]:
-    counts = pd.read_csv(patch_dir / "expected-counts.csv.gz")
+    zarr_output = patch_dir / "proseg-output.zarr"
 
-    obs = pd.read_csv(patch_dir / "cell-metadata.csv.gz")
-    obs.index = obs.index.map(str)
+    if zarr_output.exists():  # in versions >= 3.0.0
+        _sdata = spatialdata.read_zarr(zarr_output)
+        adata, geo_df = _sdata.tables["table"], _sdata.shapes["cell_boundaries"]
 
-    adata = AnnData(counts, obs=obs)
+        del geo_df.attrs["transform"]
+    else:
+        counts = pd.read_csv(patch_dir / "expected-counts.csv.gz")
 
-    with gzip.open(patch_dir / "cell-polygons.geojson.gz", "rb") as f:
-        geo_df = gpd.read_file(f)
+        obs = pd.read_csv(patch_dir / "cell-metadata.csv.gz")
+        obs.index = obs.index.map(str)
+
+        adata = AnnData(counts, obs=obs)
+
+        with gzip.open(patch_dir / "cell-polygons.geojson.gz", "rb") as f:
+            geo_df = gpd.read_file(f)
+
+    geo_df.crs = None
 
     transformations = get_transformation(sdata[points_key], get_all=True).copy()
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 
     return adata, geo_df
+
+
+def _use_zarr_output(proseg_executable_path: str) -> bool:
+    import subprocess
+
+    from packaging.version import InvalidVersion, Version
+
+    result = subprocess.run(f"{proseg_executable_path} --version", shell=True, capture_output=True, text=True)
+
+    try:
+        return Version(result.stdout.split()[1]) >= Version("3.0.0")
+    except InvalidVersion:
+        log.warning(
+            "Could not parse the version of proseg. Assumes proseg<3.0.0. We may assume fallback to a different version in the future."
+        )
+        return False

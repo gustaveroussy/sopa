@@ -2,6 +2,9 @@
 
 Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow to get started quickly. This will not involve any coding but requires some setup specific to `snakemake`.
 
+!!! info
+    If you're more familiar with Nextflow, you can try [nf-core/sopa](https://nf-co.re/sopa/dev/) instead.
+
 ## Setup
 
 ### Installation

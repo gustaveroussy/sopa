@@ -122,7 +122,9 @@ def write(
             adata.write_h5ad(path / FileNames.H5AD)
 
     ### Saving cell boundaries
-    if shapes_key is None:
+    if not _should_save(mode, "b") and not _should_save(mode, "m"):
+        shapes_key, geo_df = None, None
+    elif shapes_key is None:
         shapes_key, geo_df = get_boundaries(sdata, return_key=True, warn=True)
     else:
         geo_df = sdata[shapes_key]
@@ -163,30 +165,60 @@ def write(
 
     ### Saving experiment.xenium file
     if _should_save(mode, "m"):
-        write_metadata(path, run_name or image_key, shapes_key, _get_n_obs(sdata, geo_df, table_key), pixel_size)
+        region_name = _get_region_name(sdata, shapes_key)
+        write_metadata(path, run_name or image_key, region_name, _get_n_obs(sdata, geo_df, table_key), pixel_size)
 
     log.info(f"Saved files in the following directory: {path}")
     log.info(f"You can open the experiment with 'open {path / FileNames.METADATA}'")
 
 
-def _use_symlink(path: Path, sdata: SpatialData, pattern: str) -> bool:
+def _get_region_name(sdata: SpatialData, shapes_key: str) -> str:
+    if SopaAttrs.XENIUM_OUTPUT_PATH not in sdata.attrs:
+        return shapes_key
+    try:
+        with open(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]) / FileNames.METADATA) as f:
+            metadata: dict = json.load(f)
+            return f"{metadata['region_name']}-{shapes_key}"  # recover original region name
+    except Exception:
+        return shapes_key
+
+
+def _use_symlink(dst: Path, sdata: SpatialData, pattern: str) -> bool:
     """Try using the Xenium output files when existing to avoid re-generating large files."""
     if SopaAttrs.XENIUM_OUTPUT_PATH not in sdata.attrs:
         return False
 
-    files = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
-    for file in files:
-        target = path / file.name
+    sources = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
 
-        if target.exists():
-            if not target.is_symlink():  # avoid removing non-symlink files
-                return False
-            target.unlink()
+    for src in sources:
+        target = dst / src.name
 
-        target.symlink_to(file)
-        log.info(f"Created symlink {target} -> {file}")
+        if src.is_dir():
+            target.mkdir(parents=True, exist_ok=True)
 
-    return len(files) > 0
+            for sub_src in src.iterdir():
+                if not sub_src.is_file():
+                    continue
+
+                sub_target = target / sub_src.name
+
+                if sub_target.exists():
+                    if not sub_target.is_symlink():
+                        return False
+                    sub_target.unlink()
+
+                sub_target.symlink_to(sub_src.resolve())
+                log.info(f"Created symlink {sub_target} -> {sub_src.resolve()}")
+        else:
+            if target.exists():
+                if not target.is_symlink():  # avoid removing non-symlink files
+                    return False
+                target.unlink()
+
+            target.symlink_to(src.resolve())
+            log.info(f"Created symlink {target} -> {src.resolve()}")
+
+    return len(sources) > 0
 
 
 def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> int:
@@ -198,7 +230,7 @@ def _get_n_obs(sdata: SpatialData, geo_df: gpd.GeoDataFrame, table_key: str) -> 
 def write_metadata(
     path: str,
     run_name: str = "NA",
-    shapes_key: str = "NA",
+    region_name: str = "NA",
     n_obs: int = 0,
     is_dir: bool = True,
     pixel_size: float = 0.2125,
@@ -211,15 +243,34 @@ def write_metadata(
     Args:
         path: Path to the Xenium Explorer directory where the metadata file will be written
         run_name: Key of `SpatialData` object containing the primary image used on the explorer.
-        shapes_key: Key of `SpatialData` object containing the boundaries shown on the explorer.
+        region_name: Name of the region to be displayed on the Xenium Explorer.
         n_obs: Number of cells
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
     """
+    path = Path(path)
+
+    additional_images = {}
+    if is_dir:
+        mip_file: Path = path / "morphology_mip.ome.tif"
+
+        if mip_file.exists():
+            additional_images["morphology_mip_filepath"] = mip_file.name
+
+        focus_file: Path = path / "morphology_focus.ome.tif"
+        if focus_file.exists():
+            additional_images["morphology_focus_filepath"] = focus_file.name
+        else:
+            focus_file: Path = path / "morphology_focus" / "morphology_focus_0000.ome.tif"
+            if focus_file.exists():
+                additional_images["morphology_focus_filepath"] = "morphology_focus/morphology_focus_0000.ome.tif"
+
     path = explorer_file_path(path, FileNames.METADATA, is_dir)
 
+    metadata = experiment_dict(run_name, region_name, n_obs, pixel_size)
+    metadata["images"] |= additional_images
+
     with open(path, "w") as f:
-        metadata = experiment_dict(run_name, shapes_key, n_obs, pixel_size)
         json.dump(metadata, f, indent=4)
 
 

@@ -17,7 +17,7 @@
 
 </div>
 
-Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Molecural Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
+Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMx, PhenoCycler, MACSima, Molecural Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
 ## Documentation
 
@@ -50,7 +50,7 @@ Sopa comes in four different flavours, each corresponding to a different use cas
 
 ### API
 
-Below is an example of a minimal API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
+Below is a minimal example of API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/api_usage/).
 
 ```python
 import sopa
@@ -75,7 +75,7 @@ For more details on `snakemake` configuration and how to properly setup your env
 
 ### CLI
 
-Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).
+Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/cli_usage/).
 
 ```bash
 > sopa --help # show command names and arguments

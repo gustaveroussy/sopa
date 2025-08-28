@@ -90,7 +90,9 @@ class OnDiskTranscriptPatches(Patches2D):
             f"Prior-segmentation column {self.prior_shapes_key} not found in sdata['{self.points_key}']"
         )
 
-        self.points[self.prior_shapes_key] = _assign_prior(self.points[self.prior_shapes_key], self.unassigned_value)
+        self.points[self.prior_shapes_key] = _unassigned_to_zero(
+            self.points[self.prior_shapes_key], self.unassigned_value
+        )
 
     def get_prior_centroids(self) -> gpd.GeoDataFrame:
         assert self.prior_shapes_key is not None, "Prior shapes key is required to write cell centroids"
@@ -116,7 +118,7 @@ class OnDiskTranscriptPatches(Patches2D):
 
         assert len(valid_indices), "No valid patches found. Check the minimum number of points or cells per patch."
 
-        geo_df = self.geo_df.iloc[valid_indices]
+        geo_df = self.geo_df.iloc[valid_indices].copy()
         geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(self.cache_dir / str(index)))
         geo_df[SopaKeys.POINTS_KEY] = self.points_key
 
@@ -149,7 +151,7 @@ class OnDiskTranscriptPatches(Patches2D):
                     yield index
                     continue
 
-                log.info(f"Patch {index} is out for segmentation (less than {self.min_cells_per_patch} cells).")
+                log.info(f"Patch {index} is out for segmentation (less than {self.min_cells_per_patch} prior cells).")
                 continue
 
             log.info(f"Patch {index} is out for segmentation (less than {self.min_points_per_patch} transcripts).")
@@ -181,10 +183,10 @@ def _check_min_lines(path: str, n: int) -> bool:
     if not Path(path).exists():  # empty file are not written at all
         return False
     with open(path) as f:
-        return any(count + 1 >= n for count, _ in enumerate(f))
+        return any(count >= n for count, _ in enumerate(f))
 
 
-def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.Series:
+def _unassigned_to_zero(series: dd.Series, unassigned_value: int | str | None) -> dd.Series:
     if is_string_dtype(series):
         series = series.astype("category")
         series = series.cat.as_known()
@@ -204,6 +206,7 @@ def _assign_prior(series: dd.Series, unassigned_value: int | str | None) -> pd.S
     if is_integer_dtype:
         if unassigned_value is None or unassigned_value == 0:
             return series
-        return series.replace(int(unassigned_value), 0)
+        max_value = np.iinfo(series.dtype).max
+        return series.replace(0, max_value - 1).replace(int(unassigned_value), 0)
 
     raise ValueError(f"Invalid dtype {series.dtype} for prior cell ids. Must be int or string.")

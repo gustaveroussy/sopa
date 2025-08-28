@@ -134,6 +134,8 @@ def test_aggregate_bins():
 
     adata_aggr = sopa.aggregation.aggregate_bins(sdata, "cells", "table")
 
+    assert (adata_aggr.obsm["bins_assignments"].nonzero()[1] == [0, 0, 1, 2, 3, 4, 5, 6]).all()
+
     assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
 
     assert (adata_aggr.X.toarray() == expected_counts).all()

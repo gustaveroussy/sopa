@@ -62,7 +62,7 @@ def cosmx(
         fov_shift: Whether to apply FOV shift correction. For some datasets, there is a one-FOV shift in the y direction between the image and the polygons/transcripts. If `None`, it will be inferred automatically based on the FOV positions file and the polygons files.
 
     Returns:
-        A `SpatialData` object representing the CosMX experiment
+        A `SpatialData` object representing the CosMx experiment
     """
     path = Path(path)
 
@@ -406,7 +406,7 @@ class _CosMXReader:
             ["fov", "x_mm", "y_mm"],
             ["fov", "x_global_mm", "y_global_mm"],
         ]
-        mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMX
+        mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMx
 
         for (fov_key, x_key, y_key), scale_factor in zip(valid_keys, [1, mm_to_pixels, mm_to_pixels]):
             if not np.isin([fov_key, x_key, y_key], fov_locs.columns).all():  # try different column names

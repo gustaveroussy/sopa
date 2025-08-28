@@ -28,7 +28,7 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
        ├─ mosaic_{stain}_z{z_layer}.tif
        └─ micron_to_mosaic_pixel_transform.csv
     ```
-=== "CosMX"
+=== "CosMx"
     `data_path` is the path to the directory containing:
 
     - a transcript file `*_tx_file` (with columns `target`, `x_global_px`, `y_global_px`)

@@ -1,10 +1,24 @@
-## [2.1.2] - xxxx-xx-xx
+## [2.1.3] - xxxx-xx-xx
 
 ### Added
-- Sopa is now also available on 🍏 `nf-core` - see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)
+- Add support for the new proseg version `>=3.0.0`
+- Added sopa-comseg Docker image for ComSeg support in `nf-core/sopa`
+- Fixed FOV shift in some CosMX versions (#286)
+- Can read CosMx polygons and cell labels (#285)
+
+### Fixed
+- Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameter (#294)
+- Avoid loosing prior cell `0` in prior assignment when `unassigned_value != 0`
+- Fixed stardist dependencies, as it still doesn't support `numpy>=2.0.0`
+
+## [2.1.2] - 2025-08-16
+
+### Added
+- Sopa is now also available on 🍏 `nf-core` (still in dev mode) - see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)
 - Added a `sopa:latest-tangram` Docker image for cell-type annotation
 - Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level.
 - Docs clarifications, e.g., how to use `dataset_id` for Visium HD data, and others improvements.
+- Store the cell to bins mapping in `adata.obsm["bins_assignments"]` during bins aggregation (#291)
 
 ### Changed
 - Minor Snakemake files simplification (e.g., no need to provide the gene column name anymore)
@@ -12,7 +26,8 @@
 ### Fixed
 - Preserve cell ids when converting to the explorer. Better interchangeability after filtering cells.
 - `sopa --version` faster and returns no warning (prevent it from importing sopa)
-- Fixed FOV shift in some CosMX versions (#286)
+- Preserve Xenium region_name and morphology_focus/mip files (via a symlink at the file level) when using `sopa.io.explorer.write`
+- Remove warning in `sopa.io.explorer.write` when `mode="+it"` and used before running Sopa (typically, when running the Snakemake or Nextflow pipeline)
 
 ## [2.1.1] - 2025-07-16
 

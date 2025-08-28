@@ -50,15 +50,16 @@ def aggregate_bins(
     )
 
     if no_overlap:
-        log.warning("Unique bin mapping is currently experimental. Any feedback on GitHub is welcome.")
-        indices_matrix = _get_unique_bins_mapping(indices_matrix, bins_table)
+        log.warning("Unique bin assignments is currently experimental. Any feedback on GitHub is welcome.")
+        indices_matrix = _get_unique_bins_assignments(indices_matrix, bins_table)
 
     adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)
     adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
+    adata.obsm["bins_assignments"] = indices_matrix.tocsr()
     return adata
 
 
-def _get_unique_bins_mapping(
+def _get_unique_bins_assignments(
     indices_matrix: coo_matrix,
     bins_table: AnnData,
     n_components: int = 50,
