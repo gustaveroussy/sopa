@@ -1,4 +1,6 @@
-## [2.1.3] - xxxx-xx-xx
+## [2.1.4] - xxxx-xx-xx
+
+## [2.1.3] - 2025-08-29
 
 ### Added
 - Add support for the new proseg version `>=3.0.0`
