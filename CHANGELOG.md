@@ -8,10 +8,10 @@
 - Can read CosMx polygons and cell labels (#285)
 
 ### Fixed
-- Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameter (#294)
-- Avoid loosing prior cell `0` in prior assignment when `unassigned_value != 0`
+- Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameters (#294)
+- Avoid losing prior cell `0` in prior assignment when `unassigned_value != 0`
 - Fixed stardist dependencies, as it still doesn't support `numpy>=2.0.0`
-- Fixed FOV shift in some CosMX versions (#286)
+- Fixed FOV shift in some CosMx versions (#286)
 
 ## [2.1.2] - 2025-08-16
 
