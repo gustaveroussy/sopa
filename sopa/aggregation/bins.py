@@ -3,7 +3,7 @@ import logging
 import geopandas as gpd
 import numpy as np
 from anndata import AnnData
-from scipy.sparse import coo_matrix, csr_matrix, lil_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 from spatialdata import SpatialData
 from tqdm import tqdm
 
@@ -44,7 +44,7 @@ def aggregate_bins(
 
     bin_within_cell = gpd.sjoin(bins, cells)
 
-    indices_matrix = coo_matrix(
+    indices_matrix = csr_matrix(
         (np.full(len(bin_within_cell), 1), (bin_within_cell["index_right"], bin_within_cell.index)),
         shape=(len(cells), len(bins)),
     )
@@ -55,20 +55,21 @@ def aggregate_bins(
 
     adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)
     adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
-    adata.obsm["bins_assignments"] = indices_matrix.tocsr()
+    adata.obsm["bins_assignments"] = indices_matrix
     return adata
 
 
 def _get_unique_bins_assignments(
-    indices_matrix: coo_matrix,
+    indices_matrix: csr_matrix,
     bins_table: AnnData,
     n_components: int = 50,
-) -> coo_matrix | lil_matrix:
+) -> csr_matrix:
     shared_bins: np.ndarray = (indices_matrix.sum(0) >= 2).A1
 
     if not shared_bins.any():
         return indices_matrix
 
+    indices_matrix: coo_matrix = indices_matrix.tocoo()
     no_overlap: coo_matrix = indices_matrix.copy()
     no_overlap.data[shared_bins[no_overlap.col]] = 0
     no_overlap.eliminate_zeros()
@@ -86,7 +87,7 @@ def _get_unique_bins_assignments(
 
         no_overlap[cell_index, bin_index] = 1
 
-    return no_overlap
+    return no_overlap.tocsr()
 
 
 def _pca_representation(

@@ -4,7 +4,7 @@
 - Visium HD: also store the spatial coordinates of the bins in microns (not just in pixels)
 
 ### Fixed
-- Use `csr` matrices instead of `coo` in transcript aggregation to support `anndata>=0.12.0` (#305)
+- Use `csr` matrices instead of `coo` in transcript and bins aggregation to support `anndata>=0.12.0` (#305)
 
 ## [2.1.3] - 2025-08-29
 

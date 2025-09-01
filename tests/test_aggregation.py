@@ -134,6 +134,8 @@ def test_aggregate_bins():
 
     adata_aggr = sopa.aggregation.aggregate_bins(sdata, "cells", "table")
 
+    assert isinstance(adata_aggr.obsm["bins_assignments"], csr_matrix)
+
     assert (adata_aggr.obsm["bins_assignments"].nonzero()[1] == [0, 0, 1, 2, 3, 4, 5, 6]).all()
 
     assert list(adata_aggr.var_names) == ["gene1", "gene2", "gene3"]
@@ -176,8 +178,10 @@ def test_aggregate_bins_no_overlap(as_sparse: bool):
     sdata = SpatialData(shapes={"bins_2um": gdf_bins, "cells": gdf_cells}, tables={"table": adata})
 
     adata_aggr1 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", no_overlap=False, expand_radius_ratio=1.5)
+    assert isinstance(adata_aggr1.obsm["bins_assignments"], csr_matrix)
 
     adata_aggr2 = sopa.aggregation.aggregate_bins(sdata, "cells", "table", no_overlap=True, expand_radius_ratio=1.5)
+    assert isinstance(adata_aggr2.obsm["bins_assignments"], csr_matrix)
 
     X1 = adata_aggr1.X.toarray() if as_sparse else adata_aggr1.X
     X2 = adata_aggr2.X.toarray() if as_sparse else adata_aggr2.X
