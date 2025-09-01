@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import numpy as np
 from spatialdata import SpatialData
 
 from ..._constants import SopaAttrs
@@ -18,6 +19,7 @@ def visium_hd(
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
     var_names_make_unique: bool = True,
+    bins_as_squares: bool = True,
     **kwargs: int,
 ) -> SpatialData:
     """Read Visium HD data as a `SpatialData` object. For more information, refer to [spatialdata-io](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.visium_hd.html).
@@ -32,6 +34,7 @@ def visium_hd(
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
         var_names_make_unique: If True, ensure that the var names are unique.
+        bins_as_squares: If `True`, the bins are represented as squares. If `False`, the bins are represented as circles. For a correct visualization one should use squares.
         kwargs: Additional keyword arguments passed to `spatialdata_io.visium_hd`.
 
     Returns:
@@ -49,6 +52,7 @@ def visium_hd(
         fullres_image_file=fullres_image_file,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
+        bins_as_squares=bins_as_squares,
         **kwargs,
     )
 
@@ -68,6 +72,17 @@ def visium_hd(
             sdata.attrs[SopaAttrs.BINS_TABLE] = key
         if var_names_make_unique:
             adata.var_names_make_unique()
+
+    for key, geo_df in sdata.shapes.items():
+        table_name = key[-12:]
+        if table_name not in sdata.tables:
+            log.warning(f"Could not find a table matching the shapes '{key}' to compute the scale factor.")
+        else:
+            diameter = int(key[-5:-2])
+            area = geo_df.geometry.iloc[0].area
+            microns_per_pixel = diameter / (np.sqrt(area) if bins_as_squares else geo_df["radius"].iloc[0] * 2)
+
+            sdata[table_name].obsm["spatial_microns"] = sdata[table_name].obsm["spatial"] * microns_per_pixel
 
     for key in sdata.shapes:
         if key.endswith("_002um"):
