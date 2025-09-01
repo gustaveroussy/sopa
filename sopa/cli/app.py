@@ -53,22 +53,32 @@ def convert(
         None,
         help="Path to the snakemake config. This can be useful in order not to provide the `--technology` and the `--kwargs` arguments",
     ),
+    overwrite: bool = typer.Option(
+        False, help="Whether to overwrite the existing SpatialData object if already existing"
+    ),
     kwargs: str = typer.Option(
         default={},
         callback=ast.literal_eval,
         help="Dictionary provided to the reader function as kwargs",
     ),
 ):
-    """Read any technology data, and write a standardized SpatialData object.
+    """Read any technology data as a SpatialData object and save it as a `.zarr` directory.
 
     Either `--technology` or `--config-path` has to be provided."""
     from pathlib import Path
 
+    from spatialdata import SpatialData
+
     from sopa import io
+    from sopa._constants import SopaKeys
 
-    sdata_path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
+    sdata_path: Path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
 
-    io.standardize._check_can_write_zarr(sdata_path)
+    if not overwrite and sdata_path.exists():
+        assert not any(sdata_path.iterdir()), (
+            f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files."
+        )
+        sdata_path.rmdir()  # remove empty directory
 
     assert technology is not None or config_path is not None, "Provide the argument `--technology` or `--config-path`"
 
@@ -86,8 +96,17 @@ def convert(
         f"Technology {technology} unknown. Currently available: xenium, merscope, visium_hd, cosmx, phenocycler, hyperion, macsima"
     )
 
-    sdata = getattr(io, technology)(data_path, **kwargs)
-    io.write_standardized(sdata, sdata_path, delete_table=True)
+    sdata: SpatialData = getattr(io, technology)(data_path, **kwargs)
+
+    io.standardize.sanity_check(sdata)
+
+    assert SopaKeys.TABLE not in sdata.tables, (
+        f"sdata.tables['{SopaKeys.TABLE}'] exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
+    )
+
+    log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
+
+    sdata.write(sdata_path, overwrite=overwrite)
 
 
 @app.command()
