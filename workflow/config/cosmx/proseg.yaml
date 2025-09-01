@@ -18,5 +18,4 @@ aggregate:
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 explorer:
-  gene_column: "feature_name"
   ram_threshold_gb: 4

@@ -17,7 +17,6 @@ segmentation:
 
 aggregate:
   aggregate_channels: true
-  gene_column: genes
 
 annotation:
   method: fluorescence
