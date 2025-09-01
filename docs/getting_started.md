@@ -9,7 +9,7 @@ Sopa can be installed on every OS with `pip`, from `python>=3.10` to `python<3.1
     For instance, you can create a new `conda` environment:
 
     ```bash
-    conda create --name sopa python=3.10
+    conda create --name sopa python=3.12
     conda activate sopa
     ```
 
