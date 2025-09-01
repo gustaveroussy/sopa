@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from anndata import AnnData
 from dask.diagnostics import ProgressBar
-from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 
 from .. import settings
@@ -64,7 +64,7 @@ def _count_transcripts_aligned(geo_df: gpd.GeoDataFrame, points: dd.DataFrame, v
     points[value_key] = points[value_key].astype("category").cat.as_known()
     gene_names = points[value_key].cat.categories.astype(str)
 
-    X = coo_matrix((len(geo_df), len(gene_names)), dtype=int)
+    X = csr_matrix((len(geo_df), len(gene_names)), dtype=int)
     adata = AnnData(X=X, var=pd.DataFrame(index=gene_names))
     adata.obs_names = geo_df.index.astype(str)
 
@@ -74,14 +74,12 @@ def _count_transcripts_aligned(geo_df: gpd.GeoDataFrame, points: dd.DataFrame, v
 
     with ProgressBar():
         points.map_partitions(
-            partial(_add_coo, X_partitions, geo_df, gene_column=value_key, gene_names=gene_names),
+            partial(_add_csr, X_partitions, geo_df, gene_column=value_key, gene_names=gene_names),
             meta=(),
         ).compute()
 
     for X_partition in X_partitions:
         adata.X += X_partition
-
-    adata.X = adata.X.tocsr()
 
     if settings.gene_exclude_pattern is not None:
         adata = adata[:, ~adata.var_names.str.match(settings.gene_exclude_pattern, case=False, na=False)].copy()
@@ -89,8 +87,8 @@ def _count_transcripts_aligned(geo_df: gpd.GeoDataFrame, points: dd.DataFrame, v
     return adata
 
 
-def _add_coo(
-    X_partitions: list[coo_matrix],
+def _add_csr(
+    X_partitions: list[csr_matrix],
     geo_df: gpd.GeoDataFrame,
     partition: pd.DataFrame,
     gene_column: str,
@@ -106,7 +104,7 @@ def _add_coo(
     cells_indices = cells_indices[column_indices >= 0]
     column_indices = column_indices[column_indices >= 0]
 
-    X_partition = coo_matrix(
+    X_partition = csr_matrix(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
         shape=(len(geo_df), len(gene_names)),
     )
