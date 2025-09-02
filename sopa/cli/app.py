@@ -80,6 +80,8 @@ def convert(
             cache_dir = sdata_path.resolve() / SopaFiles.SOPA_CACHE_DIR
             if cache_dir.exists() and cache_dir.is_dir():
                 shutil.rmtree(cache_dir)
+            if not any(sdata_path.iterdir()):
+                sdata_path.rmdir()  # remove empty directory
         else:
             assert not any(sdata_path.iterdir()), (
                 f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files. Use the `--overwrite` flag to overwrite it."
