@@ -65,20 +65,26 @@ def convert(
     """Read any technology data as a SpatialData object and save it as a `.zarr` directory.
 
     Either `--technology` or `--config-path` has to be provided."""
+    import shutil
     from pathlib import Path
 
     from spatialdata import SpatialData
 
     from sopa import io
-    from sopa._constants import SopaKeys
+    from sopa._constants import SopaFiles, SopaKeys
 
     sdata_path: Path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
 
-    if not overwrite and sdata_path.exists():
-        assert not any(sdata_path.iterdir()), (
-            f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files."
-        )
-        sdata_path.rmdir()  # remove empty directory
+    if sdata_path.exists():
+        if overwrite:
+            cache_dir = sdata_path.resolve() / SopaFiles.SOPA_CACHE_DIR
+            if cache_dir.exists() and cache_dir.is_dir():
+                shutil.rmtree(cache_dir)
+        else:
+            assert not any(sdata_path.iterdir()), (
+                f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files. Use the `--overwrite` flag to overwrite it."
+            )
+            sdata_path.rmdir()  # remove empty directory
 
     assert technology is not None or config_path is not None, "Provide the argument `--technology` or `--config-path`"
 
