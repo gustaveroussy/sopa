@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install extra dependencies
-        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install 'snakemake==8.25.0' 'pulp==2.7.0'
+        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install 'snakemake>=7.32.4,<9.0' 'pulp<2.8'
 
       - name: Tests
         run: uv run pytest
