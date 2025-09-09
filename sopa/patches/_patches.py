@@ -89,7 +89,7 @@ class Patches2D:
             element: SpatialElement or name of the element on with patches will be made (image or points)
             patch_width: Width of the patches (in the unit of the coordinate system of the element). If `None`, only one patch will be created
             patch_overlap: Overlap width between the patches
-            roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
+            roi_key: Optional name of the shapes that need to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
             use_roi_centroids: If `True`, the ROI will be computed from the centroids of the shapes in `roi_key`. If `False`, the ROI will be computed from the shapes themselves.
         """
         patch_width = float("inf") if (patch_width is None or patch_width == -1) else patch_width
@@ -118,7 +118,7 @@ class Patches2D:
         self.patch_y = Patches1D(ymin, ymax, patch_width, patch_overlap, tight, int_coords)
 
         self.roi = None
-        assert roi_key is None or roi_key in sdata.shapes or roi_key == SopaKeys.ROI
+        assert roi_key is None or roi_key in sdata.shapes or roi_key == SopaKeys.ROI, f"Invalid {roi_key=}"
 
         if roi_key is not None and roi_key in sdata.shapes:
             roi_geo_df = to_intrinsic(sdata, sdata[roi_key], self.original_element)

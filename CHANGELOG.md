@@ -4,6 +4,7 @@
 - Visium HD: also store the spatial coordinates of the bins in microns (not just in pixels)
 - Added an `--overwrite` option to the `sopa convert` command line (#306)
 - Support `python==3.13`
+- Add `roi_key` in image/transcript patches for decide which shapes to use for the region of interest (#309)
 
 ### Fixed
 - Use `csr` matrices instead of `coo` in transcript and bins aggregation to support `anndata>=0.12.0` (#305)

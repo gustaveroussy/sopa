@@ -33,8 +33,9 @@ class OnDiskTranscriptPatches(Patches2D):
         csv_name: str = SopaFiles.TRANSCRIPTS_FILE,
         centroids_csv_name: str = SopaFiles.CENTROIDS_FILE,
         write_cells_centroids: bool = False,
+        roi_key: str | None = SopaKeys.ROI,
     ):
-        super().__init__(sdata, points_key, patch_width, patch_overlap)
+        super().__init__(sdata, points_key, patch_width, patch_overlap, roi_key=roi_key)
 
         self.points_key = points_key
         self.points: dd.DataFrame = sdata.points[points_key]
