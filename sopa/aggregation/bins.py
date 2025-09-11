@@ -27,7 +27,7 @@ def aggregate_bins(
         shapes_key: Key of the shapes containing the cell boundaries
         bins_key: Key of the table containing the bin-by-gene counts
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate bins from the cytoplasm.
-        no_overlap: If `True`, bins belonging to multiples cells with be assigned to only one, based on transcript-profile proximity.
+        no_overlap: If `True`, bins belonging to multiple cells will be assigned to only one, based on transcript-profile proximity.
 
     Returns:
         An `AnnData` object of shape with the cell-by-gene count matrix
