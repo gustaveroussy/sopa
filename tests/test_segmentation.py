@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 import shapely
 from geopandas.testing import assert_geodataframe_equal
 from shapely import MultiPolygon
@@ -20,6 +21,7 @@ def test_channels_average_within_mask():
     assert (_channels_average_within_mask(image, mask) == expected).all()
 
 
+@pytest.mark.long
 def test_cellpose_segmentation():
     sdata = sopa.io.toy_dataset(length=500)
 

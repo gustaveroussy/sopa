@@ -80,6 +80,7 @@ def test_patchify_baysor_inside_tissue_roi(sdata: SpatialData):
     sopa.utils.delete_cache(sdata)
 
 
+@pytest.mark.long
 def test_patches_inference_clustering():
     sdata = sopa.io.toy_dataset(length=200)
 

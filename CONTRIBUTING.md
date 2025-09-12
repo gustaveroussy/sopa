@@ -38,7 +38,7 @@ To add some new code to **sopa**, you should:
 2. Install `sopa` in editable mode with the 'dev' extra (see above)
 3. Create your personal branch from `main`
 4. Implement your changes
-5. Run tests via `pytest` (for coverage, use `pytest --cov --cov-config=pyproject.toml --cov-report=html` and open it with `open htmlcov/index.html`)
+5. Run tests via `uv run pytest` (for coverage, use `uv run pytest --cov --cov-config=pyproject.toml --cov-report=html` and open it with `open htmlcov/index.html`). For quicker test, use `uv run pytest -m "not long"`
 6. Run `pre-commit run --all-files` to ensure minimal code quality.
 7. Commit and push changes
 8. Create a pull request on the `main` branch. Add explanations about your developed features, and wait for discussion and validation of your pull request
