@@ -24,11 +24,13 @@ rule all:
         sdata_path = paths.sdata_path,
         explorer_directory = paths.explorer_directory,
         explorer_experiment = paths.explorer_experiment,
+        report = paths.report,
     shell:
         """
         echo 🎉 Successfully run sopa
         echo → SpatialData output directory: {params.sdata_path}
         echo → Explorer output directory: {params.explorer_directory}
+        echo → Open the sopa report: 'open {params.report}'
         echo → Open the result in the explorer: 'open {params.explorer_experiment}'
         """
 
@@ -166,11 +168,30 @@ rule explorer:
         sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-it"
         """
 
+rule scanpy_preprocess:
+    input:
+        args.segmentation_boundaries(),
+        paths.smk_aggregation,
+        paths.annotations if args.annotate else [],
+        paths.explorer_experiment,
+    output:
+        paths.smk_scanpy_preprocess,
+    params:
+        sdata_path = paths.sdata_path,
+        scanpy_preprocess = args["scanpy_preprocess"].as_cli(),
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa scanpy-preprocess {params.sdata_path} {params.scanpy_preprocess}
+        """
+
 rule report:
     input:
         args.segmentation_boundaries(),
         paths.smk_aggregation,
         paths.annotations if args.annotate else [],
+        paths.smk_scanpy_preprocess if "scanpy_preprocess" in config else [],
     output:
         paths.report,
     params:

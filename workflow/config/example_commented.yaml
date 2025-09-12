@@ -94,6 +94,10 @@ annotation:
   #     CD68: Macrophage
   #     CD20: B cell
 
+# [optional] add this if you want basic scanpy preprocessing to be done (normalization, log1p, HVG selection, UMAP, and leiden clustering) - use only for spatial transcriptomics datasets
+scanpy_preprocess:
+  resolution: 1 # resolution parameter for the leiden clustering
+
 explorer:
   # parameters related to the conversion to the Xenium Explorer (Sopa's visualizer)
   ram_threshold_gb: 4 # [optional] images below this RAM threshold will be loaded in memory during conversion. It can accelerate image writing

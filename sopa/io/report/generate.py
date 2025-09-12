@@ -148,7 +148,9 @@ class SectionBuilder:
         if not self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             return None
 
-        mean_transcript_count = _to_array(self.adata.X.mean(0))
+        counts = self.adata.layers.get("counts", self.adata.X)
+
+        mean_transcript_count = _to_array(counts.mean(0))
         low_average = mean_transcript_count < LOW_AVERAGE_COUNT
 
         QC_subsubsections = []
@@ -160,14 +162,14 @@ class SectionBuilder:
             )
             genes = self.adata.var_names[low_average].tolist()
             if len(genes) > 50:
-                genes = genes[:50] + [f"and {len(genes) - 50} others..."]
+                genes = [*genes[:50], f"and {len(genes) - 50} others..."]
             QC_subsubsections.append(Message(", ".join(genes), color="danger"))
 
         fig1 = plt.figure()
         _kdeplot_vmax_quantile(mean_transcript_count)
         plt.xlabel("Count per transcript (average / cells)")
 
-        counts = _to_array(self.adata.X.sum(1))
+        counts = _to_array(counts.sum(1))
         self.adata.obs["transcript_counts"] = counts
 
         fig2 = plt.figure()
@@ -191,6 +193,10 @@ class SectionBuilder:
         )
 
     def representation_section(self, max_obs: int = 100_000):
+        if "X_umap" in self.adata.obsm:
+            log.info("UMAP already computed")
+            return self._umap_figure()
+
         if self._table_has(SopaKeys.UNS_HAS_TRANSCRIPTS):
             sc.pp.normalize_total(self.adata)
             sc.pp.log1p(self.adata)
@@ -204,8 +210,13 @@ class SectionBuilder:
         sc.pp.neighbors(self.adata)
         sc.tl.umap(self.adata)
 
-        colors = self._table_has(SopaKeys.UNS_CELL_TYPES, None)
-        sc.pl.umap(self.adata, color=colors, show=False)
+        return self._umap_figure()
+
+    def _umap_figure(self):
+        default_color = "leiden" if "leiden" in self.adata.obs else None
+        color = self._table_has(SopaKeys.UNS_CELL_TYPES, default_color)
+
+        sc.pl.umap(self.adata, color=color, show=False)
 
         return Section(
             "Representation",

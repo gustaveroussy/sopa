@@ -227,6 +227,45 @@ def aggregate(
 
 
 @app.command()
+def scanpy_preprocess(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    table_key: str = typer.Option("table", help="Key of the table in the `SpatialData` object to be preprocessed"),
+    resolution: float = typer.Option(1.0, help="Resolution parameter for the leiden clustering"),
+    check_counts: bool = typer.Option(True, help="Whether to check that adata.X contains counts"),
+):
+    """Optional scanpy table preprocessing (log1p, HVG, UMAP, leiden clustering) after aggregation/annotation."""
+    import scanpy as sc
+    from anndata import AnnData
+
+    import sopa
+    from sopa.io.standardize import read_zarr_standardized
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    adata: AnnData = sdata.tables[table_key]
+
+    if check_counts:
+        assert adata.X.max() > 10, (
+            f"adata.X looks already log-normalized (max={adata.X.max()}). If you are sure it contains counts, use `--no-check-counts`"
+        )
+
+    adata.layers["counts"] = adata.X.copy()
+
+    sc.pp.normalize_total(adata)
+    sc.pp.log1p(adata)
+
+    sc.pp.highly_variable_genes(adata)
+
+    sc.pp.neighbors(adata)
+    sc.tl.umap(adata)
+    sc.tl.leiden(adata, resolution=resolution)
+
+    sopa.utils.add_spatial_element(sdata, table_key, adata)
+
+    (sopa.utils.get_cache_dir(sdata) / "scanpy_preprocess").touch()
+
+
+@app.command()
 def report(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     path: str = typer.Argument(help="Path to the HTML report"),
