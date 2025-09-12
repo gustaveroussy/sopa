@@ -8,6 +8,7 @@
 
 ### Fixed
 - Use `csr` matrices instead of `coo` in transcript and bins aggregation to support `anndata>=0.12.0` (#305)
+- Fix `ValueError` due to forward slash in morphology marker name @professor-sagittarius (#311)
 
 ## [2.1.3] - 2025-08-29
 

@@ -510,11 +510,12 @@ def _get_morphology_coords(images_dir: Path) -> list[str]:
         channels = re.findall(r'"ChannelId": "(.*?)",', description)
         channel_order = list(re.findall(r'"ChannelOrder": "(.*?)",', description)[0])
 
-        return [substrings[channels.index(x)].replace("/", ".") if x in channels else x for x in channel_order]
+        channels: list[str] = [substrings[channels.index(x)] if x in channels else x for x in channel_order]
+        return [channel.replace("/", ".") for channel in channels]
 
 
 def _get_protein_name(image_path: Path) -> str:
     with tifffile.TiffFile(image_path) as tif:
         description = tif.pages[0].description
         substrings = re.findall(r'"DisplayName": "(.*?)",', description)
-        return substrings[0]
+        return substrings[0].replace("/", ".")
