@@ -1,4 +1,4 @@
-## [2.1.4] - xxxx-xx-xx
+## [2.1.4] - 2025-09-29
 
 ### Added
 - Visium HD: also store the spatial coordinates of the bins in microns (not just in pixels)
