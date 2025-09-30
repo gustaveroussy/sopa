@@ -1,4 +1,4 @@
-## What are the inputs or Sopa?
+## What are the inputs of Sopa?
 
 You need the raw inputs of your machine, that is:
 
