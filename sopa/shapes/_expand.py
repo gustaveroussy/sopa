@@ -73,6 +73,7 @@ def remove_overlap(geo_df: gpd.GeoDataFrame, as_gdf: bool = True) -> gpd.GeoSeri
         log.warning(f"Found {nan_locs.sum()} NaN geometries after removing the overlap. Replacing with empty polygons.")
         geometry[nan_locs] = shapely.Polygon()
 
+    geometry = geometry.buffer(1e-4)  # to re-expand the polygons to their original size
     geometry = geometry.map(ensure_polygon)
 
     if not as_gdf:
