@@ -1,10 +1,12 @@
+## [2.1.5] - xxxx-xx-xx
+
 ## [2.1.4] - 2025-09-29
 
 ### Added
 - Visium HD: also store the spatial coordinates of the bins in microns (not just in pixels)
 - Added an `--overwrite` option to the `sopa convert` command line (#306)
 - Support `python==3.13`
-- Add `roi_key` in image/transcript patches for decide which shapes to use for the region of interest (#309)
+- Add `roi_key` in image/transcript patches to decide which shapes to use for the region of interest (#309)
 - Optional command line `sopa scanpy-preprocess` for basic preprocessing (see [Snakemake config example](https://github.com/gustaveroussy/sopa/blob/8aef922412bf765ffb0db94347082554bb063c09/workflow/config/example_commented.yaml#L98))
 
 ### Fixed

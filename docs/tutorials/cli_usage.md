@@ -33,7 +33,7 @@ $ sopa segmentation cellpose sdata.zarr
 
 For this tutorial, we use a generated dataset. You can expect a total runtime of a few minutes.
 
-The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-are-the-inputs-or-sopa) describing which data input you need, or run `sopa convert --help`.
+The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-are-the-inputs-of-sopa) describing which data input you need, or run `sopa convert --help`.
 
 === "Tutorial"
     ```sh
