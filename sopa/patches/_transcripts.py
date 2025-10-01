@@ -163,7 +163,7 @@ class OnDiskTranscriptPatches(Patches2D):
         if SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY in df.columns:
             df = df[~df[SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY]]
         if gene_column is not None and settings.gene_exclude_pattern is not None:
-            df = df[~df[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=False)]
+            df = df[~df[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=True)]
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
         self.write_points(patches_gdf, points_gdf, mode="a")
 

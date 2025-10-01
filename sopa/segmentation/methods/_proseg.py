@@ -70,6 +70,8 @@ def proseg(
 def _run_proseg(proseg_command: str, patch_dir: str | Path):
     import subprocess
 
+    log.info(f"Running proseg with command: `{proseg_command}`")
+
     result = subprocess.run(
         proseg_command,
         cwd=patch_dir,
@@ -99,7 +101,31 @@ def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix
 
     use_zarr = _use_zarr_output(proseg_executable)
 
+    command_line_suffix = _add_presets(command_line_suffix, sdata[points_key].columns)
+
     return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
+
+
+def _add_presets(command_line_suffix: str, columns: list[str]) -> str:
+    if "fov-column" not in command_line_suffix:
+        for column in columns:
+            if column in ["fov", "fov_name"]:
+                command_line_suffix += f" --fov-column {column}"
+                break
+
+    if "qv" in columns and "--qv-column" not in command_line_suffix:
+        command_line_suffix += " --qv-column qv"
+
+    if "qv" in columns and "--min-qv" not in command_line_suffix:
+        command_line_suffix += " --min-qv 20.0"
+
+    if "compartment-column" not in command_line_suffix:
+        if "overlaps_nucleus" in columns:
+            command_line_suffix += " --compartment-column overlaps_nucleus --compartment-nuclear 1"
+        elif "CellComp" in columns:
+            command_line_suffix += " --compartment-column CellComp --compartment-nuclear Nuclear"
+
+    return command_line_suffix
 
 
 def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[AnnData, gpd.GeoDataFrame]:

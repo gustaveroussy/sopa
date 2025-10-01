@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from shapely import Point
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, ShapesModel
+from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
@@ -121,19 +121,43 @@ def test_patches_inference_clustering():
 def test_gene_exlude_pattern():
     _default_gene_exclude_pattern = sopa.settings.gene_exclude_pattern
 
-    sdata = sopa.io.toy_dataset(add_nan_gene_name=True, length=1000)
+    num_to_exclude = 5
 
-    sopa.make_transcript_patches(sdata)
+    gene_names = [
+        pd.NA,  # should be excluded
+        np.nan,  # should be excluded
+        "bLaNk",  # should be excluded
+        "SystemControl",  # should be excluded
+        "negcontrol_gene",  # should be excluded
+        "gene1",
+        "gene2",
+        "gene3",
+        "CDNAN",  # should not be excluded although it contains 'nan'
+    ]
+
+    df = pd.DataFrame({
+        "x": np.zeros(len(gene_names)),
+        "y": np.zeros(len(gene_names)),
+        "z": np.zeros(len(gene_names)),
+        "genes": gene_names,
+    })
+    points = {
+        "transcripts": PointsModel.parse(df, feature_key="genes"),
+    }
+
+    sdata = SpatialData(points=points)
+
+    sopa.make_transcript_patches(sdata, min_points_per_patch=0)
 
     df = pd.read_csv(
         sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE
     )
 
-    assert len(df) == len(sdata["transcripts"]) - 2  # remove blank and nan genes (one each)
+    assert len(df) == len(sdata["transcripts"]) - num_to_exclude
 
     sopa.settings.gene_exclude_pattern = None
 
-    sopa.make_transcript_patches(sdata)
+    sopa.make_transcript_patches(sdata, min_points_per_patch=0)
 
     df = pd.read_csv(
         sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE

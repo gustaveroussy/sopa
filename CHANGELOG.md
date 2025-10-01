@@ -1,5 +1,9 @@
 ## [2.1.5] - xxxx-xx-xx
 
+### Added
+- Use the default `proseg` presets if not provided in the `command_line_suffix`
+- Also exclude CosMX control genes in transcript patches
+
 ### Fixed
 - Ensure that cell expansion with no overlap preserves a polygon output (#318)
 
