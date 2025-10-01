@@ -59,6 +59,11 @@ def baysor(
         assert "segmentation" in config, "The provided config should contain a 'segmentation' key"
         config["segmentation"]["scale"] = scale
 
+    if "scale" in config["segmentation"] and config["segmentation"]["scale"] >= 20:
+        log.warning(
+            f"The provided scale ({config['segmentation']['scale']}) seems large. Make sure the scale is in microns, and not in pixels. If you are using CosMX data, note that the transcripts coordinates are now in microns."
+        )
+
     baysor_command = _get_baysor_command(prior_shapes_key)
 
     baysor_patch = BaysorPatch(baysor_command, config, force=force, capture_output=patch_index is None)

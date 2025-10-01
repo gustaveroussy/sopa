@@ -6,6 +6,10 @@
 
 ### Fixed
 - Ensure that cell expansion with no overlap preserves a polygon output (#318)
+- Fixed `proseg` usage on CosMx data (#323)
+
+### Broken changes
+- The CosMX reader now stores the transcript coordinates in microns instead of pixels, so Baysor/Comseg config need to be adjusted (#323)
 
 ## [2.1.4] - 2025-09-29
 
