@@ -1,5 +1,8 @@
 ## [2.1.5] - xxxx-xx-xx
 
+### Fixed
+- Ensure that cell expansion with no overlap preserves a polygon output (#318)
+
 ## [2.1.4] - 2025-09-29
 
 ### Added
