@@ -83,18 +83,10 @@ class StainingSegmentation:
         """
         bounds = [int(x) for x in patch.bounds]
 
-        # Check minimum patch size to avoid resize errors
-        patch_width = bounds[2] - bounds[0]
-        patch_height = bounds[3] - bounds[1]
-
-        if patch_width < self.min_patch_size or patch_height < self.min_patch_size:
-            log.warning(
-                "Skipping patch with dimensions %dx%d (smaller than min_patch_size=%d)",
-                patch_width,
-                patch_height,
-                self.min_patch_size,
-            )
-            return gpd.GeoDataFrame(columns=["geometry"], geometry=[])
+        patch_width, patch_height = bounds[2] - bounds[0], bounds[3] - bounds[1]
+        if min(patch_width, patch_height) < self.min_patch_size:
+            log.info(f"Skipping patch with too small dimensions ({patch_width}, {patch_height})")
+            return gpd.GeoDataFrame(geometry=[])
 
         image = self.image.sel(
             c=self.channels,

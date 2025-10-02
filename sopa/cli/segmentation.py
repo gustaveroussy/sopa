@@ -33,10 +33,6 @@ def cellpose(
     gaussian_sigma: float = typer.Option(
         1, help="Parameter for scipy gaussian_filter (applied before running cellpose)"
     ),
-    min_patch_size: int = typer.Option(
-        10,
-        help="Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.",
-    ),
     patch_index: int = typer.Option(
         default=None,
         help="Index of the patch on which cellpose should be run. NB: the number of patches is `len(sdata['image_patches'])`",
@@ -74,7 +70,6 @@ def cellpose(
         gaussian_sigma,
         patch_index,
         cache_dir_name,
-        min_patch_size=min_patch_size,
         diameter=diameter,
         flow_threshold=flow_threshold,
         cellprob_threshold=cellprob_threshold,
@@ -105,10 +100,6 @@ def stardist(
         1,
         help="Parameter for scipy gaussian_filter (applied before running the segmentation method)",
     ),
-    min_patch_size: int = typer.Option(
-        10,
-        help="Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.",
-    ),
     patch_index: int = typer.Option(
         default=None,
         help="Index of the patch on which the segmentation method should be run. NB: the number of patches is `len(sdata['image_patches'])`",
@@ -137,7 +128,6 @@ def stardist(
         gaussian_sigma,
         patch_index,
         cache_dir_name,
-        min_patch_size=min_patch_size,
         prob_thresh=prob_thresh,
         nms_thresh=nms_thresh,
         model_type=model_type,
@@ -169,10 +159,6 @@ def generic_staining(
     gaussian_sigma: float = typer.Option(
         1,
         help="Parameter for scipy gaussian_filter (applied before running the segmentation method)",
-    ),
-    min_patch_size: int = typer.Option(
-        10,
-        help="Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.",
     ),
     patch_index: int = typer.Option(
         default=None,
@@ -211,7 +197,6 @@ def generic_staining(
         gaussian_sigma,
         patch_index,
         cache_dir_name,
-        min_patch_size=min_patch_size,
         **method_kwargs,
     )
 
@@ -227,7 +212,6 @@ def _run_staining_segmentation(
     gaussian_sigma: float,
     patch_index: int | None,
     cache_dir_name: str | None,
-    min_patch_size: int = 10,
     **method_kwargs: Any,
 ):
     from sopa.io.standardize import read_zarr_standardized
@@ -258,7 +242,6 @@ def _run_staining_segmentation(
             key_added=key_added,
             cache_dir_name=cache_dir_name,
             delete_cache=delete_cache,
-            min_patch_size=min_patch_size,
         )
         _log_whether_to_resolve(patch_index, delete_cache=delete_cache)
         return
@@ -271,7 +254,6 @@ def _run_staining_segmentation(
         clip_limit=clip_limit,
         clahe_kernel_size=clahe_kernel_size,
         gaussian_sigma=gaussian_sigma,
-        min_patch_size=min_patch_size,
     )
 
     patch_dir = _default_boundary_dir(sdata_path, cache_dir_name)
