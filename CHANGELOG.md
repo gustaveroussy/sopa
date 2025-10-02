@@ -3,6 +3,7 @@
 ### Added
 - Use the default `proseg` presets if not provided in the `command_line_suffix`
 - Also exclude CosMX control genes in transcript patches
+- Added optional `only_excluded` argument in `count_transcripts` to count the genes that are normally excluded from the counts (#329)
 
 ### Fixed
 - Ensure that cell expansion with no overlap preserves a polygon output (#318)
