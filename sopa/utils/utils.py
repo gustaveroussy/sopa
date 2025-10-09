@@ -345,14 +345,24 @@ def delete_cache(sdata: SpatialData | None = None) -> None:
             shutil.rmtree(sub_dir)
 
 
-def get_transcripts_patches_dirs(sdata: SpatialData) -> list[Path]:
+def get_transcripts_patches_dirs(sdata: SpatialData, index: int | None = None) -> list[Path] | Path:
     """Get the list of directories containing the transcript patches
 
     Args:
         sdata: A `SpatialData` object containing the transcript patches.
+
+    Returns:
+        If `index` is None, a list of `Path` to the directories containing the transcript patches. Else, the `Path` to the directory of the patch with the given index.
     """
     assert SopaKeys.TRANSCRIPTS_PATCHES in sdata.shapes, "Transcript patches not found in the SpatialData object"
-    return [Path(p) for p in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+
+    cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR
+
+    if index is not None:
+        assert index in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].index, f"Patch index {index} not found"
+        return cache_dir / str(index)
+
+    return [cache_dir / str(index) for index in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].index]
 
 
 def delete_transcripts_patches_dirs(sdata: SpatialData):

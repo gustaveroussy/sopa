@@ -1,8 +1,11 @@
+import shutil
+
 import dask
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
+import spatialdata
 from shapely import Point
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
@@ -11,6 +14,7 @@ import sopa
 from sopa._constants import SopaFiles, SopaKeys
 from sopa.patches._patches import Patches1D, Patches2D
 from sopa.patches._transcripts import _unassigned_to_zero
+from sopa.segmentation._transcripts import _check_transcript_patches
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa: E402
@@ -190,3 +194,19 @@ def test_unassigned_to_zero():
     assert (_unassigned_to_zero(df["col1"], "zero").compute() == [1, 2, 0, 2]).all()
     assert (_unassigned_to_zero(df["col2"], -1).compute() == [0, 9223372036854775806, 1, 2]).all()
     assert (_unassigned_to_zero(df["col3"], 0).compute() == [0, 1, 2, 10]).all()
+
+
+def test_move_sdata_transcript_cache():
+    sdata = sopa.io.toy_dataset()
+
+    sopa.segmentation.tissue(sdata)
+    sdata.write("test.zarr")
+
+    sopa.make_transcript_patches(sdata, patch_width=70, patch_overlap=0)
+
+    shutil.move("test.zarr", "test_moved.zarr")
+
+    sdata = spatialdata.read_zarr("test_moved.zarr")
+    _check_transcript_patches(sdata)  # the cache should still be detected
+
+    shutil.rmtree("test_moved.zarr")

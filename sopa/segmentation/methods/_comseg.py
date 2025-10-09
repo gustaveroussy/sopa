@@ -61,7 +61,7 @@ def comseg(
     config["prior_name"] = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
 
     if patch_index is not None:
-        patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
+        patch_dir = get_transcripts_patches_dirs(sdata, patch_index)
         comseg_patch(patch_dir, config, recover)
         return
 

@@ -69,7 +69,7 @@ def baysor(
     baysor_patch = BaysorPatch(baysor_command, config, force=force, capture_output=patch_index is None)
 
     if patch_index is not None:
-        patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
+        patch_dir = get_transcripts_patches_dirs(sdata, patch_index)
         baysor_patch(patch_dir)
         return
 
