@@ -9,6 +9,7 @@
 - Ensure that cell expansion with no overlap preserves a polygon output (#318)
 - Fixed `proseg` usage on CosMx data (#323)
 - Don't perform segmentation on extremely small patches @Marius1311 (#282)
+- Do not save the cache column in the transcript patches to allow moving the `.zarr` directory before segmentation
 
 ### Broken changes
 - The CosMX reader now stores the transcript coordinates in microns instead of pixels, so Baysor/Comseg config need to be adjusted (#323)

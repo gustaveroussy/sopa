@@ -16,7 +16,7 @@ from tqdm import tqdm
 from .. import shapes
 from .._constants import SopaKeys
 from ..aggregation import count_transcripts
-from ..utils import add_spatial_element
+from ..utils import add_spatial_element, get_transcripts_patches_dirs
 from . import solve_conflicts
 
 log = logging.getLogger(__name__)
@@ -185,7 +185,7 @@ def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
         "Transcript patches not found in the SpatialData object. Run `sopa.make_transcript_patches(...)` first."
     )
 
-    directories = [Path(path) for path in sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.CACHE_PATH_KEY]]
+    directories: list[Path] = get_transcripts_patches_dirs(sdata)
 
     assert all(directory.exists() for directory in directories), (
         "Some patch directories are missing. "

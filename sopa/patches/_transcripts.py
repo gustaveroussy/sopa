@@ -120,7 +120,6 @@ class OnDiskTranscriptPatches(Patches2D):
         assert len(valid_indices), "No valid patches found. Check the minimum number of points or cells per patch."
 
         geo_df = self.geo_df.iloc[valid_indices].copy()
-        geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(self.cache_dir / str(index)))
         geo_df[SopaKeys.POINTS_KEY] = self.points_key
 
         if self.prior_shapes_key:
