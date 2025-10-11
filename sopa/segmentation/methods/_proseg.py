@@ -23,6 +23,7 @@ def proseg(
     sdata: SpatialData,
     delete_cache: bool = True,
     command_line_suffix: str = "",
+    infer_presets: bool = True,
     key_added: str = SopaKeys.PROSEG_BOUNDARIES,
 ):
     """Run [`proseg`](https://github.com/dcjones/proseg) segmentation on a SpatialData object, and add the corresponding cell boundaries and `AnnData` table with counts.
@@ -40,6 +41,7 @@ def proseg(
         sdata: A `SpatialData` object.
         delete_cache: Whether to delete the cache after segmentation.
         command_line_suffix: Optional suffix to add to the proseg command line.
+        infer_presets: Whether to infer the proseg presets based on the columns of the transcripts dataframe.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
     """
     _check_transcript_patches(sdata)
@@ -52,7 +54,7 @@ def proseg(
     )
     patch_dir = Path(patches_dirs[0])
 
-    proseg_command = _get_proseg_command(sdata, points_key, command_line_suffix)
+    proseg_command = _get_proseg_command(sdata, points_key, command_line_suffix, infer_presets)
 
     _run_proseg(proseg_command, patch_dir)
     adata, geo_df = _read_proseg(sdata, patch_dir, points_key)
@@ -88,7 +90,12 @@ def _run_proseg(proseg_command: str, patch_dir: str | Path):
         )
 
 
-def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
+def _get_proseg_command(
+    sdata: SpatialData,
+    points_key: str,
+    command_line_suffix: str,
+    infer_presets: bool,
+) -> str:
     proseg_executable = _get_executable_path("proseg", ".cargo")
 
     assert SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES], (
@@ -101,7 +108,8 @@ def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix
 
     use_zarr = _use_zarr_output(proseg_executable)
 
-    command_line_suffix = _add_presets(command_line_suffix, sdata[points_key].columns)
+    if infer_presets:
+        command_line_suffix = _add_presets(command_line_suffix, sdata[points_key].columns)
 
     return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
 

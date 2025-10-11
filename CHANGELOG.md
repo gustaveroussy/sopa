@@ -1,8 +1,8 @@
 ## [2.1.5] - xxxx-xx-xx
 
 ### Added
-- Use the default `proseg` presets if not provided in the `command_line_suffix`
-- Also exclude CosMX control genes in transcript patches
+- Use the default `proseg` presets if `infer_presets = True` (default) and if not yet provided in the `command_line_suffix`
+- Exclude the CosMX control genes from the transcript patches and the aggregation
 - Added optional `only_excluded` argument in `count_transcripts` to count the genes that are normally excluded from the counts (#329)
 
 ### Fixed
