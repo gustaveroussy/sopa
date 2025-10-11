@@ -52,9 +52,9 @@ def test_aggregate_channels_aligned():
 
 def test_count_transcripts():
     df_pandas = pd.DataFrame({
-        "x": [1, 2, 3, 7, 11, 1, 2, 2, 1],
-        "y": [1, 1, 2, 8, 0, 2, 3, 3, 1],
-        "gene": ["a", "a", "b", "c", "a", "c", "b", "b", "blank"],
+        "x": [1, 2, 3, 7, 11, 1, 3, 2, 2, 1],
+        "y": [1, 1, 2, 8, 0, 2, 4, 3, 3, 1],
+        "gene": ["a", "a", "b", "c", "a", "c", "gene_control", "b", "b", "blank"],
     })
     df_pandas["gene"] = df_pandas["gene"].astype(object)
     df_pandas["gene"].loc[0] = np.nan
@@ -71,6 +71,13 @@ def test_count_transcripts():
     adata = _count_transcripts_aligned(gdf, points, "gene")
     expected = np.array([[0, 3, 1], [1, 0, 1], [1, 3, 1]])
 
+    assert (adata.var_names == ["a", "b", "c"]).all()
+    assert (adata.X.toarray() == expected).all()
+
+    adata = _count_transcripts_aligned(gdf, points, "gene", only_excluded=True)
+    expected = np.array([[0, 1], [1, 0], [1, 0]])
+
+    assert (adata.var_names == ["blank", "gene_control"]).all()
     assert (adata.X.toarray() == expected).all()
 
 

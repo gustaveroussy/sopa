@@ -120,7 +120,6 @@ class OnDiskTranscriptPatches(Patches2D):
         assert len(valid_indices), "No valid patches found. Check the minimum number of points or cells per patch."
 
         geo_df = self.geo_df.iloc[valid_indices].copy()
-        geo_df[SopaKeys.CACHE_PATH_KEY] = geo_df.index.map(lambda index: str(self.cache_dir / str(index)))
         geo_df[SopaKeys.POINTS_KEY] = self.points_key
 
         if self.prior_shapes_key:
@@ -163,7 +162,7 @@ class OnDiskTranscriptPatches(Patches2D):
         if SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY in df.columns:
             df = df[~df[SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY]]
         if gene_column is not None and settings.gene_exclude_pattern is not None:
-            df = df[~df[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=False)]
+            df = df[~df[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=True)]
         points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
         self.write_points(patches_gdf, points_gdf, mode="a")
 

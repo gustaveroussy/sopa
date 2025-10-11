@@ -44,10 +44,10 @@ def ensure_polygon(
         if geoms:
             return max(geoms, key=lambda polygon: polygon.area)
 
-        log.warning(f"Removing cell of type {type(cell)} as it contains no Polygon geometry")
+        log.warning(f"Found a cell of type {type(cell)} which contains no Polygon geometry")
         return Polygon()
 
-    log.warning(f"Removing cell of unknown type {type(cell)}")
+    log.warning(f"Found a cell of unknown type {type(cell)}")
     return Polygon()
 
 

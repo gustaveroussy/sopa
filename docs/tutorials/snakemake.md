@@ -25,7 +25,7 @@ Keep in mind the path of your config (relative to the `workflow` directory) beca
 
 ### Locate your raw data
 
-First, you need to locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-or-sopa).
+First, you need to locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-of-sopa).
 
 Again, remind this path, as we will use it later.
 

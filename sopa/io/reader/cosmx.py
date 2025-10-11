@@ -14,11 +14,14 @@ from scipy.sparse import csr_matrix
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, Labels2DModel, PointsModel, ShapesModel, TableModel
+from spatialdata.transformations import Scale
 
 from ..._constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)
+
+COSMX_PIXEL_SIZE = 0.120280945
 
 
 def cosmx(
@@ -140,18 +143,22 @@ class _CosMXReader:
         df["global_cell_id"] = self._get_global_cell_id(df)
 
         if self.fov is None:
-            df["x"] = df["x_global_px"] - self.fov_locs["xmin"].min()
-            df["y"] = df["y_global_px"] - self.fov_locs["ymin"].min()
-            coordinates = None
+            df["x"] = (df["x_global_px"] - self.fov_locs["xmin"].min()) * COSMX_PIXEL_SIZE
+            df["y"] = (df["y_global_px"] - self.fov_locs["ymin"].min()) * COSMX_PIXEL_SIZE
             points_name = "points"
         else:
             df = df[df["fov"] == self.fov]
-            coordinates = {"x": "x_local_px", "y": "y_local_px"}
+            df["x"] = df["x_local_px"] * COSMX_PIXEL_SIZE
+            df["y"] = df["y_local_px"] * COSMX_PIXEL_SIZE
             points_name = f"F{self.fov:0>5}_points"
 
         from spatialdata_io._constants._constants import CosmxKeys
 
-        transcripts = PointsModel.parse(df, coordinates=coordinates, feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT)
+        transcripts = PointsModel.parse(
+            df,
+            feature_key=CosmxKeys.TARGET_OF_TRANSCRIPT,
+            transformations={"global": Scale([1 / COSMX_PIXEL_SIZE, 1 / COSMX_PIXEL_SIZE], axes=("x", "y"))},
+        )
 
         return {points_name: transcripts}
 
@@ -406,7 +413,7 @@ class _CosMXReader:
             ["fov", "x_mm", "y_mm"],
             ["fov", "x_global_mm", "y_global_mm"],
         ]
-        mm_to_pixels = 1e3 / 0.120280945  # conversion factor from mm to pixels for CosMx
+        mm_to_pixels = 1e3 / COSMX_PIXEL_SIZE  # conversion factor from mm to pixels for CosMx
 
         for (fov_key, x_key, y_key), scale_factor in zip(valid_keys, [1, mm_to_pixels, mm_to_pixels]):
             if not np.isin([fov_key, x_key, y_key], fov_locs.columns).all():  # try different column names

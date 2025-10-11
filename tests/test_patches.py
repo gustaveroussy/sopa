@@ -1,16 +1,20 @@
+import shutil
+
 import dask
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import pytest
+import spatialdata
 from shapely import Point
 from spatialdata import SpatialData
-from spatialdata.models import Image2DModel, ShapesModel
+from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
 from sopa.patches._patches import Patches1D, Patches2D
 from sopa.patches._transcripts import _unassigned_to_zero
+from sopa.segmentation._transcripts import _check_transcript_patches
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa: E402
@@ -121,19 +125,43 @@ def test_patches_inference_clustering():
 def test_gene_exlude_pattern():
     _default_gene_exclude_pattern = sopa.settings.gene_exclude_pattern
 
-    sdata = sopa.io.toy_dataset(add_nan_gene_name=True, length=1000)
+    num_to_exclude = 5
 
-    sopa.make_transcript_patches(sdata)
+    gene_names = [
+        pd.NA,  # should be excluded
+        np.nan,  # should be excluded
+        "bLaNk",  # should be excluded
+        "SystemControl",  # should be excluded
+        "negcontrol_gene",  # should be excluded
+        "gene1",
+        "gene2",
+        "gene3",
+        "CDNAN",  # should not be excluded although it contains 'nan'
+    ]
+
+    df = pd.DataFrame({
+        "x": np.zeros(len(gene_names)),
+        "y": np.zeros(len(gene_names)),
+        "z": np.zeros(len(gene_names)),
+        "genes": gene_names,
+    })
+    points = {
+        "transcripts": PointsModel.parse(df, feature_key="genes"),
+    }
+
+    sdata = SpatialData(points=points)
+
+    sopa.make_transcript_patches(sdata, min_points_per_patch=0)
 
     df = pd.read_csv(
         sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE
     )
 
-    assert len(df) == len(sdata["transcripts"]) - 2  # remove blank and nan genes (one each)
+    assert len(df) == len(sdata["transcripts"]) - num_to_exclude
 
     sopa.settings.gene_exclude_pattern = None
 
-    sopa.make_transcript_patches(sdata)
+    sopa.make_transcript_patches(sdata, min_points_per_patch=0)
 
     df = pd.read_csv(
         sopa.utils.get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR / "0" / SopaFiles.TRANSCRIPTS_FILE
@@ -166,3 +194,19 @@ def test_unassigned_to_zero():
     assert (_unassigned_to_zero(df["col1"], "zero").compute() == [1, 2, 0, 2]).all()
     assert (_unassigned_to_zero(df["col2"], -1).compute() == [0, 9223372036854775806, 1, 2]).all()
     assert (_unassigned_to_zero(df["col3"], 0).compute() == [0, 1, 2, 10]).all()
+
+
+def test_move_sdata_transcript_cache():
+    sdata = sopa.io.toy_dataset()
+
+    sopa.segmentation.tissue(sdata)
+    sdata.write("test.zarr")
+
+    sopa.make_transcript_patches(sdata, patch_width=70, patch_overlap=0)
+
+    shutil.move("test.zarr", "test_moved.zarr")
+
+    sdata = spatialdata.read_zarr("test_moved.zarr")
+    _check_transcript_patches(sdata)  # the cache should still be detected
+
+    shutil.rmtree("test_moved.zarr")

@@ -11,7 +11,6 @@ class SopaKeys:
     PATCHES = "image_patches"
     TRANSCRIPTS_PATCHES = "transcripts_patches"
     EMBEDDINGS_PATCHES = "embeddings_patches"
-    CACHE_PATH_KEY = "cache_path"
     BOUNDS = "bboxes"
     PATCHES_ILOCS = "ilocs"
     ROI = "region_of_interest"

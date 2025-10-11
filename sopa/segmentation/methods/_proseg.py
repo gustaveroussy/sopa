@@ -23,6 +23,7 @@ def proseg(
     sdata: SpatialData,
     delete_cache: bool = True,
     command_line_suffix: str = "",
+    infer_presets: bool = True,
     key_added: str = SopaKeys.PROSEG_BOUNDARIES,
 ):
     """Run [`proseg`](https://github.com/dcjones/proseg) segmentation on a SpatialData object, and add the corresponding cell boundaries and `AnnData` table with counts.
@@ -40,6 +41,7 @@ def proseg(
         sdata: A `SpatialData` object.
         delete_cache: Whether to delete the cache after segmentation.
         command_line_suffix: Optional suffix to add to the proseg command line.
+        infer_presets: Whether to infer the proseg presets based on the columns of the transcripts dataframe.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
     """
     _check_transcript_patches(sdata)
@@ -52,7 +54,7 @@ def proseg(
     )
     patch_dir = Path(patches_dirs[0])
 
-    proseg_command = _get_proseg_command(sdata, points_key, command_line_suffix)
+    proseg_command = _get_proseg_command(sdata, points_key, command_line_suffix, infer_presets)
 
     _run_proseg(proseg_command, patch_dir)
     adata, geo_df = _read_proseg(sdata, patch_dir, points_key)
@@ -70,6 +72,8 @@ def proseg(
 def _run_proseg(proseg_command: str, patch_dir: str | Path):
     import subprocess
 
+    log.info(f"Running proseg with command: `{proseg_command}`")
+
     result = subprocess.run(
         proseg_command,
         cwd=patch_dir,
@@ -86,7 +90,12 @@ def _run_proseg(proseg_command: str, patch_dir: str | Path):
         )
 
 
-def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix: str) -> str:
+def _get_proseg_command(
+    sdata: SpatialData,
+    points_key: str,
+    command_line_suffix: str,
+    infer_presets: bool,
+) -> str:
     proseg_executable = _get_executable_path("proseg", ".cargo")
 
     assert SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES], (
@@ -99,7 +108,32 @@ def _get_proseg_command(sdata: SpatialData, points_key: str, command_line_suffix
 
     use_zarr = _use_zarr_output(proseg_executable)
 
+    if infer_presets:
+        command_line_suffix = _add_presets(command_line_suffix, sdata[points_key].columns)
+
     return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
+
+
+def _add_presets(command_line_suffix: str, columns: list[str]) -> str:
+    if "fov-column" not in command_line_suffix:
+        for column in columns:
+            if column in ["fov", "fov_name"]:
+                command_line_suffix += f" --fov-column {column}"
+                break
+
+    if "qv" in columns and "--qv-column" not in command_line_suffix:
+        command_line_suffix += " --qv-column qv"
+
+    if "qv" in columns and "--min-qv" not in command_line_suffix:
+        command_line_suffix += " --min-qv 20.0"
+
+    if "compartment-column" not in command_line_suffix:
+        if "overlaps_nucleus" in columns:
+            command_line_suffix += " --compartment-column overlaps_nucleus --compartment-nuclear 1"
+        elif "CellComp" in columns:
+            command_line_suffix += " --compartment-column CellComp --compartment-nuclear Nuclear"
+
+    return command_line_suffix
 
 
 def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[AnnData, gpd.GeoDataFrame]:

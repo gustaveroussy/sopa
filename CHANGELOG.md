@@ -1,10 +1,27 @@
-## [2.1.4] - xxxx-xx-xx
+## [2.1.5] - xxxx-xx-xx
+
+### Added
+- Use the default `proseg` presets if `infer_presets = True` (default) and if not yet provided in the `command_line_suffix`
+- Exclude the CosMX control genes from the transcript patches and the aggregation
+- Added optional `only_excluded` argument in `count_transcripts` to count the genes that are normally excluded from the counts (#329)
+
+### Fixed
+- Ensure that cell expansion with no overlap preserves a polygon output (#318)
+- Fixed `proseg` usage on CosMx data (#323)
+- Don't perform segmentation on extremely small patches @Marius1311 (#282)
+- Fixed incorrect prior cell ID assignment to float dtype instead of int in the CosMx reader when `fov is not None` (#335)
+- Do not save the cache column in the transcript patches to allow moving the `.zarr` directory before segmentation
+
+### Broken changes
+- The CosMX reader now stores the transcript coordinates in microns instead of pixels, so Baysor/Comseg config need to be adjusted (#323)
+
+## [2.1.4] - 2025-09-29
 
 ### Added
 - Visium HD: also store the spatial coordinates of the bins in microns (not just in pixels)
 - Added an `--overwrite` option to the `sopa convert` command line (#306)
 - Support `python==3.13`
-- Add `roi_key` in image/transcript patches for decide which shapes to use for the region of interest (#309)
+- Add `roi_key` in image/transcript patches to decide which shapes to use for the region of interest (#309)
 - Optional command line `sopa scanpy-preprocess` for basic preprocessing (see [Snakemake config example](https://github.com/gustaveroussy/sopa/blob/8aef922412bf765ffb0db94347082554bb063c09/workflow/config/example_commented.yaml#L98))
 
 ### Fixed
