@@ -1,4 +1,6 @@
-## [2.1.5] - xxxx-xx-xx
+## [2.1.6] - xxxx-xx-xx
+
+## [2.1.5] - 2025-10-11
 
 ### Added
 - Use the default `proseg` presets if `infer_presets = True` (default) and if not yet provided in the `command_line_suffix`
