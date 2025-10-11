@@ -147,7 +147,7 @@ class _CosMXReader:
             df["y"] = (df["y_global_px"] - self.fov_locs["ymin"].min()) * COSMX_PIXEL_SIZE
             points_name = "points"
         else:
-            df = df[df["fov"] == self.fov].copy()
+            df = df[df["fov"] == self.fov]
             df["x"] = df["x_local_px"] * COSMX_PIXEL_SIZE
             df["y"] = df["y_local_px"] * COSMX_PIXEL_SIZE
             points_name = f"F{self.fov:0>5}_points"

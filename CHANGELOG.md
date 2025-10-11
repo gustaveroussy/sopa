@@ -9,6 +9,7 @@
 - Ensure that cell expansion with no overlap preserves a polygon output (#318)
 - Fixed `proseg` usage on CosMx data (#323)
 - Don't perform segmentation on extremely small patches @Marius1311 (#282)
+- Fixed incorrect prior cell ID assignment to float dtype instead of int in the CosMx reader when `fov is not None` (#335)
 - Do not save the cache column in the transcript patches to allow moving the `.zarr` directory before segmentation
 
 ### Broken changes
