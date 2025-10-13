@@ -1,5 +1,8 @@
 ## [2.1.6] - xxxx-xx-xx
 
+### Added
+- Using `igraph` by default (for Leiden clustering)
+
 ## [2.1.5] - 2025-10-11
 
 ### Added

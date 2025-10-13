@@ -4410,11 +4410,12 @@ wheels = [
 
 [[package]]
 name = "sopa"
-version = "2.1.4"
+version = "2.1.5"
 source = { editable = "." }
 dependencies = [
     { name = "anndata" },
     { name = "dask", extra = ["distributed"] },
+    { name = "igraph" },
     { name = "scanpy" },
     { name = "spatialdata" },
     { name = "spatialdata-io" },
@@ -4442,7 +4443,6 @@ stardist = [
     { name = "tensorflow", version = "2.19.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
 ]
 wsi = [
-    { name = "igraph" },
     { name = "tiffslide" },
     { name = "torch" },
     { name = "torchvision" },
@@ -4467,7 +4467,7 @@ requires-dist = [
     { name = "anndata", specifier = ">=0.11.0" },
     { name = "cellpose", marker = "extra == 'cellpose'", specifier = ">=3.0.5" },
     { name = "dask", extras = ["distributed"], specifier = ">=2024.4.1" },
-    { name = "igraph", marker = "extra == 'wsi'", specifier = ">=0.11.0" },
+    { name = "igraph", specifier = ">=0.11.0" },
     { name = "loompy", marker = "extra == 'baysor'", specifier = ">=3.0.7" },
     { name = "multiscale-spatial-image", marker = "extra == 'stardist'", specifier = "<2.0.3" },
     { name = "numpy", marker = "extra == 'stardist'", specifier = "<2.0.0" },
