@@ -134,6 +134,23 @@ rule annotate:
         sopa annotate {params.method_name} {params.sdata_path} {params.annotation}
         """
 
+rule scanpy_preprocess:
+    input:
+        args.segmentation_boundaries(),
+        paths.smk_aggregation,
+        paths.annotations if args.annotate else [],
+    output:
+        paths.smk_scanpy_preprocess,
+    params:
+        sdata_path = paths.sdata_path,
+        scanpy_preprocess = args["scanpy_preprocess"].as_cli(),
+    conda:
+        "sopa"
+    shell:
+        """
+        sopa scanpy-preprocess {params.sdata_path} {params.scanpy_preprocess}
+        """
+
 rule explorer_raw:
     input:
         paths.sdata_zgroup,
@@ -155,6 +172,7 @@ rule explorer:
         args.segmentation_boundaries(),
         paths.smk_aggregation,
         paths.annotations if args.annotate else [],
+        paths.smk_scanpy_preprocess if "scanpy_preprocess" in config else [],
     output:
         paths.explorer_experiment,
     conda:
@@ -166,24 +184,6 @@ rule explorer:
     shell:
         """
         sopa explorer write {params.sdata_path} --output-path {params.explorer_directory} {params.explorer} --mode "-it"
-        """
-
-rule scanpy_preprocess:
-    input:
-        args.segmentation_boundaries(),
-        paths.smk_aggregation,
-        paths.annotations if args.annotate else [],
-        paths.explorer_experiment,
-    output:
-        paths.smk_scanpy_preprocess,
-    params:
-        sdata_path = paths.sdata_path,
-        scanpy_preprocess = args["scanpy_preprocess"].as_cli(),
-    conda:
-        "sopa"
-    shell:
-        """
-        sopa scanpy-preprocess {params.sdata_path} {params.scanpy_preprocess}
         """
 
 rule report:

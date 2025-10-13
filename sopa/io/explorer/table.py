@@ -24,14 +24,14 @@ def write_gene_counts(
     Args:
         path: Path to the Xenium Explorer directory where the cell-by-gene file will be written
         adata: An `AnnData` object. Note that `adata.X` has to be a sparse matrix (and contain the raw counts), else use the `layer` argument.
-        layer: If not `None`, `adata.layers[layer]` should be sparse (and contain the raw counts).
+        layer: If not `None`, `adata.layers[layer]` should be sparse (and contain the raw counts). By default, look into `adata.layers["counts"]` or use `adata.X`.
         preserve_ids: If `True`, then the cell IDs will be kept in the explorer as they are in `adata.obs_names`. If `False`, then the cell IDs will be replaced by integers starting from 0 in the output file.
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
     """
     path = explorer_file_path(path, FileNames.TABLE, is_dir)
 
     log.info(f"Writing table with {adata.n_vars} columns")
-    counts = adata.X if layer is None else adata.layers[layer]
+    counts = adata.layers.get("counts", adata.X) if layer is None else adata.layers[layer]
     counts = csr_matrix(counts.T)
 
     feature_keys = [*list(adata.var_names), "Total transcripts"]
