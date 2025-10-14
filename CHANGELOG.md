@@ -3,6 +3,9 @@
 ### Added
 - Using `igraph` by default (for Leiden clustering)
 
+### Changed
+- (Minor) In Snakemake, run `scanpy_preprocess` before the explorer rule
+
 ## [2.1.5] - 2025-10-11
 
 ### Added
@@ -18,7 +21,7 @@
 - Do not save the cache column in the transcript patches to allow moving the `.zarr` directory before segmentation
 
 ### Broken changes
-- The CosMX reader now stores the transcript coordinates in microns instead of pixels, so Baysor/Comseg config need to be adjusted (#323)
+- The CosMX reader now stores the transcript coordinates in microns instead of pixels, so Baysor/Comseg config needs to be adjusted (#323)
 
 ## [2.1.4] - 2025-09-29
 
