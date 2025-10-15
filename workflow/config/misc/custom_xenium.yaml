@@ -1,0 +1,21 @@
+read:
+  technology: xenium
+
+patchify:
+  patch_width_microns: -1 # only one patch
+  patch_overlap_microns: 0
+
+segmentation:
+  proseg:
+    prior_shapes_key: auto # this allows to use the prior segmentation performed by 10X Genomics
+    # command_line_suffix: "--nthreads XXX" # add here any command line suffix to the proseg command
+
+aggregate:
+  aggregate_channels: true
+  min_transcripts: 10
+
+scanpy_preprocess:
+  resolution: 1
+
+explorer:
+  ram_threshold_gb: 4

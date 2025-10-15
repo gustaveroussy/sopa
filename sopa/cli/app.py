@@ -258,7 +258,7 @@ def scanpy_preprocess(
 
     sc.pp.neighbors(adata)
     sc.tl.umap(adata)
-    sc.tl.leiden(adata, resolution=resolution)
+    sc.tl.leiden(adata, resolution=resolution, flavor="igraph")
 
     sopa.utils.add_spatial_element(sdata, table_key, adata)
 

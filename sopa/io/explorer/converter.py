@@ -49,6 +49,7 @@ def write(
     lazy: bool = True,
     ram_threshold_gb: int | None = 4,
     mode: str | None = None,
+    raw_data_path: str | None = None,
     save_h5ad: bool = False,
     run_name: str | None = None,
 ) -> None:
@@ -100,6 +101,9 @@ def write(
     image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
     preserve_ids: bool | None = None
 
+    # try using symlinks to avoid re-generating large files
+    raw_data_path = raw_data_path or sdata.attrs.get(SopaAttrs.XENIUM_OUTPUT_PATH)
+
     ### Saving table / cell categories / gene counts
     if table_key in sdata.tables:
         adata: AnnData = sdata.tables[table_key]
@@ -145,7 +149,7 @@ def write(
     if len(sdata.points):
         df = get_spatial_element(sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS))
 
-    if _should_save(mode, "t") and not _use_symlink(path, sdata, "transcripts*") and df is not None:
+    if _should_save(mode, "t") and not _use_symlink(path, raw_data_path, "transcripts*") and df is not None:
         gene_column = gene_column or get_feature_key(df)
         if gene_column is not None:
             df = to_intrinsic(sdata, df, image_key)
@@ -154,7 +158,7 @@ def write(
             log.warning("The argument 'gene_column' has to be provided to save the transcripts")
 
     ### Saving image
-    if _should_save(mode, "i") and not _use_symlink(path, sdata, "morphology*"):
+    if _should_save(mode, "i") and not _use_symlink(path, raw_data_path, "morphology*"):
         write_image(
             path,
             sdata[image_key],
@@ -183,12 +187,12 @@ def _get_region_name(sdata: SpatialData, shapes_key: str) -> str:
         return shapes_key
 
 
-def _use_symlink(dst: Path, sdata: SpatialData, pattern: str) -> bool:
+def _use_symlink(dst: Path, raw_data_path: str | None, pattern: str) -> bool:
     """Try using the Xenium output files when existing to avoid re-generating large files."""
-    if SopaAttrs.XENIUM_OUTPUT_PATH not in sdata.attrs:
+    if raw_data_path is None:
         return False
 
-    sources = list(Path(sdata.attrs[SopaAttrs.XENIUM_OUTPUT_PATH]).glob(pattern))
+    sources = list(Path(raw_data_path).glob(pattern))
 
     for src in sources:
         target = dst / src.name
