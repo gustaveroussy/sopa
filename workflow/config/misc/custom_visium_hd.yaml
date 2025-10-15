@@ -16,5 +16,8 @@ aggregate:
   aggregate_channels: true
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
+scanpy_preprocess:
+  resolution: 1
+
 explorer:
   ram_threshold_gb: 4
