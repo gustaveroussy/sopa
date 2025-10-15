@@ -37,6 +37,10 @@ def write(
         None,
         help="String that indicated which files should be created. `'-ib'` means everything except images and boundaries, while `'+tocm'` means only transcripts/observations/counts/metadata (each letter corresponds to one explorer file). By default, keeps everything",
     ),
+    raw_data_path: str = typer.Option(
+        None,
+        help="Optional path to the original Xenium output directory (to avoid re-generating large files such as transcripts or images). If `None`, tries to find the path from `sdata.attrs`.",
+    ),
     save_h5ad: bool = typer.Option(
         True,
         help="Whether to save the adata as h5ad in the explorer directory (for convenience only, since h5ad is faster to open than the original .zarr table)",
@@ -66,6 +70,7 @@ def write(
         lazy=lazy,
         ram_threshold_gb=ram_threshold_gb,
         mode=mode,
+        raw_data_path=raw_data_path,
         save_h5ad=save_h5ad,
         run_name=run_name,
     )

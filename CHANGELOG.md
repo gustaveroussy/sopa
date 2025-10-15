@@ -1,10 +1,13 @@
-## [2.1.6] - xxxx-xx-xx
+## [2.1.7] - xxxx-xx-xx
+
+## [2.1.6] - 2025-10-15 (minor release for nf-core)
 
 ### Added
 - Using `igraph` by default (for Leiden clustering)
+- Can provide `raw_data_path` in `sopa explorer write` CLI in case raw data path moved (useful for `nf-core/sopa` on AWS Batch with Xenium data)
 
 ### Changed
-- (Minor) In Snakemake, run `scanpy_preprocess` before the explorer rule
+- In Snakemake, run `scanpy_preprocess` before the explorer rule
 
 ## [2.1.5] - 2025-10-11
 
