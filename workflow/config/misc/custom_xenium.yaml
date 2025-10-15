@@ -16,6 +16,7 @@ aggregate:
 
 scanpy_preprocess:
   resolution: 1
+  check_counts: false
 
 explorer:
   ram_threshold_gb: 4
