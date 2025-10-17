@@ -34,12 +34,12 @@ class Inference:
             if settings.native_read_region:
                 self.slide = get_reader(_backend)(_path)
             else:
-                self.slide = get_reader("xarray")(image, _backend)
+                self.slide = get_reader("xarray")(image)
         except Exception as e:
             log.warning(
                 f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
             )
-            self.slide = get_reader("xarray")(image, _backend)
+            self.slide = get_reader("xarray")(image)
 
         self.patch_width = int(patch_width / self.resize_factor)
         self.resized_patch_width = patch_width
