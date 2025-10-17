@@ -1,11 +1,15 @@
 import logging
 from typing import Callable
 
+import dask
 import numpy as np
 import torch
 from xarray import DataArray, DataTree
 
+from ..io.reader._wsi_reader import get_reader
 from . import models
+
+from .._settings import settings
 
 log = logging.getLogger(__name__)
 
@@ -19,8 +23,23 @@ class Inference:
         level: int | None = 0,
         magnification: int | None = None,
         device: str | None = None,
+        data_parallel: bool | list[int] = False,
     ):
         self.image, self.level, self.resize_factor = _get_extraction_parameters(image, level, magnification)
+
+        _backend = image.attrs.get("backend")
+        _path = image.attrs.get("path")
+
+        try:
+            if settings.native_read_region:
+                self.slide = get_reader(_backend)(_path)
+            else:
+                self.slide = get_reader("xarray")(image)
+        except Exception as e:
+            log.warning(
+                f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
+            )
+            self.slide = get_reader("xarray")(image)
 
         self.patch_width = int(patch_width / self.resize_factor)
         self.resized_patch_width = patch_width
@@ -30,6 +49,10 @@ class Inference:
         self.device = device
         if self.device is not None:
             self.model.to(device)
+
+        if data_parallel:
+            ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
+            self.model = torch.nn.DataParallel(self.model, device_ids=ids)
 
     def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:
         if isinstance(model, str):
@@ -52,15 +75,17 @@ class Inference:
         Extract a numpy patch from the image given a bounding box
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
-        image_patch = self.image[:, slice(box[1], box[3]), slice(box[0], box[2])]
+        image_patch = np.array(self.slide.read_region((box[0], box[1]), self.level, (box[2] - box[0], box[3] - box[1])))
 
-        pad_x, pad_y = self.patch_width - image_patch.shape[1], self.patch_width - image_patch.shape[2]
-        return np.pad(image_patch, ((0, 0), (0, pad_x), (0, pad_y)))
+        pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
+        padded_patch = np.pad(image_patch, ((0, pad_x), (0, pad_y), (0, 0)))
+        return np.transpose(padded_patch, (2, 0, 1))
 
     def _torch_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
 
-        batch = np.array([self._numpy_patch(box) for box in bboxes])
+        delayed_patches = [dask.delayed(self._numpy_patch)(box) for box in bboxes]
+        batch = np.array(dask.compute(*delayed_patches))
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
         return batch if self.resize_factor == 1 else self._torch_resize(batch)
