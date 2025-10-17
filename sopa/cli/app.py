@@ -53,22 +53,40 @@ def convert(
         None,
         help="Path to the snakemake config. This can be useful in order not to provide the `--technology` and the `--kwargs` arguments",
     ),
+    overwrite: bool = typer.Option(
+        False, help="Whether to overwrite the existing SpatialData object if already existing"
+    ),
     kwargs: str = typer.Option(
         default={},
         callback=ast.literal_eval,
         help="Dictionary provided to the reader function as kwargs",
     ),
 ):
-    """Read any technology data, and write a standardized SpatialData object.
+    """Read any technology data as a SpatialData object and save it as a `.zarr` directory.
 
     Either `--technology` or `--config-path` has to be provided."""
+    import shutil
     from pathlib import Path
 
+    from spatialdata import SpatialData
+
     from sopa import io
+    from sopa._constants import SopaFiles, SopaKeys
 
-    sdata_path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
+    sdata_path: Path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
 
-    io.standardize._check_can_write_zarr(sdata_path)
+    if sdata_path.exists():
+        if overwrite:
+            cache_dir = sdata_path.resolve() / SopaFiles.SOPA_CACHE_DIR
+            if cache_dir.exists() and cache_dir.is_dir():
+                shutil.rmtree(cache_dir)
+            if not any(sdata_path.iterdir()):
+                sdata_path.rmdir()  # remove empty directory
+        else:
+            assert not any(sdata_path.iterdir()), (
+                f"Zarr directory {sdata_path} already exists. Sopa will not continue to avoid overwritting files. Use the `--overwrite` flag to overwrite it."
+            )
+            sdata_path.rmdir()  # remove empty directory
 
     assert technology is not None or config_path is not None, "Provide the argument `--technology` or `--config-path`"
 
@@ -86,8 +104,17 @@ def convert(
         f"Technology {technology} unknown. Currently available: xenium, merscope, visium_hd, cosmx, phenocycler, hyperion, macsima"
     )
 
-    sdata = getattr(io, technology)(data_path, **kwargs)
-    io.write_standardized(sdata, sdata_path, delete_table=True)
+    sdata: SpatialData = getattr(io, technology)(data_path, **kwargs)
+
+    io.standardize.sanity_check(sdata)
+
+    assert SopaKeys.TABLE not in sdata.tables, (
+        f"sdata.tables['{SopaKeys.TABLE}'] exists. Delete it you want to use sopa, to avoid conflicts with future table generation"
+    )
+
+    log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
+
+    sdata.write(sdata_path, overwrite=overwrite)
 
 
 @app.command()
@@ -197,6 +224,45 @@ def aggregate(
         expand_radius_ratio=expand_radius_ratio,
         min_intensity_ratio=min_intensity_ratio,
     )
+
+
+@app.command()
+def scanpy_preprocess(
+    sdata_path: str = typer.Argument(help=SDATA_HELPER),
+    table_key: str = typer.Option("table", help="Key of the table in the `SpatialData` object to be preprocessed"),
+    resolution: float = typer.Option(1.0, help="Resolution parameter for the leiden clustering"),
+    check_counts: bool = typer.Option(True, help="Whether to check that adata.X contains counts"),
+):
+    """Optional scanpy table preprocessing (log1p, HVG, UMAP, leiden clustering) after aggregation/annotation."""
+    import scanpy as sc
+    from anndata import AnnData
+
+    import sopa
+    from sopa.io.standardize import read_zarr_standardized
+
+    sdata = read_zarr_standardized(sdata_path)
+
+    adata: AnnData = sdata.tables[table_key]
+
+    if check_counts:
+        assert adata.X.max() > 10, (
+            f"adata.X looks already log-normalized (max={adata.X.max()}). If you are sure it contains counts, use `--no-check-counts`"
+        )
+
+    adata.layers["counts"] = adata.X.copy()
+
+    sc.pp.normalize_total(adata)
+    sc.pp.log1p(adata)
+
+    sc.pp.highly_variable_genes(adata)
+
+    sc.pp.neighbors(adata)
+    sc.tl.umap(adata)
+    sc.tl.leiden(adata, resolution=resolution, flavor="igraph")
+
+    sopa.utils.add_spatial_element(sdata, table_key, adata)
+
+    (sopa.utils.get_cache_dir(sdata) / "scanpy_preprocess").touch()
 
 
 @app.command()

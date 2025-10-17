@@ -35,6 +35,7 @@ class WorkflowPaths:
         self.smk_transcripts_temp_dir = self.sopa_cache / "transcript_patches"
         self.smk_patches_file_transcripts = self.sopa_cache / "patches_file_transcripts"
         self.smk_patches_file_image = self.sopa_cache / "patches_file_image"
+        self.smk_scanpy_preprocess = self.sopa_cache / "scanpy_preprocess"
 
         ### Xenium Explorer outputs
         self.explorer_directory = self.sdata_path.with_suffix(".explorer")

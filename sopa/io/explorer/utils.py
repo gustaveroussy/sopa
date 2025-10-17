@@ -23,19 +23,54 @@ def explorer_file_path(path: str | Path, filename: str, is_dir: bool):
     return path
 
 
-def int_cell_id(explorer_cell_id: str) -> int:
+def is_valid_explorer_id(cell_id: str) -> bool:
+    """Check if a cell ID is a valid Xenium Explorer ID"""
+    if not hasattr(cell_id, "__len__"):
+        return False
+    if len(cell_id) == 10:
+        return cell_id[:-2].isalpha() and cell_id[-2] == "-"
+    if len(cell_id) == 8:
+        return cell_id.isalpha()
+    return False
+
+
+def int_cell_id(explorer_cell_id: str | pd.Index) -> int | pd.Index:
     """Transforms an alphabetical cell id from the Xenium Explorer to an integer ID
 
-    E.g., int_cell_id('aaaachba-1') = 10000"""
+    E.g., int_cell_id('aaaachba-1') = 10000
+
+    Args:
+        explorer_cell_id: An alphabetical cell ID or a pandas Index of many explorer cell IDs
+
+    Returns:
+        An integer or a pandas Index of integers representing cell IDs as indices"""
+    if isinstance(explorer_cell_id, pd.Index):
+        return explorer_cell_id.map(int_cell_id)
+
+    assert isinstance(explorer_cell_id, str), "The cell ID must be a string or a pandas Index of strings"
+    assert is_valid_explorer_id(explorer_cell_id), "The cell ID must be a valid Xenium Explorer ID"
+
     code = explorer_cell_id[:-2] if explorer_cell_id[-2] == "-" else explorer_cell_id
     coefs = [ord(c) - 97 for c in code][::-1]
     return sum(value * 16**i for i, value in enumerate(coefs))
 
 
-def str_cell_id(cell_id: int) -> str:
+def str_cell_id(cell_id: int | pd.Index) -> str | pd.Index:
     """Transforms an integer cell ID into an Xenium Explorer alphabetical cell id
 
-    E.g., str_cell_id(10000) = 'aaaachba-1'"""
+    E.g., str_cell_id(10000) = 'aaaachba-1'
+
+    Args:
+        cell_id: An integer or a pandas Index of integers representing cell indices
+
+    Returns:
+        A string or a pandas Index of strings representing cell IDs in the Xenium Explorer format
+    """
+    if isinstance(cell_id, pd.Index):
+        return cell_id.map(str_cell_id)
+
+    assert isinstance(cell_id, int), "The cell ID must be an integer or a pandas Index of integers"
+
     coefs = []
     for _ in range(8):
         cell_id, coef = divmod(cell_id, 16)

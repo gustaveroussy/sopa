@@ -129,8 +129,8 @@ class Aggregator:
 
         return True
 
-    def filter_cells(self, where_filter: np.ndarray):
-        log.info(f"Filtering {where_filter.sum()} cells")
+    def filter_cells(self, where_filter: np.ndarray, reason: str | None = None):
+        log.info(f"Filtering {where_filter.sum()} cells" + (f" due to {reason}" if reason else ""))
 
         self.geo_df = self.geo_df[~where_filter]
         self.sdata.shapes[self.shapes_key] = self.geo_df
@@ -180,7 +180,7 @@ class Aggregator:
                 )
 
             if min_transcripts > 0:
-                self.filter_cells(self.table.X.sum(axis=1) < min_transcripts)
+                self.filter_cells(self.table.X.sum(axis=1) < min_transcripts, f"transcript count < {min_transcripts}")
 
         if aggregate_channels:
             mean_intensities = _aggregate_channels(
@@ -195,7 +195,7 @@ class Aggregator:
                 means = mean_intensities.mean(axis=1)
                 intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
                 where_filter = means < intensity_threshold
-                self.filter_cells(where_filter)
+                self.filter_cells(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
                 mean_intensities = mean_intensities[~where_filter]
 
             if aggregate_genes:

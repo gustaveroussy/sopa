@@ -1,4 +1,4 @@
-### This file details all existing Sopa parameters
+### This file details many Sopa parameters
 ###
 ### Most of these parameters are optional: don't hesitate to delete those that doesn't interest you
 ###
@@ -7,6 +7,9 @@
 
 read:
   technology: merscope # name of the machine, e.g. xenium/merscope/cosmx/phenocycler/macsima/hyperion
+  # [optional] you can provide keyword arguments to `sopa.io.merscope` (or any other reader)
+  # kwargs:
+  #   z_layers: 2
 
 patchify:
   # [only if running cellpose]
@@ -35,15 +38,19 @@ segmentation:
     clip_limit: 0.2 # [optional] value used to increase the contrast of the image. 0 means no change, 1 means high contrast change (see skimage.exposure.equalize_adapthist).
     gaussian_sigma: 1 # [optional] sigma used for gaussian smoothing. This can improve segmentation for highly-pixelated images
 
+  # [only if running proseg]
+  proseg:
+    prior_shapes_key: auto # [optional] this allows to use the prior segmentation performed by the provider. This shouldn't be provided if you run cellpose with Sopa.
+    # command_line_suffix: "--nthreads XXX" # add here any command line suffix to the proseg command
+
   # [only if running baysor]
   baysor:
     min_area: 20 # [optional] minimum area (in microns^2) for a cell to not be filtered
     prior_shapes_key: auto # [optional] this allows to use the prior segmentation performed by the provider. This shouldn't be provided if you run cellpose with Sopa.
 
     config:
-      # [this is the baysor config, as in https://github.com/kharchenkolab/Baysor]
+      # [this is the baysor config, as in https://github.com/kharchenkolab/Baysor, you can add valid Baysor parameters]
       data:
-        exclude_genes: "Blank*" # genes excluded from the Baysor segmentation
         force_2d: true # if false, uses 3D mode
         min_molecules_per_cell: 10
         gene: "gene" # name of the column of the transcript dataframe indicating the genes names
@@ -60,24 +67,12 @@ segmentation:
         scale: 6.25 # [important parameter] typical cell radius in microns
         scale_std: "25%" # cell radius standard deviation
         prior_segmentation_confidence: 0.5 # confidence of the cellpose confidence (float in [0, 1])
-        estimate_scale_from_centers: false
-        n_clusters: 4
-        iters: 500
-        n_cells_init: 0
-        nuclei_genes: ""
-        cyto_genes: ""
-
-  # [only if running proseg]
-  proseg:
-    prior_shapes_key: auto # [optional] this allows to use the prior segmentation performed by the provider. This shouldn't be provided if you run cellpose with Sopa.
-    # command_line_suffix: "--nthreads XXX" # add here any command line suffix to the proseg command
 
 aggregate:
   aggregate_genes: true # [optional] whether to compute the genes counts for each cell (cell-by-gene matrix)
   aggregate_channels: true # [optional] whether to compute, for each cell, the mean intensity per staining/channel
   min_intensity_ratio: 0.1 # [optional] cells whose mean channel intensity is less than `min_intensity_ratio * quantile_90` will be filtered
   expand_radius_ratio: 0.1 # [optional] cells polygons will be expanded by `expand_radius_ratio * mean_radius` for channels averaging **only**. This help better aggregate boundary stainings
-
   min_transcripts: 5 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # [optional] if annotation is desired, choose either 'tangram' or 'fluorescence'. If 'fluorescence' is used, make sure 'aggregate_channels' is true (see parameter above)
@@ -99,8 +94,12 @@ annotation:
   #     CD68: Macrophage
   #     CD20: B cell
 
+# [optional] add this if you want basic scanpy preprocessing to be done (normalization, log1p, HVG selection, UMAP, and leiden clustering) - use only for spatial transcriptomics datasets
+scanpy_preprocess:
+  resolution: 1 # resolution parameter for the leiden clustering
+  check_counts: false # data already contains counts when using Snakemake/Nextflow, there is no need to do an extra check
+
 explorer:
   # parameters related to the conversion to the Xenium Explorer (Sopa's visualizer)
-  gene_column: "gene" # [optional] name of the column of the transcript dataframe indicating the genes names. Provide this if you want to see transcripts on the explorer
   ram_threshold_gb: 4 # [optional] images below this RAM threshold will be loaded in memory during conversion. It can accelerate image writing
   pixel_size: 0.2125 # [optional] this is the number of microns in a pixel for the technology used (see the config of your technology of interest)

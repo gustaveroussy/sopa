@@ -1,6 +1,6 @@
 ## Installing Sopa
 
-Sopa can be installed on every OS with `pip`, from `python>=3.10` to `python<3.13`.
+Sopa can be installed from `PyPI` on all OS, for any Python version from `3.10` to `3.13` (included).
 
 !!! note "Advice (optional)"
 
@@ -9,7 +9,7 @@ Sopa can be installed on every OS with `pip`, from `python>=3.10` to `python<3.1
     For instance, you can create a new `conda` environment:
 
     ```bash
-    conda create --name sopa python=3.10
+    conda create --name sopa python=3.12
     conda activate sopa
     ```
 
@@ -59,6 +59,16 @@ By default, `sopa` only install the minimal dependencies to avoid a heavy instal
     # you can also combine extras: pip install 'sopa[cellpose,baysor,wsi,stardist]'
     ```
 
+=== "Proseg"
+    [Proseg](https://github.com/dcjones/proseg) has to be installed independently, this can be done with [`cargo`](https://doc.rust-lang.org/cargo/getting-started/installation.html):
+
+    ```sh
+    cargo install proseg
+    ```
+
+    !!! info "Executable path"
+        If the `proseg` executable is not at `~/.cargo/bin/proseg`, please make the `proseg` command available (e.g., via creating a symlink `~/.local/bin/proseg` pointing to the executable), or export the path to the executable via `export proseg=/path/to/proseg/executable`.
+
 === "Baysor"
     To use [Baysor](https://kharchenkolab.github.io/Baysor/dev/), you'll first need to install Sopa with the `baysor` extra:
 
@@ -72,15 +82,6 @@ By default, `sopa` only install the minimal dependencies to avoid a heavy instal
         If the Baysor executable is not at `~/.julia/bin/baysor`, please make the `baysor` command available (e.g., via creating a symlink `~/.local/bin/baysor` pointing to the executable), or export the path to the executable via `export baysor=/path/to/baysor/executable`.
 
 
-=== "Proseg"
-    [Proseg](https://github.com/dcjones/proseg) has to be installed independently, this can be done with [`cargo`](https://doc.rust-lang.org/cargo/getting-started/installation.html):
-
-    ```sh
-    cargo install proseg
-    ```
-
-    !!! info "Executable path"
-        If the `proseg` executable is not at `~/.cargo/bin/proseg`, please make the `proseg` command available (e.g., via creating a symlink `~/.local/bin/proseg` pointing to the executable), or export the path to the executable via `export proseg=/path/to/proseg/executable`.
 === "Stardist"
     If you need to run [Stardist](https://github.com/stardist/stardist), you can install the corresponding extra:
 
@@ -121,8 +122,9 @@ Now, follow our [snakemake tutorial](../tutorials/snakemake) to run your first p
 
 ## Usage
 
-Sopa comes in three different flavours, each corresponding to a different use case:
+Sopa comes in four different flavours, each corresponding to a different use case:
 
 - `API`: use directly `sopa` as a Python package for full flexibility and customization (see a tutorial [here](../tutorials/api_usage))
 - `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a few minutes. See our [snakemake tutorial](../tutorials/snakemake).
+- `nf-core/sopa`: run Sopa with Nextflow (see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage))
 - `CLI`: use our [command-line-interface](../tutorials/cli_usage) to prototype quickly your own pipeline

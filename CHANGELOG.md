@@ -1,5 +1,91 @@
-## [2.1.1] - xxxx-xx-xx
+## [2.1.7] - xxxx-xx-xx
 
+## [2.1.6] - 2025-10-15 (minor release for nf-core)
+
+### Added
+- Using `igraph` by default (for Leiden clustering)
+- Can provide `raw_data_path` in `sopa explorer write` CLI in case raw data path moved (useful for `nf-core/sopa` on AWS Batch with Xenium data)
+
+### Changed
+- In Snakemake, run `scanpy_preprocess` before the explorer rule
+
+## [2.1.5] - 2025-10-11
+
+### Added
+- Use the default `proseg` presets if `infer_presets = True` (default) and if not yet provided in the `command_line_suffix`
+- Exclude the CosMX control genes from the transcript patches and the aggregation
+- Added optional `only_excluded` argument in `count_transcripts` to count the genes that are normally excluded from the counts (#329)
+
+### Fixed
+- Ensure that cell expansion with no overlap preserves a polygon output (#318)
+- Fixed `proseg` usage on CosMx data (#323)
+- Don't perform segmentation on extremely small patches @Marius1311 (#282)
+- Fixed incorrect prior cell ID assignment to float dtype instead of int in the CosMx reader when `fov is not None` (#335)
+- Do not save the cache column in the transcript patches to allow moving the `.zarr` directory before segmentation
+
+### Broken changes
+- The CosMX reader now stores the transcript coordinates in microns instead of pixels, so Baysor/Comseg config needs to be adjusted (#323)
+
+## [2.1.4] - 2025-09-29
+
+### Added
+- Visium HD: also store the spatial coordinates of the bins in microns (not just in pixels)
+- Added an `--overwrite` option to the `sopa convert` command line (#306)
+- Support `python==3.13`
+- Add `roi_key` in image/transcript patches to decide which shapes to use for the region of interest (#309)
+- Optional command line `sopa scanpy-preprocess` for basic preprocessing (see [Snakemake config example](https://github.com/gustaveroussy/sopa/blob/8aef922412bf765ffb0db94347082554bb063c09/workflow/config/example_commented.yaml#L98))
+
+### Fixed
+- Use `csr` matrices instead of `coo` in transcript and bins aggregation to support `anndata>=0.12.0` (#305)
+- Fix `ValueError` due to forward slash in morphology marker name @professor-sagittarius (#311)
+
+## [2.1.3] - 2025-08-29
+
+### Added
+- Add support for the new proseg version `>=3.0.0`
+- Added sopa-comseg Docker image for ComSeg support in `nf-core/sopa`
+- Can read CosMx polygons and cell labels (#285)
+
+### Fixed
+- Overwrite the `scale` parameter when running baysor and providing both `config` and `scale` parameters (#294)
+- Avoid losing prior cell `0` in prior assignment when `unassigned_value != 0`
+- Fixed stardist dependencies, as it still doesn't support `numpy>=2.0.0`
+- Fixed FOV shift in some CosMx versions (#286)
+
+## [2.1.2] - 2025-08-16
+
+### Added
+- Sopa is now also available on 🍏 `nf-core` (still in dev mode) - see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)
+- Added a `sopa:latest-tangram` Docker image for cell-type annotation
+- Log a warning in case an annotation level group has multiple parents when running Tangram with multi-level.
+- Docs clarifications, e.g., how to use `dataset_id` for Visium HD data, and others improvements.
+- Store the cell to bins mapping in `adata.obsm["bins_assignments"]` during bins aggregation (#291)
+
+### Changed
+- Minor Snakemake files simplification (e.g., no need to provide the gene column name anymore)
+
+### Fixed
+- Preserve cell ids when converting to the explorer. Better interchangeability after filtering cells.
+- `sopa --version` faster and returns no warning (prevent it from importing sopa)
+- Preserve Xenium region_name and morphology_focus/mip files (via a symlink at the file level) when using `sopa.io.explorer.write`
+- Remove warning in `sopa.io.explorer.write` when `mode="+it"` and used before running Sopa (typically, when running the Snakemake or Nextflow pipeline)
+
+## [2.1.1] - 2025-07-16
+
+### Added
+- Log a warning in `sopa.io.visium_hd` if the fullres image is too small (potentially a user error)
+- Added a `allow_holes` argument to `sopa.segmentation.tissue` to decide whether to keep holes or not
+- `correction` argument in `sopa.spatial.mean_distance` to account for the bias related to group proportions (experimental)
+- The Docker CI now also pushes the images with the `latest` tag
+
+### Changed
+- CosMx reader: use `flip_image=False` by default (#231)
+
+### Fixed
+- `_smoothen_cell` returns an empty polygon if the cell can't be smoothened (#279)
+- Remove NaN genes before transcript-based segmentation (#283)
+- Broken link in the docs @ChristopherBottomsOMRF (#284)
+- Added again the command `ps` to all Docker images for Nextflow
 
 ## [2.1.0] - 2025-06-27
 

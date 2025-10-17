@@ -2,6 +2,9 @@
 
 Sopa comes with an existing [Snakemake](https://snakemake.readthedocs.io/en/stable/) workflow to get started quickly. This will not involve any coding but requires some setup specific to `snakemake`.
 
+!!! info
+    If you're more familiar with Nextflow, you can try [nf-core/sopa](https://nf-co.re/sopa/dev/) instead.
+
 ## Setup
 
 ### Installation
@@ -22,7 +25,7 @@ Keep in mind the path of your config (relative to the `workflow` directory) beca
 
 ### Locate your raw data
 
-First, you need to locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-or-sopa).
+First, you need to locate the path to one sample's raw experiment file(s). This is usually a directory containing one or many image(s) and, eventually, a transcript file. If you don't know what data you need, see our [FAQ](../../faq/#what-are-the-inputs-of-sopa).
 
 Again, remind this path, as we will use it later.
 
@@ -136,7 +139,19 @@ Make sure you have installed everything as detailed in this tutorial, and then r
         --workflow-profile profile/local \
         --cores 1
     ```
+=== "Proseg usage"
+    Make sure you have installed the `proseg` command (refer to our getting started).
+    ```sh
+    conda activate snakemake    # or any environment that has `snakemake`
+    cd workflow   # move to the workflow directory inside the sopa repository
 
+    # you can replace tuto.zarr by another path where the data will be saved
+    snakemake \
+        --config sdata_path=tuto.zarr \
+        --configfile=config/toy/proseg.yaml \
+        --workflow-profile profile/local \
+        --cores 1
+    ```
 === "Baysor usage"
     Make sure you have installed sopa with the `baysor` extra, and that you have installed the `baysor` command (refer to our getting started).
     ```sh

@@ -1,6 +1,3 @@
-# Using the 10X Genomics multi-channel segmentation as a prior for Proseg.
-
-# For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml
 read:
   technology: xenium
 
@@ -15,7 +12,11 @@ segmentation:
 
 aggregate:
   aggregate_channels: true
-  min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
+  min_transcripts: 10
+
+scanpy_preprocess:
+  resolution: 1
+  check_counts: false
 
 explorer:
   ram_threshold_gb: 4

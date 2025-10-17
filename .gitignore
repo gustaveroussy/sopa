@@ -9,10 +9,11 @@ sandbox
 *.html
 .env
 *.h5ad
+!tests/toy_tangram_ref.h5ad
 *.zarr
 *.explorer
 *.tif
-docs/tutorials/data
+data
 
 # OS related
 .DS_Store

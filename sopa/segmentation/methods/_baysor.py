@@ -43,7 +43,7 @@ def baysor(
         delete_cache: Whether to delete the cache after segmentation.
         recover: If `True`, recover the cache from a failed segmentation, and continue.
         force: If `True`, ignore failed patches and continue with the successful ones.
-        scale: The typical cell radius in microns. If `config` is not provided, the configuration is inferred based on this parameter.
+        scale: The typical cell radius in microns. If `config` is not provided, the configuration is inferred based on this parameter. Else, it will overwrite the existing scale in the config.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
         patch_index: Index of the patch to segment (we do not recommend to set this argument). By default, segment all patches.
     """
@@ -55,13 +55,21 @@ def baysor(
 
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)
+    elif scale is not None:
+        assert "segmentation" in config, "The provided config should contain a 'segmentation' key"
+        config["segmentation"]["scale"] = scale
+
+    if "scale" in config["segmentation"] and config["segmentation"]["scale"] >= 20:
+        log.warning(
+            f"The provided scale ({config['segmentation']['scale']}) seems large. Make sure the scale is in microns, and not in pixels. If you are using CosMX data, note that the transcripts coordinates are now in microns."
+        )
 
     baysor_command = _get_baysor_command(prior_shapes_key)
 
     baysor_patch = BaysorPatch(baysor_command, config, force=force, capture_output=patch_index is None)
 
     if patch_index is not None:
-        patch_dir = Path(sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES].loc[patch_index, SopaKeys.CACHE_PATH_KEY])
+        patch_dir = get_transcripts_patches_dirs(sdata, patch_index)
         baysor_patch(patch_dir)
         return
 

@@ -7,24 +7,31 @@ from anndata import AnnData
 from scipy.sparse import csr_matrix
 
 from ._constants import FileNames, cell_categories_attrs
-from .utils import explorer_file_path
+from .utils import explorer_file_path, int_cell_id
 
 log = logging.getLogger(__name__)
 
 
-def write_gene_counts(path: str, adata: AnnData, layer: str | None = None, is_dir: bool = True) -> None:
+def write_gene_counts(
+    path: str,
+    adata: AnnData,
+    layer: str | None = None,
+    preserve_ids: bool = True,
+    is_dir: bool = True,
+) -> None:
     """Write a `cell_feature_matrix.zarr.zip` file containing the cell-by-gene transcript counts (i.e., from `adata.X`)
 
     Args:
         path: Path to the Xenium Explorer directory where the cell-by-gene file will be written
         adata: An `AnnData` object. Note that `adata.X` has to be a sparse matrix (and contain the raw counts), else use the `layer` argument.
-        layer: If not `None`, `adata.layers[layer]` should be sparse (and contain the raw counts).
+        layer: If not `None`, `adata.layers[layer]` should be sparse (and contain the raw counts). By default, look into `adata.layers["counts"]` or use `adata.X`.
+        preserve_ids: If `True`, then the cell IDs will be kept in the explorer as they are in `adata.obs_names`. If `False`, then the cell IDs will be replaced by integers starting from 0 in the output file.
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
     """
     path = explorer_file_path(path, FileNames.TABLE, is_dir)
 
     log.info(f"Writing table with {adata.n_vars} columns")
-    counts = adata.X if layer is None else adata.layers[layer]
+    counts = adata.layers.get("counts", adata.X) if layer is None else adata.layers[layer]
     counts = csr_matrix(counts.T)
 
     feature_keys = [*list(adata.var_names), "Total transcripts"]
@@ -50,7 +57,7 @@ def write_gene_counts(path: str, adata: AnnData, layer: str | None = None, is_di
     indptr = np.append(indptr, indptr[-1] + loc.sum())
 
     cell_id = np.ones((adata.n_obs, 2))
-    cell_id[:, 0] = np.arange(adata.n_obs)
+    cell_id[:, 0] = int_cell_id(adata.obs_names) if preserve_ids else np.arange(adata.n_obs)
 
     with zarr.ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)
@@ -88,7 +95,7 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
     adata.strings_to_categoricals()
     cat_columns = [name for name, cat in adata.obs.dtypes.items() if cat == "category"]
 
-    log.info(f"Writing {len(cat_columns)} cell categories: {', '.join(cat_columns)}")
+    log.info(f"Writing {len(cat_columns)} cell/observations categories: {', '.join(cat_columns)}")
 
     ATTRS = cell_categories_attrs()
     ATTRS["number_groupings"] = len(cat_columns)

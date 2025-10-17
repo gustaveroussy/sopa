@@ -1,4 +1,4 @@
-## What are the inputs or Sopa?
+## What are the inputs of Sopa?
 
 You need the raw inputs of your machine, that is:
 
@@ -28,7 +28,7 @@ In this documentation, `data_path` denotes the path to your raw data. Select the
        ├─ mosaic_{stain}_z{z_layer}.tif
        └─ micron_to_mosaic_pixel_transform.csv
     ```
-=== "CosMX"
+=== "CosMx"
     `data_path` is the path to the directory containing:
 
     - a transcript file `*_tx_file` (with columns `target`, `x_global_px`, `y_global_px`)
@@ -197,7 +197,7 @@ segmentation:
 
 ## How to use a prior cell segmentation?
 
-If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/main/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/main/workflow/config/xenium/baysor_prior.yaml) data. If using the API/CLI, consider using the `prior_shapes_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `prior_shapes_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `prior_shapes_key="cell_id"` and `unassigned_value="UNASSIGNED"`. You can also decide to run Cellpose via Sopa, and then use it as a prior: in that case, simply pass `prior_shapes_key="cellpose_boundaries"` after running cellpose.
+If you have MERSCOPE or Xenium data, you probably already have a cell segmentation. This can be used as a prior for Proseg or Baysor, instead of running Cellpose with Sopa. For that, you have an existing config file for the Snakemake pipeline for both [MERSCOPE](https://github.com/gustaveroussy/sopa/blob/main/workflow/config/merscope/baysor_vizgen.yaml) and [Xenium](https://github.com/gustaveroussy/sopa/blob/main/workflow/config/xenium/baysor_prior.yaml) data. If using the API/CLI, consider using the `prior_shapes_key` and the `unassigned_value` arguments when creating the patches for the transcripts. For MERSCOPE data, `prior_shapes_key="cell_id"` and `unassigned_value=-1`. For Xenium data, `prior_shapes_key="cell_id"` and `unassigned_value="UNASSIGNED"`. You can also decide to run Cellpose via Sopa, and then use it as a prior: in that case, simply pass `prior_shapes_key="cellpose_boundaries"` after running cellpose.
 
 ## How to optimize the segmentation parameters?
 
@@ -212,10 +212,6 @@ Some CLI arguments are optionnal dictionnaries. For instance, `sopa convert` has
 ## How to fix an "out-of-memory" issue on MERSCOPE data?
 
 If using MERSCOPE data, images can be huge. To improve RAM efficiency, you can install `rioxarray` (`pip install rioxarray`). Then, the `rioxarray` will be used by default by the reader (no change needed, it will be detected automatically).
-
-## What about Nextflow?
-
-Nextflow is not supported yet, but we are working on it. You can also help re-write our Snakemake pipeline for Nextflow (see issue [#7](https://github.com/gustaveroussy/sopa/issues/7)).
 
 ## How to remove the logs?
 

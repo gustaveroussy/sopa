@@ -1,9 +1,9 @@
 [project]
 name = "sopa"
-version = "2.1.0"
+version = "2.1.6"
 description = "Spatial-omics pipeline and analysis"
 authors = [{ name = "Quentin Blampey", email = "quentin.blampey@gmail.com" }]
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10"
 readme = "README.md"
 license = "BSD-3-Clause"
 classifiers = [
@@ -16,28 +16,27 @@ classifiers = [
 ]
 dependencies = [
   "spatialdata>=0.4.0",
-  "spatialdata-io>=0.2.0",
+  "spatialdata-io>=0.3.0",
   "spatialdata-plot>=0.2.10",
   "scanpy>=1.10.4",
   "anndata>=0.11.0",
+  "igraph>=0.11.0",
   "typer>=0.9.0",
   "dask[distributed]>=2024.4.1",
 ]
 
 [project.optional-dependencies]
-cellpose = [
-  "cellpose>=3.0.5",
-  "torch>=2.0.0, !=2.0.1, !=2.1.0",
-  "opencv-python>=4.8.0",
+cellpose = ["cellpose>=3.0.5", "torch>=2.1.1", "opencv-python>=4.8.0"]
+stardist = [
+  "tensorflow>=2.18.0",
+  "stardist>=0.9.1",
+  "numpy<2.0.0",                    # TODO: remove this once numpy>=2.0.0 is supported by stardist
+  "spatialdata<0.5.0",              # same as above
+  "multiscale-spatial-image<2.0.3", # same as above
+  "spatial-image<1.2.2",            # same as above
 ]
-stardist = ["tensorflow>=2.18.0", "stardist>=0.9.1", "numpy<2.0.0"]
 baysor = ["toml>=0.10.2", "loompy>=3.0.7"]
-wsi = [
-  "tiffslide>=2.3.1",
-  "torch>=2.0.0, !=2.0.1, !=2.1.0",
-  "igraph>=0.11.0",
-  "torchvision>=0.20.0",
-]
+wsi = ["tiffslide>=2.3.1", "torch>=2.1.1", "torchvision>=0.20.0"]
 
 [dependency-groups]
 dev = [

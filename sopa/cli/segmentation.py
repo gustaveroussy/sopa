@@ -325,6 +325,10 @@ def proseg(
         "",
         help="String suffix to add to the proseg command line. This can be used to add extra parameters to the proseg command line.",
     ),
+    infer_presets: bool = typer.Option(
+        True,
+        help="Whether to infer the proseg presets based on the columns of the transcripts dataframe.",
+    ),
 ):
     """Perform Proseg segmentation. This needs to be done on a single
     patch as proseg is fast enough and doesn't require parallelization."""
@@ -337,7 +341,7 @@ def proseg(
     sdata = read_zarr_standardized(sdata_path)
 
     try:
-        proseg(sdata, command_line_suffix=command_line_suffix)
+        proseg(sdata, command_line_suffix=command_line_suffix, infer_presets=infer_presets)
     except CalledProcessError as e:
         sys.exit(e.returncode)
 

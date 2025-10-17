@@ -5,20 +5,17 @@ read:
 patchify:
   patch_width_pixel: 6000
   patch_overlap_pixel: 150
-  patch_width_microns: 8000
-  patch_overlap_microns: 150
 
 segmentation:
   cellpose:
     diameter: 60
-    channels: [ "DNA" ]
+    channels: ["DNA"]
     flow_threshold: 2
     cellprob_threshold: -6
     min_area: 2000
 
 aggregate:
   aggregate_channels: true
-  gene_column: "target"
   min_transcripts: 10 # [optional] cells whose transcript count is below that this threshold are filtered
 
 # Comment this out if you want to use tangram -->
@@ -30,5 +27,4 @@ aggregate:
 #     cell_type_key: ct
 
 explorer:
-  gene_column: "target"
   ram_threshold_gb: 4

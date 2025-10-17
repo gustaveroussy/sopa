@@ -17,9 +17,7 @@
 
 </div>
 
-Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMX, PhenoCycler, MACSima, Molecural Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
-
-🎉 `sopa==2.0.0` is out! Check [our migration guide](https://github.com/gustaveroussy/sopa/discussions/138) to smoothly update your code base.
+Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMx, PhenoCycler, MACSima, Molecular Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
 ## Documentation
 
@@ -35,22 +33,24 @@ The following illustration describes the main steps of `sopa`:
 
 ## Installation
 
-Sopa can be installed via `PyPI` on all operating systems, with the only requirement being Python (`>=3.10` and `<3.13`). On a new environment, run the following command:
+Sopa can be installed from `PyPI` on all OS, for any Python version from `3.10` to `3.13` (included). On a new environment, run the following command:
 ```sh
 pip install sopa
 ```
 
-See the [installation section](https://gustaveroussy.github.io/sopa/getting_started/) from the docs for more details, to install extras or to use other installations modes.
+> [!NOTE]
+> See this [installation section](https://gustaveroussy.github.io/sopa/getting_started/) for more details about extras and other installations modes.
 
 ## Features
-Sopa comes in three different flavours, each corresponding to a different use case:
+Sopa comes in four different flavours, each corresponding to a different use case:
 - `API`: use directly `sopa` as a Python package for complete flexibility and customization
 - `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a couple of minutes
+- `nf-core/sopa`: run Sopa with Nextflow (see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage))
 - `CLI`: use our command-line-interface for prototyping quickly your own pipeline
 
 ### API
 
-Below is an example of a minimal API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa).
+Below is a minimal example of API usage. For a complete API description, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/api_usage/).
 
 ```python
 import sopa
@@ -75,7 +75,7 @@ For more details on `snakemake` configuration and how to properly setup your env
 
 ### CLI
 
-Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/cli).
+Below are examples of commands that can be run with the `sopa` CLI. For a complete description of the CLI, please refer to the [documentation](https://gustaveroussy.github.io/sopa/tutorials/cli_usage/).
 
 ```bash
 > sopa --help # show command names and arguments

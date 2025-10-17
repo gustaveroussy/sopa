@@ -1,14 +1,14 @@
 import logging
-from collections.abc import Iterable
 from math import ceil
 from pathlib import Path
 
+import geopandas as gpd
 import numpy as np
 import zarr
 from shapely.geometry import MultiPolygon, Polygon
 
 from ._constants import FileNames, cell_summary_attrs, group_attrs
-from .utils import explorer_file_path
+from .utils import explorer_file_path, int_cell_id
 
 log = logging.getLogger(__name__)
 
@@ -50,20 +50,26 @@ def pad_polygon(polygon: Polygon, max_vertices: int, tolerance: float = TOLERANC
 
 def write_polygons(
     path: Path,
-    polygons: Iterable[Polygon],
+    geo_df: gpd.GeoDataFrame,
     max_vertices: int,
     is_dir: bool = True,
     pixel_size: float = 0.2125,
+    preserve_ids: bool = True,
 ) -> None:
     """Write a `cells.zarr.zip` file containing the cell polygonal boundaries
 
     Args:
         path: Path to the Xenium Explorer directory where the transcript file will be written
-        polygons: A list of `shapely` polygons to be written
+        geo_df: A GeoDataFrame containing the `shapely` polygons to be written
         max_vertices: The number of vertices per polygon (they will be transformed to have the right number of vertices)
         is_dir: If `False`, then `path` is a path to a single file, not to the Xenium Explorer directory.
         pixel_size: Number of microns in a pixel. Invalid value can lead to inconsistent scales in the Explorer.
+        preserve_ids: If `True`, will preserve the cell IDs from `geo_df.index` in the explorer (they need to be valid Xenium Explorer IDs). If `False`, will use new IDs for the output file.
     """
+    assert isinstance(geo_df, gpd.GeoDataFrame), "geo_df must be a GeoDataFrame"
+
+    polygons = geo_df.geometry.values
+
     assert all(isinstance(geom, (Polygon, MultiPolygon)) for geom in polygons), (
         "All geometries must be a `shapely.Polygon` or `shapely.MultiPolygon`"
     )
@@ -101,7 +107,7 @@ def write_polygons(
         )
 
         cell_id = np.ones((num_cells, 2))
-        cell_id[:, 0] = np.arange(num_cells)
+        cell_id[:, 0] = int_cell_id(geo_df.index) if preserve_ids else np.arange(num_cells)
         g.array("cell_id", cell_id, dtype="uint32", chunks=(cells_half, 1))
 
         cell_summary = np.zeros((num_cells, 7))

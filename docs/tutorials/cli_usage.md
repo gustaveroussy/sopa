@@ -33,7 +33,7 @@ $ sopa segmentation cellpose sdata.zarr
 
 For this tutorial, we use a generated dataset. You can expect a total runtime of a few minutes.
 
-The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-are-the-inputs-or-sopa) describing which data input you need, or run `sopa convert --help`.
+The command below will generate and save it on disk (you can change the path `tuto.zarr` to save it somewhere else). If you want to load your own data: choose the right panel below. For more information, refer to this [FAQ](../../faq/#what-are-the-inputs-of-sopa) describing which data input you need, or run `sopa convert --help`.
 
 === "Tutorial"
     ```sh
@@ -50,7 +50,7 @@ The command below will generate and save it on disk (you can change the path `tu
     # it will generate a '/path/to/sample/directory.zarr' directory
     sopa convert /path/to/sample/directory --technology merscope
     ```
-=== "CosMX"
+=== "CosMx"
     ```sh
     # it will generate a '/path/to/sample/directory.zarr' directory
     sopa convert /path/to/sample/directory --technology cosmx
@@ -284,13 +284,16 @@ sopa report tuto.zarr report.html
 ```
 
 ## Visualization (Xenium Explorer)
-The Xenium Explorer is a software developed by 10X Genomics for visualizing spatial data, and it can be downloaded freely [here](https://www.10xgenomics.com/support/software/xenium-explorer/latest). Sopa allows the conversion to the Xenium Explorer, whatever the type of spatial data you worked on. It will create some files under a new `tuto.explorer` directory:
+The Xenium Explorer is a software developed by 10X Genomics for visualizing spatial data, and it can be downloaded freely [here](https://www.10xgenomics.com/support/software/xenium-explorer/latest). Sopa allows the conversion to the Xenium Explorer. It will create some files under a new `tuto.explorer` directory:
 
 ```sh
 sopa explorer write tuto.zarr
 ```
 
 If you have downloaded the Xenium Explorer, you can now open the results in the explorer: `open tuto.explorer/experiment.xenium` (if using a Unix operating system), or double-click on the latter file.
+
+!!! License
+    _Xenium Explorer_ is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
 
 !!! info "Time efficiency"
     Creating the image needed by the Xenium Explorer can be time-consuming. Therefore, we recommend performing one run for the image generation (below) and another to save the transcripts/boundaries/observations.

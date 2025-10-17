@@ -10,9 +10,11 @@ from spatialdata.models import ShapesModel
 import sopa
 from sopa._constants import SopaKeys
 from sopa.spatial import cells_to_groups, mean_distance, niches_geometry_stats, spatial_neighbors, vectorize_niches
+from sopa.spatial.distance import _random_distance_likelihood
 from sopa.spatial.join import _get_cell_id
 
 NICHE_KEY = "niche"
+CT_KEY = "cell_type"
 
 
 @pytest.fixture
@@ -38,8 +40,9 @@ def adata() -> AnnData:
         [5, 3],
     ])
     niches = ["a", "a", "a", "b", "b", "b", "c", "c", "c", "d", "d", "d"]
+    cell_types = ["c1", "c1", "c1", "c1", "c2", "c2", "c3", "c3", "c3", "c3", "c3", "c3"]
 
-    adata = AnnData(obs=pd.DataFrame({NICHE_KEY: niches}))
+    adata = AnnData(obs=pd.DataFrame({NICHE_KEY: niches, CT_KEY: cell_types}))
     adata.obsm["spatial"] = coords
 
     spatial_neighbors(adata, radius=[0, 2.9])
@@ -61,6 +64,44 @@ def test_mean_distance(adata: AnnData):
 
     expected_a = [0, 5 / 3, 5 / 3, 10 / 3]
     assert (df_pairwise_distances.iloc[0] == expected_a).all()
+
+    assert (
+        (
+            mean_distance(adata, CT_KEY, NICHE_KEY, ignore_zeros=True)
+            >= mean_distance(adata, CT_KEY, NICHE_KEY, ignore_zeros=False)
+        )
+        .all()
+        .all()
+    )
+
+
+def test_mean_distance_corrected(adata: AnnData):
+    assert _random_distance_likelihood(0.5, ignore_zeros=True) > _random_distance_likelihood(0.5, ignore_zeros=False)
+
+    diff = mean_distance(adata, group_key=CT_KEY, correction=False) - mean_distance(
+        adata, group_key=CT_KEY, correction=True
+    )
+
+    assert (diff.values[np.diag_indices_from(diff)] == 0).all()
+
+    diff = mean_distance(adata, group_key=CT_KEY, correction=False, ignore_zeros=True) - mean_distance(
+        adata, group_key=CT_KEY, correction=True, ignore_zeros=True
+    )
+
+    assert (diff.std(0) < 1e-6).all()
+
+    diff = mean_distance(adata, group_key=NICHE_KEY, target_group_key=CT_KEY, correction=False) - mean_distance(
+        adata, group_key=NICHE_KEY, target_group_key=CT_KEY, correction=True
+    )
+
+    assert (diff.std(0) < 1e-6).all()
+    assert diff["c3"].iloc[0] < diff["c1"].iloc[0] < diff["c2"].iloc[0]
+
+    diff = mean_distance(adata, group_key=CT_KEY, target_group_key=NICHE_KEY, correction=False) - mean_distance(
+        adata, group_key=CT_KEY, target_group_key=NICHE_KEY, correction=True
+    )
+
+    assert (diff.std() < 1e-6).all()  # same niche proportions
 
 
 def test_vectorize_niches(adata: AnnData):

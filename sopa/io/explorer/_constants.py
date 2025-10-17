@@ -105,8 +105,6 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int, pixel_size:
         "calibration_uuid": "N/A",
         "images": {
             "morphology_filepath": "morphology.ome.tif",
-            "morphology_mip_filepath": "morphology_mip.ome.tif",
-            "morphology_focus_filepath": "morphology_focus.ome.tif",
         },
         "xenium_explorer_files": {
             "transcripts_zarr_filepath": "transcripts.zarr.zip",

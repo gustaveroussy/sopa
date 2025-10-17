@@ -48,7 +48,7 @@ def transcripts(
         help="Whether to also write the centroids of the cells (must be True for ComSeg)",
     ),
 ):
-    """Prepare patches for transcript-based segmentation (including Baysor)"""
+    """Prepare patches for transcript-based segmentation (e.g., for Proseg or Baysor)"""
 
     import sopa
     from sopa._constants import SopaFiles, SopaKeys

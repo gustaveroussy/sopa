@@ -3,19 +3,10 @@ read:
   technology: toy_dataset
 
 patchify:
-  patch_width_pixel: 1200
-  patch_overlap_pixel: 50
   patch_width_microns: 400
   patch_overlap_microns: 20
 
 segmentation:
-  cellpose:
-    diameter: 35
-    channels: ["DAPI"]
-    flow_threshold: 2
-    cellprob_threshold: -6
-    min_area: 2500
-
   baysor:
     min_area: 10
 
@@ -53,6 +44,9 @@ annotation:
       CK: Tumoral cell
       CD3: T cell
       CD20: B cell
+
+scanpy_preprocess:
+  resolution: 1
 
 explorer:
   ram_threshold_gb: 4

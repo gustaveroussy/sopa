@@ -9,9 +9,7 @@ You'll need two things for alignment with the Xenium Explorer:
 - A `SpatialData` object (see [`sopa.io`](../../api/readers)) and it's corresponding Xenium Explorer directory (see next section).
 - An image (usually `.tif` or `.ome.tif`) that you want to align to the `SpatialData` object.
 
-!!! info
-
-  *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
+> *Xenium Explorer* is a registered trademark of 10x Genomics. The Xenium Explorer is licensed for usage on Xenium data (more details [here](https://www.10xgenomics.com/legal/end-user-software-license-agreement)).
 
 ### Explorer data
 
@@ -37,7 +35,7 @@ You need to have the right image format for the Xenium Explorer. Here, we conver
 
 You can convert the image with QuPath as written in this [10x genomics webpage](https://www.10xgenomics.com/support/software/xenium-explorer/tutorials/xe-image-file-conversion). Otherwise, if you are not familiar with QuPath, you can also use our API to write the image:
 ```python
-# use sopa.io.ome_tif to read your image, or any reader from sopa.io
+# use sopa.io.ome_tif to read your image, or any reader from sopa.io, e.g. sopa.io.wsi
 image = sopa.io.ome_tif("path/to/your/image.tif", as_image=True)
 
 # write this image so that it can be open with the Xenium Explorer

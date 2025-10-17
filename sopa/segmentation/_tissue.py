@@ -30,6 +30,7 @@ def tissue(
     open_kernel_size: int = 5,
     close_kernel_size: int = 5,
     drop_threshold: float = 0.01,
+    allow_holes: bool = True,
     key_added: str = SopaKeys.ROI,
 ):
     """Perform a contouring of the tissue (i.e., "tissue-segmentation"). The resulting regions-of-interest(s) are saved as shapes in the `SpatialData` object. There are two
@@ -60,6 +61,7 @@ def tissue(
         open_kernel_size: The kernel size of the morphological openning operation
         close_kernel_size: The kernel size of the morphological closing operation
         drop_threshold: Segments that cover less area than a ratio of `drop_threshold` of the number of pixels of the image will be removed
+        allow_holes: If `True`, the holes in the polygons will be kept. If `False`, the holes will be removed.
         key_added: Name of the spatial element that will be added, containing the segmented tissue polygons.
     """
     image, mode = _get_image_and_mode(sdata, image_key, mode, channel)
@@ -79,6 +81,7 @@ def tissue(
         drop_threshold=drop_threshold,
         channel=channel,
         clip_parameters=clip_parameters,
+        allow_holes=allow_holes,
     ).get_polygons(mode)
 
     if not len(geo_df):
@@ -90,7 +93,7 @@ def tissue(
 
     geo_df = expand_radius(geo_df, expand_radius_ratio)
     geo_df = geo_df.explode(index_parts=False, ignore_index=True)
-    geo_df = to_valid_polygons(geo_df, simple_polygon=False)
+    geo_df = to_valid_polygons(geo_df, simple_polygon=not allow_holes)
 
     geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
 
@@ -120,6 +123,7 @@ class TissueSegmentation:
         drop_threshold: float,
         channel: str | None,
         clip_parameters: tuple[float, float],
+        allow_holes: bool,
     ):
         self.image = image
         self.blur_kernel_size = blur_kernel_size
@@ -128,6 +132,7 @@ class TissueSegmentation:
         self.drop_threshold = drop_threshold
         self.channel = channel
         self.clip_parameters = clip_parameters
+        self.allow_holes = allow_holes
 
         if image.sizes["y"] * image.sizes["x"] > self.SIZE_THRESHOLD_LARGE_IMAGE:
             log.warning(
@@ -179,7 +184,7 @@ class TissueSegmentation:
 
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
-        geo_df = _vectorize_mask(labels, allow_holes=True)
+        geo_df = _vectorize_mask(labels, allow_holes=self.allow_holes)
         return gpd.GeoDataFrame(geometry=[geo_df.union_all()])
 
 
