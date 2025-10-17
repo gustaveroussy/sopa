@@ -14,7 +14,7 @@ def wsi(
     path: str | Path,
     chunks: str | tuple[int, int, int] = "auto",
     as_image: bool = False,
-    backend: Literal["tiffslide", "openslide", "slideio", "zarr"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object
 
@@ -27,7 +27,7 @@ def wsi(
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`, or just the DataTree if `as_image=True`
     """
-    image_name, img, slide, slide_metadata = _open_wsi(path, backend=backend)
+    image_name, img, slide_metadata = _open_wsi(path, backend=backend)
 
     images = {}
     for level, key in enumerate(sorted(img.keys(), key=int)):
@@ -89,7 +89,7 @@ def wsi_autoscale(
     """
     image_model_kwargs = _default_image_models_kwargs(image_model_kwargs)
 
-    image_name, img, _, tiff_metadata = _open_wsi(path, backend=backend)
+    image_name, img, tiff_metadata = _open_wsi(path, backend=backend)
 
     img = img.rename_dims({"S": "c", "Y": "y", "X": "x"})
 
@@ -130,4 +130,4 @@ def _open_wsi(
 
     zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
-    return image_name, zarr_img, reader, metadata
+    return image_name, zarr_img, metadata

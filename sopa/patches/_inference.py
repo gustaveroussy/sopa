@@ -9,6 +9,8 @@ from xarray import DataArray, DataTree
 from ..io.reader._wsi_reader import get_reader
 from . import models
 
+from .._settings import settings
+
 log = logging.getLogger(__name__)
 
 
@@ -29,15 +31,15 @@ class Inference:
         _path = image.attrs.get("path")
 
         try:
-            if _backend and _backend != "xarray":
+            if settings.native_read_region:
                 self.slide = get_reader(_backend)(_path)
             else:
-                self.slide = get_reader("xarray")(image)
+                self.slide = get_reader("xarray")(image, _backend)
         except Exception as e:
             log.warning(
                 f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
             )
-            self.slide = get_reader("xarray")(image)
+            self.slide = get_reader("xarray")(image, _backend)
 
         self.patch_width = int(patch_width / self.resize_factor)
         self.resized_patch_width = patch_width
