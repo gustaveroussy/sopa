@@ -256,9 +256,17 @@ def scanpy_preprocess(
 
     sc.pp.highly_variable_genes(adata)
 
+    if adata.var["highly_variable"].sum() <= 50:
+        log.warning("Less than 50 HVG found. They will not be used for the UMAP and leiden clustering.")
+        hvg = adata.var["highly_variable"]
+        del adata.var["highly_variable"]  # else sc.pp.neighbors will crash
+
     sc.pp.neighbors(adata)
     sc.tl.umap(adata)
     sc.tl.leiden(adata, resolution=resolution, flavor="igraph")
+
+    if "highly_variable" not in adata.var:
+        adata.var["highly_variable"] = hvg  # put it back
 
     sopa.utils.add_spatial_element(sdata, table_key, adata)
 
