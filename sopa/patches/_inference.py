@@ -9,7 +9,7 @@ from xarray import DataArray, DataTree
 from ..io.reader._wsi_reader import get_reader
 from . import models
 
-from .._settings import settings
+from .. import settings
 
 log = logging.getLogger(__name__)
 
