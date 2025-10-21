@@ -246,7 +246,7 @@ class XarrayReader(ReaderBase):
         x_end, y_end = x_start + size[0], y_start + size[1]
         image = self.slide[f"scale{level}"].image if isinstance(self.slide, DataTree) else self.slide
         tile = image[:, slice(y_start, y_end), slice(x_start, x_end)]
-        return tile.transpose("x", "y", "c")
+        return tile.transpose("y", "x", "c")
 
     def close(self):
         """Close the slide."""
