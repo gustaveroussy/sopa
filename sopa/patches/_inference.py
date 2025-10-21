@@ -6,10 +6,9 @@ import numpy as np
 import torch
 from xarray import DataArray, DataTree
 
+from .. import settings
 from ..io.reader._wsi_reader import get_reader
 from . import models
-
-from .. import settings
 
 log = logging.getLogger(__name__)
 
