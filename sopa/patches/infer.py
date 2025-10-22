@@ -100,7 +100,8 @@ def compute_embeddings(
         "patch_overlap": patch_overlap,
         "magnification": magnification,
         "level": infer.level,
-        "resize_factor": infer.resize_factor,
+        "level_downsample": infer.level_downsample,
+        "resize_factor": infer.tile_resize_factor,
         "model_str": infer.model_str,
     }
 
