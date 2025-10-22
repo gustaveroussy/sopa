@@ -9,6 +9,7 @@ class Resnet50Features(nn.Module):
         from torchvision.models import resnet50
 
         resnet = resnet50()
+        resnet.eval()
 
         self.features = nn.Sequential(
             resnet.conv1,
