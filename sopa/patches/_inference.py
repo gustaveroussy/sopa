@@ -120,7 +120,7 @@ def _get_extraction_parameters(
         level = len(image.keys()) + level
 
     if magnification is None:
-        resize_factor = 1
+        tile_resize_factor = 1
         if level is None:
             log.warning("Both level and magnification arguments are None. Using level=0 by default.")
             level = 0
