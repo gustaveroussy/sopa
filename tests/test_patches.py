@@ -115,7 +115,7 @@ def test_patches_inference_clustering():
     assert sdata["dummy_embeddings"].shape == (4, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 50, magnification=100, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (4, 3)
+    assert sdata["dummy_embeddings"].shape == (16, 3)
 
     sopa.patches.cluster_embeddings(sdata, "dummy_embeddings")
 
