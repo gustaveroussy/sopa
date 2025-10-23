@@ -232,8 +232,11 @@ def scanpy_preprocess(
     table_key: str = typer.Option("table", help="Key of the table in the `SpatialData` object to be preprocessed"),
     resolution: float = typer.Option(1.0, help="Resolution parameter for the leiden clustering"),
     check_counts: bool = typer.Option(True, help="Whether to check that adata.X contains counts"),
+    hvg: bool = typer.Option(
+        False, help="Whether to compute highly variable genes before computing the UMAP and clustering"
+    ),
 ):
-    """Optional scanpy table preprocessing (log1p, HVG, UMAP, leiden clustering) after aggregation/annotation."""
+    """Optional scanpy table preprocessing (log1p, UMAP, leiden clustering) after aggregation/annotation."""
     import scanpy as sc
     from anndata import AnnData
 
@@ -254,19 +257,20 @@ def scanpy_preprocess(
     sc.pp.normalize_total(adata)
     sc.pp.log1p(adata)
 
-    sc.pp.highly_variable_genes(adata)
+    if hvg:
+        sc.pp.highly_variable_genes(adata)
 
-    if adata.var["highly_variable"].sum() <= 50:
-        log.warning("Less than 50 HVG found. They will not be used for the UMAP and leiden clustering.")
-        hvg = adata.var["highly_variable"]
-        del adata.var["highly_variable"]  # else sc.pp.neighbors will crash
+        if adata.var["highly_variable"].sum() <= 50:
+            log.warning("Less than 50 HVG found. They will not be used for the UMAP and leiden clustering.")
+            highly_variable = adata.var["highly_variable"]
+            del adata.var["highly_variable"]  # else sc.pp.neighbors will crash
 
     sc.pp.neighbors(adata)
     sc.tl.umap(adata)
     sc.tl.leiden(adata, resolution=resolution, flavor="igraph")
 
-    if "highly_variable" not in adata.var:
-        adata.var["highly_variable"] = hvg  # put it back
+    if hvg and "highly_variable" not in adata.var:
+        adata.var["highly_variable"] = highly_variable  # put it back
 
     sopa.utils.add_spatial_element(sdata, table_key, adata)
 

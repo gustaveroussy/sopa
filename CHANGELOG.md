@@ -1,7 +1,7 @@
 ## [2.1.7] - xxxx-xx-xx
 
-### Fixed
-- Fix `scanpy_preprocess` when less than 50 HVGs are found
+### Added
+- Argument to choose whether to run HVG in `scanpy_preprocess`
 
 ## [2.1.6] - 2025-10-15 (minor release for nf-core)
 
