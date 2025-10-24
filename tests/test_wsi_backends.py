@@ -29,10 +29,13 @@ def test_region_matching():
     wsi_slideio = get_reader("slideio")("tests/CMU-1-Small-Region.svs")
     wsi_xarray = get_reader("xarray")(sopa.io.wsi("tests/CMU-1-Small-Region.svs")["CMU-1-Small-Region"])
 
-    region_tiffslide = wsi_tiffslide.read_region((1000, 1000), level=0, size=(512, 512))
-    region_openslide = wsi_openslide.read_region((1000, 1000), level=0, size=(512, 512))
-    region_slideio = wsi_slideio.read_region((1000, 1000), level=0, size=(512, 512))
-    region_xarray = wsi_xarray.read_region((1000, 1000), level=0, size=(512, 512))
+    location = (780, 660)
+    size = (512, 556)
+
+    region_tiffslide = wsi_tiffslide.read_region(location, level=0, size=size)
+    region_openslide = wsi_openslide.read_region(location, level=0, size=size)
+    region_slideio = wsi_slideio.read_region(location, level=0, size=size)
+    region_xarray = wsi_xarray.read_region(location, level=0, size=size)
 
     assert (np.array(region_tiffslide) == np.array(region_openslide)).all(), (
         "Regions from tiffslide and openslide do not match"
