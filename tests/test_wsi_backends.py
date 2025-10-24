@@ -21,6 +21,7 @@ def test_slideio_backend():
 @pytest.mark.wsi_backends
 def test_region_matching():
     import numpy as np
+
     from sopa.io.reader._wsi_reader import get_reader
 
     wsi_tiffslide = get_reader("tiffslide")("tests/CMU-1-Small-Region.svs")
