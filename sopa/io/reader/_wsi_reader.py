@@ -5,19 +5,6 @@ from xarray import DataArray, DataTree
 log = logging.getLogger(__name__)
 
 
-def get_reader(backend: str):
-    """Get a reader for the specified backend."""
-    readers = {
-        "openslide": OpenSlideReader,
-        "tiffslide": TiffSlideReader,
-        "slideio": SlideIOReader,
-        "xarray": XarrayReader,
-    }
-    if backend not in readers:
-        raise ValueError(f"Unknown backend: {backend}. Supported backends are: {', '.join(readers.keys())}.")
-    return readers[backend]
-
-
 class ReaderBase:
     path: str
     name = "base"
@@ -259,3 +246,16 @@ class XarrayReader(ReaderBase):
     def close(self):
         """Close the slide."""
         self.slide.close()
+
+
+def get_reader(backend: str) -> type[ReaderBase]:
+    """Get a reader for the specified backend."""
+    readers = {
+        "openslide": OpenSlideReader,
+        "tiffslide": TiffSlideReader,
+        "slideio": SlideIOReader,
+        "xarray": XarrayReader,
+    }
+    if backend not in readers:
+        raise ValueError(f"Unknown backend: {backend}. Supported backends are: {', '.join(readers.keys())}.")
+    return readers[backend]
