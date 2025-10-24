@@ -70,7 +70,12 @@ class OpenSlideReader(ReaderBase):
     name = "openslide"
 
     def __init__(self, path: str):
-        from openslide import OpenSlide
+        try:
+            from openslide import OpenSlide
+        except ImportError:
+            raise ImportError(
+                "To use the openslide backend, you need to install it, e.g.,: `pip install openslide-python openslide-bin`."
+            )
 
         self.path = path
         self.slide = OpenSlide(path)
@@ -169,7 +174,10 @@ class SlideIOReader(ReaderBase):
         dask.config.set(scheduler="single-threaded")
         log.warning("SlideIOReader is not multi-threaded compatible, setting dask scheduler to single-threaded.")
 
-        import slideio
+        try:
+            import slideio
+        except ImportError:
+            raise ImportError("To use the slideio backend, you need to install it, e.g.,: `pip install slideio`.")
 
         self.path = path
         self.slide = slideio.open_slide(path)
