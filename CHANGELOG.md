@@ -174,6 +174,7 @@ Yanked release (missing dask distributed, cannot install)
 - Use `prob_thresh=0.2` and `nms_thresh=0.6` by default in `stardist`
 - During segmentation, pixels outside of the ROI / tissue use the mean channels value instead of 0 (#222)
 
+
 ## [2.0.2] - 2025-02-21
 
 ### Added

@@ -102,10 +102,10 @@ def test_patches_inference_clustering():
 
     assert sdata["dummy_embeddings"].shape == (9, 3)
 
-    sdata["he_image"].attrs["backend"] = "test"
+    sdata["he_image"].attrs["backend"] = "tiffslide"
     sdata["he_image"].attrs["metadata"] = {
         "level_downsamples": [1, 2, 4],
-        "properties": {"test.objective-power": 50},
+        "properties": {"tiffslide.objective-power": 50},
     }
 
     sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10, image_key="he_image")
@@ -115,11 +115,16 @@ def test_patches_inference_clustering():
     assert sdata["dummy_embeddings"].shape == (4, 3)
 
     sopa.patches.compute_embeddings(sdata, "dummy", 50, magnification=100, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (4, 3)
+    assert sdata["dummy_embeddings"].shape == (16, 3)
 
     sopa.patches.cluster_embeddings(sdata, "dummy_embeddings")
 
     assert "cluster" in sdata["dummy_embeddings"].obs
+
+    # Testing the xarray slicing for the read region
+    sopa.settings.native_read_region = False
+    sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10, image_key="he_image")
+    assert sdata["dummy_embeddings"].shape == (9, 3)
 
 
 def test_gene_exlude_pattern():

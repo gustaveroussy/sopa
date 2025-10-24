@@ -13,6 +13,7 @@ class HOPTIMUSFeatures(nn.Module):
             )
 
         self.model = timm.create_model("hf_hub:bioptimus/H-optimus-0", pretrained=True)
+        self.model.eval()
 
     def forward(self, x):
         from torchvision import transforms
