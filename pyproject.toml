@@ -73,6 +73,7 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+addopts = "-m 'not wsi_backends'"
 
 [tool.mypy]
 files = ["sopa"]

@@ -41,6 +41,23 @@ jobs:
       - name: Snakemake
         run: cd workflow && uv run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
 
+  test_wsi_backends:
+    needs: [pre-commit]
+    name: "pytest wsi_backends"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Install extra dependencies
+        run: uv sync --extra wsi --dev && uv run pip install 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1'
+
+      - name: Tests
+        run: uv run pytest -m wsi_backends
+
   deploy-docs:
     needs: [tests]
     if: contains(github.ref, 'tags')
