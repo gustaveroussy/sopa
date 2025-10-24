@@ -49,17 +49,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up the environment
-        uses: ./.github/actions/setup-python-env
-
-      - name: Install extra dependencies
-        run: uv sync --extra wsi --dev && uv run pip install 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Install the dependencies
+        run: pip install -e '.[wsi]' pytest 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1'
 
       - name: Tests
-        run: uv run pytest -m wsi_backends
+        run: pytest -m wsi_backends
 
   deploy-docs:
-    needs: [tests]
+    needs: [tests, test_wsi_backends]
     if: contains(github.ref, 'tags')
     name: "Deploy documentation"
     runs-on: ubuntu-latest
@@ -76,7 +76,7 @@ jobs:
         run: uv run mkdocs gh-deploy --force
 
   pypi-release:
-    needs: [tests]
+    needs: [tests, test_wsi_backends]
     if: contains(github.ref, 'tags')
     name: "PyPI release"
     runs-on: ubuntu-latest
