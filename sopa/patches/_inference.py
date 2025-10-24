@@ -161,9 +161,9 @@ def _get_level_for_magnification(image: DataArray | DataTree, magnification: int
 
     level = _get_best_level_for_downsample(slide_metadata["level_downsamples"], downsample)
     level_downsample = slide_metadata["level_downsamples"][level]
-    resize_factor = level_downsample / downsample
+    tile_resize_factor = level_downsample / downsample
 
-    return level, resize_factor, level_downsample
+    return level, tile_resize_factor, level_downsample
 
 
 def _get_best_level_for_downsample(level_downsamples: list[float], downsample: float) -> int:

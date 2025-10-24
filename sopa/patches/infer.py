@@ -101,7 +101,7 @@ def compute_embeddings(
         "magnification": magnification,
         "level": infer.level,
         "level_downsample": infer.level_downsample,
-        "resize_factor": infer.tile_resize_factor,
+        "tile_resize_factor": infer.tile_resize_factor,
         "model_str": infer.model_str,
     }
 
