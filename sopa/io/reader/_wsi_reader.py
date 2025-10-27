@@ -182,7 +182,7 @@ class SlideIOReader(ReaderBase):
             tile_x = int(np.round(x_width / scaling))
             tile_y = int(np.round(y_height / scaling))
             _tile = scene.read_block((x, y, x_width, y_height), (tile_x, tile_y))
-            tile = np.zeros((size[0], size[1], 3), dtype=np.uint8)
+            tile = np.zeros((size[1], size[0], 3), dtype=np.uint8)
             tile[: _tile.shape[0], : _tile.shape[1], :] = _tile[:, :, :3]  # Ensure RGB format
         return np.array(tile)
 
