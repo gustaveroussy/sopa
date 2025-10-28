@@ -10,21 +10,21 @@ If you want to open a PR, follow the following instructions.
 
 ## Installing `sopa` in editable mode
 
-When contributing, installing `sopa` in editable mode is recommended. Also, we recommend installing the 'dev' extra.
+When contributing, installing `sopa` in editable mode is recommended. You'll need the `dev` extra to be able to run tests and pre-commits.
 
-For this, use one of the two following lines:
+For this, use one of the two following lines (using `uv` is recommended, see [here](https://docs.astral.sh/uv/getting-started/installation/) how to install it):
 
 ```sh
-# with pip
+# pip setup
 pip install -e '.[dev]'
 
-# or with uv
+# uv setup
 uv sync --all-extras --dev
 ```
 
 ## Coding guidelines
 
-- Some code quality controls can be executed via pre-commit. You can install it via `pre-commit install`, and it will run the checks before any commit. You can also run `pre-commit` manually via `pre-commit run --all-files`
+- Some code quality controls can be executed via pre-commit. You can install it via `pre-commit install`, and it will run the checks before any commit. You can also run it manually via `pre-commit run --all-files` to check the code quality at any time
 - Follow the [PEP8](https://peps.python.org/pep-0008/) style guide.
 - Provide meaningful names to all your variables and functions.
 - Document your functions and type your function inputs/outputs.
@@ -38,7 +38,7 @@ To add some new code to **sopa**, you should:
 2. Install `sopa` in editable mode with the 'dev' extra (see above)
 3. Create your personal branch from `main`
 4. Implement your changes
-5. Run tests via `uv run pytest` (for coverage, use `uv run pytest --cov --cov-config=pyproject.toml --cov-report=html` and open it with `open htmlcov/index.html`). For quicker test, use `uv run pytest -m "not long"`
+5. Run tests via `uv run poe test_short`. Afterwards, you can open the test coverage report with `open htmlcov/index.html`. For the full tests, use `uv run poe test` (but it may take minutes).
 6. Run `pre-commit run --all-files` to ensure minimal code quality.
 7. Commit and push changes
 8. Create a pull request on the `main` branch. Add explanations about your developed features, and wait for discussion and validation of your pull request
