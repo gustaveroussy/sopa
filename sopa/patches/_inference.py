@@ -32,7 +32,7 @@ class Inference:
         _path = image.attrs.get("path")
 
         try:
-            if settings.native_read_region:
+            if settings.native_read_region and _backend is not None:
                 self.slide = get_reader(_backend)(_path)
             else:
                 self.slide = get_reader("xarray")(image)

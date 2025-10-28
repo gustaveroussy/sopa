@@ -12,7 +12,7 @@ from ..._constants import SopaAttrs
 
 def wsi(
     path: str | Path,
-    chunks: str | tuple[int, int, int] = "auto",
+    chunks: tuple[int, int, int] = (3, 512, 512),
     as_image: bool = False,
     backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
