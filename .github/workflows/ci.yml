@@ -111,6 +111,11 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Wait for PyPI availability
+        run: |
+          echo "Sleeping 5 minutes to ensure the package is deployed on PyPI..."
+          sleep 300
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
