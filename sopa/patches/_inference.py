@@ -113,6 +113,7 @@ def _get_extraction_parameters(
 ) -> tuple[DataArray, int, float]:
     if isinstance(image, DataArray):
         assert level == 0, "Level must be 0 when using a DataArray"
+        assert magnification is None, "Magnification must be None when the image is not multi scale"
         return image, 0, 1, 1
 
     if level < 0:
@@ -120,13 +121,14 @@ def _get_extraction_parameters(
         level = len(image.keys()) + level
 
     if magnification is None:
-        tile_resize_factor = 1
-        level_downsample = 1
+        tile_resize_factor, level_downsample = 1, 1
         if level is None:
             log.warning("Both level and magnification arguments are None. Using level=0 by default.")
             level = 0
     else:
         level, tile_resize_factor, level_downsample = _get_level_for_magnification(image, magnification)
+
+    assert f"scale{level}" in image, f"Level {level} not found in the image scales"
 
     image = next(iter(image[f"scale{level}"].values()))
 
