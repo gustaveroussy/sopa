@@ -12,13 +12,9 @@ If you want to open a PR, follow the following instructions.
 
 When contributing, installing `sopa` in editable mode is recommended. You'll need the `dev` extra to be able to run tests and pre-commits.
 
-For this, use one of the two following lines (using `uv` is recommended, see [here](https://docs.astral.sh/uv/getting-started/installation/) how to install it):
+To do that, using `uv` is recommended. See [here](https://docs.astral.sh/uv/getting-started/installation/) how to install `uv`, and then install all the dependencies as below.
 
 ```sh
-# pip setup
-pip install -e '.[dev]'
-
-# uv setup
 uv sync --all-extras --dev
 ```
 
@@ -30,15 +26,22 @@ uv sync --all-extras --dev
 - Document your functions and type your function inputs/outputs.
 - Try as much as possible to follow the same coding style as the rest of the repository.
 
-## Pull Requests
+## Pull Requests guidelines
 
 To add some new code to **sopa**, you should:
 
+### Branch setup
 1. Fork the repository
 2. Install `sopa` in editable mode with the 'dev' extra (see above)
 3. Create your personal branch from `main`
+
+### Code implementation and quality testing
 4. Implement your changes
-5. Run tests via `uv run poe test_short`. Afterwards, you can open the test coverage report with `open htmlcov/index.html`. For the full tests, use `uv run poe test` (but it may take minutes).
-6. Run `pre-commit run --all-files` to ensure minimal code quality.
-7. Commit and push changes
-8. Create a pull request on the `main` branch. Add explanations about your developed features, and wait for discussion and validation of your pull request
+5. If you need to add documentation, add it under the `docs` directory. You can deploy it locally via `uv run poe docs`
+6. Run tests via `uv run poe test_short`. You can open the test coverage report with `open htmlcov/index.html`. For the full tests, use `uv run poe test` (but it may take minutes).
+7. If you fixed an issue or made an important change, mention it in the `CHANGELOG.md` file with your GitHub username.
+8. Run `pre-commit run --all-files` to ensure minimal code quality.
+
+### Create the PR
+9.  Commit and push changes to your personal branch
+10. Create a pull request on the `main` branch of the `sopa` repository. Add explanations about your developed features, and wait for discussion and validation of your pull request.
