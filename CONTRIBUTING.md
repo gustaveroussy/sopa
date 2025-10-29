@@ -1,4 +1,4 @@
-# Contributing to *sopa*
+# Contributing to `sopa`
 
 Contributions are welcome as we aim to continue improving the pipeline. For instance, you can contribute by:
 
@@ -28,7 +28,7 @@ uv sync --all-extras --dev
 
 ## Pull Requests guidelines
 
-To add some new code to **sopa**, you should:
+To add some new code to `sopa`, you should:
 
 ### Branch setup
 1. Fork the repository
