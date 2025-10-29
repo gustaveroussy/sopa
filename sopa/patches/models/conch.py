@@ -5,6 +5,7 @@ class ConchFeatures(nn.Module):
     def __init__(self):
         super().__init__()
         self.conch, self.transform = _import_conch()
+        self.conch.eval()
 
     def forward(self, x):
         return self.conch(self.transform(x))
