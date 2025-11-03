@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import base64
 from io import BytesIO
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -12,8 +13,10 @@ from .css import BULMA_CSS
 class Renderable:
     """Object that can be transformed to string representing HTML"""
 
+    _children: list[Renderable] | Renderable | None = None
+
     @property
-    def children(self) -> list["Renderable"]:
+    def children(self) -> list[Renderable]:
         if hasattr(self, "_children") and self._children is not None:
             if isinstance(self._children, list):
                 return self._children
@@ -24,7 +27,7 @@ class Renderable:
     def children_html(self) -> str:
         return "".join([str(child) for child in self.children])
 
-    def children_rec(self) -> list["Renderable"]:
+    def children_rec(self) -> list[Renderable]:
         return [self] + [cc for child in self.children for cc in child.children_rec()]
 
     def __str__(self) -> str:
@@ -96,7 +99,7 @@ class ProgressBar(Renderable):
         self,
         value: float,
         valuemax: int = 1,
-        text: Optional[str] = None,
+        text: str | None = None,
         color: str = "primary",
         is_light: bool = False,
     ) -> None:
@@ -119,13 +122,13 @@ class ProgressBar(Renderable):
 class Section(Renderable):
     """Section of the report"""
 
-    def __init__(self, name: str, content: list["Section"] | None = None) -> None:
+    def __init__(self, name: str, content: list[Section] | None = None) -> None:
         self.name = name
         self._children = content
         self.subtitle = False
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.name.lower().replace(" ", "-")
 
     def __str__(self) -> str:
@@ -144,7 +147,7 @@ class Section(Renderable):
 class SubSection(Section):
     """Sub-section of the report"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: int, **kwargs: int):
         super().__init__(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -162,7 +165,7 @@ class NavbarItem(Renderable):
     def __init__(self, section: Section) -> None:
         self.section = section
 
-    def subsections(self):
+    def subsections(self) -> str:
         li = [f"<li><a href='#{subsection.id}'>{subsection.name}</a></li>" for subsection in self.section.children]
         return "".join(li)
 
@@ -213,12 +216,12 @@ class Image(Renderable):
         self.extension = extension
         self.pretty_legend = pretty_legend
 
-    def make_figure_pretty(self):
+    def make_figure_pretty(self) -> None:
         if self.pretty_legend and _has_handles(self.fig):
             self.fig.legend(bbox_to_anchor=(1.04, 0.5), loc="center left", borderaxespad=0, frameon=False)
         sns.despine(fig=self.fig, offset=10, trim=True)
 
-    def encod(self):
+    def encod(self) -> str:
         self.make_figure_pretty()
         tmpfile = BytesIO()
         self.fig.savefig(tmpfile, format=self.extension, transparent=True, bbox_inches="tight")
@@ -243,7 +246,7 @@ class Root(Renderable):
         self._children = sections
         self.nav = Navbar(sections)
 
-    def sanity_check(self):
+    def sanity_check(self) -> None:
         section_ids = [section.id for section in self.children]
         assert len(section_ids) == len(set(section_ids)), "Sections IDs must be unique"
 
