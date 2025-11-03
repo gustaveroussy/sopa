@@ -5,26 +5,19 @@ class Resnet50Features(nn.Module):
     def __init__(self):
         super().__init__()
 
+        try:
+            import timm
+        except ImportError:
+            raise ImportError(
+                "Using the hoptimus0 model for inference requires installing the timm dependency, e.g. via `pip install timm`"
+            )
+        self.model = timm.create_model("resnet50", pretrained=True, num_classes=0)
+        self.model.eval()
+
         from torchvision import transforms
-        from torchvision.models import resnet50
-
-        resnet = resnet50()
-        resnet.eval()
-
-        self.features = nn.Sequential(
-            resnet.conv1,
-            resnet.bn1,
-            resnet.relu,
-            resnet.maxpool,
-            resnet.layer1,
-            resnet.layer2,
-            resnet.layer3,
-            nn.AdaptiveAvgPool2d(1),
-            nn.Flatten(start_dim=1),
-        )
-
-        self.t = transforms.Compose([transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))])
+        self.transform = transforms.Compose([
+            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+        ])
 
     def __call__(self, x):
-        x = self.features(self.t(x))
-        return x
+        return self.model(self.transform(x))
