@@ -200,13 +200,13 @@ def test_move_sdata_transcript_cache():
     sdata = sopa.io.toy_dataset()
 
     sopa.segmentation.tissue(sdata)
-    sdata.write("test.zarr")
+    sdata.write("tests/test.zarr", overwrite=True)
 
     sopa.make_transcript_patches(sdata, patch_width=70, patch_overlap=0)
 
-    shutil.move("test.zarr", "test_moved.zarr")
+    shutil.move("tests/test.zarr", "tests/test_moved.zarr")
 
-    sdata = spatialdata.read_zarr("test_moved.zarr")
+    sdata = spatialdata.read_zarr("tests/test_moved.zarr")
     _check_transcript_patches(sdata)  # the cache should still be detected
 
-    shutil.rmtree("test_moved.zarr")
+    shutil.rmtree("tests/test_moved.zarr")
