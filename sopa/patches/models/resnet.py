@@ -15,6 +15,7 @@ class Resnet50Features(nn.Module):
         self.model.eval()
 
         from torchvision import transforms
+
         self.transform = transforms.Compose([
             transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
         ])
