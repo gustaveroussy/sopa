@@ -19,6 +19,9 @@ class Settings:
     available_parallelization_backends = [None, "dask"]
     dask_client_kwargs: dict = {}
 
+    ### Backend settings
+    native_read_region: bool = True
+
     ### Segmentation or aggregation
     gene_exclude_pattern: str | None = (
         "nan|<NA>|.*control.*|blank.*|antisense.*|unassigned.*|deprecated.*|intergenic.*|false.*|neg.*"

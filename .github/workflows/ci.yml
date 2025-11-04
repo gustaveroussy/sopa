@@ -33,16 +33,33 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install extra dependencies
-        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install 'snakemake>=7.32.4,<9.0' 'pulp<2.8'
+        run: uv sync --extra cellpose --extra wsi --dev && uv run pip install 'snakemake>=7.32.4,<9.0' 'pulp<2.8' 'cellpose<4.0.0'
 
       - name: Tests
-        run: uv run pytest
+        run: uv run poe test
 
       - name: Snakemake
         run: cd workflow && uv run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1
 
+  test_wsi_backends:
+    needs: [pre-commit]
+    name: "pytest wsi_backends"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      - name: Install the dependencies
+        run: pip install -e '.[wsi]' pytest 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1' 'timm==1.0.21'
+
+      - name: Tests
+        run: pytest -m wsi_backends
+
   deploy-docs:
-    needs: [tests]
+    needs: [tests, test_wsi_backends]
     if: contains(github.ref, 'tags')
     name: "Deploy documentation"
     runs-on: ubuntu-latest
@@ -59,7 +76,7 @@ jobs:
         run: uv run mkdocs gh-deploy --force
 
   pypi-release:
-    needs: [tests]
+    needs: [tests, test_wsi_backends]
     if: contains(github.ref, 'tags')
     name: "PyPI release"
     runs-on: ubuntu-latest

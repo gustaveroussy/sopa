@@ -23,6 +23,7 @@ dependencies = [
   "igraph>=0.11.0",
   "typer>=0.9.0",
   "dask[distributed]>=2024.4.1",
+  "zarr<3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -50,6 +51,7 @@ dev = [
   "mkdocs-jupyter>=0.24.6",
   "mkdocstrings>=0.23.0",
   "mkdocstrings-python>=1.7.3",
+  "poethepoet>=0.34.0",
 ]
 
 [project.urls]
@@ -73,6 +75,13 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+addopts = "-m 'not wsi_backends'"
+
+[tool.poe.tasks]
+test = "python -m pytest -m 'not wsi_backends' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
+test_short = "python -m pytest -m 'not long and not wsi_backends' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
+docs = "mkdocs serve"
+pre-commit = "pre-commit run --all-files"
 
 [tool.mypy]
 files = ["sopa"]

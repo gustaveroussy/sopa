@@ -15,7 +15,7 @@ sdata = sopa.io.toy_dataset(length=1000)
 sopa.make_image_patches(sdata)
 
 sopa.segmentation.cellpose(sdata, "DAPI", diameter=35, key_added="nuclei")
-sopa.segmentation.cellpose(sdata, ["DAPI", "CK"], diameter=35, key_added="tumor_cells")
+sopa.segmentation.cellpose(sdata, ["CK", "DAPI"], diameter=35, key_added="tumor_cells")
 
 sopa.segmentation.combine(sdata, ["nuclei", "tumor_cells"], key_added="combined_cells")
 ```
@@ -33,23 +33,23 @@ First, generate the bounding boxes of the patches on which Cellpose will be run.
 sopa patchify image tuto.zarr --patch-width-pixel 1500 --patch-overlap-pixel 50
 ```
 
-Now, we can run Cellpose on each of the four patches and for each "segmentation step" we want. In this toy example, we run 3 steps with (i) DAPI + CK, (ii) DAPI + CD3, and (iii) DAPI + CD20.
+Now, we can run Cellpose on each of the four patches and for each "segmentation step" we want. In this toy example, we run 3 steps with (i) CK + DAPI, (ii) CD3 + DAPI, and (iii) CD20 + DAPI.
 
 ```sh
 sopa segmentation cellpose tuto.zarr \
-    --channels DAPI --channels CK \
+    --channels CK --channels DAPI \
     --cache-dir-name cellpose_CK \
     --diameter 35 \
     --min-area 2000
 
 sopa segmentation cellpose tuto.zarr \
-    --channels DAPI --channels CD3 \
+    --channels CD3 --channels DAPI \
     --cache-dir-name cellpose_CD3 \
     --diameter 35 \
     --min-area 2000
 
 sopa segmentation cellpose tuto.zarr \
-    --channels DAPI --channels CD20 \
+    --channels CD20 --channels DAPI \
     --cache-dir-name cellpose_CD20 \
     --diameter 35 \
     --min-area 2000

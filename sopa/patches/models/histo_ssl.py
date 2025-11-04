@@ -8,6 +8,7 @@ class HistoSSLFeatures(torch.nn.Module):
         url = "https://nextcloud.centralesupelec.fr/s/Kn4zEGMdWgnj2ac/download/tenpercent_resnet12.pth"
         self.model = torch.hub.load_state_dict_from_url(url)
         self.model.fc = torch.nn.Sequential()
+        self.model.eval()
 
     def forward(self, x):
         return self.model(x)
