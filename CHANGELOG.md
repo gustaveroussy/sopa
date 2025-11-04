@@ -1,4 +1,8 @@
-## [2.1.8] - xxxx-xx-xx
+## [2.1.9] - xxxx-xx-xx
+
+## [2.1.8] - 2025-10-04
+
+Hot fix - pin `pyarrow<22.0.0` (from fix in https://github.com/scverse/spatialdata/pull/1002) as we can't use the latest spatialdata version until we don't support zarr v3 (#347)
 
 ## [2.1.7] - 2025-10-04
 
