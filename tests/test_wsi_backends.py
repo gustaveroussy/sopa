@@ -3,6 +3,8 @@ import pytest
 import spatialdata
 
 import sopa
+from sopa.patches._inference import Inference
+from sopa.patches.infer import Patches2D, _get_image_for_inference
 
 
 @pytest.mark.wsi_backends
@@ -73,3 +75,18 @@ def test_deterministic_embedding(model: str):
     sopa.patches.compute_embeddings(sdata_on_disk, model, patch_width)
 
     assert np.isclose(sdata_tiffslide[f"{model}_embeddings"].X, sdata_on_disk[f"{model}_embeddings"].X).all()
+
+
+@pytest.mark.wsi_backends
+def test_resize_patches():
+    sdata = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
+    image = _get_image_for_inference(sdata)
+
+    patch_size = 253
+    n_bboxes = 2
+
+    infer = Inference(image, "resnet50", patch_size, 0, 15, "cpu", False)
+    patches = Patches2D(sdata, infer.image, infer.patch_width, 0)
+
+    batch = infer._torch_batch(patches.bboxes[:n_bboxes])
+    assert batch.shape == (n_bboxes, 3, patch_size, patch_size)

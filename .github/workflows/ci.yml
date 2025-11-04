@@ -53,7 +53,7 @@ jobs:
         with:
           python-version: 3.12
       - name: Install the dependencies
-        run: pip install -e '.[wsi]' pytest 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1'
+        run: pip install -e '.[wsi]' pytest 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1' 'timm==1.0.21'
 
       - name: Tests
         run: pytest -m wsi_backends

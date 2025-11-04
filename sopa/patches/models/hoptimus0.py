@@ -9,7 +9,7 @@ class HOPTIMUSFeatures(nn.Module):
             import timm
         except ImportError:
             raise ImportError(
-                "Using the hoptimus0 model for inference requires installing the timm dependency, e.g. via `pip install timm`"
+                "Using the 'hoptimus0' model for inference requires installing the timm dependency, e.g. via `pip install timm`"
             )
 
         self.model = timm.create_model("hf_hub:bioptimus/H-optimus-0", pretrained=True)

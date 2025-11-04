@@ -9,7 +9,7 @@ class Resnet50Features(nn.Module):
             import timm
         except ImportError:
             raise ImportError(
-                "Using the hoptimus0 model for inference requires installing the timm dependency, e.g. via `pip install timm`"
+                "Using the 'resnet50' model for inference requires installing the timm dependency, e.g. via `pip install timm`"
             )
         self.model = timm.create_model("resnet50", pretrained=True, num_classes=0)
         self.model.eval()

@@ -1,8 +1,6 @@
 import pytest
 
 import sopa
-from sopa.patches._inference import Inference
-from sopa.patches.infer import Patches2D, _get_image_for_inference
 
 
 def test_patches_embeddings_inference_clustering():
@@ -46,17 +44,3 @@ def test_patches_embeddings_inference_clustering():
     sopa.settings.native_read_region = False
     sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10, image_key="he_image")
     assert sdata["dummy_embeddings"].shape == (9, 3)
-
-
-def test_resize_patches():
-    sdata = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
-    image = _get_image_for_inference(sdata)
-
-    patch_size = 253
-    n_bboxes = 2
-
-    infer = Inference(image, "resnet50", patch_size, 0, 15, "cpu", False)
-    patches = Patches2D(sdata, infer.image, infer.patch_width, 0)
-
-    batch = infer._torch_batch(patches.bboxes[:n_bboxes])
-    assert batch.shape == (n_bboxes, 3, patch_size, patch_size)
