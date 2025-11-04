@@ -36,7 +36,7 @@ jobs:
         run: uv sync --extra cellpose --extra wsi --dev && uv run pip install 'snakemake>=7.32.4,<9.0' 'pulp<2.8'
 
       - name: Tests
-        run: uv run pytest
+        run: uv run poe test
 
       - name: Snakemake
         run: cd workflow && uv run snakemake --config sdata_path=tuto.zarr --configfile=config/toy/cellpose.yaml --workflow-profile profile/ci -c1

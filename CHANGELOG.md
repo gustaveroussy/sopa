@@ -1,7 +1,12 @@
 ## [2.1.7] - xxxx-xx-xx
 
 ### Added
-- Argument to choose whether to run HVG in `scanpy_preprocess`
+- Pin `zarr<3.0.0` until we fully support it (see #347 for progress on this)
+- WSI reader improvements: add slideio backend and faster embedding inference when not saving on disk @stergioc (#218)
+- Argument to choose whether to run HVG in `scanpy_preprocess` (`False` by default)
+
+### Fixed
+- Ensure the H&E embeddings are deterministic: using `timm` for resnet, and ensure always in eval mode (#318)
 
 ## [2.1.6] - 2025-10-15 (minor release for nf-core)
 
