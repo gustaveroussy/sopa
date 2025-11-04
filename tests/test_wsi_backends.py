@@ -7,22 +7,22 @@ from sopa.patches._inference import Inference
 from sopa.patches.infer import Patches2D, _get_image_for_inference
 
 
-@pytest.mark.wsi_backends
+@pytest.mark.wsi
 def test_tiffslide_backend():
     sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="tiffslide")
 
 
-@pytest.mark.wsi_backends
+@pytest.mark.wsi
 def test_openslide_backend():
     sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="openslide")
 
 
-@pytest.mark.wsi_backends
+@pytest.mark.wsi
 def test_slideio_backend():
     sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="slideio")
 
 
-@pytest.mark.wsi_backends
+@pytest.mark.wsi
 def test_region_matching():
     import numpy as np
 
@@ -52,7 +52,7 @@ def test_region_matching():
     )
 
 
-@pytest.mark.wsi_backends
+@pytest.mark.wsi
 @pytest.mark.parametrize("model", ["histo_ssl", "resnet50", "dinov2"])  # TODO: add conch and hoptimus0?
 def test_deterministic_embedding(model: str):
     patch_width = 224
@@ -77,7 +77,7 @@ def test_deterministic_embedding(model: str):
     assert np.isclose(sdata_tiffslide[f"{model}_embeddings"].X, sdata_on_disk[f"{model}_embeddings"].X).all()
 
 
-@pytest.mark.wsi_backends
+@pytest.mark.wsi
 def test_resize_patches():
     sdata = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
     image = _get_image_for_inference(sdata)
