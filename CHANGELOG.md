@@ -1,3 +1,5 @@
+## [2.1.8] - xxxx-xx-xx
+
 ## [2.1.7] - 2025-10-04
 
 ### Added
@@ -6,7 +8,7 @@
 - Argument to choose whether to run HVG in `scanpy_preprocess` (`False` by default)
 
 ### Fixed
-- Ensure the H&E embeddings are deterministic: using `timm` for resnet, and ensure always in eval mode (#318)
+- Ensure the H&E embeddings are deterministic: using `timm` for resnet, and ensure always in eval mode (#218)
 
 ### Minor
 - CI improvements (#348)
