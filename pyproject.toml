@@ -23,6 +23,7 @@ dependencies = [
   "igraph>=0.11.0",
   "typer>=0.9.0",
   "dask[distributed]>=2024.4.1",
+  "zarr<3.0.0",
 ]
 
 [project.optional-dependencies]
