@@ -58,8 +58,25 @@ jobs:
       - name: Tests
         run: uv run poe test_wsi
 
+  test_cellpose_v4:
+    needs: [pre-commit]
+    name: "pytest cellpose v4"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Install extra dependencies
+        run: uv sync --extra cellpose --dev
+
+      - name: Tests
+        run: uv run poe test_long
+
   deploy-docs:
-    needs: [tests, test_wsi]
+    needs: [tests, test_wsi, test_cellpose_v4]
     if: contains(github.ref, 'tags')
     name: "Deploy documentation"
     runs-on: ubuntu-latest
@@ -76,7 +93,7 @@ jobs:
         run: uv run mkdocs gh-deploy --force
 
   pypi-release:
-    needs: [tests, test_wsi]
+    needs: [tests, test_wsi, test_cellpose_v4]
     if: contains(github.ref, 'tags')
     name: "PyPI release"
     runs-on: ubuntu-latest

@@ -78,11 +78,12 @@ python_files = "test_*.py"
 addopts = "-m 'not wsi'"
 
 [tool.poe.tasks]
-test = "python -m pytest -m 'not wsi' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
-test_short = "python -m pytest -m 'not long and not wsi' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
-test_wsi = "python -m pytest -m wsi --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
 docs = "mkdocs serve"
 pre-commit = "pre-commit run --all-files"
+test = "pytest -m 'not wsi' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
+test_short = "pytest -m 'not long and not wsi' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
+test_wsi = "pytest -m wsi"
+test_long = "pytest -m 'long and not wsi'"
 
 [tool.mypy]
 files = ["sopa"]
