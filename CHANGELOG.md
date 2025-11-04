@@ -1,4 +1,4 @@
-## [2.1.7] - xxxx-xx-xx
+## [2.1.7] - 2025-10-04
 
 ### Added
 - Pin `zarr<3.0.0` until we fully support it (see #347 for progress on this)
@@ -7,6 +7,9 @@
 
 ### Fixed
 - Ensure the H&E embeddings are deterministic: using `timm` for resnet, and ensure always in eval mode (#318)
+
+### Minor
+- CI improvements (#348)
 
 ## [2.1.6] - 2025-10-15 (minor release for nf-core)
 
