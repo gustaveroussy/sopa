@@ -28,8 +28,9 @@ runs:
       uses: astral-sh/setup-uv@v2
       with:
         version: ${{ inputs.uv-version }}
-        enable-cache: false
+        enable-cache: true
+        cache-suffix: ${{ inputs.python-version }}
 
     - name: Install Python dependencies
-      run: uv sync --frozen
+      run: uv sync --dev --frozen
       shell: bash

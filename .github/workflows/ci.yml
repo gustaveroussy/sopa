@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install extra dependencies
-        run: uv sync --extra cellpose --dev && uv pip install 'snakemake>=7.32.4,<9.0' 'pulp<2.8' 'cellpose==3.1.1'
+        run: uv sync --extra cellpose && uv pip install 'snakemake>=7.32.4,<9.0' 'pulp<2.8' 'cellpose==3.1.1'
 
       - name: Tests
         run: uv run poe test
@@ -49,14 +49,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-      - name: Install the dependencies
-        run: pip install -e '.[wsi]' pytest 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1' 'timm==1.0.21'
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Install extra dependencies
+        run: uv sync --extra wsi && uv pip install 'openslide-bin==4.0.0.8' 'openslide-python==1.4.2' 'slideio==2.7.1' 'timm==1.0.21'
 
       - name: Tests
-        run: pytest -m wsi
+        run: uv run poe test_wsi
 
   deploy-docs:
     needs: [tests, test_wsi]
@@ -68,9 +68,6 @@ jobs:
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
-
-      - name: Install extra dependencies
-        run: uv sync --dev
 
       - name: Build documentation
         run: uv run mkdocs gh-deploy --force
