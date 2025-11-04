@@ -18,12 +18,6 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Free disk space
-      run: |
-        sudo rm -rf /usr/share/dotnet
-        sudo apt-get clean
-      shell: bash
-
     - name: Install uv
       uses: astral-sh/setup-uv@v2
       with:
@@ -32,5 +26,5 @@ runs:
         cache-suffix: ${{ inputs.python-version }}
 
     - name: Install Python dependencies
-      run: uv sync --dev --frozen
+      run: uv sync --frozen
       shell: bash
