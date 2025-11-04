@@ -16,7 +16,11 @@ def wsi(
     as_image: bool = False,
     backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
-    """Read a WSI into a `SpatialData` object
+    """Read a WSI into a `SpatialData` object.
+
+    !!! info "Supported backends"
+        Multiple backends are supported to read WSIs. To use `openslide`, you will need to install `openslide-python` and `openslide-bin`.
+        If you want to use `slideio`, you will need to install `slideio`. The `tiffslide` backend is supported out-of-the-box.
 
     Args:
         path: Path to the WSI
