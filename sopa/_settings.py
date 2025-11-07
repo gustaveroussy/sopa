@@ -26,6 +26,7 @@ class Settings:
     gene_exclude_pattern: str | None = (
         "nan|<NA>|.*control.*|blank.*|antisense.*|unassigned.*|deprecated.*|intergenic.*|false.*|neg.*"
     )
+    simplification_tolerance: float | None = None
 
     def __init__(self):
         self.parallelization_backend = os.environ.get("SOPA_PARALLELIZATION_BACKEND", None)

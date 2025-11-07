@@ -7,10 +7,12 @@ import shapely
 import shapely.affinity
 import skimage
 from geopandas import GeoDataFrame
+from shapely.errors import GEOSException
 from shapely.geometry import LinearRing, MultiPolygon, Polygon
 from skimage.measure._regionprops import RegionProperties
 
-from ._validate import _default_tolerance, _smoothen_cell
+from .. import settings
+from ._validate import ensure_polygon
 
 log = logging.getLogger(__name__)
 
@@ -83,3 +85,30 @@ def _vectorize_mask(mask: np.ndarray, allow_holes: bool = False) -> GeoDataFrame
 
 def pixel_outer_bounds(bounds: tuple[int, int, int, int]) -> tuple[int, int, int, int]:
     return [floor(bounds[0]), floor(bounds[1]), ceil(bounds[2]) + 1, ceil(bounds[3]) + 1]
+
+
+def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -> Polygon:
+    """Smoothen a cell polygon
+
+    Args:
+        cell_id: MultiPolygon representing a cell
+        smooth_radius: radius used to smooth the cell polygon
+        tolerance: tolerance used to simplify the cell polygon
+
+    Returns:
+        Shapely polygon representing the cell, or an empty Polygon if the cell was empty after smoothing
+    """
+    try:
+        if smooth_radius > 0:
+            cell = cell.buffer(-smooth_radius).buffer(2 * smooth_radius).buffer(-smooth_radius)
+        if tolerance > 0:
+            cell = cell.simplify(tolerance)
+    except GEOSException:
+        log.warning(f"Failed to smoothen cell with {smooth_radius=} and tolerance {tolerance=}.")
+        return Polygon()
+
+    return ensure_polygon(cell)
+
+
+def _default_tolerance(mean_radius: float) -> float:
+    return settings.simplification_tolerance or min(mean_radius * 0.03, 1)

@@ -2,6 +2,10 @@
 
 ### Changed
 - Building Docker images using python 3.12 instead of python 3.10
+- Lower the default tolerance during vectorization for more precise shapes (#340)
+
+### Added
+- Setting `sopa.settings.simplification_tolerance` to change the default shapely tolerance. For instance, set it to `0.1` for low simplification, or `0` for no simplification (#340)
 
 ## [2.1.8] - 2025-10-04
 
