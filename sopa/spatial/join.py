@@ -82,7 +82,7 @@ def assign_transcript_to_cell(
     geo_df = get_boundaries(sdata, key=shapes_key)
 
     geo_df = to_intrinsic(sdata, geo_df, df)
-    geo_df = geo_df.reset_index()
+    geo_df = geo_df.reset_index(drop=True)
 
     get_cell_id = partial(_get_cell_id, geo_df, unassigned_value=unassigned_value)
 
