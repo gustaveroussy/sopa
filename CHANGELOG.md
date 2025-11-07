@@ -1,5 +1,8 @@
 ## [2.1.9] - xxxx-xx-xx
 
+### Changed
+- Building Docker images using python 3.12 instead of python 3.10
+
 ## [2.1.8] - 2025-10-04
 
 Hot fix - pin `pyarrow<22.0.0` (from fix in https://github.com/scverse/spatialdata/pull/1002) as we can't use the latest spatialdata version until we support zarr v3 (#347)
