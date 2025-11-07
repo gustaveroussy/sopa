@@ -35,6 +35,7 @@ def merscope(
         slide_name: Name of the slide/run. If `None` then the name of the parent directory of `path` is used (whose name starts with a date).
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
+        kwargs: Additional keyword arguments passed to [`spatialdata_io.merscope`](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.merscope.html).
 
     Returns:
         A `SpatialData` object representing the MERSCOPE experiment
