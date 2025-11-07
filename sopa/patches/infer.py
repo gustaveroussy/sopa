@@ -82,22 +82,20 @@ def compute_embeddings(
 
     image = _get_image_for_inference(sdata, image_key)
 
-    infer = TileLoader(image, patch_width, level, magnification)
-    patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap, roi_key=roi_key, **kwargs)
+    tile_loader = TileLoader(image, patch_width, level, magnification)
+    patches = Patches2D(sdata, tile_loader.image, tile_loader.patch_width, patch_overlap, roi_key=roi_key, **kwargs)
 
-    log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
+    log.info(f"Processing {len(patches)} patches extracted from level {tile_loader.level}")
 
     predictions = []
     with torch.no_grad():
         for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-            bboxes = patches.bboxes[i : i + batch_size]
-            patches = infer._torch_batch(bboxes)  # shape (B, C, Y, X)
+            batch = tile_loader.get_batch(patches.bboxes[i : i + batch_size])  # shape (B, C, Y, X)
 
-            assert len(patches.shape) == 4
-            embedding: torch.Tensor = model(patches.to(device))
-            assert len(embedding.shape) == 2, "The model must have the following signature: (B, C, Y, X) -> (B, C)"
+            embedding: torch.Tensor = model(batch.to(device))
+            assert len(embedding.shape) == 2, "The model must have the signature (B, C, Y, X) -> (B, C)"
 
-            predictions.extend(embedding.cpu())  # shape (B, output_dim)
+            predictions.extend(embedding.cpu())
 
     predictions = torch.stack(predictions)
     if len(predictions.shape) == 1:
@@ -121,9 +119,9 @@ def compute_embeddings(
         "patch_width": patch_width,
         "patch_overlap": patch_overlap,
         "magnification": magnification,
-        "level": infer.level,
-        "level_downsample": infer.level_downsample,
-        "tile_resize_factor": infer.tile_resize_factor,
+        "level": tile_loader.level,
+        "level_downsample": tile_loader.level_downsample,
+        "tile_resize_factor": tile_loader.tile_resize_factor,
         "model_name": model_name,
     }
 
