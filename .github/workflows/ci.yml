@@ -135,7 +135,9 @@ jobs:
         run: uv publish -t ${{ secrets.PYPI_TOKEN }}
 
   wait-for-pypi:
-    name: "Wait PyPI ready"
+    needs: [pypi-release]
+    if: contains(github.ref, 'tags')
+    name: "Wait until PyPI is ready"
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
@@ -145,7 +147,7 @@ jobs:
 
       - name: Wait for sopa to be available on PyPI
         run: |
-          SPEC="sopa==2.1.8" # TODO: use ${GITHUB_REF#refs/tags/v}
+          SPEC="sopa==${GITHUB_REF#refs/tags/v}"
           attempt=0
           max_attempts=20
 
@@ -162,6 +164,7 @@ jobs:
             echo "Attempt ${attempt}/${max_attempts} failed, retrying..."
             sleep 30
           done
+          echo "${SPEC} is available on PyPI."
 
   docker-images-release:
     needs: [wait-for-pypi]
