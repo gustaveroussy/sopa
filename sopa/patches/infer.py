@@ -29,10 +29,10 @@ def compute_embeddings(
     key_added: str | None = None,
     **kwargs: int,
 ) -> str:
-    """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an image. This is mostly useful for WSI images.
+    """It creates patches, runs a computer vision model on each patch, and store the embeddings of each all patches as an [`AnnData` object](https://anndata.readthedocs.io/en/stable/). This is mostly useful for WSI images.
 
     !!! info
-        The image will be saved into the `SpatialData` object with the key `"{model_name}_embeddings"` (see the `model_name` argument below), except if `key_added` is provided.
+        The `AnnData` object will be saved into the `SpatialData` object with the key `"{model_name}_embeddings"` (see the `model_name` argument below), except if `key_added` is provided.
         The shapes of the patches will be saved with the key `"embeddings_patches"`.
 
     !!! warning
@@ -40,21 +40,21 @@ def compute_embeddings(
 
     Args:
         sdata: A `SpatialData` object
-        model: Callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`, or a string with the name of one of the available models (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`, `conch`).
-        patch_width: Width (pixels) of the patches.
-        patch_overlap: Width (pixels) of the overlap between the patches.
+        model: A supported model name (`resnet50`, `histo_ssl`, `dinov2`, `hoptimus0`, or `conch`), or a callable that takes as an input a tensor of size `(batch_size, channels, x, y)` and returns a vector for each tile `(batch_size, emb_dim)`.
+        patch_width: Width of the patches in pixels.
+        patch_overlap: Width of the overlap between the patches in pixels.
         level: Image level on which the processing is performed. Either `level` or `magnification` should be provided.
         magnification: The target magnification on which the processing is performed. If `magnification` is provided, the `level` argument will be automatically computed.
-        image_key: Optional image key of the image, unecessary if there is only one image.
+        image_key: Optional image key of the image. By default, uses the only image (if only one) or the image used for cell or tissue segmentation.
         batch_size: Mini-batch size used during inference.
         device: Device used for the computer vision model.
         data_parallel: If `True`, the model will be run in data parallel mode. If a list of GPUs is provided, the model will be run in data parallel mode on the specified GPUs.
-        roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
+        roi_key: Optional name of the shapes that needs to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used. By default, uses the tissue segmentation if available.
         key_added: Optional name of the spatial element that will be added (storing the embeddings).
         **kwargs: Additional keyword arguments passed to the `Patches2D` constructor.
 
     Returns:
-        The key of the spatial element that was added to the `SpatialData` object.
+        The name of the `AnnData` table that was added to the `SpatialData` object.
     """
     try:
         import torch
@@ -62,22 +62,44 @@ def compute_embeddings(
         raise ImportError(
             "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'`."
         )
+    from . import models
+    from ._inference import TileLoader
 
-    from ._inference import Inference
+    if isinstance(model, str):
+        assert model in models.available_models, (
+            f"'{model}' is not a valid model name. Valid names are: {', '.join(list(models.available_models.keys()))}"
+        )
+        model_name, model = model, models.available_models[model]()
+    else:
+        model_name = model.__class__.__name__
+
+    if device is not None:
+        model.to(device)
+
+    if data_parallel:
+        ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
+        model = torch.nn.DataParallel(model, device_ids=ids)
 
     image = _get_image_for_inference(sdata, image_key)
 
-    infer = Inference(image, model, patch_width, level, magnification, device, data_parallel)
+    infer = TileLoader(image, patch_width, level, magnification)
     patches = Patches2D(sdata, infer.image, infer.patch_width, patch_overlap, roi_key=roi_key, **kwargs)
 
     log.info(f"Processing {len(patches)} patches extracted from level {infer.level}")
 
     predictions = []
-    for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-        prediction = infer.infer_bboxes(patches.bboxes[i : i + batch_size])
-        predictions.extend(prediction)
-    predictions = torch.stack(predictions)
+    with torch.no_grad():
+        for i in tqdm.tqdm(range(0, len(patches), batch_size)):
+            bboxes = patches.bboxes[i : i + batch_size]
+            patches = infer._torch_batch(bboxes)  # shape (B, C, Y, X)
 
+            assert len(patches.shape) == 4
+            embedding: torch.Tensor = model(patches.to(device))
+            assert len(embedding.shape) == 2, "The model must have the following signature: (B, C, Y, X) -> (B, C)"
+
+            predictions.extend(embedding.cpu())  # shape (B, output_dim)
+
+    predictions = torch.stack(predictions)
     if len(predictions.shape) == 1:
         predictions = torch.unsqueeze(predictions, 1)
 
@@ -102,10 +124,10 @@ def compute_embeddings(
         "level": infer.level,
         "level_downsample": infer.level_downsample,
         "tile_resize_factor": infer.tile_resize_factor,
-        "model_str": infer.model_str,
+        "model_name": model_name,
     }
 
-    key_added = key_added or f"{infer.model_str}_embeddings"
+    key_added = key_added or f"{model_name}_embeddings"
     add_spatial_element(sdata, key_added, adata)
 
     return key_added

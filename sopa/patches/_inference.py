@@ -1,5 +1,4 @@
 import logging
-from typing import Callable
 
 import dask
 import numpy as np
@@ -8,21 +7,17 @@ from xarray import DataArray, DataTree
 
 from .. import settings
 from ..io.reader._wsi_reader import get_reader
-from . import models
 
 log = logging.getLogger(__name__)
 
 
-class Inference:
+class TileLoader:
     def __init__(
         self,
         image: DataTree | DataArray,
-        model: Callable | str,
         patch_width: int,
         level: int | None = 0,
         magnification: int | None = None,
-        device: str | None = None,
-        data_parallel: bool | list[int] = False,
     ):
         self.image, self.level, self.tile_resize_factor, self.level_downsample = _get_extraction_parameters(
             image, level, magnification
@@ -44,26 +39,6 @@ class Inference:
 
         self.patch_width = int(patch_width / self.tile_resize_factor)
         self.resized_patch_width = patch_width
-
-        self.model_str, self.model = self._instantiate_model(model)
-
-        self.device = device
-        if self.device is not None:
-            self.model.to(device)
-
-        if data_parallel:
-            ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
-            self.model = torch.nn.DataParallel(self.model, device_ids=ids)
-
-    def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:
-        if isinstance(model, str):
-            assert model in models.available_models, (
-                f"'{model}' is not a valid model name. Valid names are: {', '.join(list(models.available_models.keys()))}"
-            )
-
-            return model, models.available_models[model]()
-
-        return model.__class__.__name__, model
 
     def _torch_resize(self, tensor: torch.Tensor):
         from torchvision.transforms import Resize
@@ -96,16 +71,6 @@ class Inference:
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
 
         return batch if self.tile_resize_factor == 1 else self._torch_resize(batch)
-
-    @torch.no_grad()
-    def infer_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
-        patches = self._torch_batch(bboxes)  # shape (B, C, Y, X)
-
-        assert len(patches.shape) == 4
-        embedding = self.model(patches.to(self.device))
-        assert len(embedding.shape) == 2, "The model must have the following signature: (B, C, Y, X) -> (B, C)"
-
-        return embedding.cpu()  # shape (B, output_dim)
 
 
 def _get_extraction_parameters(
