@@ -1,7 +1,21 @@
-## [2.1.7] - xxxx-xx-xx
+## [2.1.9] - xxxx-xx-xx
+
+## [2.1.8] - 2025-10-04
+
+Hot fix - pin `pyarrow<22.0.0` (from fix in https://github.com/scverse/spatialdata/pull/1002) as we can't use the latest spatialdata version until we support zarr v3 (#347)
+
+## [2.1.7] - 2025-10-04
 
 ### Added
-- Argument to choose whether to run HVG in `scanpy_preprocess`
+- Pin `zarr<3.0.0` until we fully support it (see #347 for progress on this)
+- WSI reader improvements: add slideio backend and faster embedding inference when not saving on disk @stergioc (#218)
+- Argument to choose whether to run HVG in `scanpy_preprocess` (`False` by default)
+
+### Fixed
+- Ensure the H&E embeddings are deterministic: using `timm` for resnet, and ensure always in eval mode (#218)
+
+### Minor
+- CI improvements (#348)
 
 ## [2.1.6] - 2025-10-15 (minor release for nf-core)
 
@@ -173,6 +187,7 @@ Yanked release (missing dask distributed, cannot install)
 - [`spatialdata_plot`](https://spatialdata.scverse.org/projects/plot/en/latest/index.html) is now a default dependency of Sopa
 - Use `prob_thresh=0.2` and `nms_thresh=0.6` by default in `stardist`
 - During segmentation, pixels outside of the ROI / tissue use the mean channels value instead of 0 (#222)
+
 
 ## [2.0.2] - 2025-02-21
 

@@ -84,44 +84,6 @@ def test_patchify_baysor_inside_tissue_roi(sdata: SpatialData):
     sopa.utils.delete_cache(sdata)
 
 
-def test_patches_inference_clustering():
-    sdata = sopa.io.toy_dataset(length=200)
-
-    with pytest.raises(AssertionError):  # two images, and no image_key provided
-        sopa.patches.compute_embeddings(sdata, "dummy", 50)
-
-    sopa.patches.compute_embeddings(sdata, "dummy", 50, image_key="he_image")
-
-    assert sdata["dummy_embeddings"].shape == (4, 3)
-
-    sopa.patches.compute_embeddings(sdata, "dummy", 25, level=-1, image_key="he_image")
-
-    assert sdata["dummy_embeddings"].shape == (1, 3)
-
-    sopa.patches.compute_embeddings(sdata, "dummy", 13, patch_overlap=3, level=-1, image_key="he_image")
-
-    assert sdata["dummy_embeddings"].shape == (9, 3)
-
-    sdata["he_image"].attrs["backend"] = "test"
-    sdata["he_image"].attrs["metadata"] = {
-        "level_downsamples": [1, 2, 4],
-        "properties": {"test.objective-power": 50},
-    }
-
-    sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (9, 3)
-
-    sopa.patches.compute_embeddings(sdata, "dummy", 11, magnification=10, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (4, 3)
-
-    sopa.patches.compute_embeddings(sdata, "dummy", 50, magnification=100, image_key="he_image")
-    assert sdata["dummy_embeddings"].shape == (4, 3)
-
-    sopa.patches.cluster_embeddings(sdata, "dummy_embeddings")
-
-    assert "cluster" in sdata["dummy_embeddings"].obs
-
-
 def test_gene_exlude_pattern():
     _default_gene_exclude_pattern = sopa.settings.gene_exclude_pattern
 
@@ -200,13 +162,13 @@ def test_move_sdata_transcript_cache():
     sdata = sopa.io.toy_dataset()
 
     sopa.segmentation.tissue(sdata)
-    sdata.write("test.zarr")
+    sdata.write("tests/test.zarr", overwrite=True)
 
     sopa.make_transcript_patches(sdata, patch_width=70, patch_overlap=0)
 
-    shutil.move("test.zarr", "test_moved.zarr")
+    shutil.move("tests/test.zarr", "tests/test_moved.zarr")
 
-    sdata = spatialdata.read_zarr("test_moved.zarr")
+    sdata = spatialdata.read_zarr("tests/test_moved.zarr")
     _check_transcript_patches(sdata)  # the cache should still be detected
 
-    shutil.rmtree("test_moved.zarr")
+    shutil.rmtree("tests/test_moved.zarr")

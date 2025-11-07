@@ -12,22 +12,26 @@ from ..._constants import SopaAttrs
 
 def wsi(
     path: str | Path,
-    chunks: tuple[int, int, int] = (3, 256, 256),
+    chunks: tuple[int, int, int] = (3, 512, 512),
     as_image: bool = False,
-    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData | DataTree:
-    """Read a WSI into a `SpatialData` object
+    """Read a WSI into a `SpatialData` object.
+
+    !!! info "Supported backends"
+        Multiple backends are supported to read WSIs. To use `openslide`, you will need to install `openslide-python` and `openslide-bin`.
+        If you want to use `slideio`, you will need to install `slideio`. The `tiffslide` backend is supported out-of-the-box.
 
     Args:
         path: Path to the WSI
         chunks: Tuple representing the chunksize for the dimensions `(C, Y, X)`.
         as_image: If `True`, returns a, image instead of a `SpatialData` object
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"slideio"`.
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`, or just the DataTree if `as_image=True`
     """
-    image_name, img, slide, slide_metadata = _open_wsi(path, backend=backend)
+    image_name, img, slide_metadata = _open_wsi(path, backend=backend)
 
     images = {}
     for level, key in enumerate(sorted(img.keys(), key=int)):
@@ -38,7 +42,7 @@ def wsi(
             dims=("c", "y", "x"),
         ).chunk(chunks)
 
-        scale_factor = slide.level_downsamples[level]
+        scale_factor = slide_metadata["level_downsamples"][level]
 
         scale_image = Image2DModel.parse(
             scale_image[:3, :, :],
@@ -54,6 +58,7 @@ def wsi(
     sdata = SpatialData(images={image_name: multiscale_image}, attrs={SopaAttrs.TISSUE_SEGMENTATION: image_name})
     sdata[image_name].attrs["metadata"] = slide_metadata
     sdata[image_name].attrs["backend"] = backend
+    sdata[image_name].attrs["path"] = str(path)
     sdata[image_name].name = image_name
 
     if as_image:
@@ -71,7 +76,7 @@ def _get_scale_transformation(scale_factor: float):
 def wsi_autoscale(
     path: str | Path,
     image_model_kwargs: dict | None = None,
-    backend: Literal["tiffslide", "openslide"] = "tiffslide",
+    backend: Literal["tiffslide", "openslide", "slideio"] = "tiffslide",
 ) -> SpatialData:
     """Read a WSI into a `SpatialData` object.
 
@@ -81,14 +86,14 @@ def wsi_autoscale(
     Args:
         path: Path to the WSI
         image_model_kwargs: Kwargs provided to the `Image2DModel`
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`.
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"slideio"`.
 
     Returns:
         A `SpatialData` object with a 2D-image of shape `(C, Y, X)`
     """
     image_model_kwargs = _default_image_models_kwargs(image_model_kwargs)
 
-    image_name, img, _, tiff_metadata = _open_wsi(path, backend=backend)
+    image_name, img, tiff_metadata = _open_wsi(path, backend=backend)
 
     img = img.rename_dims({"S": "c", "Y": "y", "X": "x"})
 
@@ -116,37 +121,17 @@ def _default_image_models_kwargs(image_models_kwargs: dict | None) -> dict:
 
 
 def _open_wsi(
-    path: str | Path, backend: Literal["tiffslide", "openslide"] = "openslide"
+    path: str | Path, backend: Literal["tiffslide", "openslide", "slideio"] = "openslide"
 ) -> tuple[str, xarray.Dataset, Any, dict]:
+    from ._wsi_reader import get_reader
+
     image_name = Path(path).stem
 
-    if backend == "tiffslide":
-        import tiffslide
+    reader = get_reader(backend)(path)
 
-        slide = tiffslide.open_slide(path)
-        zarr_store = slide.zarr_group.store
-        zarr_img = xarray.open_zarr(
-            zarr_store,
-            consolidated=False,
-            mask_and_scale=False,
-        )
-    elif backend == "openslide":
-        import openslide
-
-        from ._openslide import OpenSlideStore
-
-        slide = openslide.open_slide(path)
-        zarr_store = OpenSlideStore(path).store
-    else:
-        raise ValueError(f"Invalid {backend:=}. Supported options are 'openslide' and 'tiffslide'")
+    zarr_store = reader.get_zarr_store()
+    metadata = reader.get_metadata()
 
     zarr_img = xarray.open_zarr(zarr_store, consolidated=False, mask_and_scale=False)
 
-    metadata = {
-        "properties": slide.properties,
-        "dimensions": slide.dimensions,
-        "level_count": slide.level_count,
-        "level_dimensions": slide.level_dimensions,
-        "level_downsamples": slide.level_downsamples,
-    }
-    return image_name, zarr_img, slide, metadata
+    return image_name, zarr_img, metadata
