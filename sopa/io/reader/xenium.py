@@ -80,10 +80,6 @@ def xenium(
 
     if "transcripts" in sdata.points:
         sdata.attrs[SopaAttrs.TRANSCRIPTS] = "transcripts"
-        if qv_threshold:
-            sdata.points["transcripts"][SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY] = (
-                sdata.points["transcripts"].qv < qv_threshold
-            )
 
         if "cell_id" in sdata.points["transcripts"].columns:
             sdata.attrs[SopaAttrs.PRIOR_TUPLE_KEY] = ["cell_id", "UNASSIGNED"]
