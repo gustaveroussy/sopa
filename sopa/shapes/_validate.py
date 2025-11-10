@@ -2,7 +2,6 @@ import logging
 
 import geopandas as gpd
 import shapely
-from shapely.errors import GEOSException
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon
 
 log = logging.getLogger(__name__)
@@ -49,32 +48,3 @@ def ensure_polygon(
 
     log.warning(f"Found a cell of unknown type {type(cell)}")
     return Polygon()
-
-
-def _smoothen_cell(cell: MultiPolygon, smooth_radius: float, tolerance: float) -> Polygon:
-    """Smoothen a cell polygon
-
-    Args:
-        cell_id: MultiPolygon representing a cell
-        smooth_radius: radius used to smooth the cell polygon
-        tolerance: tolerance used to simplify the cell polygon
-
-    Returns:
-        Shapely polygon representing the cell, or an empty Polygon if the cell was empty after smoothing
-    """
-    try:
-        cell = cell.buffer(-smooth_radius).buffer(2 * smooth_radius).buffer(-smooth_radius)
-        cell = cell.simplify(tolerance)
-    except GEOSException:
-        log.warning(f"Failed to smoothen cell with {smooth_radius=} and tolerance {tolerance=}.")
-        return Polygon()
-
-    return ensure_polygon(cell)
-
-
-def _default_tolerance(mean_radius: float) -> float:
-    if mean_radius < 10:
-        return 0.4
-    if mean_radius < 20:
-        return 1
-    return 2

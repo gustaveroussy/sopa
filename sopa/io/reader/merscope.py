@@ -16,6 +16,8 @@ def merscope(
     z_layers: int | list[int] | None = 3,
     region_name: str | None = None,
     slide_name: str | None = None,
+    cells_boundaries: bool = False,
+    cells_table: bool = False,
     image_models_kwargs: dict | None = None,
     imread_kwargs: dict | None = None,
     **kwargs: int,
@@ -33,8 +35,11 @@ def merscope(
         z_layers: Indices of the z-layers to consider. Either one `int` index, or a list of `int` indices. If `None`, then no image is loaded. By default, only the middle layer is considered (that is, layer 3).
         region_name: Name of the region of interest, e.g., `'region_0'`. If `None` then the name of the `path` directory is used.
         slide_name: Name of the slide/run. If `None` then the name of the parent directory of `path` is used (whose name starts with a date).
+        cells_boundaries: Whether to read cell boundaries (polygons).
+        cells_table: Whether to read the cells table.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         imread_kwargs: Keyword arguments passed to `dask_image.imread.imread`.
+        kwargs: Additional keyword arguments passed to [`spatialdata_io.merscope`](https://spatialdata.scverse.org/projects/io/en/latest/generated/spatialdata_io.merscope.html).
 
     Returns:
         A `SpatialData` object representing the MERSCOPE experiment
@@ -51,8 +56,8 @@ def merscope(
         slide_name=slide_name,
         image_models_kwargs=image_models_kwargs,
         imread_kwargs=imread_kwargs,
-        cells_boundaries=False,
-        cells_table=False,
+        cells_boundaries=cells_boundaries,
+        cells_table=cells_table,
         **kwargs,
     )
 

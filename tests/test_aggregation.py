@@ -57,7 +57,7 @@ def test_count_transcripts():
         "gene": ["a", "a", "b", "c", "a", "c", "gene_control", "b", "b", "blank"],
     })
     df_pandas["gene"] = df_pandas["gene"].astype(object)
-    df_pandas["gene"].loc[0] = np.nan
+    df_pandas.loc[0, "gene"] = np.nan
 
     points = dd.from_pandas(df_pandas, npartitions=2)
     polygons = [

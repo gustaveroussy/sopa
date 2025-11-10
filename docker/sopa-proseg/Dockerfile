@@ -2,7 +2,7 @@ FROM rust:latest AS rust-builder
 
 RUN cargo install proseg
 
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 ARG SOPA_VERSION
 
