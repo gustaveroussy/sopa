@@ -1,9 +1,11 @@
+## [2.1.10] - xxxx-xx-xx
+
 ## [2.1.9] - 2025-11-14
 
 ### Fixed
 - Fix `assign_transcript_to_cell` when the GeoDataFrame index name is already a column name (#346)
 - Xenium v4 aggregation issue due to the presence of `/` in the channel names (#353)
-- Ensure low quality transcripts are not count during aggregation (#349)
+- Ensure low-quality transcripts are not counted during aggregation (#349)
 
 ### Changed
 - Building Docker images using python 3.12 instead of python 3.10
