@@ -13,6 +13,7 @@ from spatialdata import SpatialData
 from spatialdata.models import PointsModel, ShapesModel, TableModel
 
 import sopa
+from sopa._constants import SopaKeys
 from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
 
@@ -79,6 +80,26 @@ def test_count_transcripts():
 
     assert (adata.var_names == ["blank", "gene_control"]).all()
     assert (adata.X.toarray() == expected).all()
+
+
+def test_count_transcripts_with_low_quality():
+    df_pandas = pd.DataFrame({
+        "x": [1, 2, 3, 1],
+        "y": [1, 1, 2, 2],
+        "gene": ["a", "a", "b", "b"],
+        SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY: [True, False, False, False],
+    })
+    df_pandas["gene"] = df_pandas["gene"].astype(object)
+
+    points = dd.from_pandas(df_pandas, npartitions=2)
+    polygons = [box(-1, -1, 10, 10)]
+
+    gdf = gpd.GeoDataFrame(geometry=polygons)
+
+    adata = _count_transcripts_aligned(gdf, points, "gene")
+
+    assert (adata.var_names == ["a", "b"]).all()
+    assert (adata.X.toarray() == np.array([[1, 2]])).all()
 
 
 def test_aggregate_bins():
