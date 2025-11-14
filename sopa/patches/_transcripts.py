@@ -49,8 +49,10 @@ class OnDiskTranscriptPatches(Patches2D):
 
         self.prior_shapes_key = prior_shapes_key
         self.unassigned_value = unassigned_value
+
         self.min_points_per_patch = min_points_per_patch
         self.min_cells_per_patch = min_cells_per_patch
+
         self.csv_name = csv_name
         self.centroids_csv_name = centroids_csv_name
         self.write_cells_centroids = write_cells_centroids
@@ -83,15 +85,16 @@ class OnDiskTranscriptPatches(Patches2D):
                 "Unassigned value is not needed when using a prior segmentation based on existing shapes"
             )
 
-            return assign_transcript_to_cell(
-                self.sdata, self.points_key, self.prior_shapes_key, self.prior_shapes_key, unassigned_value=0
+            assign_transcript_to_cell(
+                self.sdata, self.points_key, self.prior_shapes_key, SopaKeys.SOPA_PRIOR, unassigned_value=0
             )
+            return
 
         assert self.prior_shapes_key in self.points.columns, (
             f"Prior-segmentation column {self.prior_shapes_key} not found in sdata['{self.points_key}']"
         )
 
-        self.points[self.prior_shapes_key] = _unassigned_to_zero(
+        self.points[SopaKeys.SOPA_PRIOR] = _unassigned_to_zero(
             self.points[self.prior_shapes_key], self.unassigned_value
         )
 
@@ -109,7 +112,7 @@ class OnDiskTranscriptPatches(Patches2D):
                 "x": centroids.geometry.x,
                 "y": centroids.geometry.y,
                 "z": 0,
-                self.prior_shapes_key: range(1, len(centroids) + 1),
+                SopaKeys.SOPA_PRIOR: range(1, len(centroids) + 1),
             },
             geometry=centroids,
         )

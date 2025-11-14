@@ -12,6 +12,7 @@
 ### Added
 - Setting `sopa.settings.simplification_tolerance` to change the default shapely tolerance. For instance, set it to `0.1` for low simplification, or `0` for no simplification (#340)
 - Add an argument to load cells_boundaries and cells_table in `sopa.io.merscope` (`False` by default) (#346)
+- Do not overwrite the prior shape key in the transcript dataframe (useful if running multiple times `make_transcript_patches`)
 
 ## [2.1.8] - 2025-10-04
 

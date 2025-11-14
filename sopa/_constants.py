@@ -15,6 +15,7 @@ class SopaKeys:
     PATCHES_ILOCS = "ilocs"
     ROI = "region_of_interest"
     PRIOR_SHAPES_KEY = "prior_shapes_key"
+    SOPA_PRIOR = "sopa_prior"
     POINTS_KEY = "points_key"
 
     # Other SpatialData keys
