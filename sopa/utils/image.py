@@ -71,6 +71,11 @@ def get_channel_names(image: DataArray | DataTree | SpatialData, image_key: str 
     raise ValueError(f"Image must be a DataTree or a DataArray. Found: {type(image)}")
 
 
+def validated_channel_names(image: DataArray | DataTree | SpatialData, image_key: str | None = None) -> list[str]:
+    channel_names: list[str] = list(get_channel_names(image, image_key=image_key))
+    return [c.replace("/", "_") for c in channel_names]
+
+
 def is_valid_c_coords(c_coords: np.ndarray) -> bool:
     return c_coords.dtype.kind in {"U", "S", "O"}
 
