@@ -11,7 +11,7 @@ from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 
 from .. import settings
-from .._constants import SopaAttrs
+from .._constants import SopaAttrs, SopaKeys
 from ..utils import get_boundaries, get_feature_key, get_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)
@@ -114,6 +114,9 @@ def _add_csr(
     if settings.gene_exclude_pattern is not None:
         matching = partition[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=True)
         partition = partition[matching] if only_excluded else partition[~matching]
+
+    if SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY in partition.columns:
+        partition = partition[~partition[SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY]]
 
     points_gdf = gpd.GeoDataFrame(partition, geometry=gpd.points_from_xy(partition["x"], partition["y"]))
     joined = geo_df.sjoin(points_gdf)

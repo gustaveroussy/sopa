@@ -6,6 +6,11 @@ on:
       - v*
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "0 0 * * 1,3,5"
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
 
 jobs:
   pre-commit:
@@ -25,7 +30,7 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
@@ -47,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
@@ -64,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
@@ -75,13 +80,32 @@ jobs:
       - name: Tests
         run: uv run poe test_long
 
+  test_pip_install:
+    needs: [pre-commit]
+    name: "pytest with pip install"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install sopa with pip
+        run: pip install -e ".[wsi]" && pip install pytest-cov poethepoet
+
+      - name: Run short tests
+        run: poe test_short
+
   deploy-docs:
-    needs: [tests, test_wsi, test_cellpose_v4]
+    needs: [tests, test_wsi, test_cellpose_v4, test_pip_install]
     if: contains(github.ref, 'tags')
     name: "Deploy documentation"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
@@ -93,13 +117,13 @@ jobs:
         run: uv run mkdocs gh-deploy --force
 
   pypi-release:
-    needs: [tests, test_wsi, test_cellpose_v4]
+    needs: [tests, test_wsi, test_cellpose_v4, test_pip_install]
     if: contains(github.ref, 'tags')
     name: "PyPI release"
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
@@ -110,8 +134,40 @@ jobs:
       - name: Publish
         run: uv publish -t ${{ secrets.PYPI_TOKEN }}
 
-  docker-images-release:
+  wait-for-pypi:
     needs: [pypi-release]
+    if: contains(github.ref, 'tags')
+    name: "Wait until PyPI is ready"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Wait for sopa to be available on PyPI
+        run: |
+          SPEC="sopa==${GITHUB_REF#refs/tags/v}"
+          attempt=0
+          max_attempts=20
+
+          echo "Waiting for ${SPEC} to be downloadable from PyPI..."
+          while true; do
+            if pip download --no-cache-dir --no-deps "${SPEC}" >/dev/null 2>&1; then
+              break
+            fi
+            attempt=$((attempt+1))
+            if [ "${attempt}" -ge "${max_attempts}" ]; then
+              echo "Timed out waiting for ${SPEC} to be downloadable from PyPI."
+              exit 1
+            fi
+            echo "Attempt ${attempt}/${max_attempts} failed, retrying..."
+            sleep 30
+          done
+          echo "${SPEC} is available on PyPI."
+
+  docker-images-release:
+    needs: [wait-for-pypi]
     if: contains(github.ref, 'tags')
     name: "Docker images release"
     runs-on: ubuntu-latest

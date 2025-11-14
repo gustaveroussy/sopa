@@ -6,7 +6,7 @@ import sopa
 
 
 @pytest.mark.wsi
-@pytest.mark.parametrize("model", ["histo_ssl", "dinov2"])
+@pytest.mark.parametrize("model", ["resnet50", "dinov2"])
 def test_deterministic_embedding(model: str):
     patch_width = 224
 

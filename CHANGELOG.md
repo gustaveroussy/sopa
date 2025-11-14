@@ -1,11 +1,17 @@
 ## [2.1.9] - xxxx-xx-xx
 
+### Fixed
+- Fix `assign_transcript_to_cell` when the GeoDataFrame index name is already a column name (#346)
+- Xenium v4 aggregation issue due to the presence of `/` in the channel names (#353)
+- Ensure low quality transcripts are not count during aggregation (#349)
+
 ### Changed
 - Building Docker images using python 3.12 instead of python 3.10
 - Lower the default tolerance during vectorization for more precise shapes (#340)
 
 ### Added
 - Setting `sopa.settings.simplification_tolerance` to change the default shapely tolerance. For instance, set it to `0.1` for low simplification, or `0` for no simplification (#340)
+- Add an argument to load cells_boundaries and cells_table in `sopa.io.merscope` (`False` by default) (#346)
 
 ## [2.1.8] - 2025-10-04
 

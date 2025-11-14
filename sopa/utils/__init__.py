@@ -15,6 +15,7 @@ from .utils import (
 from .annotation import preprocess_fluo, higher_z_score, tangram_annotate
 from .image import (
     get_channel_names,
+    validated_channel_names,
     scale_dtype,
     ensure_string_channel_names,
     is_valid_c_coords,

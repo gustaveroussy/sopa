@@ -43,8 +43,7 @@ wsi = ["tiffslide>=2.3.1", "torch>=2.1.1", "torchvision>=0.20.0"]
 [dependency-groups]
 dev = [
   "ruff>=0.11.4",
-  "ty>=0.0.1a6",
-  "pytest>=7.1.3",
+  "ty>=0.0.1a25",
   "pytest-cov>=4.0.0",
   "ipykernel>=6.25.2",
   "ipywidgets>=8.1.7",
@@ -85,15 +84,6 @@ test = "pytest -m 'not wsi' --cov --cov-config=pyproject.toml --cov-report=html 
 test_short = "pytest -m 'not long and not wsi' --cov --cov-config=pyproject.toml --cov-report=html --disable-warnings"
 test_wsi = "pytest -m wsi"
 test_long = "pytest -m 'long and not wsi'"
-
-[tool.mypy]
-files = ["sopa"]
-no_implicit_optional = true
-check_untyped_defs = true
-warn_return_any = true
-warn_unused_ignores = true
-show_error_codes = true
-ignore_missing_imports = true
 
 [tool.ruff]
 target-version = "py39"

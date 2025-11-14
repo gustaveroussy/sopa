@@ -10,7 +10,7 @@ from spatialdata.models import TableModel
 
 from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
-from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
+from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image, validated_channel_names
 from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
 
@@ -201,13 +201,13 @@ class Aggregator:
             if aggregate_genes:
                 self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
                     mean_intensities,
-                    columns=self.image.coords["c"].values.astype(str),
+                    columns=validated_channel_names(self.image),
                     index=self.table.obs_names,
                 )
             else:
                 self.table = AnnData(
                     mean_intensities,
-                    var=pd.DataFrame(index=self.image.coords["c"].values.astype(str)),
+                    var=pd.DataFrame(index=validated_channel_names(self.image)),
                     obs=pd.DataFrame(index=self.geo_df.index),
                 )
 
