@@ -1,4 +1,4 @@
-## [2.1.9] - xxxx-xx-xx
+## [2.1.9] - 2025-11-14
 
 ### Fixed
 - Fix `assign_transcript_to_cell` when the GeoDataFrame index name is already a column name (#346)
@@ -12,7 +12,7 @@
 ### Added
 - Setting `sopa.settings.simplification_tolerance` to change the default shapely tolerance. For instance, set it to `0.1` for low simplification, or `0` for no simplification (#340)
 - Add an argument to load cells_boundaries and cells_table in `sopa.io.merscope` (`False` by default) (#346)
-- Do not overwrite the prior shape key in the transcript dataframe (useful if running multiple times `make_transcript_patches`)
+- Do not overwrite the prior shape key in the transcript dataframe (useful if running multiple times `make_transcript_patches`) (#354)
 
 ## [2.1.8] - 2025-10-04
 
