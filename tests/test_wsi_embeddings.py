@@ -3,12 +3,10 @@ import pytest
 import spatialdata
 
 import sopa
-from sopa.patches._inference import Inference
-from sopa.patches.infer import Patches2D, _get_image_for_inference
 
 
 @pytest.mark.wsi
-@pytest.mark.parametrize("model", ["histo_ssl", "dinov2"])
+@pytest.mark.parametrize("model", ["resnet50", "dinov2"])
 def test_deterministic_embedding(model: str):
     patch_width = 224
 
@@ -27,6 +25,9 @@ def test_deterministic_embedding(model: str):
 
 @pytest.mark.wsi
 def test_resize_patches():
+    from sopa.patches._inference import Inference
+    from sopa.patches.infer import Patches2D, _get_image_for_inference
+
     sdata = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
     image = _get_image_for_inference(sdata)
 
