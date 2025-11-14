@@ -58,7 +58,7 @@ def comseg(
 
     assert "gene_column" in config, "'gene_column' not found in config"
 
-    config["prior_name"] = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+    config["prior_name"] = SopaKeys.SOPA_PRIOR
 
     if patch_index is not None:
         patch_dir = get_transcripts_patches_dirs(sdata, patch_index)

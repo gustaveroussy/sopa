@@ -44,7 +44,7 @@ def proseg(
         infer_presets: Whether to infer the proseg presets based on the columns of the transcripts dataframe.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
     """
-    _check_transcript_patches(sdata)
+    _check_transcript_patches(sdata, with_prior=True)
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
 
@@ -98,12 +98,6 @@ def _get_proseg_command(
 ) -> str:
     proseg_executable = _get_executable_path("proseg", ".cargo")
 
-    assert SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES], (
-        "Proseg requires a prior. Re-run `sopa.make_transcript_patches` with a `prior_shapes_key`."
-    )
-
-    prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
-
     feature_key = get_feature_key(sdata[points_key], raise_error=True)
 
     use_zarr = _use_zarr_output(proseg_executable)
@@ -111,7 +105,7 @@ def _get_proseg_command(
     if infer_presets:
         command_line_suffix = _add_presets(command_line_suffix, sdata[points_key].columns)
 
-    return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {prior_shapes_key} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
+    return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {SopaKeys.SOPA_PRIOR} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
 
 
 def _add_presets(command_line_suffix: str, columns: list[str]) -> str:

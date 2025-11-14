@@ -196,6 +196,6 @@ def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
 
     if with_prior:
         assert SopaKeys.PRIOR_SHAPES_KEY in sdata[SopaKeys.TRANSCRIPTS_PATCHES].columns, (
-            "You need to create the transcript patches with a `prior_shapes_key`. "
-            "For that, you can run cellpose first, and then run again `sopa.make_transcript_patches` with `prior_shapes_key='cellpose_boundaries'`"
+            "You need to run `sopa.make_transcript_patches` with a `prior_shapes_key`. "
+            "You can provide `prior_shapes_key='auto'` if your technology has a prior segmentation, or `prior_shapes_key='cellpose_boundaries'` if you ran cellpose segmentation first."
         )

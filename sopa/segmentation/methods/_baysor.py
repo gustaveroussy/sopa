@@ -49,9 +49,9 @@ def baysor(
     """
     _check_transcript_patches(sdata)
 
-    prior_shapes_key = None
-    if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES]:
-        prior_shapes_key = sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.PRIOR_SHAPES_KEY].iloc[0]
+    prior_shapes_key = (
+        SopaKeys.SOPA_PRIOR if SopaKeys.PRIOR_SHAPES_KEY in sdata.shapes[SopaKeys.TRANSCRIPTS_PATCHES] else None
+    )
 
     if config is None or not len(config):
         config = _get_default_config(sdata, prior_shapes_key, scale)
