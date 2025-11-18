@@ -1,15 +1,15 @@
-import gzip
 import logging
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import spatialdata
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from spatialdata.transformations import get_transformation
+from spatialdata.transformations import BaseTransformation, Identity, get_transformation
 
 from ..._constants import SopaAttrs, SopaKeys
 from ...aggregation.aggregation import add_standardized_table
@@ -66,6 +66,7 @@ def proseg(
 
         _proseg_bins(
             sdata,
+            prior_shapes_key=prior_shapes_key,
             bins_key=bins_key,
             command_line_suffix=command_line_suffix,
             infer_presets=infer_presets,
@@ -106,7 +107,7 @@ def _proseg_points(
     proseg_command = _get_proseg_points_command(sdata, points_key, command_line_suffix, infer_presets)
 
     _run_proseg(proseg_command, patch_dir)
-    adata, geo_df = _read_proseg(sdata, patch_dir, points_key)
+    adata, geo_df = _read_proseg(patch_dir, get_transformation(sdata[points_key], get_all=True).copy())
 
     add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
@@ -116,26 +117,59 @@ def _proseg_points(
         delete_transcripts_patches_dirs(sdata)
 
 
-def _proseg_bins(sdata: SpatialData, bins_key: str, command_line_suffix: str, infer_presets: bool, key_added: str):
+def _proseg_bins(
+    sdata: SpatialData,
+    prior_shapes_key: str,
+    bins_key: str,
+    command_line_suffix: str,
+    infer_presets: bool,
+    key_added: str,
+):
+    import shutil
+
     assert sdata.path is not None, "sdata object must be saved on disk (for now) to run proseg on bins data."
 
-    adata_bins: AnnData = sdata.tables[bins_key]
+    bins_table: AnnData = sdata.tables[bins_key]
 
-    assert "spatial_microns" in adata_bins.obsm
+    assert isinstance(bins_table.X, csr_matrix), (
+        "The bin table's X matrix must be in CSR format. E.g., you can run `adata.X = adata.X.tocsr()`"
+    )
 
-    assert isinstance(adata_bins.X, csr_matrix), "The bin table's X matrix must be in CSR format"
+    bins_shapes_key = sdata.get_annotated_regions(bins_table)
+    bins_shapes_key = bins_shapes_key[0] if isinstance(bins_shapes_key, list) else bins_shapes_key
+    bins_shapes = sdata[bins_shapes_key]
 
-    res = to_intrinsic(sdata, "stardist_boundaries", "Visium_HD_Human_Lung_Cancer_Fixed_Frozen_square_002um")
-    sjoin = sdata["Visium_HD_Human_Lung_Cancer_Fixed_Frozen_square_002um"].sjoin(res.reset_index(drop=True))
-    adata_bins.obs[SopaKeys.SOPA_PRIOR] = 0
+    assert "microns" in bins_shapes.attrs["transform"], "`microns` coordinate system is needed for the shapes"
+
+    centroid_microns = spatialdata.transform(bins_shapes, to_coordinate_system="microns").centroid
+    bins_table.obsm["spatial_microns"] = np.array([centroid_microns.x, centroid_microns.y]).T
+
+    prior_aligned = to_intrinsic(sdata, prior_shapes_key, bins_shapes_key)
+
+    sjoin = sdata[bins_shapes_key].sjoin(prior_aligned.reset_index(drop=True))
     sjoin = sjoin[~sjoin.index.duplicated()]
-    sjoin.index = sjoin.index.map({v: k for k, v in adata_bins.obs["location_id"].items()})
 
-    adata_bins.obs.loc[sjoin.index, SopaKeys.SOPA_PRIOR] = sjoin["index_right"] + 1
+    instance_key_column = sdata.get_instance_key_column(bins_table)
+    sjoin.index = sjoin.index.map(pd.Series(instance_key_column.index, index=instance_key_column.values))
 
-    proseg_command = _get_proseg_bins_command(sdata, bins_key, command_line_suffix, infer_presets)
+    bins_table.obs[SopaKeys.SOPA_PRIOR] = 0
+    bins_table.obs.loc[sjoin.index, SopaKeys.SOPA_PRIOR] = sjoin["index_right"] + 1
 
-    _run_proseg(proseg_command, get_cache_dir(sdata))
+    cwd = get_cache_dir(sdata)
+
+    bins_table.write_zarr(cwd / "bins_table.zarr")
+
+    proseg_command = _get_proseg_bins_command(sdata, command_line_suffix, infer_presets)
+
+    _run_proseg(proseg_command, cwd)
+    adata, geo_df = _read_proseg(sdata, cwd, {"microns": Identity()})
+
+    add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
+
+    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+
+    shutil.rmtree(cwd / "bins_table.zarr")
+    shutil.rmtree(cwd / "proseg-output.zarr")
 
 
 def _run_proseg(proseg_command: str, cwd: str | Path):
@@ -177,18 +211,13 @@ def _get_proseg_points_command(
     return f"{proseg_executable} transcripts.csv -x x -y y -z z --gene-column {feature_key} --cell-id-column {SopaKeys.SOPA_PRIOR} --cell-id-unassigned 0 {'--exclude-spatialdata-transcripts' if use_zarr else ''} {command_line_suffix}"
 
 
-def _get_proseg_bins_command(
-    sdata: SpatialData,
-    bins_key: str,
-    command_line_suffix: str,
-    infer_presets: bool,
-) -> str:
+def _get_proseg_bins_command(sdata: SpatialData, command_line_suffix: str, infer_presets: bool) -> str:
     proseg_executable = _get_executable_path("proseg", ".cargo")
 
     if infer_presets and "--voxel-size" not in command_line_suffix:
         command_line_suffix += " --voxel-size 2"
 
-    return f"{proseg_executable} --anndata {sdata.path / 'tables' / bins_key} --anndata-coordinate-key spatial_microns --cell-id-column {SopaKeys.SOPA_PRIOR} {command_line_suffix}"
+    return f"{proseg_executable} --anndata {get_cache_dir(sdata) / 'bins_table.zarr'} --anndata-coordinate-key spatial_microns --cell-id-column {SopaKeys.SOPA_PRIOR} {command_line_suffix}"
 
 
 def _add_presets(command_line_suffix: str, columns: list[str]) -> str:
@@ -213,8 +242,8 @@ def _add_presets(command_line_suffix: str, columns: list[str]) -> str:
     return command_line_suffix
 
 
-def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[AnnData, gpd.GeoDataFrame]:
-    zarr_output = patch_dir / "proseg-output.zarr"
+def _read_proseg(cwd: Path, transformations: dict[str, BaseTransformation]) -> tuple[AnnData, gpd.GeoDataFrame]:
+    zarr_output = cwd / "proseg-output.zarr"
 
     if zarr_output.exists():  # in versions >= 3.0.0
         _sdata = spatialdata.read_zarr(zarr_output)
@@ -222,19 +251,19 @@ def _read_proseg(sdata: SpatialData, patch_dir: Path, points_key: str) -> tuple[
 
         del geo_df.attrs["transform"]
     else:
-        counts = pd.read_csv(patch_dir / "expected-counts.csv.gz")
+        import gzip
 
-        obs = pd.read_csv(patch_dir / "cell-metadata.csv.gz")
+        counts = pd.read_csv(cwd / "expected-counts.csv.gz")
+
+        obs = pd.read_csv(cwd / "cell-metadata.csv.gz")
         obs.index = obs.index.map(str)
 
         adata = AnnData(counts, obs=obs)
 
-        with gzip.open(patch_dir / "cell-polygons.geojson.gz", "rb") as f:
+        with gzip.open(cwd / "cell-polygons.geojson.gz", "rb") as f:
             geo_df = gpd.read_file(f)
 
     geo_df.crs = None
-
-    transformations = get_transformation(sdata[points_key], get_all=True).copy()
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 
     return adata, geo_df

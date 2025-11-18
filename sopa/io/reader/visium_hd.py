@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from spatialdata import SpatialData
+from spatialdata.transformations import Scale, set_transformation
 
 from ..._constants import SopaAttrs
 from ...segmentation import shapes_bounding_box
@@ -74,15 +75,13 @@ def visium_hd(
             adata.var_names_make_unique()
 
     for key, geo_df in sdata.shapes.items():
-        table_name = key[-12:]
-        if table_name not in sdata.tables:
-            log.warning(f"Could not find a table matching the shapes '{key}' to compute the scale factor.")
-        else:
-            diameter = int(key[-5:-2])
-            area = geo_df.geometry.iloc[0].area
-            microns_per_pixel = diameter / (np.sqrt(area) if bins_as_squares else geo_df["radius"].iloc[0] * 2)
+        diameter = int(key[-5:-2])
 
-            sdata[table_name].obsm["spatial_microns"] = sdata[table_name].obsm["spatial"] * microns_per_pixel
+        area = geo_df.geometry.iloc[0].area
+        microns_per_pixel = diameter / (np.sqrt(area) if bins_as_squares else geo_df["radius"].iloc[0] * 2)
+
+        scale = Scale([microns_per_pixel, microns_per_pixel], axes=("x", "y"))
+        set_transformation(geo_df, scale, "microns", set_all=False)
 
     for key in sdata.shapes:
         if key.endswith("_002um"):
