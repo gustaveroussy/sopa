@@ -162,7 +162,8 @@ def _proseg_bins(
     proseg_command = _get_proseg_bins_command(sdata, command_line_suffix, infer_presets)
 
     _run_proseg(proseg_command, cwd)
-    adata, geo_df = _read_proseg(sdata, cwd, {"microns": Identity()})
+
+    adata, geo_df = _read_proseg(cwd, _transformations_from_microns(bins_shapes))
 
     add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
@@ -170,6 +171,16 @@ def _proseg_bins(
 
     shutil.rmtree(cwd / "bins_table.zarr")
     shutil.rmtree(cwd / "proseg-output.zarr")
+
+
+def _transformations_from_microns(bins_shapes: gpd.GeoDataFrame) -> dict[str, BaseTransformation]:
+    transformations = get_transformation(bins_shapes, get_all=True).copy()
+    from_microns = transformations["microns"].inverse()
+
+    transformations = {cs: from_microns.compose_with(t) for cs, t in transformations.items() if cs != "microns"}
+    transformations["microns"] = Identity()
+
+    return transformations
 
 
 def _run_proseg(proseg_command: str, cwd: str | Path):
@@ -217,7 +228,7 @@ def _get_proseg_bins_command(sdata: SpatialData, command_line_suffix: str, infer
     if infer_presets and "--voxel-size" not in command_line_suffix:
         command_line_suffix += " --voxel-size 2"
 
-    return f"{proseg_executable} --anndata {get_cache_dir(sdata) / 'bins_table.zarr'} --anndata-coordinate-key spatial_microns --cell-id-column {SopaKeys.SOPA_PRIOR} {command_line_suffix}"
+    return f"{proseg_executable} --anndata {get_cache_dir(sdata) / 'bins_table.zarr'} --anndata-coordinate-key spatial_microns --overwrite --cell-id-column {SopaKeys.SOPA_PRIOR} {command_line_suffix}"
 
 
 def _add_presets(command_line_suffix: str, columns: list[str]) -> str:
