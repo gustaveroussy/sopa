@@ -71,7 +71,7 @@ class TileLoader:
 
         delayed_patches = [dask.delayed(self._numpy_patch)(box) for box in bboxes]
         batch = np.array(dask.compute(*delayed_patches))
-        
+
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
         batch = batch.movedim(-1,1)
 
