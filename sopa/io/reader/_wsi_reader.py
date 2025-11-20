@@ -171,6 +171,7 @@ class SlideIOReader(ReaderBase):
 
     def read_region(self, location, level, size):
         import numpy as np
+        from PIL import Image
 
         with self.slide.get_scene(0) as scene:
             scaling = 1 / scene.get_zoom_level_info(level).scale
@@ -184,7 +185,7 @@ class SlideIOReader(ReaderBase):
             _tile = scene.read_block((x, y, x_width, y_height), (tile_x, tile_y))
             tile = np.zeros((size[1], size[0], 3), dtype=np.uint8)
             tile[: _tile.shape[0], : _tile.shape[1], :] = _tile[:, :, :3]  # Ensure RGB format
-        return np.array(tile)
+        return Image.fromarray(tile)
 
     def get_zarr_store(self, tilesize: int = 512):
         from zarr.storage import KVStore
