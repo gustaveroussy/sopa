@@ -10,6 +10,7 @@ from .. import settings
 from ..io.reader._wsi_reader import get_reader
 from ..utils import get_spatial_element
 from ._patches import Patches2D
+from .._constants import SopaAttrs
 
 log = logging.getLogger(__name__)
 

@@ -5,9 +5,8 @@ import tqdm
 from anndata import AnnData
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
-from xarray import DataArray, DataTree
 
-from .._constants import SopaAttrs, SopaKeys
+from .._constants import SopaKeys
 from ..utils import add_spatial_element
 
 log = logging.getLogger(__name__)
