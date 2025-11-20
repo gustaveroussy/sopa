@@ -73,7 +73,7 @@ class TileLoader:
         batch = np.array(dask.compute(*delayed_patches))
 
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
-        batch = batch.movedim(-1,1)
+        batch = batch.movedim(-1, 1)
 
         if self.tile_resize_factor != 1:
             from torchvision.transforms import Resize
