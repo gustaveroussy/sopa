@@ -2,7 +2,6 @@ import logging
 
 import dask
 import numpy as np
-import torch
 from spatialdata import SpatialData
 from xarray import DataArray, DataTree
 
@@ -49,12 +48,6 @@ class TileLoader:
         self.resized_patch_width = patch_width
         self.patches = Patches2D(sdata, self.image, self.patch_width, patch_overlap=patch_overlap, roi_key=roi_key)
 
-    def _torch_resize(self, tensor: torch.Tensor):
-        from torchvision.transforms import Resize
-
-        dim = (self.resized_patch_width, self.resized_patch_width)
-        return Resize(dim)(tensor)
-
     def _numpy_patch(self, box: tuple[int, int, int, int]) -> np.ndarray:
         """
         Extract a numpy patch from the image given a bounding box
@@ -74,11 +67,17 @@ class TileLoader:
 
     def get_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
+        import torch
 
         delayed_patches = [dask.delayed(self._numpy_patch)(box) for box in bboxes]
         batch = np.array(dask.compute(*delayed_patches))
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
-        batch = batch if self.tile_resize_factor == 1 else self._torch_resize(batch)
+
+        if self.tile_resize_factor != 1:
+            from torchvision.transforms import Resize
+
+            dim = (self.resized_patch_width, self.resized_patch_width)
+            batch = Resize(dim)(batch)
 
         assert len(batch.shape) == 4
 
@@ -93,7 +92,7 @@ class TileLoader:
     def __len__(self):
         return len(self.patches)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int | slice):
         bboxes = self.patches.bboxes[idx]
         batch = self.get_batch(np.atleast_2d(bboxes))
         return batch
