@@ -6,7 +6,7 @@ from spatialdata import SpatialData
 from xarray import DataArray, DataTree
 
 from .. import settings
-from .._constants import SopaAttrs
+from .._constants import SopaAttrs, SopaKeys
 from ..io.reader._wsi_reader import get_reader
 from ..utils import get_spatial_element
 from ._patches import Patches2D
@@ -23,7 +23,7 @@ class TileLoader:
         level: int | None = 0,
         magnification: int | None = None,
         patch_overlap: int = 0,
-        roi_key: str | None = None,
+        roi_key: str | None = SopaKeys.ROI,
     ):
         multiscale_image = _get_image_for_inference(sdata, image_key)
         self.image, self.level, self.tile_resize_factor, self.level_downsample = _get_extraction_parameters(
