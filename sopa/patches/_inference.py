@@ -63,7 +63,7 @@ class TileLoader:
 
         pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
         padded_patch = np.pad(image_patch, ((0, pad_x), (0, pad_y), (0, 0)))
-        return np.transpose(padded_patch, (2, 0, 1))
+        return padded_patch
 
     def get_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
@@ -71,7 +71,9 @@ class TileLoader:
 
         delayed_patches = [dask.delayed(self._numpy_patch)(box) for box in bboxes]
         batch = np.array(dask.compute(*delayed_patches))
+        
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
+        batch = batch.movedim(-1,1)
 
         if self.tile_resize_factor != 1:
             from torchvision.transforms import Resize
