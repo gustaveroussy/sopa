@@ -77,7 +77,6 @@ def test_resize_patches():
     n_bboxes = 2
 
     tile_loader = TileLoader(sdata, patch_size, level=0, magnification=15)
-    patches = Patches2D(sdata, tile_loader.image, tile_loader.patch_width, 0)
 
-    batch = tile_loader.get_batch(patches.bboxes[:n_bboxes])
+    batch = tile_loader[:n_bboxes]
     assert batch.shape == (n_bboxes, 3, patch_size, patch_size)
