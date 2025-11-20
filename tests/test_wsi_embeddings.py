@@ -69,7 +69,7 @@ def test_deterministic_embedding(model: str):
 
 @pytest.mark.wsi
 def test_resize_patches():
-    from sopa.patches._inference import Patches2D, TileLoader
+    from sopa.patches import Patches2D, TileLoader
 
     sdata = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
 
