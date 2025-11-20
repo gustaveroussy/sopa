@@ -78,9 +78,7 @@ def compute_embeddings(
         ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
         model = torch.nn.DataParallel(model, device_ids=ids)
 
-    tile_loader = TileLoader(
-        sdata, image_key, patch_width, level, magnification, patch_overlap=patch_overlap, roi_key=roi_key
-    )
+    tile_loader = TileLoader(sdata, patch_width, image_key, level, magnification, patch_overlap, roi_key)
 
     log.info(f"Processing {len(tile_loader)} patches extracted from level {tile_loader.level}")
 

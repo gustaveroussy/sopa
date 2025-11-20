@@ -69,15 +69,14 @@ def test_deterministic_embedding(model: str):
 
 @pytest.mark.wsi
 def test_resize_patches():
-    from sopa.patches._inference import Patches2D, TileLoader, _get_image_for_inference
+    from sopa.patches._inference import Patches2D, TileLoader
 
     sdata = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
-    image = _get_image_for_inference(sdata)
 
     patch_size = 253
     n_bboxes = 2
 
-    tile_loader = TileLoader(image, patch_size, 0, 15)
+    tile_loader = TileLoader(sdata, patch_size, level=0, magnification=15)
     patches = Patches2D(sdata, tile_loader.image, tile_loader.patch_width, 0)
 
     batch = tile_loader.get_batch(patches.bboxes[:n_bboxes])

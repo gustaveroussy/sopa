@@ -18,8 +18,8 @@ class TileLoader:
     def __init__(
         self,
         sdata: SpatialData,
-        image_key: str,
         patch_width: int,
+        image_key: str | None = None,
         level: int | None = 0,
         magnification: int | None = None,
         patch_overlap: int = 0,
