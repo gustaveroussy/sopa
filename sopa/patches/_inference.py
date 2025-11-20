@@ -3,10 +3,13 @@ import logging
 import dask
 import numpy as np
 import torch
+from spatialdata import SpatialData
 from xarray import DataArray, DataTree
 
 from .. import settings
 from ..io.reader._wsi_reader import get_reader
+from ..utils import get_spatial_element
+from ._patches import Patches2D
 
 log = logging.getLogger(__name__)
 
@@ -14,31 +17,36 @@ log = logging.getLogger(__name__)
 class TileLoader:
     def __init__(
         self,
-        image: DataTree | DataArray,
+        sdata: SpatialData,
+        image_key: str,
         patch_width: int,
         level: int | None = 0,
         magnification: int | None = None,
+        patch_overlap: int = 0,
+        roi_key: str | None = None,
     ):
+        multiscale_image = _get_image_for_inference(sdata, image_key)
         self.image, self.level, self.tile_resize_factor, self.level_downsample = _get_extraction_parameters(
-            image, level, magnification
+            multiscale_image, level, magnification
         )
 
-        _backend = image.attrs.get("backend")
-        _path = image.attrs.get("path")
+        _backend = multiscale_image.attrs.get("backend")
+        _path = multiscale_image.attrs.get("path")
 
         try:
             if settings.native_read_region and _backend is not None:
                 self.slide = get_reader(_backend)(_path)
             else:
-                self.slide = get_reader("xarray")(image)
+                self.slide = get_reader("xarray")(multiscale_image)
         except Exception as e:
             log.warning(
                 f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
             )
-            self.slide = get_reader("xarray")(image)
+            self.slide = get_reader("xarray")(multiscale_image)
 
         self.patch_width = int(patch_width / self.tile_resize_factor)
         self.resized_patch_width = patch_width
+        self.patches = Patches2D(sdata, self.image, self.patch_width, patch_overlap=patch_overlap, roi_key=roi_key)
 
     def _torch_resize(self, tensor: torch.Tensor):
         from torchvision.transforms import Resize
@@ -74,6 +82,34 @@ class TileLoader:
         assert len(batch.shape) == 4
 
         return batch
+
+    def get_PIL_patch(self, idx: int):
+        """Retrives a PIL patch using the index"""
+        from PIL import Image
+
+        return Image.fromarray(np.array(self[idx][0].movedim(0, -1) * 255, dtype="uint8"))
+
+    def __len__(self):
+        return len(self.patches)
+
+    def __getitem__(self, idx: int):
+        bboxes = self.patches.bboxes[idx]
+        batch = self.get_batch(np.atleast_2d(bboxes))
+        return batch
+
+
+def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:
+    if image_key is not None:
+        return get_spatial_element(sdata.images, key=image_key)
+
+    cell_image = sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION)
+    tissue_image = sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION)
+
+    assert cell_image is None or tissue_image is None or cell_image == tissue_image, (
+        "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+    )
+
+    return get_spatial_element(sdata.images, key=cell_image or tissue_image)
 
 
 def _get_extraction_parameters(

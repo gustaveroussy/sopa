@@ -8,8 +8,7 @@ from spatialdata.models import TableModel
 from xarray import DataArray, DataTree
 
 from .._constants import SopaAttrs, SopaKeys
-from ..utils import add_spatial_element, get_spatial_element
-from . import Patches2D
+from ..utils import add_spatial_element
 
 log = logging.getLogger(__name__)
 
@@ -80,18 +79,16 @@ def compute_embeddings(
         ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
         model = torch.nn.DataParallel(model, device_ids=ids)
 
-    image = _get_image_for_inference(sdata, image_key)
+    tile_loader = TileLoader(
+        sdata, image_key, patch_width, level, magnification, patch_overlap=patch_overlap, roi_key=roi_key
+    )
 
-    tile_loader = TileLoader(image, patch_width, level, magnification)
-    patches = Patches2D(sdata, tile_loader.image, tile_loader.patch_width, patch_overlap, roi_key=roi_key, **kwargs)
-
-    log.info(f"Processing {len(patches)} patches extracted from level {tile_loader.level}")
+    log.info(f"Processing {len(tile_loader)} patches extracted from level {tile_loader.level}")
 
     predictions = []
     with torch.no_grad():
-        for i in tqdm.tqdm(range(0, len(patches), batch_size)):
-            batch = tile_loader.get_batch(patches.bboxes[i : i + batch_size])  # shape (B, C, Y, X)
-
+        for i in tqdm.tqdm(range(0, len(tile_loader), batch_size)):
+            batch = tile_loader[i : i + batch_size]
             embedding: torch.Tensor = model(batch.to(device))
             assert len(embedding.shape) == 2, "The model must have the signature (B, C, Y, X) -> (B, C)"
 
@@ -101,6 +98,7 @@ def compute_embeddings(
     if len(predictions.shape) == 1:
         predictions = torch.unsqueeze(predictions, 1)
 
+    patches = tile_loader.patches
     patches.add_shapes(key_added=SopaKeys.EMBEDDINGS_PATCHES)
 
     gdf = sdata[SopaKeys.EMBEDDINGS_PATCHES]
@@ -129,17 +127,3 @@ def compute_embeddings(
     add_spatial_element(sdata, key_added, adata)
 
     return key_added
-
-
-def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:
-    if image_key is not None:
-        return get_spatial_element(sdata.images, key=image_key)
-
-    cell_image = sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION)
-    tissue_image = sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION)
-
-    assert cell_image is None or tissue_image is None or cell_image == tissue_image, (
-        "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
-    )
-
-    return get_spatial_element(sdata.images, key=cell_image or tissue_image)
