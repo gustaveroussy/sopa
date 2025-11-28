@@ -155,22 +155,22 @@ def _proseg_bins(
     bins_table.obs[SopaKeys.SOPA_PRIOR] = 0
     bins_table.obs.loc[sjoin.index, SopaKeys.SOPA_PRIOR] = sjoin["index_right"] + 1
 
-    cwd = get_cache_dir(sdata)
+    work_dir = get_cache_dir(sdata)
 
-    bins_table.write_zarr(cwd / "bins_table.zarr")
+    bins_table.write_zarr(work_dir / "bins_table.zarr")
 
     proseg_command = _get_proseg_bins_command(sdata, command_line_suffix, infer_presets)
 
-    _run_proseg(proseg_command, cwd)
+    _run_proseg(proseg_command, work_dir)
 
-    adata, geo_df = _read_proseg(cwd, _transformations_from_microns(bins_shapes))
+    adata, geo_df = _read_proseg(work_dir, _transformations_from_microns(bins_shapes))
 
     add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
     sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
 
-    shutil.rmtree(cwd / "bins_table.zarr")
-    shutil.rmtree(cwd / "proseg-output.zarr")
+    shutil.rmtree(work_dir / "bins_table.zarr")
+    shutil.rmtree(work_dir / "proseg-output.zarr")
 
 
 def _transformations_from_microns(bins_shapes: gpd.GeoDataFrame) -> dict[str, BaseTransformation]:

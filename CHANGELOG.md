@@ -1,5 +1,8 @@
 ## [2.1.10] - xxxx-xx-xx
 
+### Added
+- `proseg` support for Visium HD data (see the related tutorial).
+
 ## [2.1.9] - 2025-11-14
 
 ### Fixed

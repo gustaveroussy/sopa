@@ -74,6 +74,17 @@ def visium_hd(
         if var_names_make_unique:
             adata.var_names_make_unique()
 
+    _set_microns_coordinate_system(sdata, bins_as_squares=bins_as_squares)
+
+    for key in sdata.shapes:
+        if key.endswith("_002um"):
+            shapes_bounding_box(sdata, key)
+            break
+
+    return sdata
+
+
+def _set_microns_coordinate_system(sdata: SpatialData, bins_as_squares: bool = True) -> None:
     for key, geo_df in sdata.shapes.items():
         diameter = int(key[-5:-2])
 
@@ -82,13 +93,6 @@ def visium_hd(
 
         scale = Scale([microns_per_pixel, microns_per_pixel], axes=("x", "y"))
         set_transformation(geo_df, scale, "microns", set_all=False)
-
-    for key in sdata.shapes:
-        if key.endswith("_002um"):
-            shapes_bounding_box(sdata, key)
-            break
-
-    return sdata
 
 
 def _sanity_check_images(sdata: SpatialData) -> None:
