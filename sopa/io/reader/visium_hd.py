@@ -86,6 +86,9 @@ def visium_hd(
 
 def _set_microns_coordinate_system(sdata: SpatialData, bins_as_squares: bool = True) -> None:
     for key, geo_df in sdata.shapes.items():
+        if not key[-5:-2].isdigit():
+            continue
+
         diameter = int(key[-5:-2])
 
         area = geo_df.geometry.iloc[0].area
