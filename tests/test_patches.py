@@ -172,3 +172,35 @@ def test_move_sdata_transcript_cache():
     _check_transcript_patches(sdata)  # the cache should still be detected
 
     shutil.rmtree("tests/test_moved.zarr")
+
+
+def test_patched_assignment():
+    genes = ["G1", "G2", "G3", "G4", "G5", "G6"]
+
+    df = pd.DataFrame({
+        "x": [0, 0.1, 1, 0, 1, 0.9],
+        "y": [0, 0.1, 0, 1, 1, 0.9],
+        "genes": genes,
+    })
+    points = {
+        "transcripts": PointsModel.parse(df, feature_key="genes"),
+    }
+
+    sdata = SpatialData(points=points)
+
+    cache_dir = sopa.utils.get_cache_dir(sdata)
+
+    sopa.make_transcript_patches(sdata, patch_width=-1, min_points_per_patch=0)
+
+    patch_dirs = list((cache_dir / "transcript_patches").iterdir())
+    assert len(patch_dirs) == 1
+    assert (pd.read_csv(patch_dirs[0] / "transcripts.csv").genes == genes).all()
+
+    sopa.make_transcript_patches(sdata, patch_width=0.5, patch_overlap=0, min_points_per_patch=0)
+
+    patch_dirs = list((cache_dir / "transcript_patches").iterdir())
+    assert len(patch_dirs) == 4
+    assert (pd.read_csv(cache_dir / "transcript_patches" / "0" / "transcripts.csv").genes == genes[:2]).all()
+    assert (pd.read_csv(cache_dir / "transcript_patches" / "1" / "transcripts.csv").genes == genes[2:3]).all()
+    assert (pd.read_csv(cache_dir / "transcript_patches" / "2" / "transcripts.csv").genes == genes[3:4]).all()
+    assert (pd.read_csv(cache_dir / "transcript_patches" / "3" / "transcripts.csv").genes == genes[4:]).all()
