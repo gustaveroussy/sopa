@@ -167,6 +167,10 @@ class Patches2D:
     def shape(self) -> tuple[int, int]:
         return (self.patch_y._count, self.patch_x._count)
 
+    @property
+    def is_full_slide(self) -> bool:
+        return self.roi is None and len(self) == 1
+
     def centroids(self) -> np.ndarray:
         """Get the centroids of the patches as a numpy array of shape `(n_patches, 2)`.
         This doesn't take into account the ROI, so it may return centroids outside the ROI."""
