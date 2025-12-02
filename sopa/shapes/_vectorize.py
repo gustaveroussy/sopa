@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def vectorize(mask: np.ndarray, tolerance: float | None = None, smooth_radius_ratio: float = 0.1) -> gpd.GeoDataFrame:
-    """Convert a cells mask to multiple `shapely` geometries. Inspired from https://github.com/Vizgen/vizgen-postprocessing
+    """Convert a cells mask to multiple `shapely` geometries. Each shape is smoothen and converted to a single polygon. Inspired from [VPT](https://github.com/Vizgen/vizgen-postprocessing).
 
     Args:
         mask: A cell mask. Non-null values correspond to cell ids
