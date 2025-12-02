@@ -1,11 +1,11 @@
 import logging
-from functools import partial
 from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from dask import compute, delayed
 from dask.diagnostics import ProgressBar
 from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData
@@ -72,9 +72,11 @@ class OnDiskTranscriptPatches(Patches2D):
 
         gene_column = get_feature_key(self.points)
         with ProgressBar():
-            self.points.map_partitions(
-                partial(self.query_points_partition, patches_geo_df, gene_column=gene_column), meta=()
-            ).compute()
+            tasks = [
+                delayed(self.query_points_partition)(patches_geo_df, part, gene_column=gene_column)
+                for part in self.points.to_delayed()
+            ]
+            compute(*tasks, num_workers=4)
 
     def assign_prior_segmentation(self) -> None:
         if self.prior_shapes_key is None:
