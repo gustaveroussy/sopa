@@ -1,11 +1,11 @@
 import logging
-from functools import partial
 from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from dask import compute, delayed
 from dask.diagnostics import ProgressBar
 from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData
@@ -72,9 +72,11 @@ class OnDiskTranscriptPatches(Patches2D):
 
         gene_column = get_feature_key(self.points)
         with ProgressBar():
-            self.points.map_partitions(
-                partial(self.query_points_partition, patches_geo_df, gene_column=gene_column), meta=()
-            ).compute()
+            tasks = [
+                delayed(self.query_points_partition)(patches_geo_df, part, gene_column=gene_column)
+                for part in self.points.to_delayed()
+            ]
+            compute(*tasks)
 
     def assign_prior_segmentation(self) -> None:
         if self.prior_shapes_key is None:
@@ -166,8 +168,12 @@ class OnDiskTranscriptPatches(Patches2D):
             df = df[~df[SopaKeys.LOW_QUALITY_TRANSCRIPT_KEY]]
         if gene_column is not None and settings.gene_exclude_pattern is not None:
             df = df[~df[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=True)]
-        points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
-        self.write_points(patches_gdf, points_gdf, mode="a")
+
+        if self.is_full_slide:
+            df.to_csv(self.get_patch_path(0), mode="a", header=False, index=False)
+        else:
+            points_gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df["x"], df["y"]))
+            self.write_points(patches_gdf, points_gdf, mode="a")
 
     def write_points(
         self, patches_gdf: gpd.GeoDataFrame, points_gdf: gpd.GeoDataFrame, mode="w", csv_name: str | None = None
