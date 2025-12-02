@@ -174,7 +174,7 @@ def test_move_sdata_transcript_cache():
     shutil.rmtree("tests/test_moved.zarr")
 
 
-def test_patched_assignment():
+def test_patch_assignment():
     genes = ["G1", "G2", "G3", "G4", "G5", "G6"]
 
     df = pd.DataFrame({
