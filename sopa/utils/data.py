@@ -36,6 +36,7 @@ def toy_dataset(
     add_nan_gene_name: bool = False,
     continuous_z_stack: bool = False,
     add_second_points_key: bool = False,
+    points_3d: bool = False,
 ) -> SpatialData:
     """Generate a dummy dataset composed of cells generated uniformly in a square. It also has transcripts.
 
@@ -56,6 +57,7 @@ def toy_dataset(
         add_nan_gene_name: If `True`, a NaN value will be added to the gene names for testing purposes
         continuous_z_stack: If `True`, the z-stack values will be continuous (not integers)
         add_second_points_key: If `True`, a second points key will be added to the dataset with dummy data for testing purposes
+        points_3d: If `True`, the points will be 3D points instead of 2D points.
 
     Returns:
         A SpatialData object with a 2D image (`sdata["image"]`), the cells polygon boundaries (`sdata["cells"]`), the transcripts (`sdata["transcripts"]`), and optional cell vertices (`sdata["vertices"]`) if `include_vertices` is `True`.
@@ -149,7 +151,7 @@ def toy_dataset(
     df = pd.DataFrame({
         "x": points_coords[:, 0],
         "y": points_coords[:, 1],
-        "z_stack": z_stack,
+        ("z" if points_3d else "z_stack"): z_stack,
         "genes": gene_names,
     })
 
