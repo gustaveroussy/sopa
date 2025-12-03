@@ -1,3 +1,5 @@
+# Run proseg segmentation on Visium HD data using the 10X Genomics as prior segmentation.
+
 # For parameters details, see this commented example: https://github.com/gustaveroussy/sopa/blob/main/workflow/config/example_commented.yaml
 read:
   technology: visium_hd
