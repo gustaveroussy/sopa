@@ -4,6 +4,9 @@
 - `proseg` support for Visium HD data (see the related tutorial).
 - Bypass spatial join when using only one patch to speed-up `make_transcript_patches` (#362)
 
+### Fixed
+- Ensure shapes transformation is always 2D (#359)
+
 ## [2.1.9] - 2025-11-14
 
 ### Fixed

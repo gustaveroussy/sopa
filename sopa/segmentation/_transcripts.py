@@ -16,7 +16,7 @@ from tqdm import tqdm
 from .. import shapes
 from .._constants import SopaKeys
 from ..aggregation import count_transcripts
-from ..utils import add_spatial_element, get_transcripts_patches_dirs
+from ..utils import add_spatial_element, ensure_2d_transformation, get_transcripts_patches_dirs
 from . import solve_conflicts
 
 log = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def resolve(
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     points = sdata[points_key]
-    transformations = get_transformation(points, get_all=True).copy()
+    transformations = ensure_2d_transformation(get_transformation(points, get_all=True).copy())
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 
