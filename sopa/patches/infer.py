@@ -89,9 +89,9 @@ def compute_embeddings(
             embedding: torch.Tensor = model(batch.to(device))
             assert len(embedding.shape) == 2, "The model must have the signature (B, C, Y, X) -> (B, C)"
 
-            predictions.extend(embedding.cpu())
+            predictions.append(embedding.cpu())
 
-    predictions = torch.stack(predictions)
+    predictions = torch.cat(predictions)
     if len(predictions.shape) == 1:
         predictions = torch.unsqueeze(predictions, 1)
 
