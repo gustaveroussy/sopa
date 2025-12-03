@@ -53,7 +53,7 @@ def proseg(
         delete_cache: Whether to delete the cache after segmentation.
         command_line_suffix: Optional suffix to add to the proseg command line.
         infer_presets: Whether to infer the proseg presets based on the columns of the transcripts dataframe.
-        prior_shapes_key: **Only for Visium HD data.** Key of `sdata` containing the prior cell boundaries.
+        prior_shapes_key: **Only for Visium HD data.** Key of `sdata` containing the prior cell boundaries. If `"auto"`, use the latest performed segmentation (e.g., stardist or the 10X Genomics segmentation).
         bins_key: **Only for Visium HD data.** Key of `sdata` with the table corresponding to the bin-by-gene table of gene counts (e.g., for Visium HD data). Inferred by default.
         key_added: Name of the shapes element to be added to `sdata.shapes`.
     """
@@ -127,7 +127,11 @@ def _proseg_bins(
 ):
     import shutil
 
-    assert sdata.path is not None, "sdata object must be saved on disk (for now) to run proseg on bins data."
+    if prior_shapes_key == "auto":
+        prior_shapes_key = sdata.attrs.get(SopaAttrs.BOUNDARIES)
+        assert prior_shapes_key is not None, (
+            "`sdata` does not contain any known prior segmentation. Please provide the `prior_shapes_key` explicitly."
+        )
 
     bins_table: AnnData = sdata.tables[bins_key]
 

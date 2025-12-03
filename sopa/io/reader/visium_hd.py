@@ -66,8 +66,6 @@ def visium_hd(
         elif key.endswith("_hires_image"):
             sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = key
 
-    _sanity_check_images(sdata)
-
     for key, adata in sdata.tables.items():
         if key.endswith("_002um"):
             sdata.attrs[SopaAttrs.BINS_TABLE] = key
@@ -77,9 +75,16 @@ def visium_hd(
     _set_microns_coordinate_system(sdata, bins_as_squares=bins_as_squares)
 
     for key in sdata.shapes:
+        if key.endswith("_cell_segmentations"):
+            sdata.attrs[SopaAttrs.BOUNDARIES] = key
+            break
+
+    for key in sdata.shapes:
         if key.endswith("_002um"):
             shapes_bounding_box(sdata, key)
             break
+
+    _sanity_check_images(sdata)
 
     return sdata
 
@@ -100,9 +105,14 @@ def _set_microns_coordinate_system(sdata: SpatialData, bins_as_squares: bool = T
 
 def _sanity_check_images(sdata: SpatialData) -> None:
     if SopaAttrs.CELL_SEGMENTATION not in sdata.attrs:
-        log.warning(
-            "The full-resolution image was not found, you'll not be able to run cell segmentation.\nPlease set the `fullres_image_file` argument to the path of the full-resolution image."
-        )
+        if SopaAttrs.BOUNDARIES not in sdata.attrs:
+            log.warning(
+                "The full-resolution image was not found, you'll not be able to run cell segmentation.\nPlease set the `fullres_image_file` argument to the path of the full-resolution image."
+            )
+        else:
+            log.info(
+                "The full-resolution image was not found, but you have prior 10X Genomics segmentation. You can run `sopa.segmentation.proseg` with `prior_shapes_key='auto'`."
+            )
         return
 
     if SopaAttrs.TISSUE_SEGMENTATION not in sdata.attrs:
