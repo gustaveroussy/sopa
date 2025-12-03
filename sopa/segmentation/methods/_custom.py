@@ -3,8 +3,8 @@ from typing import Callable
 
 from spatialdata import SpatialData
 
-from ..._constants import SopaAttrs, SopaKeys
-from ...utils import get_cache_dir
+from ..._constants import SopaKeys
+from ...utils import get_cache_dir, set_boundaries_attrs
 from .. import StainingSegmentation, solve_conflicts
 
 
@@ -60,7 +60,7 @@ def custom_staining_based(
 
     StainingSegmentation.add_shapes(sdata, cells, image_key=segmentation.image_key, key_added=key_added)
 
-    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+    set_boundaries_attrs(sdata, key_added)
 
     if delete_cache:
         shutil.rmtree(temp_dir)

@@ -4,6 +4,9 @@
 - `proseg` support for Visium HD data (see the related tutorial).
 - Bypass spatial join when using only one patch to speed-up `make_transcript_patches` (#362)
 
+### Fixed
+- Update `attrs` on disk when updating the latest Sopa boundaries (#363)
+
 ## [2.1.9] - 2025-11-14
 
 ### Fixed
