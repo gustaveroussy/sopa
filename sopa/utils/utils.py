@@ -4,11 +4,14 @@ from pathlib import Path
 
 import dask.dataframe as dd
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import spatialdata
 from spatialdata import SpatialData
 from spatialdata.models import SpatialElement
 from spatialdata.transformations import (
+    Affine,
+    BaseTransformation,
     Identity,
     Sequence,
     get_transformation,
@@ -119,6 +122,39 @@ def to_intrinsic(
         transformation = Sequence([transformations1[cs], transformations2[cs].inverse()])
 
     return spatialdata.transform(element, transformation=transformation, maintain_positioning=True)
+
+
+def _make_affine_2d(affine: Affine) -> Affine:
+    i = affine.input_axes.index("z")
+    j = affine.output_axes.index("z")
+
+    X = affine.matrix
+
+    assert X[j, i] == 1 and len(X[:, i].nonzero()[0]) == 1, "Cannot reduce 3D affine to 2D"
+
+    return Affine(
+        np.delete(np.delete(X, i, axis=1), j, axis=0),
+        input_axes=[name for name in affine.input_axes if name != "z"],
+        output_axes=[name for name in affine.output_axes if name != "z"],
+    )
+
+
+def ensure_2d_transformation(
+    transformation: BaseTransformation | dict[str, BaseTransformation],
+) -> BaseTransformation | dict[str, BaseTransformation]:
+    if isinstance(transformation, dict):
+        return {cs: ensure_2d_transformation(t) for cs, t in transformation.items()}
+
+    if isinstance(transformation, Affine):
+        z_input, z_output = "z" in transformation.input_axes, "z" in transformation.output_axes
+        assert z_input == z_output, f"Cannot reduce 3D affine to 2D: {transformation}"
+
+        return _make_affine_2d(transformation) if z_input else transformation
+
+    elif isinstance(transformation, Sequence):
+        return Sequence([ensure_2d_transformation(t) for t in transformation.transformations])
+
+    return transformation
 
 
 def get_feature_key(points: dd.DataFrame, raise_error: bool = False) -> str:

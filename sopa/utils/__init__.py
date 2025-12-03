@@ -11,6 +11,7 @@ from .utils import (
     get_feature_key,
     delete_transcripts_patches_dirs,
     set_sopa_attrs,
+    ensure_2d_transformation,
 )
 from .annotation import preprocess_fluo, higher_z_score, tangram_annotate
 from .image import (

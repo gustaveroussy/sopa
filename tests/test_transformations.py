@@ -4,11 +4,7 @@ import pytest
 import spatialdata
 from spatialdata import SpatialData
 from spatialdata.models import PointsModel
-from spatialdata.transformations import (
-    Identity,
-    Scale,
-    get_transformation_between_coordinate_systems,
-)
+from spatialdata.transformations import Affine, Identity, Scale, get_transformation_between_coordinate_systems
 
 import sopa
 
@@ -75,3 +71,40 @@ def test_transform_multiple_shortest_path():
     expected_coordinates = np.array([[2, 2], [4, 4]])
 
     assert (df.values == expected_coordinates).all()
+
+
+def test_convert_to_2d_transformation():  # repro #359
+    matrix = [
+        [0, 0, 1, 0],
+        [10, 0, 0, -1000],
+        [0, 10, 0, -6000],
+        [0, 0, 0, 1],
+    ]
+    affine = Affine(matrix, input_axes=["x", "y", "z"], output_axes=["z", "x", "y"])
+    transformation_dict = {"global": affine}
+
+    for affine_ in [affine, transformation_dict]:
+        affine_2d = sopa.utils.ensure_2d_transformation(affine_)
+
+        if isinstance(affine_, dict):
+            affine_2d = affine_2d["global"]
+
+        assert affine_2d.input_axes == ["x", "y"]
+        assert affine_2d.output_axes == ["x", "y"]
+
+        assert affine_2d.matrix.shape == (3, 3)
+        expected_matrix = np.array([[10, 0, -1000], [0, 10, -6000], [0, 0, 1]])
+        assert np.array_equal(affine_2d.matrix, expected_matrix)
+
+
+def test_transcript_patches_from_3d():  # repro #359
+    sdata = sopa.io.toy_dataset(length=200, points_3d=True)
+    sopa.make_transcript_patches(sdata, patch_width=None, min_points_per_patch=0)
+
+    affine: Affine = sdata["transcripts_patches"].attrs["transform"]["global"]
+    assert affine.input_axes == ["x", "y"]
+    assert affine.output_axes == ["x", "y"]
+
+    expected = np.array([[10, 0, -1000], [0, 10, -6000], [0, 0, 1]])
+
+    assert np.isclose(affine.matrix, expected).all()

@@ -12,7 +12,7 @@ from xarray import DataArray, DataTree
 
 from .._constants import SopaKeys
 from ..shapes import to_valid_polygons
-from ..utils import add_spatial_element, to_intrinsic
+from ..utils import add_spatial_element, ensure_2d_transformation, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -158,7 +158,8 @@ class Patches2D:
 
         assert len(geo_df), "No valid patches found inside the provided region of interest."
 
-        return ShapesModel.parse(geo_df, transformations=get_transformation(self.element, get_all=True).copy())
+        transformations = get_transformation(self.element, get_all=True).copy()
+        return ShapesModel.parse(geo_df, transformations=ensure_2d_transformation(transformations))
 
     def __repr__(self):
         return f"{self.__class__.__name__} object with {len(self)} patches"
