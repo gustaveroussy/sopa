@@ -13,7 +13,7 @@ from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 import sopa
 from sopa._constants import SopaFiles, SopaKeys
 from sopa.patches._patches import Patches1D, Patches2D
-from sopa.patches._transcripts import _unassigned_to_zero
+from sopa.patches._transcripts import OnDiskTranscriptPatches, _unassigned_to_zero
 from sopa.segmentation._transcripts import _check_transcript_patches
 
 dask.config.set({"dataframe.query-planning": False})
@@ -204,3 +204,65 @@ def test_patch_assignment():
     assert (pd.read_csv(cache_dir / "transcript_patches" / "1" / "transcripts.csv").genes == genes[2:3]).all()
     assert (pd.read_csv(cache_dir / "transcript_patches" / "2" / "transcripts.csv").genes == genes[3:4]).all()
     assert (pd.read_csv(cache_dir / "transcript_patches" / "3" / "transcripts.csv").genes == genes[4:]).all()
+
+
+def test_is_full_slide():
+    sdata = sopa.io.toy_dataset(length=500)
+
+    patches = OnDiskTranscriptPatches(
+        sdata,
+        "transcripts",
+        patch_width=None,
+        patch_overlap=0,
+        prior_shapes_key=None,
+        unassigned_value=None,
+        min_points_per_patch=0,
+        write_cells_centroids=False,
+        roi_key=None,
+    )
+
+    assert patches.is_full_slide
+
+    patches = OnDiskTranscriptPatches(
+        sdata,
+        "transcripts",
+        patch_width=1000,
+        patch_overlap=0,
+        prior_shapes_key=None,
+        unassigned_value=None,
+        min_points_per_patch=0,
+        write_cells_centroids=False,
+        roi_key=None,
+    )
+
+    assert patches.is_full_slide
+
+    patches = OnDiskTranscriptPatches(
+        sdata,
+        "transcripts",
+        patch_width=10,
+        patch_overlap=0,
+        prior_shapes_key=None,
+        unassigned_value=None,
+        min_points_per_patch=0,
+        write_cells_centroids=False,
+        roi_key=None,
+    )
+
+    assert not patches.is_full_slide
+
+    sopa.segmentation.tissue(sdata)
+
+    patches = OnDiskTranscriptPatches(
+        sdata,
+        "transcripts",
+        patch_width=None,
+        patch_overlap=0,
+        prior_shapes_key=None,
+        unassigned_value=None,
+        min_points_per_patch=0,
+        write_cells_centroids=False,
+        roi_key=SopaKeys.ROI,
+    )
+
+    assert not patches.is_full_slide

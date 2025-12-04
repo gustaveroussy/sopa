@@ -23,9 +23,9 @@ def test_channels_average_within_mask():
 
 @pytest.mark.long
 def test_cellpose_segmentation():
-    sdata = sopa.io.toy_dataset(length=500)
+    sdata = sopa.io.toy_dataset(length=200)
 
-    sopa.make_image_patches(sdata, patch_width=300)
+    sopa.make_image_patches(sdata, patch_width=125, patch_overlap=40)
 
     assert len(sdata[SopaKeys.PATCHES]) == 4
 
