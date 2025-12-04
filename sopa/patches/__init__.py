@@ -1,3 +1,4 @@
+from ._inference import TileLoader
 from ._patches import Patches2D
 from ._factory import make_image_patches, make_transcript_patches
 from .cluster import cluster_embeddings

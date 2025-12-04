@@ -1,75 +1,52 @@
 import logging
-from typing import Callable
 
 import dask
 import numpy as np
-import torch
+from spatialdata import SpatialData
 from xarray import DataArray, DataTree
 
 from .. import settings
+from .._constants import SopaAttrs, SopaKeys
 from ..io.reader._wsi_reader import get_reader
-from . import models
+from ..utils import get_spatial_element
+from ._patches import Patches2D
 
 log = logging.getLogger(__name__)
 
 
-class Inference:
+class TileLoader:
     def __init__(
         self,
-        image: DataTree | DataArray,
-        model: Callable | str,
+        sdata: SpatialData,
         patch_width: int,
+        image_key: str | None = None,
         level: int | None = 0,
         magnification: int | None = None,
-        device: str | None = None,
-        data_parallel: bool | list[int] = False,
+        patch_overlap: int = 0,
+        roi_key: str | None = SopaKeys.ROI,
     ):
+        multiscale_image = _get_image_for_inference(sdata, image_key)
         self.image, self.level, self.tile_resize_factor, self.level_downsample = _get_extraction_parameters(
-            image, level, magnification
+            multiscale_image, level, magnification
         )
 
-        _backend = image.attrs.get("backend")
-        _path = image.attrs.get("path")
+        _backend = multiscale_image.attrs.get("backend")
+        _path = multiscale_image.attrs.get("path")
 
         try:
             if settings.native_read_region and _backend is not None:
                 self.slide = get_reader(_backend)(_path)
             else:
-                self.slide = get_reader("xarray")(image)
+                self.slide = get_reader("xarray")(multiscale_image)
         except Exception as e:
             log.warning(
                 f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
             )
-            self.slide = get_reader("xarray")(image)
+            self.slide = get_reader("xarray")(multiscale_image)
 
         self.patch_width = int(patch_width / self.tile_resize_factor)
         self.resized_patch_width = patch_width
-
-        self.model_str, self.model = self._instantiate_model(model)
-
-        self.device = device
-        if self.device is not None:
-            self.model.to(device)
-
-        if data_parallel:
-            ids = data_parallel if isinstance(data_parallel, list) else list(range(torch.cuda.device_count()))
-            self.model = torch.nn.DataParallel(self.model, device_ids=ids)
-
-    def _instantiate_model(self, model: Callable | str) -> tuple[str, torch.nn.Module]:
-        if isinstance(model, str):
-            assert model in models.available_models, (
-                f"'{model}' is not a valid model name. Valid names are: {', '.join(list(models.available_models.keys()))}"
-            )
-
-            return model, models.available_models[model]()
-
-        return model.__class__.__name__, model
-
-    def _torch_resize(self, tensor: torch.Tensor):
-        from torchvision.transforms import Resize
-
-        dim = (self.resized_patch_width, self.resized_patch_width)
-        return Resize(dim)(tensor)
+        self.patches = Patches2D(sdata, self.image, self.patch_width, patch_overlap=patch_overlap, roi_key=roi_key)
 
     def _numpy_patch(self, box: tuple[int, int, int, int]) -> np.ndarray:
         """
@@ -86,26 +63,55 @@ class Inference:
 
         pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
         padded_patch = np.pad(image_patch, ((0, pad_x), (0, pad_y), (0, 0)))
-        return np.transpose(padded_patch, (2, 0, 1))
+        return padded_patch
 
-    def _torch_batch(self, bboxes: np.ndarray):
+    def get_batch(self, bboxes: np.ndarray):
         """Retrives a batch of patches using the bboxes"""
+        import torch
 
         delayed_patches = [dask.delayed(self._numpy_patch)(box) for box in bboxes]
         batch = np.array(dask.compute(*delayed_patches))
+
         batch = torch.tensor(batch, dtype=torch.float32) / 255.0
+        batch = batch.movedim(-1, 1)
 
-        return batch if self.tile_resize_factor == 1 else self._torch_resize(batch)
+        if self.tile_resize_factor != 1:
+            from torchvision.transforms import Resize
 
-    @torch.no_grad()
-    def infer_bboxes(self, bboxes: np.ndarray) -> torch.Tensor:
-        patches = self._torch_batch(bboxes)  # shape (B, C, Y, X)
+            dim = (self.resized_patch_width, self.resized_patch_width)
+            batch = Resize(dim)(batch)
 
-        assert len(patches.shape) == 4
-        embedding = self.model(patches.to(self.device))
-        assert len(embedding.shape) == 2, "The model must have the following signature: (B, C, Y, X) -> (B, C)"
+        assert len(batch.shape) == 4
 
-        return embedding.cpu()  # shape (B, output_dim)
+        return batch
+
+    def get_PIL_patch(self, idx: int):
+        """Retrives a PIL patch using the index"""
+        from PIL import Image
+
+        return Image.fromarray(np.array(self[idx][0].movedim(0, -1) * 255, dtype="uint8"))
+
+    def __len__(self):
+        return len(self.patches)
+
+    def __getitem__(self, idx: int | slice):
+        bboxes = self.patches.bboxes[idx]
+        batch = self.get_batch(np.atleast_2d(bboxes))
+        return batch
+
+
+def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:
+    if image_key is not None:
+        return get_spatial_element(sdata.images, key=image_key)
+
+    cell_image = sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION)
+    tissue_image = sdata.attrs.get(SopaAttrs.TISSUE_SEGMENTATION)
+
+    assert cell_image is None or tissue_image is None or cell_image == tissue_image, (
+        "When different images are existing for cell and tissue segmentation, you need to provide the `image_key` argument"
+    )
+
+    return get_spatial_element(sdata.images, key=cell_image or tissue_image)
 
 
 def _get_extraction_parameters(
