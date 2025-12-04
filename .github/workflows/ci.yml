@@ -94,7 +94,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install sopa with pip
-        run: pip install -e ".[wsi]" && pip install pytest-cov poethepoet
+        run: pip install -e . && pip install pytest-cov poethepoet
 
       - name: Run short tests
         run: poe test_short

@@ -1,3 +1,5 @@
+import torch
+
 from .conch import ConchFeatures
 from .dinov2 import DINOv2Features
 from .dummy import DummyFeatures
@@ -14,7 +16,7 @@ __all__ = [
     "Resnet50Features",
 ]
 
-available_models = {
+available_models: dict[str, type[torch.nn.Module]] = {
     "conch": ConchFeatures,
     "dinov2": DINOv2Features,
     "dummy": DummyFeatures,

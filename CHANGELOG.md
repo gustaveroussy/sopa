@@ -6,6 +6,7 @@
 
 ### Fixed
 - Update `attrs` on disk when updating the latest Sopa boundaries (#363)
+- Ensure shapes transformation is always 2D (#359)
 
 ## [2.1.9] - 2025-11-14
 

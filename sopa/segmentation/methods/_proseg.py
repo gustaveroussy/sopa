@@ -15,6 +15,7 @@ from ..._constants import SopaAttrs, SopaKeys
 from ...aggregation.aggregation import add_standardized_table
 from ...utils import (
     delete_transcripts_patches_dirs,
+    ensure_2d_transformation,
     get_cache_dir,
     get_feature_key,
     get_transcripts_patches_dirs,
@@ -280,7 +281,7 @@ def _read_proseg(cwd: Path, transformations: dict[str, BaseTransformation]) -> t
             geo_df = gpd.read_file(f)
 
     geo_df.crs = None
-    geo_df = ShapesModel.parse(geo_df, transformations=transformations)
+    geo_df = ShapesModel.parse(geo_df, transformations=ensure_2d_transformation(transformations))
 
     return adata, geo_df
 
