@@ -5,8 +5,13 @@ from pathlib import Path
 from spatialdata import SpatialData
 
 from ... import settings
-from ..._constants import SopaAttrs, SopaFiles, SopaKeys
-from ...utils import delete_transcripts_patches_dirs, get_feature_key, get_transcripts_patches_dirs
+from ..._constants import SopaFiles, SopaKeys
+from ...utils import (
+    delete_transcripts_patches_dirs,
+    get_feature_key,
+    get_transcripts_patches_dirs,
+    set_boundaries_attrs,
+)
 from .._transcripts import _check_transcript_patches, resolve
 from ._utils import _get_executable_path
 
@@ -90,7 +95,7 @@ def baysor(
     gene_column = _get_gene_column_argument(config)
     resolve(sdata, patches_dirs, gene_column, min_area=min_area, key_added=key_added)
 
-    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+    set_boundaries_attrs(sdata, key_added)
 
     if delete_cache:
         delete_transcripts_patches_dirs(sdata)

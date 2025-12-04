@@ -11,12 +11,8 @@ import numpy as np
 from spatialdata import SpatialData
 
 from ... import settings
-from ..._constants import SopaAttrs, SopaKeys
-from ...utils import (
-    delete_transcripts_patches_dirs,
-    get_transcripts_patches_dirs,
-    to_intrinsic,
-)
+from ..._constants import SopaKeys
+from ...utils import delete_transcripts_patches_dirs, get_transcripts_patches_dirs, set_boundaries_attrs, to_intrinsic
 from .._transcripts import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
@@ -72,7 +68,7 @@ def comseg(
 
     resolve(sdata, patches_dirs, config["gene_column"], min_area=min_area, key_added=key_added)
 
-    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+    set_boundaries_attrs(sdata, key_added)
 
     if delete_cache:
         delete_transcripts_patches_dirs(sdata)

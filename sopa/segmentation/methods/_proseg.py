@@ -19,6 +19,7 @@ from ...utils import (
     get_cache_dir,
     get_feature_key,
     get_transcripts_patches_dirs,
+    set_boundaries_attrs,
     to_intrinsic,
 )
 from .._transcripts import _check_transcript_patches
@@ -112,7 +113,7 @@ def _proseg_points(
 
     add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
-    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+    set_boundaries_attrs(sdata, key_added)
 
     if delete_cache:
         delete_transcripts_patches_dirs(sdata)
@@ -172,7 +173,7 @@ def _proseg_bins(
 
     add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
-    sdata.attrs[SopaAttrs.BOUNDARIES] = key_added
+    set_boundaries_attrs(sdata, key_added)
 
     shutil.rmtree(work_dir / "bins_table.zarr")
     shutil.rmtree(work_dir / "proseg-output.zarr")

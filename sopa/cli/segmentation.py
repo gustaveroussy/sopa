@@ -329,6 +329,14 @@ def proseg(
         True,
         help="Whether to infer the proseg presets based on the columns of the transcripts dataframe.",
     ),
+    prior_shapes_key: str | None = typer.Option(
+        None,
+        help="**Only for Visium HD data.** Key of `sdata` containing the prior cell boundaries. If `'auto'`, use the latest performed segmentation (e.g., stardist or the 10X Genomics segmentation).",
+    ),
+    bins_key: str = typer.Option(
+        None,
+        help="**Only for Visium HD data.** Key of `sdata` with the table corresponding to the bin-by-gene table of gene counts (e.g., for Visium HD data). Inferred by default.",
+    ),
 ):
     """Perform Proseg segmentation. This needs to be done on a single
     patch as proseg is fast enough and doesn't require parallelization."""
@@ -341,7 +349,13 @@ def proseg(
     sdata = read_zarr_standardized(sdata_path)
 
     try:
-        proseg(sdata, command_line_suffix=command_line_suffix, infer_presets=infer_presets)
+        proseg(
+            sdata,
+            command_line_suffix=command_line_suffix,
+            infer_presets=infer_presets,
+            prior_shapes_key=prior_shapes_key,
+            bins_key=bins_key,
+        )
     except CalledProcessError as e:
         sys.exit(e.returncode)
 

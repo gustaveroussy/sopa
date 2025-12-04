@@ -60,22 +60,32 @@ class Args:
 
     ### The methods below are used to convert the Args object into a string for the Sopa CLI
 
-    def as_cli(self, keys: list[str] | None = None, contains: str | None = None) -> str:
+    def as_cli(
+        self, keys: list[str] | None = None, contains: str | None = None, exclude: list[str] | None = None
+    ) -> str:
         """Extract a subset of the config (or the whole config) as a string for the CLI (command-line interface)
 
         Args:
             keys: List of keys to extract from the config.
             contains: String that must be contained in the keys to be extracted.
+            exclude: List of keys to exclude from the config.
 
         Returns:
             A string that can be used as arguments/options for the Sopa CLI.
         """
-        assert (keys is None) or (contains is None), "Provide either 'keys' or 'contains', but not both"
+        assert sum(arg is not None for arg in [keys, contains, exclude]) <= 1, (
+            "Only one of 'keys', 'contains' or 'exclude' arguments can be provided."
+        )
 
         if keys is None and contains is None:
             return str(self)
 
-        if keys is not None:
+        if exclude is not None:
+            sub_args = Args(
+                self.paths,
+                {key: value for key, value in self.config.items() if key not in exclude},
+            )
+        elif keys is not None:
             sub_args = Args(
                 self.paths,
                 {key: self.config[key] for key in keys if key in self.config},

@@ -25,6 +25,18 @@ from .._constants import ATTRS_KEY, SopaAttrs, SopaFiles, SopaKeys
 log = logging.getLogger(__name__)
 
 
+def set_boundaries_attrs(sdata: SpatialData, key: str):
+    """Sets the boundaries attribute in the SpatialData object.
+
+    Args:
+        sdata: A SpatialData object.
+        key: Key of the shapes containing the cell boundaries.
+    """
+    assert key in sdata.shapes, f"No '{key}' found in sdata.shapes"
+    sdata.attrs[SopaAttrs.BOUNDARIES] = key
+    _save_attrs(sdata)
+
+
 def get_boundaries(
     sdata: SpatialData,
     return_key: bool = False,
@@ -333,6 +345,16 @@ def set_sopa_attrs(
     if bins_table_key is not None:
         assert bins_table_key in sdata.tables
         sdata.attrs[SopaAttrs.BINS_TABLE] = bins_table_key
+
+    _save_attrs(sdata)
+
+
+def _save_attrs(sdata: SpatialData):
+    if sdata.is_backed() and settings.auto_save_on_disk:
+        try:
+            sdata.write_attrs()
+        except Exception as e:
+            raise ValueError(f"Error while saving attrs on disk: {e}")
 
 
 HOME_CACHE_DIR = Path.home() / SopaFiles.SOPA_CACHE_DIR
