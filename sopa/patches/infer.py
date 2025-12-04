@@ -8,6 +8,7 @@ from spatialdata.models import TableModel
 
 from .._constants import SopaKeys
 from ..utils import add_spatial_element
+from . import TileLoader
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +62,6 @@ def compute_embeddings(
             "For patch embedding, you need `torch` (and perhaps `torchvision`). Consider installing the sopa WSI extra: `pip install 'sopa[wsi]'`."
         )
     from . import models
-    from ._inference import TileLoader
 
     if isinstance(model, str):
         assert model in models.available_models, (
