@@ -73,11 +73,11 @@ class Args:
         Returns:
             A string that can be used as arguments/options for the Sopa CLI.
         """
-        assert sum(arg is not None for arg in [keys, contains, exclude]) <= 1, (
-            "Only one of 'keys', 'contains' or 'exclude' arguments can be provided."
-        )
+        args = [keys, contains, exclude]
 
-        if keys is None and contains is None:
+        assert sum(arg is not None for arg in args) <= 1, "Only one of 'keys', 'contains' or 'exclude' can be provided."
+
+        if all(arg is None for arg in args):
             return str(self)
 
         if exclude is not None:

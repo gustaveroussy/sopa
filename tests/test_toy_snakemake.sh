@@ -21,6 +21,7 @@ CONFIG_FILES=(
   config/toy/cellpose.yaml
   config/toy/comseg.yaml
   config/toy/proseg.yaml
+  config/toy/proseg_3d.yaml
   config/toy/backward_comp_check.yaml
   config/toy/cellpose_gpu.yaml
   config/toy/tissue_cellpose.yaml
