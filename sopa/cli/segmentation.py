@@ -55,7 +55,7 @@ def cellpose(
 
         - [On all patches at once] For small images, you can run the segmentation method sequentially (`--patch-index` is not needed)
     """
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
 
     channels = channels if isinstance(channels, list) else [channels]
 
@@ -115,7 +115,7 @@ def stardist(
     ),
 ):
     """Perform Stardist segmentation. This can be done on all patches directly, or on one individual patch."""
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
 
     _run_staining_segmentation(
         sdata_path,

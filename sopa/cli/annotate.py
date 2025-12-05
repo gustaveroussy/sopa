@@ -17,7 +17,7 @@ def fluorescence(
 
     For each cell, one z-score statistic is computed and the population with the highest z-score is attributed.
     """
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
     from sopa.utils import higher_z_score
 
@@ -53,7 +53,7 @@ def tangram(
     """Tangram segmentation (i.e., uses an annotated scRNAseq reference to transfer cell-types)"""
     import anndata
 
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
     from sopa.utils import tangram_annotate
 

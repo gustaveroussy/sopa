@@ -11,8 +11,8 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import BaseTransformation, Identity, get_transformation
 
-from ..._constants import SopaAttrs, SopaKeys
 from ...aggregation.aggregation import add_standardized_table
+from ...constants import SopaAttrs, SopaKeys
 from ...utils import (
     delete_transcripts_patches_dirs,
     ensure_2d_transformation,
@@ -22,8 +22,7 @@ from ...utils import (
     set_boundaries_attrs,
     to_intrinsic,
 )
-from .._transcripts import _check_transcript_patches
-from ._utils import _get_executable_path
+from .utils import _check_transcript_patches, _get_executable_path
 
 log = logging.getLogger(__name__)
 

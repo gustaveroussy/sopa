@@ -7,7 +7,7 @@ from typing import Callable
 import numpy as np
 from spatialdata import SpatialData
 
-from ..._constants import SopaKeys
+from ...constants import SopaKeys
 from ._custom import custom_staining_based
 
 

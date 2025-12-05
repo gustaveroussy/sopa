@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 from pathlib import Path
 
 import anndata
@@ -13,11 +14,11 @@ from spatialdata.models import ShapesModel, TableModel
 from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
-from .. import shapes
-from .._constants import SopaKeys
-from ..aggregation import count_transcripts
-from ..utils import add_spatial_element, ensure_2d_transformation, get_transcripts_patches_dirs
-from . import solve_conflicts
+from ... import shapes
+from ...aggregation import count_transcripts
+from ...constants import SopaKeys
+from ...utils import add_spatial_element, ensure_2d_transformation, get_transcripts_patches_dirs
+from .. import solve_conflicts
 
 log = logging.getLogger(__name__)
 
@@ -199,3 +200,17 @@ def _check_transcript_patches(sdata: SpatialData, with_prior: bool = False):
             "You need to run `sopa.make_transcript_patches` with a `prior_shapes_key`. "
             "You can provide `prior_shapes_key='auto'` if your technology has a prior segmentation, or `prior_shapes_key='cellpose_boundaries'` if you ran cellpose segmentation first."
         )
+
+
+def _get_executable_path(name: str, default_dir: str) -> Path | str:
+    if shutil.which(name) is not None:
+        return name
+
+    default_path = Path.home() / default_dir / "bin" / name
+    if default_path.exists():
+        return default_path
+
+    bin_path = Path.home() / ".local" / "bin" / name
+    raise FileNotFoundError(
+        f"Please install {name} and ensure that either `{default_path}` executes {name}, or that `{name}` is an existing command (add it to your PATH, or create a symlink at {bin_path})."
+    )

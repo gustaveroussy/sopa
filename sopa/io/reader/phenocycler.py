@@ -9,7 +9,7 @@ from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 from .utils import _deduplicate_names, _default_image_kwargs
 
 log = logging.getLogger(__name__)

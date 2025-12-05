@@ -6,7 +6,7 @@ from dask_image.imread import imread
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 from .utils import _default_image_kwargs
 
 

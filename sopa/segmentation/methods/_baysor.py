@@ -5,15 +5,14 @@ from pathlib import Path
 from spatialdata import SpatialData
 
 from ... import settings
-from ..._constants import SopaFiles, SopaKeys
+from ...constants import SopaFiles, SopaKeys
 from ...utils import (
     delete_transcripts_patches_dirs,
     get_feature_key,
     get_transcripts_patches_dirs,
     set_boundaries_attrs,
 )
-from .._transcripts import _check_transcript_patches, resolve
-from ._utils import _get_executable_path
+from .utils import _check_transcript_patches, _get_executable_path, resolve
 
 log = logging.getLogger(__name__)
 

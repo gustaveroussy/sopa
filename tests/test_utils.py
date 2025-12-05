@@ -4,7 +4,7 @@ from spatialdata.models import PointsModel
 from xarray import DataArray, DataTree
 
 import sopa
-from sopa._constants import ATTRS_KEY, SopaAttrs
+from sopa.constants import ATTRS_KEY, SopaAttrs
 
 
 def test_make_toy_dataset():

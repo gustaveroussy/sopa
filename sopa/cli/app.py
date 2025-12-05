@@ -71,7 +71,7 @@ def convert(
     from spatialdata import SpatialData
 
     from sopa import io
-    from sopa._constants import SopaFiles, SopaKeys
+    from sopa.constants import SopaFiles, SopaKeys
 
     sdata_path: Path = Path(data_path).with_suffix(".zarr") if sdata_path is None else Path(sdata_path)
 
@@ -115,65 +115,6 @@ def convert(
     log.info(f"Writing the following spatialdata object to {sdata_path}:\n{sdata}")
 
     sdata.write(sdata_path, overwrite=overwrite)
-
-
-@app.command()
-def crop(
-    sdata_path: str = typer.Option(None, help=SDATA_HELPER),
-    intermediate_image: str = typer.Option(
-        None,
-        help="Path to the intermediate image, with a `.zip` extension. Use this only if the interactive mode is not available",
-    ),
-    intermediate_polygon: str = typer.Option(
-        None,
-        help="Path to the intermediate polygon, with a `.zip` extension. Use this locally, after downloading the intermediate_image",
-    ),
-    channels: list[str] = typer.Option(
-        None,
-        help="List of channel names to be displayed. Optional if there are already only 1 or 3 channels",
-    ),
-    scale_factor: float = typer.Option(10, help="Resize the image by this value (high value for a lower memory usage)"),
-    margin_ratio: float = typer.Option(
-        0.1, help="Ratio of the image margin on the display (compared to the image size)"
-    ),
-):
-    """Crop an image based on a user-defined polygon (interactive mode).
-
-    Warning:
-        This command is deprecated. Using `napari-spatialdata` instead.
-        Provide the name `"region_of_interest"` to your selected ROI.
-
-    Usage:
-
-        - [Locally] Only `--sdata-path` is required
-
-        - [On a cluster] Run `sopa crop` with `--sdata-path` and `--intermediate-image` on the cluster. Then, download the image locally, and run `sopa crop` with `--intermediate-image` and `--intermediate-polygon`. Then, upload the polygon and run `sopa crop` on the cluster with `--sdata-path` and `--intermediate-polygon`.
-    """
-    from .utils import _check_zip
-
-    _check_zip([intermediate_image, intermediate_polygon])
-
-    from sopa.io.standardize import read_zarr_standardized
-    from sopa.utils.crop import intermediate_selection, polygon_selection
-
-    if intermediate_image and intermediate_polygon:
-        assert sdata_path is None, (
-            "When both --intermediate_image and --intermediate_polygon, sdata_path should not to be provided"
-        )
-
-        intermediate_selection(intermediate_image, intermediate_polygon, margin_ratio)
-        return
-
-    sdata = read_zarr_standardized(sdata_path)
-
-    polygon_selection(
-        sdata,
-        intermediate_image,
-        intermediate_polygon,
-        None if channels is None else list(channels),
-        scale_factor,
-        margin_ratio,
-    )
 
 
 @app.command()

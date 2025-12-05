@@ -11,9 +11,9 @@ import numpy as np
 from spatialdata import SpatialData
 
 from ... import settings
-from ..._constants import SopaKeys
+from ...constants import SopaKeys
 from ...utils import delete_transcripts_patches_dirs, get_transcripts_patches_dirs, set_boundaries_attrs, to_intrinsic
-from .._transcripts import _check_transcript_patches, resolve
+from .utils import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
 

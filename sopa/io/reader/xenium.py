@@ -3,7 +3,7 @@ from pathlib import Path
 
 from spatialdata import SpatialData
 
-from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
+from ...constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ...utils import ensure_string_channel_names
 from .utils import _default_image_kwargs
 

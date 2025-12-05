@@ -11,10 +11,10 @@ from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData
 
 from .. import settings
-from .._constants import SopaFiles, SopaKeys
+from ..constants import SopaFiles, SopaKeys
 from ..spatial import assign_transcript_to_cell
 from ..utils import add_spatial_element, get_cache_dir, get_feature_key, to_intrinsic
-from ._patches import Patches2D
+from .patches import Patches2D
 
 log = logging.getLogger(__name__)
 

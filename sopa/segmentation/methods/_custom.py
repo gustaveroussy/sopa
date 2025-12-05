@@ -3,7 +3,7 @@ from typing import Callable
 
 from spatialdata import SpatialData
 
-from ..._constants import SopaKeys
+from ...constants import SopaKeys
 from ...utils import get_cache_dir, set_boundaries_attrs
 from .. import StainingSegmentation, solve_conflicts
 

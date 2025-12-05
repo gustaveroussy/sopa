@@ -5,7 +5,7 @@ import xarray as xr
 from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 
-from sopa._constants import SopaAttrs
+from sopa.constants import SopaAttrs
 from sopa.io.reader.utils import _default_image_kwargs, _image_int_dtype
 
 log = logging.getLogger(__name__)

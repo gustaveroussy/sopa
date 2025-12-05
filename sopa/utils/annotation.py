@@ -7,7 +7,7 @@ import scanpy as sc
 from anndata import AnnData
 from spatialdata import SpatialData
 
-from .._constants import SopaKeys
+from ..constants import SopaKeys
 
 log = logging.getLogger(__name__)
 

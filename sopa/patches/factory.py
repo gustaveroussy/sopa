@@ -3,10 +3,10 @@ from typing import Literal
 
 from spatialdata import SpatialData
 
-from .._constants import SopaAttrs, SopaKeys
+from ..constants import SopaAttrs, SopaKeys
 from ..utils import get_spatial_element, get_spatial_image
-from ._patches import Patches2D
-from ._transcripts import OnDiskTranscriptPatches
+from .patches import Patches2D
+from .transcripts import OnDiskTranscriptPatches
 
 log = logging.getLogger(__name__)
 

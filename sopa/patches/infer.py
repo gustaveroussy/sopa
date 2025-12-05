@@ -6,7 +6,7 @@ from anndata import AnnData
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
 
-from .._constants import SopaKeys
+from ..constants import SopaKeys
 from ..utils import add_spatial_element
 from . import TileLoader
 

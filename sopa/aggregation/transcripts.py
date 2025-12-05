@@ -11,7 +11,7 @@ from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 
 from .. import settings
-from .._constants import SopaAttrs, SopaKeys
+from ..constants import SopaAttrs, SopaKeys
 from ..utils import get_boundaries, get_feature_key, get_spatial_element, to_intrinsic
 
 log = logging.getLogger(__name__)

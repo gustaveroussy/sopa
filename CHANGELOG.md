@@ -1,5 +1,8 @@
 ## [2.1.11] - xxxx-xx-xx
 
+### Changed
+- Remove deprecated `sopa crop` command line
+
 ## [2.1.10] - 2025-12-05
 
 ### Added

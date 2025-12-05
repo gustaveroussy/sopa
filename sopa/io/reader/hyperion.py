@@ -8,7 +8,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from xarray import DataArray
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 from .utils import _clip_intensity_values, _default_image_kwargs
 
 log = logging.getLogger(__name__)

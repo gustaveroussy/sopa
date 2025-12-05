@@ -5,7 +5,7 @@ import numpy as np
 from spatialdata import SpatialData
 from spatialdata.transformations import Scale, set_transformation
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 from ...segmentation import shapes_bounding_box
 from ...utils import ensure_string_channel_names, get_spatial_image
 from .utils import _default_image_kwargs

@@ -16,7 +16,7 @@ def image(
 ):
     """Prepare patches for staining-based segmentation (including Cellpose)"""
     import sopa
-    from sopa._constants import SopaFiles, SopaKeys
+    from sopa.constants import SopaFiles, SopaKeys
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
@@ -51,7 +51,7 @@ def transcripts(
     """Prepare patches for transcript-based segmentation (e.g., for Proseg or Baysor)"""
 
     import sopa
-    from sopa._constants import SopaFiles, SopaKeys
+    from sopa.constants import SopaFiles, SopaKeys
     from sopa.io.standardize import read_zarr_standardized
 
     sdata = read_zarr_standardized(sdata_path)
@@ -75,7 +75,7 @@ def transcripts(
 def _save_cache(sdata_path: str, filename: str, content: str):
     from pathlib import Path
 
-    from sopa._constants import SopaFiles
+    from sopa.constants import SopaFiles
 
     cache_file = Path(sdata_path) / SopaFiles.SOPA_CACHE_DIR / filename
     cache_file.parent.mkdir(parents=True, exist_ok=True)

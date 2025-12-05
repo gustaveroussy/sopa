@@ -11,10 +11,10 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 
 import sopa
-from sopa._constants import SopaFiles, SopaKeys
-from sopa.patches._patches import Patches1D, Patches2D
-from sopa.patches._transcripts import OnDiskTranscriptPatches, _unassigned_to_zero
-from sopa.segmentation._transcripts import _check_transcript_patches
+from sopa.constants import SopaFiles, SopaKeys
+from sopa.patches.patches import Patches1D, Patches2D
+from sopa.patches.transcripts import OnDiskTranscriptPatches, _unassigned_to_zero
+from sopa.segmentation.methods.utils import _check_transcript_patches
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa: E402

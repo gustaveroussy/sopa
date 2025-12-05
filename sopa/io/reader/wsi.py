@@ -7,7 +7,7 @@ from spatialdata.models import Image2DModel
 from spatialdata.transformations import Identity, Scale
 from xarray import DataArray, Dataset, DataTree
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 
 
 def wsi(

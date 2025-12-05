@@ -12,7 +12,7 @@ from spatialdata.datasets import BlobsDataset
 from spatialdata.models import Image2DModel, PointsModel, ShapesModel
 from spatialdata.transformations import Affine, Identity, Scale
 
-from .._constants import SopaAttrs, SopaKeys
+from ..constants import SopaAttrs, SopaKeys
 
 log = logging.getLogger(__name__)
 

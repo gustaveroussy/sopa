@@ -16,7 +16,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
 from .. import settings, shapes
-from .._constants import SopaKeys
+from ..constants import SopaKeys
 from ..utils import add_spatial_element, get_spatial_image
 
 log = logging.getLogger(__name__)
