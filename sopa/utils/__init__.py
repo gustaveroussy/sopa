@@ -12,7 +12,7 @@ from .utils import (
     delete_transcripts_patches_dirs,
     set_sopa_attrs,
     set_boundaries_attrs,
-    ensure_2d_transformation,
+    copy_transformations,
 )
 from .annotation import preprocess_fluo, higher_z_score, tangram_annotate
 from .image import (

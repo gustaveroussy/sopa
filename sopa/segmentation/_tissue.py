@@ -8,12 +8,11 @@ from shapely.geometry import GeometryCollection, box
 from skimage.morphology import disk
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
 from ..constants import SopaAttrs, SopaKeys
 from ..shapes import _vectorize_mask, expand_radius, to_valid_polygons
-from ..utils import add_spatial_element, get_spatial_element
+from ..utils import add_spatial_element, copy_transformations, get_spatial_element
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +94,7 @@ def tissue(
     geo_df = geo_df.explode(index_parts=False, ignore_index=True)
     geo_df = to_valid_polygons(geo_df, simple_polygon=not allow_holes)
 
-    geo_df = ShapesModel.parse(geo_df, transformations=get_transformation(image, get_all=True).copy())
+    geo_df = ShapesModel.parse(geo_df, transformations=copy_transformations(image))
 
     add_spatial_element(sdata, key_added, geo_df)
 
@@ -247,6 +246,6 @@ def shapes_bounding_box(sdata: SpatialData, shape_key: str, key_added: str = Sop
     bounding_box = GeometryCollection(shapes.geometry.values)
     bounding_box = gpd.GeoDataFrame(geometry=[box(*bounding_box.bounds)])
 
-    geo_df = ShapesModel.parse(bounding_box, transformations=get_transformation(shapes, get_all=True).copy())
+    geo_df = ShapesModel.parse(bounding_box, transformations=copy_transformations(shapes))
 
     add_spatial_element(sdata, key_added, geo_df)

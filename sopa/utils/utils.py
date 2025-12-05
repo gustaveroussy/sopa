@@ -136,37 +136,47 @@ def to_intrinsic(
     return spatialdata.transform(element, transformation=transformation, maintain_positioning=True)
 
 
-def _make_affine_2d(affine: Affine) -> Affine:
-    i = affine.input_axes.index("z")
-    j = affine.output_axes.index("z")
-
+def _make_affine_2d(affine: Affine, remove_name: str = "z") -> Affine:
     X = affine.matrix
+    i, j = affine.input_axes.index(remove_name), affine.output_axes.index(remove_name)
 
     assert X[j, i] == 1 and len(X[:, i].nonzero()[0]) == 1, "Cannot reduce 3D affine to 2D"
 
     return Affine(
         np.delete(np.delete(X, i, axis=1), j, axis=0),
-        input_axes=[name for name in affine.input_axes if name != "z"],
-        output_axes=[name for name in affine.output_axes if name != "z"],
+        input_axes=[name for name in affine.input_axes if name != remove_name],
+        output_axes=[name for name in affine.output_axes if name != remove_name],
     )
 
 
-def ensure_2d_transformation(
+def _has_3d_name(affine: Affine, name: str) -> bool:
+    in_input, in_output = name in affine.input_axes, name in affine.output_axes
+    assert in_input == in_output, f"Affine transformation has {name=} in only one of input/output axes: {affine}"
+    return in_input
+
+
+def _ensure_2d_transformation(
     transformation: BaseTransformation | dict[str, BaseTransformation],
 ) -> BaseTransformation | dict[str, BaseTransformation]:
     if isinstance(transformation, dict):
-        return {cs: ensure_2d_transformation(t) for cs, t in transformation.items()}
+        return {cs: _ensure_2d_transformation(t) for cs, t in transformation.items()}
 
     if isinstance(transformation, Affine):
-        z_input, z_output = "z" in transformation.input_axes, "z" in transformation.output_axes
-        assert z_input == z_output, f"Cannot reduce 3D affine to 2D: {transformation}"
-
-        return _make_affine_2d(transformation) if z_input else transformation
+        if _has_3d_name(transformation, "z"):
+            return _make_affine_2d(transformation, remove_name="z")
+        elif _has_3d_name(transformation, "c"):
+            return _make_affine_2d(transformation, remove_name="c")
+        return transformation
 
     elif isinstance(transformation, Sequence):
-        return Sequence([ensure_2d_transformation(t) for t in transformation.transformations])
+        return Sequence([_ensure_2d_transformation(t) for t in transformation.transformations])
 
     return transformation
+
+
+def copy_transformations(element: SpatialElement, ensure_2d: bool = True) -> BaseTransformation:
+    transformation = get_transformation(element, get_all=True).copy()
+    return _ensure_2d_transformation(transformation) if ensure_2d else transformation
 
 
 def get_feature_key(points: dd.DataFrame, raise_error: bool = False) -> str:

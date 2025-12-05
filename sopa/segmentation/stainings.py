@@ -13,11 +13,10 @@ from shapely.geometry import Polygon, box
 from skimage import exposure
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from spatialdata.transformations import get_transformation
 
 from .. import settings, shapes
 from ..constants import SopaKeys
-from ..utils import add_spatial_element, get_spatial_image
+from ..utils import add_spatial_element, copy_transformations, get_spatial_image
 
 log = logging.getLogger(__name__)
 
@@ -190,8 +189,8 @@ class StainingSegmentation:
         image = get_spatial_image(sdata, image_key)
 
         cells.index = image_key + cells.index.astype(str)
+        cells = ShapesModel.parse(cells, transformations=copy_transformations(image))
 
-        cells = ShapesModel.parse(cells, transformations=get_transformation(image, get_all=True).copy())
         add_spatial_element(sdata, key_added, cells)
 
         log.info(f"Added {len(cells)} cell boundaries in sdata['{key_added}']")

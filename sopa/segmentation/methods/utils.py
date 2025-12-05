@@ -11,13 +11,12 @@ from anndata import AnnData
 from shapely.geometry import Polygon, shape
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, TableModel
-from spatialdata.transformations import get_transformation
 from tqdm import tqdm
 
 from ... import shapes
 from ...aggregation import count_transcripts
 from ...constants import SopaKeys
-from ...utils import add_spatial_element, ensure_2d_transformation, get_transcripts_patches_dirs
+from ...utils import add_spatial_element, copy_transformations, get_transcripts_patches_dirs
 from .. import solve_conflicts
 
 log = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ def resolve(
 
     points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
     points = sdata[points_key]
-    transformations = ensure_2d_transformation(get_transformation(points, get_all=True).copy())
+    transformations = copy_transformations(points)
 
     geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 

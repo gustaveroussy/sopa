@@ -7,12 +7,11 @@ import numpy as np
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, box
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel, SpatialElement
-from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
 from ..constants import SopaKeys
 from ..shapes import to_valid_polygons
-from ..utils import add_spatial_element, ensure_2d_transformation, to_intrinsic
+from ..utils import add_spatial_element, copy_transformations, to_intrinsic
 
 log = logging.getLogger(__name__)
 
@@ -158,8 +157,7 @@ class Patches2D:
 
         assert len(geo_df), "No valid patches found inside the provided region of interest."
 
-        transformations = get_transformation(self.element, get_all=True).copy()
-        return ShapesModel.parse(geo_df, transformations=ensure_2d_transformation(transformations))
+        return ShapesModel.parse(geo_df, transformations=copy_transformations(self.element))
 
     def __repr__(self):
         return f"{self.__class__.__name__} object with {len(self)} patches"

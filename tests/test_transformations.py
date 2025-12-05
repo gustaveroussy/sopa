@@ -7,6 +7,7 @@ from spatialdata.models import PointsModel
 from spatialdata.transformations import Affine, Identity, Scale, get_transformation_between_coordinate_systems
 
 import sopa
+from sopa.utils.utils import _ensure_2d_transformation
 
 
 @pytest.fixture
@@ -73,18 +74,19 @@ def test_transform_multiple_shortest_path():
     assert (df.values == expected_coordinates).all()
 
 
-def test_convert_to_2d_transformation():  # repro #359
+@pytest.mark.parametrize("channel_name", ["c", "z"])
+def test_convert_to_2d_transformation(channel_name: str):  # repro #359
     matrix = [
         [0, 0, 1, 0],
         [10, 0, 0, -1000],
         [0, 10, 0, -6000],
         [0, 0, 0, 1],
     ]
-    affine = Affine(matrix, input_axes=["x", "y", "z"], output_axes=["z", "x", "y"])
+    affine = Affine(matrix, input_axes=["x", "y", channel_name], output_axes=[channel_name, "x", "y"])
     transformation_dict = {"global": affine}
 
     for affine_ in [affine, transformation_dict]:
-        affine_2d = sopa.utils.ensure_2d_transformation(affine_)
+        affine_2d = _ensure_2d_transformation(affine_)
 
         if isinstance(affine_, dict):
             affine_2d = affine_2d["global"]

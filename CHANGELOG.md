@@ -1,5 +1,8 @@
 ## [2.1.11] - xxxx-xx-xx
 
+### Fixed
+- Also ensure shapes transformation is always 2D when transformation extracted from images
+
 ### Changed
 - Remove deprecated `sopa crop` command line
 

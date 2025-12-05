@@ -6,10 +6,9 @@ import pandas as pd
 from shapely import Polygon
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from spatialdata.transformations import get_transformation
 
 from ...constants import SopaAttrs
-from ...utils import add_spatial_element, get_spatial_element
+from ...utils import add_spatial_element, copy_transformations, get_spatial_element
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +110,5 @@ def add_explorer_selection(
     polys = xenium_explorer_selection(path, pixel_size=pixel_size, return_list=True)
     image = get_spatial_element(sdata.images, key=image_key or sdata.attrs.get(SopaAttrs.CELL_SEGMENTATION))
 
-    transformations = get_transformation(image, get_all=True).copy()
-
-    geo_df = ShapesModel.parse(gpd.GeoDataFrame(geometry=polys), transformations=transformations)
+    geo_df = ShapesModel.parse(gpd.GeoDataFrame(geometry=polys), transformations=copy_transformations(image))
     add_spatial_element(sdata, key_added, geo_df)

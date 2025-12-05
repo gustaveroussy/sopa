@@ -9,13 +9,13 @@ from anndata import AnnData
 from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
-from spatialdata.transformations import BaseTransformation, Identity, get_transformation
+from spatialdata.transformations import BaseTransformation, Identity
 
 from ...aggregation.aggregation import add_standardized_table
 from ...constants import SopaAttrs, SopaKeys
 from ...utils import (
+    copy_transformations,
     delete_transcripts_patches_dirs,
-    ensure_2d_transformation,
     get_cache_dir,
     get_feature_key,
     get_transcripts_patches_dirs,
@@ -108,7 +108,7 @@ def _proseg_points(
     proseg_command = _get_proseg_points_command(sdata, points_key, command_line_suffix, infer_presets)
 
     _run_proseg(proseg_command, patch_dir)
-    adata, geo_df = _read_proseg(patch_dir, get_transformation(sdata[points_key], get_all=True).copy())
+    adata, geo_df = _read_proseg(patch_dir, copy_transformations(sdata[points_key]))
 
     add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
@@ -179,7 +179,7 @@ def _proseg_bins(
 
 
 def _transformations_from_microns(bins_shapes: gpd.GeoDataFrame) -> dict[str, BaseTransformation]:
-    transformations = get_transformation(bins_shapes, get_all=True).copy()
+    transformations = copy_transformations(bins_shapes)
     from_microns = transformations["microns"].inverse()
 
     transformations = {cs: from_microns.compose_with(t) for cs, t in transformations.items() if cs != "microns"}
@@ -280,7 +280,7 @@ def _read_proseg(cwd: Path, transformations: dict[str, BaseTransformation]) -> t
             geo_df = gpd.read_file(f)
 
     geo_df.crs = None
-    geo_df = ShapesModel.parse(geo_df, transformations=ensure_2d_transformation(transformations))
+    geo_df = ShapesModel.parse(geo_df, transformations=transformations)
 
     return adata, geo_df
 
