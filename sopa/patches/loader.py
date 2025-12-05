@@ -6,10 +6,10 @@ from spatialdata import SpatialData
 from xarray import DataArray, DataTree
 
 from .. import settings
-from .._constants import SopaAttrs, SopaKeys
+from ..constants import SopaAttrs, SopaKeys
 from ..io.reader._wsi_reader import get_reader
 from ..utils import get_spatial_element
-from ._patches import Patches2D
+from .patches import Patches2D
 
 log = logging.getLogger(__name__)
 

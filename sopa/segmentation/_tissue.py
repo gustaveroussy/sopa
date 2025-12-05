@@ -11,7 +11,7 @@ from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
-from .._constants import SopaAttrs, SopaKeys
+from ..constants import SopaAttrs, SopaKeys
 from ..shapes import _vectorize_mask, expand_radius, to_valid_polygons
 from ..utils import add_spatial_element, get_spatial_element
 

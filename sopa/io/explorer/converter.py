@@ -7,7 +7,7 @@ import pandas as pd
 from anndata import AnnData
 from spatialdata import SpatialData
 
-from ..._constants import ATTRS_KEY, SopaAttrs, SopaKeys
+from ...constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ...utils import get_boundaries, get_feature_key, get_spatial_element, get_spatial_image, to_intrinsic
 from . import write_cell_categories, write_gene_counts, write_image, write_polygons, write_transcripts
 from ._constants import FileNames, experiment_dict

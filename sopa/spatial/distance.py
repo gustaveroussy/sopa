@@ -6,8 +6,8 @@ from anndata import AnnData
 from spatialdata import SpatialData
 from tqdm import tqdm
 
-from .._constants import SopaKeys
-from ._build import _check_has_delaunay
+from ..constants import SopaKeys
+from .build import _check_has_delaunay
 
 log = logging.getLogger(__name__)
 

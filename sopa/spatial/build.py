@@ -17,7 +17,7 @@ from scipy.spatial import Delaunay
 from sklearn.metrics.pairwise import euclidean_distances
 from spatialdata import SpatialData
 
-from .._constants import SopaKeys
+from ..constants import SopaKeys
 
 log = logging.getLogger(__name__)
 __all__ = ["spatial_neighbors"]

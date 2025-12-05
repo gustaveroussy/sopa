@@ -13,9 +13,9 @@ from spatialdata import SpatialData
 from spatialdata.models import PointsModel, ShapesModel, TableModel
 
 import sopa
-from sopa._constants import SopaKeys
 from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
+from sopa.constants import SopaKeys
 
 dask.config.set({"dataframe.query-planning": False})
 import dask.dataframe as dd  # noqa: E402

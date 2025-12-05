@@ -3,13 +3,8 @@ import logging
 import spatialdata
 from spatialdata import SpatialData
 
-from .._constants import VALID_DIMENSIONS
-from ..utils import (
-    assert_is_integer_dtype,
-    get_channel_names,
-    get_spatial_image,
-    is_valid_c_coords,
-)
+from ..constants import VALID_DIMENSIONS
+from ..utils import assert_is_integer_dtype, get_channel_names, get_spatial_image, is_valid_c_coords
 
 log = logging.getLogger(__name__)
 

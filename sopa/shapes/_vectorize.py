@@ -12,7 +12,7 @@ from shapely.geometry import LinearRing, MultiPolygon, Polygon
 from skimage.measure._regionprops import RegionProperties
 
 from .. import settings
-from ._validate import ensure_polygon
+from .validate import ensure_polygon
 
 log = logging.getLogger(__name__)
 

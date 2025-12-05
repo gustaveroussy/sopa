@@ -8,7 +8,7 @@ from anndata import AnnData
 from shapely import Polygon
 from spatialdata import SpatialData
 
-from .._constants import SopaAttrs, SopaKeys
+from ..constants import SopaAttrs, SopaKeys
 from ..utils import get_feature_key, get_spatial_element, to_intrinsic
 from .aggregation import Aggregator
 

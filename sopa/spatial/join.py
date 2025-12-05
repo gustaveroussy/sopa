@@ -5,7 +5,7 @@ import geopandas as gpd
 import pandas as pd
 from spatialdata import SpatialData
 
-from .._constants import SopaAttrs
+from ..constants import SopaAttrs
 from ..utils import get_boundaries, get_spatial_element, to_intrinsic
 
 

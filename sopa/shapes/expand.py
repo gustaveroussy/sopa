@@ -5,7 +5,7 @@ import numpy as np
 import shapely
 from shapely.errors import GEOSException
 
-from ._validate import ensure_polygon
+from .validate import ensure_polygon
 
 log = logging.getLogger(__name__)
 

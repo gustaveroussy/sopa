@@ -12,7 +12,7 @@ from spatialdata import SpatialData
 from spatialdata.models import Image2DModel
 from xarray import DataArray
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 
 log = logging.getLogger(__name__)
 

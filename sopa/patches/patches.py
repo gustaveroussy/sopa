@@ -10,7 +10,7 @@ from spatialdata.models import ShapesModel, SpatialElement
 from spatialdata.transformations import get_transformation
 from xarray import DataArray, DataTree
 
-from .._constants import SopaKeys
+from ..constants import SopaKeys
 from ..shapes import to_valid_polygons
 from ..utils import add_spatial_element, ensure_2d_transformation, to_intrinsic
 

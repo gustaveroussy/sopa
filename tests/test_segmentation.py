@@ -5,8 +5,8 @@ from geopandas.testing import assert_geodataframe_equal
 from shapely import MultiPolygon
 
 import sopa
-from sopa._constants import SopaKeys
-from sopa.segmentation._stainings import _channels_average_within_mask
+from sopa.constants import SopaKeys
+from sopa.segmentation.stainings import _channels_average_within_mask
 
 
 def test_channels_average_within_mask():

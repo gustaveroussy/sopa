@@ -8,7 +8,7 @@ from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 from spatialdata.models import TableModel
 
-from .._constants import ATTRS_KEY, SopaAttrs, SopaKeys
+from ..constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
 from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image, validated_channel_names
 from . import aggregate_bins, count_transcripts

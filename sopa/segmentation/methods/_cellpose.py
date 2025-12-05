@@ -7,7 +7,7 @@ import numpy as np
 from packaging.version import Version
 from spatialdata import SpatialData
 
-from ..._constants import SopaKeys
+from ...constants import SopaKeys
 from ._custom import custom_staining_based
 
 log = logging.getLogger(__name__)

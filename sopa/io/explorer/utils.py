@@ -8,7 +8,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import get_transformation
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 from ...utils import add_spatial_element, get_spatial_element
 
 log = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ def _check_zip(names: list[str]):
 def _default_boundary_dir(sdata_path: str, directory_name: str):
     from pathlib import Path
 
-    from sopa._constants import SopaFiles
+    from sopa.constants import SopaFiles
 
     temp_dir = Path(sdata_path) / SopaFiles.SOPA_CACHE_DIR / directory_name
     temp_dir.mkdir(parents=True, exist_ok=True)

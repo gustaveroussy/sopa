@@ -8,7 +8,7 @@ from shapely import box
 from spatialdata.models import ShapesModel
 
 import sopa
-from sopa._constants import SopaKeys
+from sopa.constants import SopaKeys
 from sopa.spatial import cells_to_groups, mean_distance, niches_geometry_stats, spatial_neighbors, vectorize_niches
 from sopa.spatial.distance import _random_distance_likelihood
 from sopa.spatial.join import _get_cell_id

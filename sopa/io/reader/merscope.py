@@ -4,7 +4,7 @@ from typing import Literal
 
 from spatialdata import SpatialData
 
-from ..._constants import SopaAttrs
+from ...constants import SopaAttrs
 from .utils import _default_image_kwargs
 
 log = logging.getLogger(__name__)

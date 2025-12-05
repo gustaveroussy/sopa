@@ -14,7 +14,7 @@ def cellpose(
     ),
 ):
     """Resolve patches conflicts after cellpose segmentation"""
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
 
     from .utils import _default_boundary_dir
 
@@ -35,7 +35,7 @@ def stardist(
     ),
 ):
     """Resolve patches conflicts after stardist segmentation"""
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
 
     from .utils import _default_boundary_dir
 
@@ -94,9 +94,9 @@ def baysor(
 ):
     """Resolve patches conflicts after baysor segmentation."""
     import sopa
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation._transcripts import resolve
+    from sopa.segmentation.methods.utils import resolve
 
     sdata = read_zarr_standardized(sdata_path)
 
@@ -119,9 +119,9 @@ def comseg(
 ):
     """Resolve patches conflicts after comseg segmentation."""
     import sopa
-    from sopa._constants import SopaKeys
+    from sopa.constants import SopaKeys
     from sopa.io.standardize import read_zarr_standardized
-    from sopa.segmentation._transcripts import resolve
+    from sopa.segmentation.methods.utils import resolve
 
     sdata = read_zarr_standardized(sdata_path)
 
