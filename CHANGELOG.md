@@ -1,4 +1,6 @@
-## [2.1.10] - xxxx-xx-xx
+## [2.1.11] - xxxx-xx-xx
+
+## [2.1.10] - 2025-12-05
 
 ### Added
 - `proseg` support for Visium HD data (see the related tutorial).
