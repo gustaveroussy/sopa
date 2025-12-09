@@ -91,5 +91,6 @@ Below are examples of commands that can be run with the `sopa` CLI. For a comple
 Our article is published in [Nature Communications](https://www.nature.com/articles/s41467-024-48981-z). You can cite Sopa as below:
 
 ```txt
-Blampey, Q., Mulder, K., Gardet, M. et al. Sopa: a technology-invariant pipeline for analyses of image-based spatial omics. Nat Commun 15, 4981 (2024). https://doi.org/10.1038/s41467-024-48981-z
+Blampey, Q., Mulder, K., Gardet, M. et al. Sopa: a technology-invariant pipeline for analyses of image-based spatial omics.
+Nat Commun 15, 4981 (2024). https://doi.org/10.1038/s41467-024-48981-z
 ```
