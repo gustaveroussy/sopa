@@ -19,6 +19,9 @@
 
 Built on top of [SpatialData](https://github.com/scverse/spatialdata), Sopa enables processing and analyses of spatial omics data with single-cell resolution (spatial transcriptomics or multiplex imaging data) using a standard data structure and output. We currently support the following technologies: Xenium, Visium HD, MERSCOPE, CosMx, PhenoCycler, MACSima, Molecular Cartography, and others. Sopa was designed for generability and low memory consumption on large images (scales to `1TB+` images).
 
+> [!NOTE]
+> You may also be interested in [Novae](https://github.com/MICS-Lab/novae), developed by the same authors, now published in [Nature Methods](https://www.nature.com/articles/s41592-025-02899-6) 🎉
+
 ## Documentation
 
 Check [Sopa's documentation](https://gustaveroussy.github.io/sopa) to get started. It contains installation explanations, CLI/API details, and tutorials.
