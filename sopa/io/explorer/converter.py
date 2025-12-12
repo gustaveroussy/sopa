@@ -261,13 +261,15 @@ def write_metadata(
         if mip_file.exists():
             additional_images["morphology_mip_filepath"] = mip_file.name
 
-        focus_file: Path = path / "morphology_focus.ome.tif"
-        if focus_file.exists():
-            additional_images["morphology_focus_filepath"] = focus_file.name
-        else:
-            focus_file: Path = path / "morphology_focus" / "morphology_focus_0000.ome.tif"
-            if focus_file.exists():
-                additional_images["morphology_focus_filepath"] = "morphology_focus/morphology_focus_0000.ome.tif"
+        focus_file1: Path = path / "morphology_focus.ome.tif"
+        focus_file2: Path = path / "morphology_focus" / "morphology_focus_0000.ome.tif"
+        focus_file3: Path = path / "morphology_focus" / "ch0000_dapi.ome.tif"
+        if focus_file1.exists():
+            additional_images["morphology_focus_filepath"] = focus_file1.name
+        elif focus_file2.exists():
+            additional_images["morphology_focus_filepath"] = "morphology_focus/morphology_focus_0000.ome.tif"
+        elif focus_file3.exists():
+            additional_images["morphology_focus_filepath"] = "morphology_focus/ch0000_dapi.ome.tif"
 
     path = explorer_file_path(path, FileNames.METADATA, is_dir)
 

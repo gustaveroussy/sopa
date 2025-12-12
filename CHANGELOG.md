@@ -2,6 +2,7 @@
 
 ### Fixed
 - Also ensure shapes transformation is always 2D when transformation extracted from images
+- Xenium v4 users: the Explorer should now open the correct new-format image
 
 ### Changed
 - Remove deprecated `sopa crop` command line

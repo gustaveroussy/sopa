@@ -21,7 +21,7 @@ class ExplorerConstants:
 
 
 class Versions:
-    EXPERIMENT = [2, 0]
+    EXPERIMENT = [6, 0, 0]
     GROUPS = [5, 0]
     CELL_CATEGORIES = [1, 0]
 
@@ -78,6 +78,7 @@ def experiment_dict(run_name: str, region_name: str, num_cells: int, pixel_size:
     return {
         "major_version": Versions.EXPERIMENT[0],
         "minor_version": Versions.EXPERIMENT[1],
+        "patch_version": Versions.EXPERIMENT[2],
         "run_name": run_name,
         "region_name": region_name,
         "experiment_uuid": "N/A",
