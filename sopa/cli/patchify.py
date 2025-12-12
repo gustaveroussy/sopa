@@ -37,7 +37,7 @@ def transcripts(
     ),
     unassigned_value: str = typer.Option(
         None,
-        help="If --cell-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
+        help="If --prior-shapes-key is provided, this is the value given to transcripts that are not inside any cell (if it's already 0, don't provide this argument)",
     ),
     prior_shapes_key: str = typer.Option(
         None,
