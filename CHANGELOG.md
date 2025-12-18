@@ -10,6 +10,7 @@
 - Use the right gene column in comseg when no config is provided (i.e., inferred by Sopa).
 
 ### Changed
+- Remove support for the Xenium Explorer `<4.0.0`, please update it if not already done.
 - Remove deprecated `sopa crop` command line
 
 ## [2.1.10] - 2025-12-05
