@@ -16,7 +16,7 @@ from tqdm import tqdm
 from ... import shapes
 from ...aggregation import count_transcripts
 from ...constants import SopaKeys
-from ...utils import add_spatial_element, copy_transformations, get_transcripts_patches_dirs
+from ...utils import add_spatial_element, copy_transformations, get_feature_key, get_transcripts_patches_dirs
 from .. import solve_conflicts
 
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 def resolve(
     sdata: SpatialData,
     patches_dirs: list[str | Path],
-    gene_column: str,
+    gene_column: str | None = None,
     min_area: float = 0,
     key_added: str = SopaKeys.BAYSOR_BOUNDARIES,
 ):
@@ -57,6 +57,7 @@ def resolve(
         geo_df_new = ShapesModel.parse(geo_df_new, transformations=transformations)
 
         log.info("Aggregating transcripts on merged cells")
+        gene_column = gene_column or get_feature_key(sdata, raise_error=True)
         table_conflicts = count_transcripts(sdata, gene_column, geo_df=geo_df_new, points_key=points_key)
         table_conflicts.obs_names = new_ids
         table_conflicts = [table_conflicts]

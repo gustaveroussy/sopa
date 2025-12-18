@@ -63,6 +63,11 @@ def baysor(
         assert "segmentation" in config, "The provided config should contain a 'segmentation' key"
         config["segmentation"]["scale"] = scale
 
+    assert "data" in config, "The provided config should contain a 'data' key"
+
+    if "gene" not in config["data"]:
+        config["data"]["gene"] = str(get_feature_key(sdata, raise_error=True))
+
     if "scale" in config["segmentation"] and config["segmentation"]["scale"] >= 20:
         log.warning(
             f"The provided scale ({config['segmentation']['scale']}) seems large. Make sure the scale is in microns, and not in pixels. If you are using CosMX data, note that the transcripts coordinates are now in microns."
@@ -91,8 +96,7 @@ def baysor(
         patches_dirs = [patch_dir for patch_dir in patches_dirs if (patch_dir / "segmentation_counts.loom").exists()]
         assert patches_dirs, "Baysor failed on all patches"
 
-    gene_column = _get_gene_column_argument(config)
-    resolve(sdata, patches_dirs, gene_column, min_area=min_area, key_added=key_added)
+    resolve(sdata, patches_dirs, gene_column=config["data"]["gene"], min_area=min_area, key_added=key_added)
 
     set_boundaries_attrs(sdata, key_added)
 
@@ -167,14 +171,11 @@ def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale:
         "   - Provide the `config` argument, containing a valid Baysor config."
     )
 
-    points_key = sdata[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
-    feature_key = get_feature_key(sdata[points_key], raise_error=True)
-
     config = {
         "data": {
             "x": "x",
             "y": "y",
-            "gene": str(feature_key),
+            "gene": str(get_feature_key(sdata, raise_error=True)),
             "min_molecules_per_gene": 10,
             "min_molecules_per_cell": 20,
             "force_2d": True,
@@ -188,16 +189,6 @@ def _get_default_config(sdata: SpatialData, prior_shapes_key: str | None, scale:
     log.info(f"The Baysor config was not provided, using the following by default:\n{config}")
 
     return config
-
-
-def _get_gene_column_argument(config: dict | str) -> str:
-    if isinstance(config, str):
-        import toml
-
-        config = toml.load(config)
-
-    assert config.get("data", {}).get("gene"), "Gene column not found in config['data']['gene']"
-    return config["data"]["gene"]
 
 
 def _copy_segmentation_config(path: Path | str, config: dict | str):

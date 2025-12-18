@@ -124,7 +124,7 @@ Now, follow our [snakemake tutorial](../tutorials/snakemake) to run your first p
 
 Sopa comes in four different flavours, each corresponding to a different use case:
 
-- `API`: use directly `sopa` as a Python package for full flexibility and customization (see a tutorial [here](../tutorials/api_usage))
+- `API`: use directly `sopa` as a Python package for full flexibility and customization (see a tutorial [here](../tutorials/api_usage)).
 - `Snakemake pipeline`: choose a config, and run our pipeline on your spatial data in a few minutes. See our [snakemake tutorial](../tutorials/snakemake).
-- `nf-core/sopa`: run Sopa with Nextflow (see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage))
-- `CLI`: use our [command-line-interface](../tutorials/cli_usage) to prototype quickly your own pipeline
+- `nf-core/sopa`: run Sopa with Nextflow (see [this repo](https://github.com/nf-core/sopa) and the corresponding [usage guide](https://nf-co.re/sopa/usage)). Great for Docker users.
+- `CLI`: use our [command-line-interface](../tutorials/cli_usage) to prototype quickly your own pipeline (advanced users).

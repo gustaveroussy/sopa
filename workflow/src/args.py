@@ -37,13 +37,8 @@ class Args:
         if self.transcript_based_method is None or self.transcript_based_method == "proseg":
             return ""
 
-        if self.transcript_based_method == "baysor":
-            gene_column = self.config["segmentation"]["baysor"]["config"]["data"]["gene"]
-        elif self.transcript_based_method == "comseg":
-            gene_column = self.config["segmentation"]["comseg"]["config"]["gene_column"]
-
         min_area = self.config["segmentation"].get(self.transcript_based_method, {}).get("min_area", 0)
-        return f"--gene-column {gene_column} --min-area {min_area}"
+        return f"--min-area {min_area}"
 
     def patchify_transcripts(self) -> str:
         """Arguments for `sopa patchify transcripts`"""

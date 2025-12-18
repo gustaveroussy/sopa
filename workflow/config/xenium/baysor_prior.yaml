@@ -20,7 +20,6 @@ segmentation:
         x: "x"
         y: "y"
         z: "z"
-        gene: "feature_name"
         min_molecules_per_gene: 0
         min_molecules_per_segment: 3
         confidence_nn_id: 6

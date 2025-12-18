@@ -2,12 +2,15 @@
 
 ### Added
 - Use new `stardist` version to remove numpy pinning (now, all extras can use `numpy>=2.0.0`).
+- gene-column argument is now optional in Baysor and Comseg configs (inferred by default)
 
 ### Fixed
 - Also ensure shapes transformation is always 2D when transformation extracted from images
 - Xenium v4 users: the Explorer should now open the correct new-format image
+- Use the right gene column in comseg when no config is provided (i.e., inferred by Sopa).
 
 ### Changed
+- Remove support for the Xenium Explorer `<4.0.0`, please update it if not already done.
 - Remove deprecated `sopa crop` command line
 
 ## [2.1.10] - 2025-12-05

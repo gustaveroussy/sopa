@@ -12,7 +12,13 @@ from spatialdata import SpatialData
 
 from ... import settings
 from ...constants import SopaKeys
-from ...utils import delete_transcripts_patches_dirs, get_transcripts_patches_dirs, set_boundaries_attrs, to_intrinsic
+from ...utils import (
+    delete_transcripts_patches_dirs,
+    get_feature_key,
+    get_transcripts_patches_dirs,
+    set_boundaries_attrs,
+    to_intrinsic,
+)
 from .utils import _check_transcript_patches, resolve
 
 log = logging.getLogger(__name__)
@@ -52,7 +58,8 @@ def comseg(
         with open(config) as f:
             config = json.load(f)
 
-    assert "gene_column" in config, "'gene_column' not found in config"
+    if "gene_column" not in config:
+        config["gene_column"] = str(get_feature_key(sdata, raise_error=True))
 
     config["prior_name"] = SopaKeys.SOPA_PRIOR
 
@@ -147,7 +154,7 @@ def _get_default_config(sdata: SpatialData, patches: gpd.GeoDataFrame) -> dict:
         "alpha": 0.5,  # alpha value to compute the polygon https://pypi.org/project/alphashape/
         "allow_disconnected_polygon": False,
         "min_rna_per_cell": 20,  # minimal number of RNAs for a cell to be taken into account
-        "gene_column": "genes",
+        "gene_column": str(get_feature_key(sdata, raise_error=True)),
     }
 
     log.info(f"The Comseg config was not provided, using the following by default:\n{config}")
