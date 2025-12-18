@@ -3,11 +3,11 @@
 ## [2.1.11] - 2025-12-18
 
 ### Added
-- Use new `stardist` version to remove numpy pinning (now, all extras can use `numpy>=2.0.0`).
+- Use the new `stardist` version to remove numpy pinning (now, all extras can use `numpy>=2.0.0`).
 - gene-column argument is now optional in Baysor and Comseg configs (inferred by default)
 
 ### Fixed
-- Also ensure shapes transformation is always 2D when transformation extracted from images
+- Also ensure shapes transformation is always 2D when the transformation is extracted from images
 - Xenium v4 users: the Explorer should now open the correct new-format image
 - Use the right gene column in comseg when no config is provided (i.e., inferred by Sopa).
 
