@@ -1,4 +1,6 @@
-## [2.1.11] - xxxx-xx-xx
+## [2.1.12] - xxxx-xx-xx
+
+## [2.1.11] - 2025-12-18
 
 ### Added
 - Use new `stardist` version to remove numpy pinning (now, all extras can use `numpy>=2.0.0`).
