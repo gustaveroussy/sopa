@@ -89,7 +89,7 @@ def _resolve_generic(sdata_path: str, patch_dirs: list[str], key_added: str):
 @app_resolve.command()
 def baysor(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    gene_column: str = typer.Option(help="Column of the transcripts dataframe containing the genes names"),
+    gene_column: str = typer.Option(None, help="Column of the transcripts dataframe containing the genes names"),
     min_area: float = typer.Option(0, help="Cells with an area less than this value (in microns^2) will be filtered"),
 ):
     """Resolve patches conflicts after baysor segmentation."""
@@ -114,7 +114,7 @@ def baysor(
 @app_resolve.command()
 def comseg(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
-    gene_column: str = typer.Option(help="Column of the transcripts dataframe containing the genes names"),
+    gene_column: str = typer.Option(None, help="Column of the transcripts dataframe containing the genes names"),
     min_area: float = typer.Option(0, help="Cells with an area less than this value (in microns^2) will be filtered"),
 ):
     """Resolve patches conflicts after comseg segmentation."""

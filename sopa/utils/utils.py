@@ -179,8 +179,17 @@ def copy_transformations(element: SpatialElement, ensure_2d: bool = True) -> Bas
     return _ensure_2d_transformation(transformation) if ensure_2d else transformation
 
 
-def get_feature_key(points: dd.DataFrame, raise_error: bool = False) -> str:
+def get_feature_key(points: dd.DataFrame | SpatialData, raise_error: bool = False) -> str:
     """Get the feature key of a transcript dataframe"""
+    if isinstance(points, SpatialData):
+        if SopaKeys.TRANSCRIPTS_PATCHES in points.shapes:
+            points_key = points[SopaKeys.TRANSCRIPTS_PATCHES][SopaKeys.POINTS_KEY].iloc[0]
+        else:
+            points_key = points.attrs.get(SopaAttrs.TRANSCRIPTS)
+            assert points_key is not None, "No transcripts found in the SpatialData object"
+
+        points = points[points_key]
+
     assert isinstance(points, dd.DataFrame), "points must be a Dask DataFrame"
 
     feature_key = points.attrs.get(ATTRS_KEY, {}).get("feature_key")
