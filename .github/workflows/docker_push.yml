@@ -1,0 +1,43 @@
+name: docker
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  docker-images-release:
+    name: "Docker images release"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        extra-name: ["-proseg"]
+
+    steps:
+      - name: Export tag version
+        run: |
+          TAG="2.1.11"
+          echo "VERSION=$TAG" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/sopa:${{ env.VERSION }}${{ matrix.extra-name }}
+            ${{ vars.DOCKERHUB_USERNAME }}/sopa:latest${{ matrix.extra-name }}
+          context: ./docker/sopa${{ matrix.extra-name }}
+          build-args: |
+            SOPA_VERSION=${{ env.VERSION }}
