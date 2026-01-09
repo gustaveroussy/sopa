@@ -5,6 +5,7 @@ import pandas as pd
 import zarr
 from anndata import AnnData
 from scipy.sparse import csr_matrix
+from zarr.storage import ZipStore
 
 from ._constants import FileNames, cell_categories_attrs
 from .utils import explorer_file_path, int_cell_id
@@ -59,27 +60,27 @@ def write_gene_counts(
     cell_id = np.ones((adata.n_obs, 2))
     cell_id[:, 0] = int_cell_id(adata.obs_names) if preserve_ids else np.arange(adata.n_obs)
 
-    with zarr.ZipStore(path, mode="w") as store:
+    with ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)
         cells_group = g.create_group("cell_features")
         cells_group.attrs.put(ATTRS)
 
-        cells_group.array("cell_id", cell_id, dtype="uint32", chunks=cell_id.shape)
-        cells_group.array("data", data, dtype="uint32", chunks=data.shape)
-        cells_group.array("indices", indices, dtype="uint32", chunks=indices.shape)
-        cells_group.array("indptr", indptr, dtype="uint32", chunks=indptr.shape)
+        cells_group.create_array("cell_id", data=cell_id.astype(np.uint32), chunks=cell_id.shape)
+        cells_group.create_array("data", data=data.astype(np.uint32), chunks=data.shape)
+        cells_group.create_array("indices", data=indices.astype(np.uint32), chunks=indices.shape)
+        cells_group.create_array("indptr", data=indptr.astype(np.uint32), chunks=indptr.shape)
 
 
 def _write_categorical_column(root: zarr.Group, index: int, values: np.ndarray, categories: list[str]) -> None:
-    group = root.create_group(index)
+    group = root.create_group(str(index))
     values_indices = [np.where(values == cat)[0] for cat in categories]
     values_cum_len = np.cumsum([len(indices) for indices in values_indices])
 
     indices = np.concatenate(values_indices)
     indptr = np.concatenate([[0], values_cum_len[:-1]])
 
-    group.array("indices", indices, dtype="uint32", chunks=(len(indices),))
-    group.array("indptr", indptr, dtype="uint32", chunks=(len(indptr),))
+    group.create_array("indices", data=indices.astype(np.uint32), chunks=(len(indices),))
+    group.create_array("indptr", data=indptr.astype(np.uint32), chunks=(len(indptr),))
 
 
 def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> None:
@@ -100,7 +101,7 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
     ATTRS = cell_categories_attrs()
     ATTRS["number_groupings"] = len(cat_columns)
 
-    with zarr.ZipStore(path, mode="w") as store:
+    with ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)
         cell_groups = g.create_group("cell_groups")
 

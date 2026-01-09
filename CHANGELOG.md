@@ -1,3 +1,8 @@
+## [2.2.0] - xxxx-xx-xx
+
+### Breaking change
+- Drop support for python=3.10, i.e. Sopa now depends on python>=3.11
+
 ## [2.1.12] - xxxx-xx-xx
 
 ### Added

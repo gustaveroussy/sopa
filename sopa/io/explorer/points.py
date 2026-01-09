@@ -5,6 +5,7 @@ from pathlib import Path
 import dask.dataframe as dd
 import numpy as np
 import zarr
+from zarr.storage import ZipStore
 
 from ._constants import ExplorerConstants, FileNames
 from .utils import explorer_file_path
@@ -93,7 +94,7 @@ def write_transcripts(
         "grid_keys": [],
     }
 
-    with zarr.ZipStore(path, mode="w") as store:
+    with ZipStore(path, mode="w") as store:
         g = zarr.group(store=store)
         g.attrs.put(ATTRS)
 
@@ -101,7 +102,7 @@ def write_transcripts(
 
         for level in range(max_levels):
             log.info(f"   > Level {level}: {len(location)} transcripts")
-            level_group = grids.create_group(level)
+            level_group = grids.create_group(str(level))
 
             tile_size = grid_size * 2**level
 
@@ -130,52 +131,44 @@ def write_transcripts(
                     GRIDS_ATTRS["grid_number_objects"][-1].append(n_points_tile)
 
                     tile_group = level_group.create_group(str_index)
-                    tile_group.array(
+                    tile_group.create_array(
                         "valid",
-                        valid[loc],
-                        dtype="uint8",
+                        data=valid[loc].astype(np.uint8),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "status",
-                        status[loc],
-                        dtype="uint8",
+                        data=status[loc].astype(np.uint8),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "location",
-                        location[loc],
-                        dtype="float32",
+                        data=location[loc].astype(np.float32),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "gene_identity",
-                        gene_identity[loc],
-                        dtype="uint16",
+                        data=gene_identity[loc].astype(np.uint16),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "quality_score",
-                        quality_score[loc],
-                        dtype="float32",
+                        data=quality_score[loc].astype(np.float32),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "codeword_identity",
-                        codeword_identity[loc],
-                        dtype="uint16",
+                        data=codeword_identity[loc].astype(np.uint16),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "uuid",
-                        uuid[loc],
-                        dtype="uint32",
+                        data=uuid[loc].astype(np.uint32),
                         chunks=chunks,
                     )
-                    tile_group.array(
+                    tile_group.create_array(
                         "id",
-                        transcript_id[loc],
-                        dtype="uint32",
+                        data=transcript_id[loc].astype(np.uint32),
                         chunks=chunks,
                     )
 
