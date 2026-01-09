@@ -3,7 +3,7 @@ read:
   technology: xenium
 
 patchify:
-  patch_width_pixel: 6000
+  patch_width_pixel: 2000
   patch_overlap_pixel: 150
 
 segmentation:
