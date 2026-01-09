@@ -63,7 +63,7 @@ def write_transcripts(
     transcript_id = np.stack([arange, np.full(num_transcripts, 65535, dtype=np.uint32)], axis=1)
     gene_identity = df[gene].cat.codes.values[:, None].astype(np.uint16)
     codeword_identity = np.stack([gene_identity[:, 0], np.full(num_transcripts, 65535, dtype=np.uint16)], axis=1)
-    status = np.zeros((num_transcripts, 1), dtype=np.uint8)
+    status = np.ones((num_transcripts, 1), dtype=np.uint8)
     quality_score = np.full((num_transcripts, 1), ExplorerConstants.QUALITY_SCORE, dtype=np.float32)
 
     ATTRS = {
