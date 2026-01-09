@@ -97,8 +97,7 @@ def write_polygons(
     n_vertices = num_points // 2
 
     with ZipStore(path, mode="w") as store:
-        g = zarr.group(store=store, zarr_format=2)
-        g.attrs.put(GROUP_ATTRS)
+        g = zarr.group(store=store, zarr_format=2, attributes=GROUP_ATTRS)
 
         g.create_array(
             "polygon_vertices",
@@ -112,8 +111,9 @@ def write_polygons(
 
         cell_summary = np.zeros((num_cells, 7))
         cell_summary[:, 2] = [p.area for p in polygons]
-        g.create_array("cell_summary", data=cell_summary.astype(np.float64), chunks=(num_cells, 1))
-        g["cell_summary"].attrs.put(cell_summary_attrs())
+        g.create_array(
+            "cell_summary", data=cell_summary.astype(np.float64), chunks=(num_cells, 1), attributes=cell_summary_attrs()
+        )
 
         g.create_array(
             "polygon_num_vertices", data=np.full((2, num_cells), n_vertices, dtype=np.int32), chunks=(1, cells_half)

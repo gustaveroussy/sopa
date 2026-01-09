@@ -62,8 +62,7 @@ def write_gene_counts(
 
     with ZipStore(path, mode="w") as store:
         g = zarr.group(store=store, zarr_format=2)
-        cells_group = g.create_group("cell_features")
-        cells_group.attrs.put(ATTRS)
+        cells_group = g.create_group("cell_features", attributes=ATTRS)
 
         cells_group.create_array("cell_id", data=cell_id.astype(np.uint32), chunks=cell_id.shape)
         cells_group.create_array("data", data=data.astype(np.uint32), chunks=data.shape)
@@ -71,9 +70,9 @@ def write_gene_counts(
         cells_group.create_array("indptr", data=indptr.astype(np.uint32), chunks=indptr.shape)
 
 
-def _write_categorical_column(root: zarr.Group, index: int, values: np.ndarray, categories: list[str]) -> None:
+def _write_categorical_column(root: zarr.Group, index: int, values: pd.Categorical) -> None:
     group = root.create_group(str(index))
-    values_indices = [np.where(values == cat)[0] for cat in categories]
+    values_indices = [np.where(values == cat)[0] for cat in values.cat.categories]
     values_cum_len = np.cumsum([len(indices) for indices in values_indices])
 
     indices = np.concatenate(values_indices)
@@ -96,28 +95,25 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
     adata.strings_to_categoricals()
     cat_columns = [name for name, cat in adata.obs.dtypes.items() if cat == "category"]
 
+    for name in cat_columns:
+        if adata.obs[name].isna().any():
+            NA = "NA"
+            log.warning(f"Column {name} has nan values. They will be displayed as '{NA}'")
+            adata.obs[name] = adata.obs[name].cat.add_categories(NA).fillna(NA)
+
     log.info(f"Writing {len(cat_columns)} cell/observations categories: {', '.join(cat_columns)}")
 
     ATTRS = cell_categories_attrs()
     ATTRS["number_groupings"] = len(cat_columns)
+    ATTRS["grouping_names"] = cat_columns
+    ATTRS["group_names"] = [list(adata.obs[name].cat.categories) for name in cat_columns]
 
     with ZipStore(path, mode="w") as store:
         g = zarr.group(store=store, zarr_format=2)
-        cell_groups = g.create_group("cell_groups")
+        cell_groups = g.create_group("cell_groups", attributes=ATTRS)
 
         for i, name in enumerate(cat_columns):
-            if adata.obs[name].isna().any():
-                NA = "NA"
-                log.warning(f"Column {name} has nan values. They will be displayed as '{NA}'")
-                adata.obs[name] = adata.obs[name].cat.add_categories(NA).fillna(NA)
-
-            categories = list(adata.obs[name].cat.categories)
-            ATTRS["grouping_names"].append(name)
-            ATTRS["group_names"].append(categories)
-
-            _write_categorical_column(cell_groups, i, adata.obs[name], categories)
-
-        cell_groups.attrs.put(ATTRS)
+            _write_categorical_column(cell_groups, i, adata.obs[name])
 
 
 def save_column_csv(path: str, adata: AnnData, key: str):
