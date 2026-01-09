@@ -95,7 +95,7 @@ def write_transcripts(
     }
 
     with ZipStore(path, mode="w") as store:
-        g = zarr.group(store=store)
+        g = zarr.group(store=store, zarr_format=2)
         g.attrs.put(ATTRS)
 
         grids = g.create_group("grids")

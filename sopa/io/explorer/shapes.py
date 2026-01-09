@@ -97,7 +97,7 @@ def write_polygons(
     n_vertices = num_points // 2
 
     with ZipStore(path, mode="w") as store:
-        g = zarr.group(store=store)
+        g = zarr.group(store=store, zarr_format=2)
         g.attrs.put(GROUP_ATTRS)
 
         g.create_array(

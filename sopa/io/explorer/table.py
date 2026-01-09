@@ -61,7 +61,7 @@ def write_gene_counts(
     cell_id[:, 0] = int_cell_id(adata.obs_names) if preserve_ids else np.arange(adata.n_obs)
 
     with ZipStore(path, mode="w") as store:
-        g = zarr.group(store=store)
+        g = zarr.group(store=store, zarr_format=2)
         cells_group = g.create_group("cell_features")
         cells_group.attrs.put(ATTRS)
 
@@ -102,7 +102,7 @@ def write_cell_categories(path: str, adata: AnnData, is_dir: bool = True) -> Non
     ATTRS["number_groupings"] = len(cat_columns)
 
     with ZipStore(path, mode="w") as store:
-        g = zarr.group(store=store)
+        g = zarr.group(store=store, zarr_format=2)
         cell_groups = g.create_group("cell_groups")
 
         for i, name in enumerate(cat_columns):
