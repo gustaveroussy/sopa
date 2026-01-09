@@ -1,5 +1,8 @@
 ## [2.1.12] - xxxx-xx-xx
 
+### Added
+- Add spatial plot colored by cell annotation in the Sopa report (if any cell type or leiden)
+
 ## [2.1.11] - 2025-12-18
 
 ### Added

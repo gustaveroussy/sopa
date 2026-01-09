@@ -48,6 +48,7 @@ class SectionBuilder:
         "channel_section",
         "transcripts_section",
         "representation_section",
+        "annotation_section",
     ]
 
     def __init__(self, sdata: SpatialData, table_key: str):
@@ -56,9 +57,8 @@ class SectionBuilder:
 
         if table_key not in self.sdata.tables:
             log.warning(f"Table key '{table_key}' not found in the SpatialData object")
-
-        self.adata = None
-        if table_key in self.sdata.tables:
+            self.adata = None
+        else:
             self.adata: AnnData = self.sdata.tables[table_key].copy()
 
     def _table_has(self, key, default=False):
@@ -178,10 +178,14 @@ class SectionBuilder:
 
         QC_subsubsections.append(Columns([Image(fig1), Image(fig2)]))
 
-        x, y = self.adata.obsm["spatial"].T
-        spot_size = np.sqrt((x.max() - x.min()) * (y.max() - y.min()) / self.adata.n_obs)  # visually pleasing
         fig3 = sc.pl.spatial(
-            self.adata, color="transcript_counts", spot_size=spot_size, return_fig=True, show=False, vmin=0, vmax="p95"
+            self.adata,
+            color="transcript_counts",
+            spot_size=self._default_spot_size(),
+            return_fig=True,
+            show=False,
+            vmin=0,
+            vmax="p95",
         )
 
         return Section(
@@ -191,6 +195,10 @@ class SectionBuilder:
                 SubSection("Spatial distribution", Columns([Image(fig3)])),
             ],
         )
+
+    def _default_spot_size(self) -> float:
+        x, y = self.adata.obsm["spatial"].T
+        return np.sqrt((x.max() - x.min()) * (y.max() - y.min()) / self.adata.n_obs)  # visually pleasing
 
     def representation_section(self, max_obs: int = 100_000):
         if "X_umap" in self.adata.obsm:
@@ -213,15 +221,37 @@ class SectionBuilder:
         return self._umap_figure()
 
     def _umap_figure(self):
-        default_color = "leiden" if "leiden" in self.adata.obs else None
-        color = self._table_has(SopaKeys.UNS_CELL_TYPES, default_color)
-
-        sc.pl.umap(self.adata, color=color, show=False)
+        sc.pl.umap(self.adata, color=self._get_cell_annotation_key(), show=False)
 
         return Section(
             "Representation",
             [
                 SubSection("UMAP", Columns([Image(plt.gcf(), pretty_legend=False)])),
+            ],
+        )
+
+    def _get_cell_annotation_key(self) -> str | None:
+        default_key = "leiden" if "leiden" in self.adata.obs else None
+        return self._table_has(SopaKeys.UNS_CELL_TYPES, default_key)
+
+    def annotation_section(self):
+        annotation_key = self._get_cell_annotation_key()
+
+        if annotation_key is None:
+            return None
+
+        fig = sc.pl.spatial(
+            self.adata,
+            color=annotation_key,
+            spot_size=self._default_spot_size(),
+            return_fig=True,
+            show=False,
+        )
+
+        return Section(
+            "Annotation",
+            [
+                SubSection("Spatial cell annotation", Columns([Image(fig, pretty_legend=False)])),
             ],
         )
 
