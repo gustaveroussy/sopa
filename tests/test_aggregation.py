@@ -1,5 +1,5 @@
-import dask
 import dask.array as da
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -16,9 +16,6 @@ import sopa
 from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
 from sopa.constants import SopaKeys
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa: E402
 
 
 def test_aggregate_channels_aligned():
@@ -72,13 +69,15 @@ def test_count_transcripts():
     adata = _count_transcripts_aligned(gdf, points, "gene")
     expected = np.array([[0, 3, 1], [1, 0, 1], [1, 3, 1]])
 
-    assert (adata.var_names == ["a", "b", "c"]).all()
+    assert set(adata.var_names) == {"a", "b", "c"}
+    adata = adata[:, ["a", "b", "c"]].copy()
     assert (adata.X.toarray() == expected).all()
 
     adata = _count_transcripts_aligned(gdf, points, "gene", only_excluded=True)
     expected = np.array([[0, 1], [1, 0], [1, 0]])
 
-    assert (adata.var_names == ["blank", "gene_control"]).all()
+    assert set(adata.var_names) == {"blank", "gene_control"}
+    adata = adata[:, ["blank", "gene_control"]].copy()
     assert (adata.X.toarray() == expected).all()
 
 
@@ -98,7 +97,8 @@ def test_count_transcripts_with_low_quality():
 
     adata = _count_transcripts_aligned(gdf, points, "gene")
 
-    assert (adata.var_names == ["a", "b"]).all()
+    assert set(adata.var_names) == {"a", "b"}
+    adata = adata[:, ["a", "b"]].copy()
     assert (adata.X.toarray() == np.array([[1, 2]])).all()
 
 

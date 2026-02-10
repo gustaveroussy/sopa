@@ -207,6 +207,24 @@ wheels = [
 ]
 
 [[package]]
+name = "annsel"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anndata" },
+    { name = "more-itertools" },
+    { name = "narwhals", extra = ["pandas"] },
+    { name = "pooch" },
+    { name = "session-info2" },
+    { name = "tqdm" },
+    { name = "universal-pathlib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/93/cdbe4903acb43fd743832e0c2933b88ec2dfd2a87b147992c45b90f647c8/annsel-0.1.2.tar.gz", hash = "sha256:a9ab14495f3e28c216a5cb74f918542710ac82e22bb04db57af233bbbf536da8", size = 341977 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/43/fff37380b704b60fad17c298b631044d98e3db8b9721df7897c967facf51/annsel-0.1.2-py3-none-any.whl", hash = "sha256:9659f60f4ee5545bc030341b6b8e932e0a615b95ac83d9cb6e2bd50951ae26da", size = 19120 },
+]
+
+[[package]]
 name = "appnope"
 version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -752,7 +770,7 @@ wheels = [
 
 [[package]]
 name = "dask"
-version = "2024.11.2"
+version = "2026.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -764,9 +782,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "toolz" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9d/a1/6d06c4cc93349377a9f318f2ebff5b637e6ffee373e38f363123b4b1afa7/dask-2024.11.2.tar.gz", hash = "sha256:9a72bee3f149ff89bc492340d4bcba33d5dd3e3a9d471d2b4b3872f2d71ddaae", size = 10688567 }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/46/61ecde57bac647ca7eb6ffef8dcd90af6c1c649020874cd7fd8738003d62/dask-2026.1.1.tar.gz", hash = "sha256:12b1dbb0d6e92f287feb4076871600b2fba3a843d35ff214776ada5e9e7a1529", size = 10994732 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/72/33ff765a07913cb5061baa94718f3a17003aa29adc89642a68c295d47582/dask-2024.11.2-py3-none-any.whl", hash = "sha256:6115c4b76015e8d9d9c2922b6a0a1c850e283fb7fee74eebbd2e28e9c117c30d", size = 1265299 },
+    { url = "https://files.pythonhosted.org/packages/e9/4b/9cc373120658a2516aa5f6dcdde631c95d714b876d29ad8f8e009d793f3f/dask-2026.1.1-py3-none-any.whl", hash = "sha256:146b0ef2918eb581e06139183a88801b4a8c52d7c37758a91f8c3b75c54b0e15", size = 1481492 },
 ]
 
 [package.optional-dependencies]
@@ -775,27 +793,13 @@ array = [
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' and platform_machine != 'arm64' and sys_platform == 'darwin'" },
 ]
 dataframe = [
-    { name = "dask-expr" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_machine != 'arm64') or platform_machine == 'arm64' or sys_platform != 'darwin'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' and platform_machine != 'arm64' and sys_platform == 'darwin'" },
     { name = "pandas" },
+    { name = "pyarrow" },
 ]
 distributed = [
     { name = "distributed" },
-]
-
-[[package]]
-name = "dask-expr"
-version = "1.1.19"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "dask" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ef/b0/a0c1050ee70be7a0274529b15edacea769c395b392edb1925118937fdb7c/dask_expr-1.1.19.tar.gz", hash = "sha256:5c8a50924bf6718bb630d58f11311e3d928c7037af913e096fa0eb3f0a493b9f", size = 223876 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e9/57/e7996529256b13009fa8f4c34d1d7229755cc7d2b054aa43edb6ca655578/dask_expr-1.1.19-py3-none-any.whl", hash = "sha256:b2931c20241a3bc1978ccccc4b8a2f7b27b15bb85ce89fec04595bc5bcf20cf5", size = 244456 },
 ]
 
 [[package]]
@@ -897,7 +901,7 @@ wheels = [
 
 [[package]]
 name = "distributed"
-version = "2024.11.2"
+version = "2026.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -916,9 +920,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "zict" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/b5/f8b27f48694c11721e2bbed4eadfcc5fe399a083ee449113b2a2fcd962b6/distributed-2024.11.2.tar.gz", hash = "sha256:60e430ab9d438102535f342521bc2673db08fcd373a4474b042caf9fe9fcf990", size = 1113817 }
+sdist = { url = "https://files.pythonhosted.org/packages/45/19/0c13efdffc55cb311594f66c1c8d36a3c4711e427c820155fb9c59138b5e/distributed-2026.1.1.tar.gz", hash = "sha256:3d2709a43912797df3c345af3bb333bbf1a386ec1e9e6a134e5f050521373dbd", size = 2102870 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/24/312287ead487290c13e62f6d987e59eb0e22b8088b3539dfe6f4062a8370/distributed-2024.11.2-py3-none-any.whl", hash = "sha256:a455ae031689aee151172b3492de5dd637b67531720619c171df988974985cdf", size = 1022680 },
+    { url = "https://files.pythonhosted.org/packages/b9/dc/6d709bcf8fed7611d8a510aeed23b0436cf6db5b61e63c8eb8451eb0d4d8/distributed-2026.1.1-py3-none-any.whl", hash = "sha256:506759b1ed88e45e12ba65e2a429de9911862db55d27dd8bb293c6268430374e", size = 1008417 },
 ]
 
 [[package]]
@@ -1492,7 +1496,7 @@ name = "importlib-metadata"
 version = "8.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f3/49/3b30cad09e7771a4982d9975a8cbf64f00d4a1ececb53297f1d9a7be1b10/importlib_metadata-8.7.1.tar.gz", hash = "sha256:49fef1ae6440c182052f407c8d34a68f72efc36db9ca90dc0113398f2fdde8bb", size = 57107 }
 wheels = [
@@ -2307,6 +2311,15 @@ wheels = [
 ]
 
 [[package]]
+name = "more-itertools"
+version = "10.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/5d/38b681d3fce7a266dd9ab73c66959406d565b3e85f21d5e66e1181d93721/more_itertools-10.8.0.tar.gz", hash = "sha256:f638ddf8a1a0d134181275fb5d58b086ead7c6a72429ad725c67503f13ba30bd", size = 137431 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a4/8e/469e5a4a2f5855992e425f3cb33804cc07bf18d48f2db061aec61ce50270/more_itertools-10.8.0-py3-none-any.whl", hash = "sha256:52d4362373dcf7c52546bc4af9a86ee7c4579df9a8dc268be0a2f949d376cc9b", size = 69667 },
+]
+
+[[package]]
 name = "mpmath"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2520,6 +2533,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/0c/c0/ee95b28f029c73f8d49d8f52edaed02a1d4a9acb8b69355737fdb1faa191/namex-0.1.0.tar.gz", hash = "sha256:117f03ccd302cc48e3f5c58a296838f6b89c83455ab8683a1e85f2a430aa4306", size = 6649 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/bc/465daf1de06409cdd4532082806770ee0d8d7df434da79c76564d0f69741/namex-0.1.0-py3-none-any.whl", hash = "sha256:e2012a474502f1e2251267062aae3114611f07df4224b6e06334c57b0f2ce87c", size = 5905 },
+]
+
+[[package]]
+name = "narwhals"
+version = "2.16.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/6f/713be67779028d482c6e0f2dde5bc430021b2578a4808c1c9f6d7ad48257/narwhals-2.16.0.tar.gz", hash = "sha256:155bb45132b370941ba0396d123cf9ed192bf25f39c4cea726f2da422ca4e145", size = 618268 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/cc/7cb74758e6df95e0c4e1253f203b6dd7f348bf2f29cf89e9210a2416d535/narwhals-2.16.0-py3-none-any.whl", hash = "sha256:846f1fd7093ac69d63526e50732033e86c30ea0026a44d9b23991010c7d1485d", size = 443951 },
+]
+
+[package.optional-dependencies]
+pandas = [
+    { name = "pandas" },
 ]
 
 [[package]]
@@ -2807,7 +2834,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/51/e123d997aa098c61d029f76663dedbfb9bc8dcf8c60cbd6adbe42f76d049/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:949452be657fa16687d0930933f032835951ef0892b37d2d53824d1a84dc97a8", size = 706758467 },
@@ -2818,7 +2845,7 @@ name = "nvidia-cufft-cu12"
 version = "11.3.3.83"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1f/13/ee4e00f30e676b66ae65b4f08cb5bcbb8392c03f54f2d5413ea99a5d1c80/nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4d2dd21ec0b88cf61b62e6b43564355e5222e4a3fb394cac0db101f2dd0d4f74", size = 193118695 },
@@ -2845,9 +2872,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.3.90"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
-    { name = "nvidia-cusparse-cu12" },
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "nvidia-cusparse-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/48/9a13d2975803e8cf2777d5ed57b87a0b6ca2cc795f9a4f59796a910bfb80/nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:4376c11ad263152bd50ea295c05370360776f8c3427b30991df774f9fb26c450", size = 267506905 },
@@ -2858,7 +2885,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.8.93"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (sys_platform != 'darwin' and sys_platform != 'linux')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c2/f5/e1854cb2f2bcd4280c44736c93550cc300ff4b8c95ebe370d0aa7d2b473d/nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:1ec05d76bbbd8b61b06a80e1eaf8cf4959c3d4ce8e711b65ebd0443bb0ebb13b", size = 288216466 },
@@ -4703,7 +4730,6 @@ stardist = [
     { name = "tensorflow" },
 ]
 wsi = [
-    { name = "tiffslide" },
     { name = "torch" },
     { name = "torchvision" },
 ]
@@ -4731,12 +4757,11 @@ requires-dist = [
     { name = "loompy", marker = "extra == 'baysor'", specifier = ">=3.0.7" },
     { name = "opencv-python", marker = "extra == 'cellpose'", specifier = ">=4.8.0" },
     { name = "scanpy", specifier = ">=1.10.4" },
-    { name = "spatialdata", specifier = ">=0.6.1" },
+    { name = "spatialdata", specifier = ">=0.7.2" },
     { name = "spatialdata-io", specifier = ">=0.3.0" },
     { name = "spatialdata-plot", specifier = ">=0.2.10" },
     { name = "stardist", marker = "extra == 'stardist'", specifier = ">=0.9.2" },
     { name = "tensorflow", marker = "extra == 'stardist'", specifier = ">=2.18.0" },
-    { name = "tiffslide", marker = "extra == 'wsi'", specifier = ">=2.3.1" },
     { name = "toml", marker = "extra == 'baysor'", specifier = ">=0.10.2" },
     { name = "torch", marker = "extra == 'cellpose'", specifier = ">=2.1.1" },
     { name = "torch", marker = "extra == 'wsi'", specifier = ">=2.1.1" },
@@ -4794,14 +4819,16 @@ wheels = [
 
 [[package]]
 name = "spatialdata"
-version = "0.6.1"
+version = "0.7.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anndata" },
+    { name = "annsel" },
     { name = "click" },
     { name = "dask" },
     { name = "dask-image" },
     { name = "datashader" },
+    { name = "distributed" },
     { name = "fsspec", extra = ["http", "s3"] },
     { name = "geopandas" },
     { name = "multiscale-spatial-image" },
@@ -4822,13 +4849,12 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "universal-pathlib" },
     { name = "xarray" },
-    { name = "xarray-schema" },
     { name = "xarray-spatial" },
     { name = "zarr" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/78/97a108c20c539a110fd336608d300be568593e047a717ea66ed2e16bdf73/spatialdata-0.6.1.tar.gz", hash = "sha256:d0295feb90b16a6802f13e85780243fe7aecb838b44ba433c304805eac01d555", size = 332031 }
+sdist = { url = "https://files.pythonhosted.org/packages/81/b4/3cd97a7f473def2cf0fdb94d980efd5982274e8aedae944af144327b979c/spatialdata-0.7.2.tar.gz", hash = "sha256:17cfa4be157dd00d5dfc009038b2f0ba5ceaaad4fb15cf58cb8b53b7e28fc75e", size = 347975 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/a1/e538ae38d9424f62199266b4e4ccd780e149162fa828a9e1f7b8e745262e/spatialdata-0.6.1-py3-none-any.whl", hash = "sha256:64a06b481859d22bd72e910c2cfd10af4b6c56be8e78404f096712558cd66ee8", size = 187279 },
+    { url = "https://files.pythonhosted.org/packages/7d/eb/15962d23094016d13f057e9de97021f8cd6b16bc39f21bab8e55e3f0a63e/spatialdata-0.7.2-py3-none-any.whl", hash = "sha256:c41f985dee9c272b790dca0ab54130128af426591df61c8d12556d6aa86c70b5", size = 192281 },
 ]
 
 [[package]]
@@ -5088,23 +5114,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/44/d0/18fed0fc0916578a4463f775b0fbd9c5fed2392152d039df2fb533bfdd5d/tifffile-2025.5.10.tar.gz", hash = "sha256:018335d34283aa3fd8c263bae5c3c2b661ebc45548fde31504016fcae7bf1103", size = 365290 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/06/bd0a6097da704a7a7c34a94cfd771c3ea3c2f405dd214e790d22c93f6be1/tifffile-2025.5.10-py3-none-any.whl", hash = "sha256:e37147123c0542d67bc37ba5cdd67e12ea6fbe6e86c52bee037a9eb6a064e5ad", size = 226533 },
-]
-
-[[package]]
-name = "tiffslide"
-version = "2.4.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "fsspec" },
-    { name = "imagecodecs" },
-    { name = "pillow" },
-    { name = "tifffile" },
-    { name = "typing-extensions" },
-    { name = "zarr" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/26/8a/90fc9e812644f037b182453b3b2ab95f4041cc4d226e88ad13c22b0ccb12/tiffslide-2.4.0.tar.gz", hash = "sha256:630bc36215e950dd9df279ded147cf129570f2040c7e3363cdf6845414da9672", size = 748905 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/a6/020c310f220e6f0941c9433f5ff86b498239f5eb6f246512ca3e8cd2ac64/tiffslide-2.4.0-py3-none-any.whl", hash = "sha256:f12964dd6356abc970efda6697fd4791147139dac9efc11ea008eec6883db35c", size = 32265 },
 ]
 
 [[package]]
@@ -5625,20 +5634,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/60/99/04705ee6ff4d6d4db986058ceb19f2561014dde41e2f2ab73cc5ed35c958/xarray_dataclass-3.0.0.tar.gz", hash = "sha256:0fa438efda992b859dee07dc2f99c2660886402c366706c074c4c92795b354f1", size = 8376 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/ea/bc1de04d06b7c59fc3ff647a11fa248bf80af5a6227647a31c6250c32ce6/xarray_dataclass-3.0.0-py3-none-any.whl", hash = "sha256:7956f29005671b2acaa0da700d8f359105dce84ef84f76ce2dd05b76dba3e826", size = 16862 },
-]
-
-[[package]]
-name = "xarray-schema"
-version = "0.0.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and platform_machine != 'arm64') or platform_machine == 'arm64' or sys_platform != 'darwin'" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' and platform_machine != 'arm64' and sys_platform == 'darwin'" },
-    { name = "xarray" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/64/3d/e0652fad05696e34897f085d4c3115dc4bedb1fb8c1827d6c79ce74095a6/xarray-schema-0.0.3.tar.gz", hash = "sha256:9c6c760489c0690a70394b2ad1368b32f8fa1333911c361b4adf249384212920", size = 15010 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/6d/f585a27b380ee987619b5617c0ca672a71a4345b67cfedbb6299750ce845/xarray_schema-0.0.3-py3-none-any.whl", hash = "sha256:aa6f856626b2e100213ba290407797464608b2555bb8e0b26093a97fe1ba38ce", size = 10019 },
 ]
 
 [[package]]
