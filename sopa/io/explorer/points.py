@@ -155,7 +155,7 @@ def write_transcripts(
                     if n_points_tile == 0:
                         continue
 
-                    location = np.concatenate([xy[level_locs][loc], np.zeros((len(loc), 1))], axis=1).astype(np.float32)
+                    location = np.concatenate([xy[level_locs][loc], _z(len(loc))], axis=1).astype(np.float32)
 
                     tile_group = level_group.create_group(str_index)
                     tile_group.create_array("valid", data=valid[level_locs][loc], chunks=chunks)
@@ -166,3 +166,10 @@ def write_transcripts(
                     tile_group.create_array("codeword_identity", data=codeword_identity[level_locs][loc], chunks=chunks)
                     tile_group.create_array("uuid", data=uuid[level_locs][loc], chunks=chunks)
                     tile_group.create_array("id", data=transcript_id[level_locs][loc], chunks=chunks)
+
+
+def _z(n: int) -> np.ndarray:
+    """Create a zero array with a small non-zero value at the first element to avoid reading issues."""
+    z = np.zeros((n, 1))
+    z[0] = 1e-4
+    return z
