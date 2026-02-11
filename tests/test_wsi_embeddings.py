@@ -57,7 +57,7 @@ def test_deterministic_embedding(model: str):
     sdata_on_disk = sopa.io.wsi("tests/CMU-1-Small-Region.svs")
     sdata_on_disk.write(f"tests/test_wsi_{model}.zarr")
     sdata_on_disk = spatialdata.read_zarr(f"tests/test_wsi_{model}.zarr")
-    assert "backend" not in sdata_on_disk["CMU-1-Small-Region"].attrs  # fallback to xarray reader
+    assert "backend" not in sdata_on_disk["wsi"].attrs  # fallback to xarray reader
 
     sdata_openslide = sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="openslide")
 

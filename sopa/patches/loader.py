@@ -48,14 +48,12 @@ class TileLoader:
         Extract a numpy patch from the image given a bounding box
         and pads a patch to a specific width since some patches might be smaller (e.g., on edges)
         """
-        image_patch = np.array(
-            self.slide.read_region(
-                int(box[0] * self.level_downsample),
-                int(box[1] * self.level_downsample),
-                box[2] - box[0],
-                box[3] - box[1],
-                self.level,
-            )
+        image_patch = self.slide.read_region(
+            int(box[0] * self.level_downsample),
+            int(box[1] * self.level_downsample),
+            box[2] - box[0],
+            box[3] - box[1],
+            self.level,
         )
 
         pad_x, pad_y = self.patch_width - image_patch.shape[0], self.patch_width - image_patch.shape[1]
@@ -199,9 +197,9 @@ class RegionReader:
     def __init__(self, slide: DataArray | DataTree):
         self.slide = slide
 
-    def read_region(self, x: int, y: int, width: int, height: int, level: int = 0):
+    def read_region(self, x: int, y: int, width: int, height: int, level: int = 0) -> np.ndarray:
         """Get a region from the slide."""
         x_end, y_end = x + width, y + height
         image = self.slide[f"scale{level}"].image if isinstance(self.slide, DataTree) else self.slide
         tile = image[:, slice(y, y_end), slice(x, x_end)]
-        return tile.transpose("y", "x", "c")
+        return tile.transpose("y", "x", "c").data.compute()

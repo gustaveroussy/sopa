@@ -14,7 +14,7 @@ def test_region_matching():
     from sopa.patches.loader import get_reader
 
     wsi_openslide = get_reader("openslide")("tests/CMU-1-Small-Region.svs")
-    wsi_xarray = get_reader("xarray")(sopa.io.wsi("tests/CMU-1-Small-Region.svs")["CMU-1-Small-Region"])
+    wsi_xarray = get_reader("xarray")(sopa.io.wsi("tests/CMU-1-Small-Region.svs")["wsi"])
 
     location = (780, 660)
     size = (512, 556)
