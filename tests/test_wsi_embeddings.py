@@ -24,10 +24,10 @@ def test_patches_embeddings_inference_clustering():
 
     assert sdata["dummy_embeddings"].shape == (9, 3)
 
-    sdata["he_image"].attrs["backend"] = "tiffslide"
+    sdata["he_image"].attrs["backend"] = "openslide"
     sdata["he_image"].attrs["metadata"] = {
         "level_downsamples": [1, 2, 4],
-        "properties": {"tiffslide.objective-power": 50},
+        "properties": {"openslide.objective-power": 50},
     }
 
     sopa.patches.compute_embeddings(sdata, "dummy", 10, magnification=10, image_key="he_image")
@@ -59,12 +59,12 @@ def test_deterministic_embedding(model: str):
     sdata_on_disk = spatialdata.read_zarr(f"tests/test_wsi_{model}.zarr")
     assert "backend" not in sdata_on_disk["CMU-1-Small-Region"].attrs  # fallback to xarray reader
 
-    sdata_tiffslide = sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="tiffslide")
+    sdata_openslide = sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="openslide")
 
-    sopa.patches.compute_embeddings(sdata_tiffslide, model, patch_width)
+    sopa.patches.compute_embeddings(sdata_openslide, model, patch_width)
     sopa.patches.compute_embeddings(sdata_on_disk, model, patch_width)
 
-    assert np.isclose(sdata_tiffslide[f"{model}_embeddings"].X, sdata_on_disk[f"{model}_embeddings"].X).all()
+    assert np.isclose(sdata_openslide[f"{model}_embeddings"].X, sdata_on_disk[f"{model}_embeddings"].X).all()
 
 
 @pytest.mark.wsi

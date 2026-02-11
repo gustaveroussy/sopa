@@ -1,4 +1,8 @@
+from __future__ import annotations
+
 import logging
+from collections.abc import Callable
+from functools import partial
 
 import dask
 import numpy as np
@@ -7,7 +11,6 @@ from xarray import DataArray, DataTree
 
 from .. import settings
 from ..constants import SopaAttrs, SopaKeys
-from ..io.reader._wsi_reader import get_reader
 from ..utils import get_spatial_element
 from .patches import Patches2D
 
@@ -32,17 +35,9 @@ class TileLoader:
 
         _backend = multiscale_image.attrs.get("backend")
         _path = multiscale_image.attrs.get("path")
+        name = _backend if settings.native_read_region else None
 
-        try:
-            if settings.native_read_region and _backend is not None:
-                self.slide = get_reader(_backend)(_path)
-            else:
-                self.slide = get_reader("xarray")(multiscale_image)
-        except Exception as e:
-            log.warning(
-                f"Exception raised for '{_backend}' and path '{_path}'. Falling back to xarray reader. Error: {e}"
-            )
-            self.slide = get_reader("xarray")(multiscale_image)
+        self.slide = get_reader(name)(multiscale_image if name is None else _path)
 
         self.patch_width = int(patch_width / self.tile_resize_factor)
         self.resized_patch_width = patch_width
@@ -55,9 +50,11 @@ class TileLoader:
         """
         image_patch = np.array(
             self.slide.read_region(
-                (int(box[0] * self.level_downsample), int(box[1] * self.level_downsample)),
+                int(box[0] * self.level_downsample),
+                int(box[1] * self.level_downsample),
+                box[2] - box[0],
+                box[3] - box[1],
                 self.level,
-                (box[2] - box[0], box[3] - box[1]),
             )
         )
 
@@ -182,3 +179,29 @@ def _get_best_level_for_downsample(level_downsamples: list[float], downsample: f
         if ds > downsample:
             return level - 1
     return len(level_downsamples) - 1
+
+
+def get_reader(name: str | None) -> Callable[[str | DataTree], RegionReader]:
+    if name is None:
+        return RegionReader
+
+    try:
+        from wsidata import open_wsi
+    except ImportError:
+        raise ImportError("Please install the wsi extra to use this function, e.g. via `pip install 'sopa[wsi]'`")
+
+    return partial(open_wsi, reader=name)
+
+
+class RegionReader:
+    """Region-reader for xarray data (not using any specific backend like openslide or others)."""
+
+    def __init__(self, slide: DataArray | DataTree):
+        self.slide = slide
+
+    def read_region(self, x: int, y: int, width: int, height: int, level: int = 0):
+        """Get a region from the slide."""
+        x_end, y_end = x + width, y + height
+        image = self.slide[f"scale{level}"].image if isinstance(self.slide, DataTree) else self.slide
+        tile = image[:, slice(y, y_end), slice(x, x_end)]
+        return tile.transpose("y", "x", "c")

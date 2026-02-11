@@ -3031,6 +3031,41 @@ wheels = [
 ]
 
 [[package]]
+name = "openslide-bin"
+version = "4.0.0.11"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/45/32fcc407c99621e67c9fd7906eed953ccbfedac56bbde0d770132eadf3c6/openslide_bin-4.0.0.11.tar.gz", hash = "sha256:6b0c6d18e1ac5d246f7de6fb116540486219a2696ecb833f9d386fb73b330952", size = 17546952 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/0b/7099abbe00ecf205007359111b483c6c4830e56584af9a54959fe533f35f/openslide_bin-4.0.0.11-py3-none-macosx_11_0_universal2.whl", hash = "sha256:ec8337c6afaf3fea74a4b8fd4df08e9cdf13f475c157d64d61ba8985fe553a20", size = 5457719 },
+    { url = "https://files.pythonhosted.org/packages/0f/4d/0b70552f3f248fb8a22e43dc848ea98f2006909ee00ec590c64a04c674f1/openslide_bin-4.0.0.11-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:c56009ce1d6167ef4897881055e00a9dd2e13a82f09b227dddb84f8d7f9e187a", size = 4235049 },
+    { url = "https://files.pythonhosted.org/packages/68/99/212710e3212a07bc930d657da50b3cac66a6fca3157d43bf97a4531778cf/openslide_bin-4.0.0.11-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:928b8532841f4b75b595d3a8c7c6a64205dbc7f4c5268fdd696d8374db194f9f", size = 4339551 },
+    { url = "https://files.pythonhosted.org/packages/69/8a/e46bca045f3a5aaef533e3a90dd2033694f08879f96b61665423d5d90e83/openslide_bin-4.0.0.11-py3-none-win_amd64.whl", hash = "sha256:8330b61f83d460a84fa4917d084bdfde66b84bd86a84cb98d82e09f349b19861", size = 4294929 },
+]
+
+[[package]]
+name = "openslide-python"
+version = "1.4.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/75/f3/11a90efe13994c84ca22bf7d28195e1e6912066dada1960136536c63cdc0/openslide_python-1.4.3.tar.gz", hash = "sha256:06eec2e05988c37b71ff1ee57d1f465c0dcbf26e655d1dcdab70217ad2769b82", size = 386553 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7f/bb/7a4e12d38616ada03d06fb44658371c2024de92c9d96b9ee95ddb8aa4881/openslide_python-1.4.3-cp311-abi3-macosx_10_9_universal2.whl", hash = "sha256:e0260a51821266d29fc26f6ca033242b11889a15b814fdf61c286eefd5dac076", size = 33218 },
+    { url = "https://files.pythonhosted.org/packages/18/a7/571f5f92294c954a426f5fc05844bbc8be9da739bfeb5b20e2298f03f238/openslide_python-1.4.3-cp311-abi3-manylinux1_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:024aa25336326bcf7d8b6eed8ec302cc98e068cf534c09f728a8b2860b6ce71d", size = 36843 },
+    { url = "https://files.pythonhosted.org/packages/70/d7/3abe2aade6c89461d59274f2899362c608a0cf9cc8933ea6da869871db05/openslide_python-1.4.3-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:971990d2281f1abe294047961fa50e349edab3eff6d07370dceb4eef03c1c17b", size = 37427 },
+    { url = "https://files.pythonhosted.org/packages/4c/6c/866a647cee12713fcae2f09121c88bc2c82be9f10ad2f99bdb278d85f97b/openslide_python-1.4.3-cp311-abi3-win_amd64.whl", hash = "sha256:e0ec8222e285bd01fa8c3054e75cfac5763f4d3327683f5769e312e120fd134a", size = 35396 },
+    { url = "https://files.pythonhosted.org/packages/60/af/084312ddffcebd488df82ccc487d22e118c170f8cec1faf998a5f1d541cc/openslide_python-1.4.3-cp313-cp313t-macosx_10_13_universal2.whl", hash = "sha256:7e3ca0b2f63946ac622b5e46dc95c762e9b57b29d3aa38eea4dfcdd59de1f56f", size = 33261 },
+    { url = "https://files.pythonhosted.org/packages/41/c4/660659f4294472dfe159c2c1dc5705a58757027af8543209365350c2a6f5/openslide_python-1.4.3-cp313-cp313t-manylinux1_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:f38c889703d1262a63f7f17dff35466c36eb510bbb577ddee7530ca0e1a5b1ab", size = 40726 },
+    { url = "https://files.pythonhosted.org/packages/f5/8d/1dd0b4d93eb2cd21022f8953820fee0b270dd0e2d4272886f1ff5ed03743/openslide_python-1.4.3-cp313-cp313t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:8238ed334d8510c9155b4d2af5250de1ed94376cc0186496a1bba5600dad5873", size = 41303 },
+    { url = "https://files.pythonhosted.org/packages/98/f3/8ee8ab53c2e88c349c1e988077a2770c629f63eeaba2a381d6a6f20d3aad/openslide_python-1.4.3-cp313-cp313t-win_amd64.whl", hash = "sha256:32b7a8fa9c6ae5d85158e8274ac4a25f11541d5d9b636555144f311627e8ad2e", size = 35462 },
+    { url = "https://files.pythonhosted.org/packages/ab/2d/8752975d9ecad9a434dff353226bf9751a57427ff2ac49069affb67d7132/openslide_python-1.4.3-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:18543f27311367ed4f8bb8f6bbf6b70dba716a6fca191704daec624dbb50bc0b", size = 33277 },
+    { url = "https://files.pythonhosted.org/packages/62/c4/a00296e0580168a66771cb7385480d0623b3ec3faaa9981c53470d2194e1/openslide_python-1.4.3-cp314-cp314t-manylinux1_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:62ba55fcec9304eefebef6af38c862d589441e95a78c22ea1fc627018f787937", size = 40847 },
+    { url = "https://files.pythonhosted.org/packages/99/a5/43ff2d1bf7170608c41e1db95528638a78e1b324640f255b3fc0b11386f2/openslide_python-1.4.3-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:155c7feb6377c07def806fd09b50b9adfdbe72614fb7e5ce19d0f7fd339d1048", size = 41419 },
+    { url = "https://files.pythonhosted.org/packages/c4/6f/ac109d214fa446d65ee078621cb35b351496bb72533773d7aeb38848c549/openslide_python-1.4.3-cp314-cp314t-win_amd64.whl", hash = "sha256:3a1828d01755ea751e8e26acd58b1869ddb46c1b8a010e68ad1493021cccd5dc", size = 35691 },
+]
+
+[[package]]
 name = "opt-einsum"
 version = "3.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -4732,6 +4767,7 @@ stardist = [
 wsi = [
     { name = "torch" },
     { name = "torchvision" },
+    { name = "wsidata" },
 ]
 
 [package.dev-dependencies]
@@ -4767,6 +4803,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'wsi'", specifier = ">=2.1.1" },
     { name = "torchvision", marker = "extra == 'wsi'", specifier = ">=0.20.0" },
     { name = "typer", specifier = ">=0.9.0" },
+    { name = "wsidata", marker = "extra == 'wsi'", specifier = ">=0.8.0" },
 ]
 provides-extras = ["cellpose", "stardist", "baysor", "wsi"]
 
@@ -5604,6 +5641,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/01/3a/07cd60a9d26fe73efead61c7830af975dfdba8537632d410462672e4432b/wrapt-2.0.1-cp314-cp314t-win_amd64.whl", hash = "sha256:61c4956171c7434634401db448371277d07032a81cc21c599c22953374781395", size = 64038 },
     { url = "https://files.pythonhosted.org/packages/41/99/8a06b8e17dddbf321325ae4eb12465804120f699cd1b8a355718300c62da/wrapt-2.0.1-cp314-cp314t-win_arm64.whl", hash = "sha256:35cdbd478607036fee40273be8ed54a451f5f23121bd9d4be515158f9498f7ad", size = 60634 },
     { url = "https://files.pythonhosted.org/packages/15/d1/b51471c11592ff9c012bd3e2f7334a6ff2f42a7aed2caffcf0bdddc9cb89/wrapt-2.0.1-py3-none-any.whl", hash = "sha256:4d2ce1bf1a48c5277d7969259232b57645aae5686dba1eaeade39442277afbca", size = 44046 },
+]
+
+[[package]]
+name = "wsidata"
+version = "0.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opencv-python-headless" },
+    { name = "openslide-bin" },
+    { name = "openslide-python" },
+    { name = "rich" },
+    { name = "spatialdata" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c2/b6/d65daa5e5e943fa877b62dec5758457b0a933d6beacd7430b515048e9ca5/wsidata-0.8.2.tar.gz", hash = "sha256:abc7c8d5c0be98525c195cb25f272166453064368d32ec7d8bc9df86114c72ea", size = 51093 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/a3/564492f0ad16d666aeddf9b0cc2bfc71d621be9dd39e91826de87876e534/wsidata-0.8.2-py3-none-any.whl", hash = "sha256:7ebf693372d5cc4eea2b1f9bd3c2e952675a05b696d9c8698c0f2a39323534f8", size = 68450 },
 ]
 
 [[package]]
