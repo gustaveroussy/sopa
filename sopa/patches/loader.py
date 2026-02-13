@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 class TileLoader:
     image: DataArray
     level: int
-    level_downsample: int
+    level_downsample: int | None
     tile_resize_factor: float
 
     def __init__(
@@ -32,10 +32,9 @@ class TileLoader:
         roi_key: str | None = SopaKeys.ROI,
     ):
         multiscale_image = _get_image_for_inference(sdata, image_key)
+        self.slide = get_reader(multiscale_image)
 
         self.init_extraction_parameters(multiscale_image, level, magnification)
-
-        self.slide = get_reader(multiscale_image)
 
         self.resized_patch_width = patch_width
         self.raw_patch_width = int(patch_width / self.tile_resize_factor)
@@ -101,12 +100,10 @@ class TileLoader:
 
         slide_metadata: dict[str, float | str] = multiscale_image.attrs.get("metadata", {})
 
-        assert slide_metadata, "No `metadata` field found in the image attributes"
-        assert "level_downsample" in slide_metadata, "Missing `level_downsample` in the image metadata"
-
-        level_downsamples = slide_metadata["level_downsample"]
-
         if magnification is not None:
+            assert slide_metadata, "No `metadata` field found in the image attributes"
+            assert "level_downsample" in slide_metadata, "Missing `level_downsample` in the image metadata"
+
             self.level, self.tile_resize_factor = _get_level_for_magnification(slide_metadata, magnification)
         else:
             self.tile_resize_factor = 1
@@ -119,9 +116,14 @@ class TileLoader:
                     level = len(multiscale_image.keys()) + level
                 self.level = level
 
-        assert f"scale{level}" in multiscale_image, f"Level {level} not found in the image scales"
-        self.image = next(iter(multiscale_image[f"scale{level}"].values()))
-        self.level_downsample = level_downsamples[self.level]
+        assert f"scale{self.level}" in multiscale_image, f"Level {self.level} not found in the image scales"
+        self.image = next(iter(multiscale_image[f"scale{self.level}"].values()))
+
+        if not isinstance(self.slide, RegionReader):  # level_downsample is required
+            assert "level_downsample" in slide_metadata, "Missing `level_downsample` in the image metadata"
+            self.level_downsample = slide_metadata["level_downsample"][self.level]
+        else:
+            self.level_downsample = None
 
 
 def _get_image_for_inference(sdata: SpatialData, image_key: str | None = None) -> DataArray | DataTree:
@@ -208,7 +210,7 @@ class RegionReader:
         tile = image[:, slice(y, y + height), slice(x, x + width)]
         patch: np.ndarray = tile.transpose("y", "x", "c").data.compute()
 
-        pad_x, pad_y = width - patch.shape[0], height - patch.shape[1]
-        padded_patch = np.pad(patch, ((0, pad_x), (0, pad_y), (0, 0)))
+        pad_y, pad_x = height - patch.shape[0], width - patch.shape[1]
+        padded_patch = np.pad(patch, ((0, pad_y), (0, pad_x), (0, 0)))
 
         return padded_patch

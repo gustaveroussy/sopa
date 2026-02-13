@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 import sopa
@@ -24,6 +23,4 @@ def test_region_matching():
     region_openslide = wsi_openslide.read_region(x, y, width, height, level=0)
     region_xarray = wsi_xarray.read_region(x, y, width, height, level=0)
 
-    assert (np.array(region_openslide) == np.array(region_xarray)).all(), (
-        "Regions from openslide and xarray do not match"
-    )
+    assert (region_openslide == region_xarray).all(), "Regions from openslide and xarray do not match"
