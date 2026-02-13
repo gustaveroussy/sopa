@@ -13,8 +13,10 @@ def test_openslide_backend():
 def test_region_matching():
     from sopa.patches.loader import get_reader
 
-    wsi_openslide = get_reader("openslide")("tests/CMU-1-Small-Region.svs")
-    wsi_xarray = get_reader()(sopa.io.wsi("tests/CMU-1-Small-Region.svs", as_image=True))
+    image = sopa.io.wsi("tests/CMU-1-Small-Region.svs", backend="openslide", as_image=True)
+
+    wsi_openslide = get_reader(image, "openslide")
+    wsi_xarray = get_reader(image, "xarray")
 
     x, y = 780, 660
     width, height = 512, 556
