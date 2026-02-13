@@ -1,5 +1,11 @@
 ## [2.2.0] - xxxx-xx-xx
 
+### Changed
+- Move to `zarr>=3.0.0`
+
+### Added
+- Added support for python 3.14
+
 ### Breaking change
 - Drop support for python=3.10, i.e. Sopa now depends on python>=3.11
 - `sopa.io.wsi` now uses `openslide` as a default backend, and uses `wsi` as a default image name (see new function arguments in the docs)
