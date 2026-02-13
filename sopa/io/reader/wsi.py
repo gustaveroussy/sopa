@@ -10,6 +10,7 @@ from ...constants import SopaAttrs
 def wsi(
     path: str | Path,
     as_image: bool = False,
+    image_key: str = "wsi",
     backend: Literal["openslide", "bioformats"] = "openslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object.
@@ -20,6 +21,7 @@ def wsi(
     Args:
         path: Path to the WSI
         as_image: If `True`, returns a, image instead of a `SpatialData` object
+        image_key: The key (or name) to use for the image in the `SpatialData` object
         backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"bioformats"`. See the `reader` argument from [wsidata.open_wsi](https://wsidata.readthedocs.io/en/latest/api/_autogen/wsidata.open_wsi.html).
 
     Returns:
@@ -30,21 +32,32 @@ def wsi(
     except ImportError:
         raise ImportError("Please install the wsi extra to use this function, e.g. via `pip install 'sopa[wsi]'`")
 
-    sdata = open_wsi(path, reader=backend, attach_images=True, attach_thumbnail=False).to_spatialdata()
+    sdata = open_wsi(
+        path, reader=backend, attach_images=True, attach_thumbnail=False, image_key=image_key
+    ).to_spatialdata()
 
-    image_name = "wsi"
+    sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = image_key
 
-    sdata.attrs[SopaAttrs.TISSUE_SEGMENTATION] = image_name
+    metadata = sdata[image_key].attrs.copy()
+    metadata["objective-power"] = _get_objective_power(metadata.get("raw", "{}"))
 
-    metadata = sdata[image_name].attrs.copy()
-    sdata[image_name].attrs = {
+    sdata[image_key].attrs = {
         "metadata": metadata,
         "backend": backend,
         "path": str(path),
     }
-    sdata[image_name].name = image_name
+    sdata[image_key].name = image_key
 
     if as_image:
-        return sdata[image_name]
+        return sdata[image_key]
 
     return sdata
+
+
+def _get_objective_power(raw_metadata) -> int | None:
+    import ast
+
+    try:
+        return int(ast.literal_eval(raw_metadata)["objective-power"])
+    except (KeyError, ValueError):
+        return None

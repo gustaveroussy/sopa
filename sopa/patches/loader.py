@@ -36,6 +36,7 @@ class TileLoader:
         _backend = multiscale_image.attrs.get("backend")
         _path = multiscale_image.attrs.get("path")
         name = _backend if settings.native_read_region else None
+        assert name is None or _path is not None, f"Found backend '{name}' but no path found in the image attributes"
 
         self.slide = get_reader(name)(multiscale_image if name is None else _path)
 
@@ -138,20 +139,18 @@ def _get_extraction_parameters(
 
 def _get_level_for_magnification(image: DataArray | DataTree, magnification: int) -> int:
     """Return the best level for a given downsampling factor"""
-    slide_metadata, backend = image.attrs.get("metadata", {}), image.attrs.get("backend")
+    slide_metadata: dict[str, float | str] = image.attrs.get("metadata", {})
 
     assert slide_metadata, "No `metadata` field found in the image attributes"
-    assert backend is not None, "No backend found in the image metadata, can not infer the level for the magnification"
-    assert "level_downsamples" in slide_metadata, "Missing `level_downsamples` in the image metadata"
-    assert "properties" in slide_metadata, "Missing `properties` in the image metadata"
+    assert "level_downsample" in slide_metadata, "Missing `level_downsample` in the image metadata"
 
-    objective_power = slide_metadata["properties"].get(f"{backend}.objective-power")
-    mpp_x = slide_metadata["properties"].get(f"{backend}.mpp-x")
+    objective_power = slide_metadata.get("objective-power")
+    mpp = slide_metadata.get("mpp")
 
     if objective_power:
         downsample = int(objective_power) / magnification
-    elif mpp_x:
-        mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - float(mpp_x)))
+    elif mpp:
+        mpp_objective = min([80, 40, 20, 10, 5], key=lambda obj: abs(10 / obj - float(mpp)))
         downsample = mpp_objective / magnification
     else:
         raise ValueError("No objective-power or mpp-x information found in the metadata")
@@ -162,25 +161,25 @@ def _get_level_for_magnification(image: DataArray | DataTree, magnification: int
             f"Using the highest available magnification with upscaling."
         )
 
-    level = _get_best_level_for_downsample(slide_metadata["level_downsamples"], downsample)
-    level_downsample = slide_metadata["level_downsamples"][level]
+    level = _get_best_level_for_downsample(slide_metadata["level_downsample"], downsample)
+    level_downsample = slide_metadata["level_downsample"][level]
     tile_resize_factor = level_downsample / downsample
 
     return level, tile_resize_factor, level_downsample
 
 
-def _get_best_level_for_downsample(level_downsamples: list[float], downsample: float) -> int:
+def _get_best_level_for_downsample(level_downsample: list[float], downsample: float) -> int:
     """Return the best level for a given downsampling factor"""
     if downsample <= 1.0:
         return 0
-    for level, ds in enumerate(level_downsamples):
+    for level, ds in enumerate(level_downsample):
         if ds > downsample:
             return level - 1
-    return len(level_downsamples) - 1
+    return len(level_downsample) - 1
 
 
-def get_reader(name: str | None) -> Callable[[str | DataTree], RegionReader]:
-    if name is None:
+def get_reader(name: str | None = None) -> Callable[[str | DataTree], RegionReader]:
+    if name is None or name == "xarray":
         return RegionReader
 
     try:

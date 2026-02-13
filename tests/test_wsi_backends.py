@@ -14,13 +14,13 @@ def test_region_matching():
     from sopa.patches.loader import get_reader
 
     wsi_openslide = get_reader("openslide")("tests/CMU-1-Small-Region.svs")
-    wsi_xarray = get_reader("xarray")(sopa.io.wsi("tests/CMU-1-Small-Region.svs")["wsi"])
+    wsi_xarray = get_reader()(sopa.io.wsi("tests/CMU-1-Small-Region.svs", as_image=True))
 
-    location = (780, 660)
-    size = (512, 556)
+    x, y = 780, 660
+    width, height = 512, 556
 
-    region_openslide = wsi_openslide.read_region(location, level=0, size=size)
-    region_xarray = wsi_xarray.read_region(location, level=0, size=size)
+    region_openslide = wsi_openslide.read_region(x, y, width, height, level=0)
+    region_xarray = wsi_xarray.read_region(x, y, width, height, level=0)
 
     assert (np.array(region_openslide) == np.array(region_xarray)).all(), (
         "Regions from openslide and xarray do not match"
