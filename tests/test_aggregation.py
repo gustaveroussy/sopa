@@ -102,6 +102,44 @@ def test_count_transcripts_with_low_quality():
     assert (adata.X.toarray() == np.array([[1, 2]])).all()
 
 
+def test_aggregation_more_cells():
+    n_genes, n_cells = 53, 123  # arbitrary numbers of genes and cells
+
+    counts = np.random.poisson(1, (n_cells, n_genes))
+
+    adata_original = AnnData(
+        X=csr_matrix(counts),
+        obs=pd.DataFrame(index=[f"cell_{i}" for i in range(n_cells)]),
+        var=pd.DataFrame(index=[f"gene_{i}" for i in range(n_genes)]),
+    )
+
+    locs = np.arange(n_cells * 2).reshape(n_cells, 2)
+
+    gdf = gpd.GeoDataFrame(geometry=[box(xmin - 0.5, ymin - 0.5, xmin + 0.5, ymin + 0.5) for xmin, ymin in locs])
+
+    counts_per_cell = counts.sum(1)
+    n_transcripts = counts.sum()
+
+    transcript_locs = locs.repeat(counts_per_cell, axis=0) + np.random.uniform(-0.4, 0.4, (n_transcripts, 2))
+
+    x, y = transcript_locs.T
+
+    gene_names = np.concatenate([adata_original.var_names.values[None, :].repeat(counts[i]) for i in range(n_cells)])
+
+    df_pandas = pd.DataFrame({
+        "x": x,
+        "y": y,
+        "gene": gene_names,
+    })
+    df_pandas["gene"] = df_pandas["gene"].astype(object)
+
+    points = dd.from_pandas(df_pandas, npartitions=3)
+
+    adata = _count_transcripts_aligned(gdf, points, "gene")
+
+    assert np.array_equal(adata[:, adata_original.var_names].X.toarray(), counts)
+
+
 def test_aggregate_bins():
     bins = [
         box(0, 0, 1, 1),
