@@ -33,7 +33,7 @@ def cluster_embeddings(
     key_added: str = "cluster",
     **method_kwargs: str,
 ) -> None:
-    """Create clusters of the patches embeddings (obtained from [sopa.patches.compute_embeddings][]).
+    """Create clusters of the patches embeddings (obtained from [sopa.compute_embeddings][]).
 
     Info:
         The clusters are added to the `key_added` column of the "inference_patches" shapes (`key_added='cluster'` by default).

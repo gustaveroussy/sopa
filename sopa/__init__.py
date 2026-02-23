@@ -16,5 +16,5 @@ if not any(f"--{option}" in sys.argv for option in ["version", "help"]):  # no i
     from . import spatial
     from . import segmentation
     from .aggregation import aggregate, overlay_segmentation
-    from .patches import make_transcript_patches, make_image_patches
+    from .patches import make_transcript_patches, make_image_patches, compute_embeddings, cluster_embeddings
     from .utils import get_spatial_image, get_spatial_element, to_intrinsic, get_boundaries

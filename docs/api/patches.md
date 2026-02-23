@@ -2,6 +2,6 @@
 
 ::: sopa.make_transcript_patches
 
-::: sopa.patches.compute_embeddings
+::: sopa.compute_embeddings
 
-::: sopa.patches.cluster_embeddings
+::: sopa.cluster_embeddings
