@@ -11,7 +11,7 @@ def wsi(
     path: str | Path,
     as_image: bool = False,
     image_key: str = "wsi",
-    backend: Literal["openslide", "bioformats"] = "openslide",
+    backend: Literal["openslide", "tiffslide", "bioformats"] = "openslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object.
 
