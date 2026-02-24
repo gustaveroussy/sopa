@@ -1,4 +1,4 @@
-## [2.2.0] - xxxx-xx-xx
+## [2.2.0] - 2026-02-24
 
 This release unpins `zarr`, allowing to upgrade to the newer `SpatialData` version.
 
@@ -6,6 +6,9 @@ Everything should be backward compatible, except for some updates in the `sopa.i
 
 ### Changed
 - Moved to `zarr>=3.0.0`.
+
+### Fixed
+- Fixed `'No module named "pkg_resources"'` (#387) due to installing newer SpatialData version.
 
 ### Added
 - Python 3.14 should now be supported. More tests will be performed to ensure stability.
