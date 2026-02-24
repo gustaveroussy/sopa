@@ -1,3 +1,7 @@
+## [2.2.1] - 2026-02-24
+
+Hotfix for [#389](https://github.com/gustaveroussy/sopa/issues/389)
+
 ## [2.2.0] - 2026-02-24
 
 This release unpins `zarr`, allowing to upgrade to the newer `SpatialData` version.
