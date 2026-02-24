@@ -1,6 +1,6 @@
 import shutil
 
-import dask
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -15,9 +15,6 @@ from sopa.constants import SopaFiles, SopaKeys
 from sopa.patches.patches import Patches1D, Patches2D
 from sopa.patches.transcripts import OnDiskTranscriptPatches, _unassigned_to_zero
 from sopa.segmentation.methods.utils import _check_transcript_patches
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa: E402
 
 
 @pytest.fixture

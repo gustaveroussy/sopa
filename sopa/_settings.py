@@ -4,7 +4,6 @@ from typing import Callable
 
 import dask
 import dask.delayed
-from dask.distributed import Client, progress
 from tqdm import tqdm
 
 log = logging.getLogger(__name__)
@@ -62,6 +61,7 @@ class Settings:
         import logging
         import os
 
+        from dask.distributed import Client, progress
         from distributed.scheduler import logger as _logger
 
         _logger.setLevel(logging.ERROR)

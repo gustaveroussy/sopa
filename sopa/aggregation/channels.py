@@ -5,7 +5,6 @@ import geopandas as gpd
 import numpy as np
 import numpy.ma as ma
 import shapely
-from dask.diagnostics import ProgressBar
 from shapely.geometry import Polygon, box
 from spatialdata import SpatialData
 from xarray import DataArray
@@ -60,6 +59,8 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
     Returns:
         A numpy `ndarray` of shape `(n_cells, n_channels)`
     """
+    from dask.diagnostics import ProgressBar
+
     log.info(f"Aggregating channels intensity over {len(geo_df)} cells with {mode=}")
 
     cells = geo_df if isinstance(geo_df, list) else list(geo_df.geometry)

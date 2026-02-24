@@ -6,6 +6,7 @@ import geopandas as gpd
 import numpy as np
 import zarr
 from shapely.geometry import MultiPolygon, Polygon
+from zarr.storage import ZipStore
 
 from ._constants import FileNames, cell_summary_attrs, group_attrs
 from .utils import explorer_file_path, int_cell_id
@@ -95,42 +96,32 @@ def write_polygons(
     num_points = polygon_vertices.shape[2]
     n_vertices = num_points // 2
 
-    with zarr.ZipStore(path, mode="w") as store:
-        g = zarr.group(store=store)
-        g.attrs.put(GROUP_ATTRS)
+    with ZipStore(path, mode="w") as store:
+        g = zarr.group(store=store, zarr_format=2, attributes=GROUP_ATTRS)
 
-        g.array(
+        g.create_array(
             "polygon_vertices",
-            polygon_vertices,
-            dtype="float32",
+            data=polygon_vertices.astype(np.float32),
             chunks=(1, cells_fourth, ceil(num_points / 4)),
         )
 
         cell_id = np.ones((num_cells, 2))
         cell_id[:, 0] = int_cell_id(geo_df.index) if preserve_ids else np.arange(num_cells)
-        g.array("cell_id", cell_id, dtype="uint32", chunks=(cells_half, 1))
+        g.create_array("cell_id", data=cell_id.astype(np.uint32), chunks=(cells_half, 1))
 
         cell_summary = np.zeros((num_cells, 7))
         cell_summary[:, 2] = [p.area for p in polygons]
-        g.array(
-            "cell_summary",
-            cell_summary,
-            dtype="float64",
-            chunks=(num_cells, 1),
-        )
-        g["cell_summary"].attrs.put(cell_summary_attrs())
-
-        g.array(
-            "polygon_num_vertices",
-            np.full((2, num_cells), n_vertices),
-            dtype="int32",
-            chunks=(1, cells_half),
+        g.create_array(
+            "cell_summary", data=cell_summary.astype(np.float64), chunks=(num_cells, 1), attributes=cell_summary_attrs()
         )
 
-        g.array(
+        g.create_array(
+            "polygon_num_vertices", data=np.full((2, num_cells), n_vertices, dtype=np.int32), chunks=(1, cells_half)
+        )
+
+        g.create_array(
             "seg_mask_value",
-            np.arange(num_cells),
-            dtype="uint32",
+            data=np.arange(num_cells, dtype=np.uint32),
             chunks=(cells_half,),
         )
 

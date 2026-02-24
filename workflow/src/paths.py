@@ -17,7 +17,7 @@ class WorkflowPaths:
         ### SpatialData object files
         self.data_path = self.config["data_path"]
         self.sdata_path = Path(self.config["sdata_path"])
-        self.sdata_zgroup = self.sdata_path / ".zgroup"  # trick to fix snakemake ChildIOException
+        self.sdata_json_attrs = self.sdata_path / "zarr.json"  # trick to fix snakemake ChildIOException
 
         self.shapes_dir = self.sdata_path / "shapes"
         self.points_dir = self.sdata_path / "points"

@@ -1,5 +1,5 @@
-import dask
 import dask.array as da
+import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -16,9 +16,6 @@ import sopa
 from sopa.aggregation.channels import _aggregate_channels_aligned
 from sopa.aggregation.transcripts import _count_transcripts_aligned
 from sopa.constants import SopaKeys
-
-dask.config.set({"dataframe.query-planning": False})
-import dask.dataframe as dd  # noqa: E402
 
 
 def test_aggregate_channels_aligned():
@@ -72,13 +69,15 @@ def test_count_transcripts():
     adata = _count_transcripts_aligned(gdf, points, "gene")
     expected = np.array([[0, 3, 1], [1, 0, 1], [1, 3, 1]])
 
-    assert (adata.var_names == ["a", "b", "c"]).all()
+    assert set(adata.var_names) == {"a", "b", "c"}
+    adata = adata[:, ["a", "b", "c"]].copy()
     assert (adata.X.toarray() == expected).all()
 
     adata = _count_transcripts_aligned(gdf, points, "gene", only_excluded=True)
     expected = np.array([[0, 1], [1, 0], [1, 0]])
 
-    assert (adata.var_names == ["blank", "gene_control"]).all()
+    assert set(adata.var_names) == {"blank", "gene_control"}
+    adata = adata[:, ["blank", "gene_control"]].copy()
     assert (adata.X.toarray() == expected).all()
 
 
@@ -98,8 +97,47 @@ def test_count_transcripts_with_low_quality():
 
     adata = _count_transcripts_aligned(gdf, points, "gene")
 
-    assert (adata.var_names == ["a", "b"]).all()
+    assert set(adata.var_names) == {"a", "b"}
+    adata = adata[:, ["a", "b"]].copy()
     assert (adata.X.toarray() == np.array([[1, 2]])).all()
+
+
+def test_aggregation_more_cells():
+    n_genes, n_cells = 53, 123  # arbitrary numbers of genes and cells
+
+    counts = np.random.poisson(1, (n_cells, n_genes))
+
+    adata_original = AnnData(
+        X=csr_matrix(counts),
+        obs=pd.DataFrame(index=[f"cell_{i}" for i in range(n_cells)]),
+        var=pd.DataFrame(index=[f"gene_{i}" for i in range(n_genes)]),
+    )
+
+    locs = np.arange(n_cells * 2).reshape(n_cells, 2)
+
+    gdf = gpd.GeoDataFrame(geometry=[box(xmin - 0.5, ymin - 0.5, xmin + 0.5, ymin + 0.5) for xmin, ymin in locs])
+
+    counts_per_cell = counts.sum(1)
+    n_transcripts = counts.sum()
+
+    transcript_locs = locs.repeat(counts_per_cell, axis=0) + np.random.uniform(-0.4, 0.4, (n_transcripts, 2))
+
+    x, y = transcript_locs.T
+
+    gene_names = np.concatenate([adata_original.var_names.values[None, :].repeat(counts[i]) for i in range(n_cells)])
+
+    df_pandas = pd.DataFrame({
+        "x": x,
+        "y": y,
+        "gene": gene_names,
+    })
+    df_pandas["gene"] = df_pandas["gene"].astype(object)
+
+    points = dd.from_pandas(df_pandas, npartitions=3)
+
+    adata = _count_transcripts_aligned(gdf, points, "gene")
+
+    assert np.array_equal(adata[:, adata_original.var_names].X.toarray(), counts)
 
 
 def test_aggregate_bins():

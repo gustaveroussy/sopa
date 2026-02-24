@@ -1,7 +1,21 @@
-## [2.1.12] - xxxx-xx-xx
+## [2.2.0] - xxxx-xx-xx
+
+This release unpins `zarr`, allowing to upgrade to the newer `SpatialData` version.
+
+Everything should be backward compatible, except for some updates in the `sopa.io.wsi` reader (more details below).
+
+### Changed
+- Moved to `zarr>=3.0.0`.
 
 ### Added
+- Python 3.14 should now be supported. More tests will be performed to ensure stability.
+- Faster `import sopa` (more lazy loaded packages).
 - Add spatial plot colored by cell annotation in the Sopa report (if any cell type or leiden)
+
+### Breaking changes
+- Drop support for `python==3.10`. Sopa now depends on `python>=3.11`.
+- `sopa.io.wsi` now uses `openslide` as a default backend, and uses `wsi` as a default image name (see [all function arguments in the docs](https://gustaveroussy.github.io/sopa/api/readers/#sopa.io.wsi)).
+- Removed deprecated `sopa.io.wsi_autoscale`
 
 ## [2.1.11] - 2025-12-18
 

@@ -15,6 +15,9 @@ sandbox
 *.tif
 data
 
+# Data
+Xenium_*
+
 # OS related
 .DS_Store
 

@@ -6,7 +6,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-from dask.diagnostics import ProgressBar
 from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 
@@ -69,6 +68,8 @@ def _count_transcripts_aligned(
     Returns:
         An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
     """
+    from dask.diagnostics import ProgressBar
+
     points[value_key] = points[value_key].astype("category").cat.as_known()
     gene_names = points[value_key].cat.categories.astype(str)
 

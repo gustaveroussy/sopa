@@ -37,7 +37,7 @@ During [aggregation](../../api/aggregation/#sopa.aggregate), you can for instanc
 
 ## H&E or WSI
 
-If you have only a H&E/WSI slide without spatial omics, you can also use Sopa, although many operations are dedicated to spatial omics. For instance, [`sopa.segmentation.tissue`](../../api/segmentation/#sopa.segmentation.tissue) for tissue segmentation, [`sopa.segmentation.stardist`](../../api/segmentation/#sopa.segmentation.stardist) for cell segmentation, [`sopa.patches.compute_embeddings`](../../api/patches/#sopa.patches.compute_embeddings) and [`sopa.patches.cluster_embeddings`](../../api/patches/#sopa.patches.cluster_embeddings) for patches embeddings/clusters.
+If you have only a H&E/WSI slide without spatial omics, you can also use Sopa, although many operations are dedicated to spatial omics. For instance, [`sopa.segmentation.tissue`](../../api/segmentation/#sopa.segmentation.tissue) for tissue segmentation, [`sopa.segmentation.stardist`](../../api/segmentation/#sopa.segmentation.stardist) for cell segmentation, [`sopa.compute_embeddings`](../../api/patches/#sopa.compute_embeddings) and [`sopa.cluster_embeddings`](../../api/patches/#sopa.cluster_embeddings) for patches embeddings/clusters.
 
 Though, if you have H&E with spatial omics, e.g. Xenium + H&E, in that case, we recommend segmenting the data on the spatial transcriptomics and aligning the H&E to performed [joined](../../api/spatial/#sopa.spatial.sjoin) operations as in [this tutorial](../he).
 

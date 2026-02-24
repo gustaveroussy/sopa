@@ -6,7 +6,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from dask import compute, delayed
-from dask.diagnostics import ProgressBar
 from pandas.api.types import is_string_dtype
 from spatialdata import SpatialData
 
@@ -60,6 +59,8 @@ class OnDiskTranscriptPatches(Patches2D):
         self.cache_dir = get_cache_dir(sdata) / SopaFiles.TRANSCRIPT_CACHE_DIR
 
     def write(self):
+        from dask.diagnostics import ProgressBar
+
         self.assign_prior_segmentation()
 
         self.setup_patches_directory()

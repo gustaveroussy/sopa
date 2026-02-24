@@ -31,8 +31,6 @@ def cell_categories_attrs() -> dict:
         "major_version": Versions.CELL_CATEGORIES[0],
         "minor_version": Versions.CELL_CATEGORIES[1],
         "number_groupings": 0,
-        "grouping_names": [],
-        "group_names": [],
     }
 
 

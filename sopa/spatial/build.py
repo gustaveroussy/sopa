@@ -14,7 +14,6 @@ from anndata import AnnData
 from anndata.utils import make_index_unique
 from scipy.sparse import SparseEfficiencyWarning, block_diag, csr_matrix, spmatrix
 from scipy.spatial import Delaunay
-from sklearn.metrics.pairwise import euclidean_distances
 from spatialdata import SpatialData
 
 from ..constants import SopaKeys
@@ -114,6 +113,8 @@ def _build_connectivity(
     coords: np.ndarray,
     set_diag: bool = False,
 ) -> csr_matrix | tuple[csr_matrix, csr_matrix]:
+    from sklearn.metrics.pairwise import euclidean_distances
+
     N = coords.shape[0]
 
     tri = Delaunay(coords)

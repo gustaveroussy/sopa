@@ -38,7 +38,7 @@ rule to_spatialdata:
     input:
         [] if config["is_toy_reader"] else paths.data_path,
     output:
-        paths.sdata_zgroup if paths.data_path else [],
+        paths.sdata_json_attrs if paths.data_path else [],
     conda:
         "sopa"
     params:
@@ -52,7 +52,7 @@ rule to_spatialdata:
 
 rule tissue_segmentation:
     input:
-        paths.sdata_zgroup if paths.data_path else [],
+        paths.sdata_json_attrs if paths.data_path else [],
     output:
         touch(paths.segmentation_done("tissue")),
     conda:
@@ -67,7 +67,7 @@ rule tissue_segmentation:
 
 checkpoint patchify_image:
     input:
-        paths.sdata_zgroup,
+        paths.sdata_json_attrs,
         paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
         patches_file = paths.smk_patches_file_image,
@@ -84,7 +84,7 @@ checkpoint patchify_image:
 
 checkpoint patchify_transcripts:
     input:
-        paths.sdata_zgroup,
+        paths.sdata_json_attrs,
         paths.segmentation_done("cellpose") if args.use("cellpose") else [],
         paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
@@ -153,7 +153,7 @@ rule scanpy_preprocess:
 
 rule explorer_raw:
     input:
-        paths.sdata_zgroup,
+        paths.sdata_json_attrs,
     output:
         touch(paths.smk_explorer_raw),
     conda:
