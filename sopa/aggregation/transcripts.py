@@ -1,6 +1,6 @@
 import logging
-from functools import partial
 
+import dask
 import dask.dataframe as dd
 import geopandas as gpd
 import numpy as np
@@ -68,6 +68,7 @@ def _count_transcripts_aligned(
     Returns:
         An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
     """
+    from dask import delayed
     from dask.diagnostics import ProgressBar
 
     points[value_key] = points[value_key].astype("category").cat.as_known()
@@ -79,20 +80,11 @@ def _count_transcripts_aligned(
 
     geo_df = geo_df.reset_index()
 
-    X_partitions = []
-
     with ProgressBar():
-        points.map_partitions(
-            partial(
-                _add_csr,
-                X_partitions,
-                geo_df,
-                gene_column=value_key,
-                gene_names=gene_names,
-                only_excluded=only_excluded,
-            ),
-            meta=(),
-        ).compute()
+        tasks = [
+            delayed(_as_csr_matrix)(part, geo_df, value_key, gene_names, only_excluded) for part in points.to_delayed()
+        ]
+        X_partitions = dask.compute(*tasks)
 
     for X_partition in X_partitions:
         adata.X += X_partition
@@ -104,14 +96,13 @@ def _count_transcripts_aligned(
     return adata
 
 
-def _add_csr(
-    X_partitions: list[csr_matrix],
-    geo_df: gpd.GeoDataFrame,
+def _as_csr_matrix(
     partition: pd.DataFrame,
+    geo_df: gpd.GeoDataFrame,
     gene_column: str,
     gene_names: list[str],
     only_excluded: bool,
-) -> None:
+) -> csr_matrix:
     if settings.gene_exclude_pattern is not None:
         matching = partition[gene_column].str.match(settings.gene_exclude_pattern, case=False, na=True)
         partition = partition[matching] if only_excluded else partition[~matching]
@@ -126,9 +117,7 @@ def _add_csr(
     cells_indices = cells_indices[column_indices >= 0]
     column_indices = column_indices[column_indices >= 0]
 
-    X_partition = csr_matrix(
+    return csr_matrix(
         (np.full(len(cells_indices), 1), (cells_indices, column_indices)),
         shape=(len(geo_df), len(gene_names)),
     )
-
-    X_partitions.append(X_partition)
