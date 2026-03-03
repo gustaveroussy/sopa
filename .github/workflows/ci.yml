@@ -6,6 +6,7 @@ on:
       - v*
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: "0 0 * * 1,3,5"
 
