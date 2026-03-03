@@ -28,10 +28,17 @@ jobs:
 
     strategy:
       matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         python-version: ["3.11", "3.12", "3.13"]
+        exclude:
+          - os: macos-latest
+            python-version: "3.13"
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
 
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
@@ -49,8 +56,11 @@ jobs:
 
   test_wsi:
     needs: [pre-commit]
-    name: "pytest wsi"
-    runs-on: ubuntu-latest
+    name: "${{ matrix.os }} | pytest wsi"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v5
@@ -66,8 +76,11 @@ jobs:
 
   test_cellpose_v4:
     needs: [pre-commit]
-    name: "pytest cellpose v4"
-    runs-on: ubuntu-latest
+    name: "${{ matrix.os }} | pytest cellpose v4"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v5
@@ -83,9 +96,11 @@ jobs:
 
   test_pip_install:
     needs: [pre-commit]
-    name: "pytest with pip install"
-    runs-on: ubuntu-latest
-
+    name: "${{ matrix.os }} | pytest with pip install"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - uses: actions/checkout@v5
 
