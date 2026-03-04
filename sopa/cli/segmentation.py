@@ -84,6 +84,10 @@ def cellpose(
 def stardist(
     sdata_path: str = typer.Argument(help=SDATA_HELPER),
     model_type: str = typer.Option("2D_versatile_he", help="Name of the stardist model"),
+    local_path: str | None = typer.Option(
+        None,
+        help="Path to the local directory containing the stardist model to be loaded. If not provided, the pretrained model specified by `model_type` will be used.",
+    ),
     prob_thresh: float = typer.Option(0.2, help="Stardist `prob_thresh` parameter."),
     nms_thresh: float = typer.Option(0.6, help="Stardist `nms_thresh` parameter."),
     channels: list[str] = typer.Option(None, help="Names of the channels used for segmentation."),
@@ -131,6 +135,7 @@ def stardist(
         prob_thresh=prob_thresh,
         nms_thresh=nms_thresh,
         model_type=model_type,
+        local_path=local_path,
         **method_kwargs,
     )
 
