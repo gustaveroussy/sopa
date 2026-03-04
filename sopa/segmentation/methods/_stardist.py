@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import warnings
 from functools import partial
 from typing import Callable
@@ -14,6 +15,7 @@ from ._custom import custom_staining_based
 def stardist(
     sdata: SpatialData,
     model_type: str = "2D_versatile_he",
+    local_path: str | None = None,
     image_key: str | None = None,
     channels: list[str] | str | None = None,
     min_area: int = 0,
@@ -50,6 +52,7 @@ def stardist(
     """
     method = stardist_patch(
         model_type=model_type,
+        local_path=local_path,
         prob_thresh=prob_thresh,
         nms_thresh=nms_thresh,
         **stardist_eval_kwargs,
@@ -73,6 +76,7 @@ def stardist(
 
 def stardist_patch(
     model_type: str = "2D_versatile_he",
+    local_path: str | None = None,
     prob_thresh: float = 0.2,
     nms_thresh: float = 0.6,
     channels: list[str] | str | None = None,  # for the CLI to work, as "channels" will be provided
@@ -83,16 +87,39 @@ def stardist_patch(
         from stardist.models import StarDist2D
     except ImportError:
         raise ImportError("To use stardist, you need its corresponding sopa extra: `pip install 'sopa[stardist]'`.")
+    
+    def load__model(model_key: str, local_path: str | None):
+
+        if local_path is None:
+            return StarDist2D.from_pretrained(model_key)
+
+        base = Path(local_path).expanduser()
+        if not base.is_dir():
+            raise FileNotFoundError(f"StarDist model directory not found: {base}")
+
+        # local_path points directly to the model
+        if (base / "config.json").exists():
+            return StarDist2D(None, name=base.name, basedir=str(base.parent))
+
+        # local_path is a directory containing models
+        model_dir = base / model_key
+        if model_dir.exists():
+            return StarDist2D(None, name=model_key, basedir=str(base))
+
+        raise FileNotFoundError(
+        f"StarDist model '{model_key}' not found in '{local_path}'"
+        )
 
     def _(
         patch: np.ndarray,
         model_type: str,
+        local_path: str | None,
         prob_thresh: float,
         nms_thresh: float,
         **stardist_eval_kwargs,
     ):
         with SuppressPrintsAndWarnings():
-            model = StarDist2D.from_pretrained(model_type)
+            model = load__model(model_type, local_path)
 
             patch = normalize(patch.transpose(1, 2, 0), clip=True)
             mask, _ = model.predict_instances(
@@ -104,6 +131,7 @@ def stardist_patch(
     return partial(
         _,
         model_type=model_type,
+        local_path=local_path,
         prob_thresh=prob_thresh,
         nms_thresh=nms_thresh,
         **stardist_eval_kwargs,
