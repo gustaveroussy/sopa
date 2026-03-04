@@ -1,8 +1,8 @@
 import os
 import sys
-from pathlib import Path
 import warnings
 from functools import partial
+from pathlib import Path
 from typing import Callable
 
 import numpy as np
@@ -87,9 +87,8 @@ def stardist_patch(
         from stardist.models import StarDist2D
     except ImportError:
         raise ImportError("To use stardist, you need its corresponding sopa extra: `pip install 'sopa[stardist]'`.")
-    
-    def load__model(model_key: str, local_path: str | None):
 
+    def _load__model(model_key: str, local_path: str | None):
         if local_path is None:
             return StarDist2D.from_pretrained(model_key)
 
@@ -106,9 +105,7 @@ def stardist_patch(
         if model_dir.exists():
             return StarDist2D(None, name=model_key, basedir=str(base))
 
-        raise FileNotFoundError(
-        f"StarDist model '{model_key}' not found in '{local_path}'"
-        )
+        raise FileNotFoundError(f"StarDist model '{model_key}' not found in '{local_path}'")
 
     def _(
         patch: np.ndarray,
@@ -119,7 +116,7 @@ def stardist_patch(
         **stardist_eval_kwargs,
     ):
         with SuppressPrintsAndWarnings():
-            model = load__model(model_type, local_path)
+            model = _load__model(model_type, local_path)
 
             patch = normalize(patch.transpose(1, 2, 0), clip=True)
             mask, _ = model.predict_instances(
