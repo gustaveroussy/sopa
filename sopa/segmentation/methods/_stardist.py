@@ -14,8 +14,8 @@ from ._custom import custom_staining_based
 
 def stardist(
     sdata: SpatialData,
-    model_type: str = "2D_versatile_he",
-    local_path: str | None = None,
+    model_type: str | None = "2D_versatile_he",
+    local_model: str | None = None,
     image_key: str | None = None,
     channels: list[str] | str | None = None,
     min_area: int = 0,
@@ -37,6 +37,7 @@ def stardist(
     Args:
         sdata: A `SpatialData` object
         model_type: Stardist model name.
+        local_model: Path to a local StarDist model. If `None`, the pretrained model specified by `model_type` will be used.
         image_key: Name of the image in `sdata` to be used for segmentation.
         channels: One or a list of channel names used for segmentation. None assumes RGB image.
         min_area: Minimum area of a cell to be considered.
@@ -52,7 +53,7 @@ def stardist(
     """
     method = stardist_patch(
         model_type=model_type,
-        local_path=local_path,
+        local_model=local_model,
         prob_thresh=prob_thresh,
         nms_thresh=nms_thresh,
         **stardist_eval_kwargs,
@@ -75,8 +76,8 @@ def stardist(
 
 
 def stardist_patch(
-    model_type: str = "2D_versatile_he",
-    local_path: str | None = None,
+    model_type: str | None = "2D_versatile_he",
+    local_model: str | None = None,
     prob_thresh: float = 0.2,
     nms_thresh: float = 0.6,
     channels: list[str] | str | None = None,  # for the CLI to work, as "channels" will be provided
@@ -88,35 +89,26 @@ def stardist_patch(
     except ImportError:
         raise ImportError("To use stardist, you need its corresponding sopa extra: `pip install 'sopa[stardist]'`.")
 
-    def _load__model(model_key: str, local_path: str | None):
-        if local_path is None:
-            return StarDist2D.from_pretrained(model_key)
+    def _load_model(model_type: str, local_model: str | None) -> StarDist2D:
+        if local_model is None:
+            return StarDist2D.from_pretrained(model_type)
 
-        base = Path(local_path).expanduser()
-        if not base.is_dir():
-            raise FileNotFoundError(f"StarDist model directory not found: {base}")
+        model_path = Path(local_model).absolute()
+        if not model_path.is_dir():
+            raise FileNotFoundError(f"StarDist model directory not found: {model_path}")
 
-        # local_path points directly to the model
-        if (base / "config.json").exists():
-            return StarDist2D(None, name=base.name, basedir=str(base.parent))
-
-        # local_path is a directory containing models
-        model_dir = base / model_key
-        if model_dir.exists():
-            return StarDist2D(None, name=model_key, basedir=str(base))
-
-        raise FileNotFoundError(f"StarDist model '{model_key}' not found in '{local_path}'")
+        return StarDist2D(None, name=model_path.name, basedir=str(model_path.parent))
 
     def _(
         patch: np.ndarray,
-        model_type: str,
-        local_path: str | None,
+        model_type: str | None,
+        local_model: str | None,
         prob_thresh: float,
         nms_thresh: float,
         **stardist_eval_kwargs,
     ):
         with SuppressPrintsAndWarnings():
-            model = _load__model(model_type, local_path)
+            model = _load_model(model_type, local_model)
 
             patch = normalize(patch.transpose(1, 2, 0), clip=True)
             mask, _ = model.predict_instances(
@@ -128,7 +120,7 @@ def stardist_patch(
     return partial(
         _,
         model_type=model_type,
-        local_path=local_path,
+        local_model=local_model,
         prob_thresh=prob_thresh,
         nms_thresh=nms_thresh,
         **stardist_eval_kwargs,
