@@ -14,7 +14,7 @@ from ._custom import custom_staining_based
 
 def stardist(
     sdata: SpatialData,
-    model_type: str = "2D_versatile_he",
+    model_type: str | None = "2D_versatile_he",
     local_path: str | None = None,
     image_key: str | None = None,
     channels: list[str] | str | None = None,
