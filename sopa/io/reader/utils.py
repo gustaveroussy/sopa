@@ -135,7 +135,7 @@ def ome_tif(path: str | Path, as_image: bool = False, scene: int | None = None) 
             from bioio import BioImage
         except ImportError:
             raise ImportError(
-                "To read multi-scene .ome.tif images, you need the `bioio` and `bioio-ome-tiff` package: `pip install bioio bioio-ome-tiff`."
+                "To read multi-scene .ome.tif images, you need the `bioio` and `bioio-ome-tiff` package: `pip install 'sopa[bioio]'`."
             )
         reader = BioImage(path)
         reader.set_scene(scene)

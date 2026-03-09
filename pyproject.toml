@@ -30,6 +30,7 @@ cellpose = ["cellpose>=3.0.5", "torch>=2.1.1", "opencv-python>=4.8.0"]
 stardist = ["tensorflow>=2.18.0", "stardist>=0.9.2"]
 baysor = ["toml>=0.10.2", "loompy>=3.0.7"]
 wsi = ["wsidata>=0.8.0", "torch>=2.1.1", "torchvision>=0.20.0"]
+bioio = ["bioio>=3.2.0", "bioio-ome-tiff>=1.4.0"]
 
 [dependency-groups]
 dev = [
@@ -43,6 +44,9 @@ dev = [
   "mkdocstrings>=0.23.0",
   "mkdocstrings-python>=1.7.3",
   "poethepoet>=0.34.0",
+  "poethepoet>=0.34.0",
+  "bioio>=3.2.0",
+  "bioio-ome-tiff>=1.4.0"
 ]
 
 [project.urls]
