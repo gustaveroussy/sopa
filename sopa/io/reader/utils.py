@@ -113,25 +113,41 @@ def _ome_channels_names(path: Path | str):
     return [c.attrib["Name"] if "Name" in c.attrib else c.attrib["ID"] for c in channels]
 
 
-def ome_tif(path: str | Path, as_image: bool = False) -> DataArray | SpatialData:
+def ome_tif(path: str | Path, as_image: bool = False, scene: int | None = None) -> DataArray | SpatialData:
     """Read an `.ome.tif` image. This image should be a 2D image (with possibly multiple channels).
     Typically, this function can be used to open Xenium IF images.
 
     Args:
         path: Path to the `.ome.tif` image
         as_image: If `True`, will return a `DataArray` object
+        scene: Scene index (if the `.ome.tif` contains multiple scenes).
 
     Returns:
         A `DataArray` or a `SpatialData` object
     """
     image_models_kwargs, _ = _default_image_kwargs()
     image_name = Path(path).absolute().name.split(".")[0]
-    image: da.Array = imread(path)
+
+    if scene is None:
+        image: da.Array = imread(path)
+    else:
+        try:
+            from bioio import BioImage
+        except ImportError:
+            raise ImportError(
+                "To read multi-scene .ome.tif images, you need the `bioio` and `bioio-ome-tiff` package: `pip install bioio bioio-ome-tiff`."
+            )
+        reader = BioImage(path)
+        reader.set_scene(scene)
+        image = reader.dask_data.squeeze()
 
     if image.ndim == 4:
-        assert image.shape[0] == 1, "4D images not supported"
+        assert image.shape[0] == 1, "Z-stacks images not supported"
         image = da.moveaxis(image[0], 2, 0)
         log.info(f"Transformed 4D image into a 3D image of shape (c, y, x) = {image.shape}")
+    elif image.ndim == 3:
+        if image.shape[-1] <= 4:
+            image = da.moveaxis(image, -1, 0)
     elif image.ndim != 3:
         raise ValueError(f"Number of dimensions not supported: {image.ndim}")
 
