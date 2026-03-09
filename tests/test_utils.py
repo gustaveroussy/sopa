@@ -1,5 +1,7 @@
+import numpy as np
 import pandas as pd
 import pytest
+import tifffile
 from spatialdata.models import PointsModel
 from xarray import DataArray, DataTree
 
@@ -165,3 +167,33 @@ def test_add_spatial_element():
     import shutil
 
     shutil.rmtree("_test_add_spatial_element.zarr")
+
+
+def test_ome_tif(tmp_path):
+    img3d = np.random.randint(0, 255, (100, 200, 3), dtype=np.uint8)
+    path3d = tmp_path / "test_3d.ome.tif"
+    tifffile.imwrite(path3d, img3d, photometric="rgb")
+
+    result3d = sopa.io.ome_tif(path3d, as_image=True)
+
+    assert result3d.shape == (3, 100, 200)
+    assert result3d.dims == ("c", "y", "x")
+
+    result3d_scene = sopa.io.ome_tif(path3d, as_image=True, scene=0)
+
+    assert result3d_scene.shape == (3, 100, 200)
+    assert result3d_scene.dims == ("c", "y", "x")
+
+    img4d = np.random.randint(0, 255, (1, 100, 200, 3), dtype=np.uint8)
+    path4d = tmp_path / "test_4d.ome.tif"
+    tifffile.imwrite(path4d, img4d, photometric="rgb")
+
+    result4d = sopa.io.ome_tif(path4d, as_image=True)
+
+    assert result4d.shape == (3, 100, 200)
+    assert result4d.dims == ("c", "y", "x")
+
+    result_scene = sopa.io.ome_tif(path4d, as_image=True, scene=0)
+
+    assert result_scene.shape == (3, 100, 200)
+    assert result_scene.dims == ("c", "y", "x")
