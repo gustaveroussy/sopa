@@ -92,8 +92,6 @@ def bioio(
     if scene is not None:
         reader.set_scene(scene)
 
-    xarr: xr.DataArray = reader.xarray_dask_data
-
     if len(reader.dims["T"]) > 1:
         log.info(f"Image contains {reader.dims['T']} timepoints. Only reading the timepoint = {timepoint}.")
     if len(reader.dims["Z"]) > 1:
@@ -111,6 +109,6 @@ def bioio(
 
     image = Image2DModel.parse(xarr, c_coords=xarr.coords["c"].values, **image_models_kwargs)
 
-    image_name = Path(path).name.removesuffix("".join(Path(path).suffixes))
+    image_name = Path(path).name.split(".")[0]
 
     return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
