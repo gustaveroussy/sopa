@@ -58,6 +58,8 @@ def aicsimageio(
 def bioio(
     path: Path,
     z_stack: int = 0,
+    timepoint: int = 0,
+    scene: str | int | None = None,
     image_models_kwargs: dict | None = None,
     bioio_kwargs: dict | None = None,
 ) -> SpatialData:
@@ -69,6 +71,8 @@ def bioio(
     Args:
         path: Path to the image file
         z_stack: (Only for 3D images) Index of the stack in the z-axis to use.
+        timepoint: (Only for images with multiple timepoints) Index of the timepoint to read.
+        scene: (Only for images with multiple scenes) Name or index of the scene to read. If `None`, the first scene will be read.
         image_models_kwargs: Keyword arguments passed to `spatialdata.models.Image2DModel`.
         bioio_kwargs: Keyword arguments passed to `bioio.BioImage`.
 
@@ -83,16 +87,28 @@ def bioio(
     except ImportError:
         raise ImportError("You need to install bioio, e.g. by running `pip install bioio`")
 
-    xarr: xr.DataArray = BioImage(path, **bioio_kwargs).xarray_dask_data
+    reader = BioImage(path, **bioio_kwargs)
 
-    assert len(xarr.coords["T"]) == 1, f"Only one time dimension is supported, found {len(xarr.coords['T'])}."
+    if scene is not None:
+        reader.set_scene(scene)
 
-    if len(xarr.coords["Z"]) > 1:
-        log.info(f"3D image found, only reading {z_stack:=}")
+    if len(reader.dims["T"]) > 1:
+        log.info(f"Image contains {reader.dims['T']} timepoints. Only reading the timepoint = {timepoint}.")
+    if len(reader.dims["Z"]) > 1:
+        log.info(f"3D image found, only reading Z = {z_stack}")
 
-    xarr = xarr.isel(T=0, Z=z_stack).rename({"C": "c", "Y": "y", "X": "x"})
+    data = reader.get_image_dask_data("CYX", T=timepoint, Z=z_stack)
+
+    xarr = xr.DataArray(
+        data,
+        dims=("c", "y", "x"),
+        coords={"c": reader.channel_names},
+    )
+
     xarr = _image_int_dtype(xarr)
 
     image = Image2DModel.parse(xarr, c_coords=xarr.coords["c"].values, **image_models_kwargs)
 
-    return SpatialData(images={"image": image}, attrs={SopaAttrs.CELL_SEGMENTATION: "image"})
+    image_name = Path(path).name.split(".")[0]
+
+    return SpatialData(images={image_name: image}, attrs={SopaAttrs.CELL_SEGMENTATION: image_name})
