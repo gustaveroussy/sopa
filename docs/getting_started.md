@@ -21,6 +21,12 @@ Choose one of the following, depending on your needs:
     pip install sopa
     ```
 
+=== "With conda"
+
+    ```sh
+    conda install bioconda::sopa
+    ```
+
 === "Editable mode"
 
     ``` bash
