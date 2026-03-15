@@ -10,7 +10,7 @@ from spatialdata.models import TableModel
 
 from ..constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
-from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image, validated_channel_names
+from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
 from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
 
@@ -183,7 +183,7 @@ class Aggregator:
                 self.filter_cells(self.table.X.sum(axis=1) < min_transcripts, f"transcript count < {min_transcripts}")
 
         if aggregate_channels:
-            mean_intensities = _aggregate_channels(
+            adata_intensities = _aggregate_channels(
                 self.sdata,
                 image_key=self.image_key,
                 shapes_key=self.shapes_key,
@@ -192,24 +192,20 @@ class Aggregator:
             )
 
             if min_intensity_ratio > 0:
-                means = mean_intensities.mean(axis=1)
+                means = adata_intensities.X.mean(axis=1)
                 intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
                 where_filter = means < intensity_threshold
                 self.filter_cells(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
-                mean_intensities = mean_intensities[~where_filter]
+                adata_intensities = adata_intensities[~where_filter]
 
             if aggregate_genes:
                 self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
-                    mean_intensities,
-                    columns=validated_channel_names(self.image),
-                    index=self.table.obs_names,
+                    adata_intensities.X,
+                    columns=adata_intensities.var_names,
+                    index=adata_intensities.obs_names,
                 )
             else:
-                self.table = AnnData(
-                    mean_intensities,
-                    var=pd.DataFrame(index=validated_channel_names(self.image)),
-                    obs=pd.DataFrame(index=self.geo_df.index),
-                )
+                self.table = adata_intensities
 
         self.sdata.shapes[self.shapes_key] = self.geo_df
 
