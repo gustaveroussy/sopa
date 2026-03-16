@@ -65,7 +65,12 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
 
     log.info(f"Aggregating channels intensity over {len(geo_df)} cells with {mode=}")
 
-    cells = geo_df if isinstance(geo_df, list) else list(geo_df.geometry)
+    if isinstance(geo_df, list):
+        cells = geo_df
+        obs_index = pd.RangeIndex(len(cells))
+    else:
+        cells = list(geo_df.geometry)
+        obs_index = geo_df.index
     tree = shapely.STRtree(cells)
 
     n_channels = len(image.coords["c"])
@@ -128,7 +133,7 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
     adata = AnnData(
         X,
         var=pd.DataFrame(index=validated_channel_names(image)),
-        obs=pd.DataFrame(index=geo_df.index),
+        obs=pd.DataFrame(index=obs_index),
     )
 
     return adata
