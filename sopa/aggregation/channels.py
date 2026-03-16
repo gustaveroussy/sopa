@@ -26,7 +26,7 @@ def aggregate_channels(
     expand_radius_ratio: float = 0,
     mode: str = "average",
     no_overlap: bool = False,
-) -> np.ndarray:
+) -> AnnData:
     """Aggregate the channel intensities per cell (either `"average"`, or take the `"min"` / `"max"`).
 
     Args:
@@ -38,7 +38,7 @@ def aggregate_channels(
         no_overlap: If `True`, the (expanded) cells will not overlap.
 
     Returns:
-        A numpy `ndarray` of shape `(n_cells, n_channels)`
+        An `AnnData` object with the aggregated channel intensities
     """
     assert mode in AVAILABLE_MODES, f"Invalid {mode=}. Available modes are {AVAILABLE_MODES}"
 
