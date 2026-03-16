@@ -51,11 +51,12 @@ def test_remove_overlap_empty():
 
     image = np.random.randint(1, 10, size=(3, 8, 16))
     arr = da.from_array(image, chunks=(1, 8, 8))
-    xarr = xr.DataArray(arr, dims=["c", "y", "x"])
+    channel_names = ["DAPI", "CD3", "CD20"]
+    xarr = xr.DataArray(arr, dims=["c", "y", "x"], coords={"c": channel_names})
 
     # we can still run aggregation on the empty shape
-    X = _aggregate_channels_aligned(xarr, res.geometry, mode="average")
-    assert (X[1] == 0).all()  # should be all zeros for the empty shape
+    adata = _aggregate_channels_aligned(xarr, res.geometry, mode="average")
+    assert (adata.X[1] == 0).all()  # should be all zeros for the empty shape
 
 
 def test_to_valid_polygons():

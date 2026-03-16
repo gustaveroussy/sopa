@@ -21,7 +21,8 @@ from sopa.constants import SopaKeys
 def test_aggregate_channels_aligned():
     image = np.random.randint(1, 10, size=(3, 8, 16))
     arr = da.from_array(image, chunks=(1, 8, 8))
-    xarr = xr.DataArray(arr, dims=["c", "y", "x"])
+    channel_names = ["DAPI", "CD3", "CD20"]
+    xarr = xr.DataArray(arr, dims=["c", "y", "x"], coords={"c": channel_names})
 
     cell_size = 4
     cell_start = [(0, 0), (6, 2), (9, 3)]
@@ -29,9 +30,9 @@ def test_aggregate_channels_aligned():
     # One cell is on the first block, one is overlapping on both blocks, and one is on the last block
     cells = [box(x, y, x + cell_size - 1, y + cell_size - 1) for x, y in cell_start]
 
-    mean_intensities = _aggregate_channels_aligned(xarr, cells, "average")
-    min_intensities = _aggregate_channels_aligned(xarr, cells, "min")
-    max_intensities = _aggregate_channels_aligned(xarr, cells, "max")
+    adata_mean_intensities = _aggregate_channels_aligned(xarr, cells, "average")
+    adata_min_intensities = _aggregate_channels_aligned(xarr, cells, "min")
+    adata_max_intensities = _aggregate_channels_aligned(xarr, cells, "max")
 
     true_mean_intensities = np.stack([
         image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start
@@ -43,9 +44,9 @@ def test_aggregate_channels_aligned():
         image[:, y : y + cell_size, x : x + cell_size].max(axis=(1, 2)) for x, y in cell_start
     ])
 
-    assert (mean_intensities == true_mean_intensities).all()
-    assert (min_intensities == true_min_intensities).all()
-    assert (max_intensities == true_max_intensities).all()
+    assert (true_mean_intensities == adata_mean_intensities.X).all()
+    assert (true_min_intensities == adata_min_intensities.X).all()
+    assert (true_max_intensities == adata_max_intensities.X).all()
 
 
 def test_count_transcripts():
