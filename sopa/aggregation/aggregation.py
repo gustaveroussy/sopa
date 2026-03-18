@@ -100,6 +100,7 @@ class Aggregator:
         shapes_key: str | None = None,
         bins_key: str | None = None,
         points_key: str | None = None,
+        drop_filtered_cells: bool = True,
     ):
         """
         Args:
@@ -108,12 +109,14 @@ class Aggregator:
             shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries
             bins_key: Key of `sdata` with the table corresponding to the bins table of gene counts (e.g., for Visium HD data)
             points_key: Key of `sdata` with the points dataframe representing the transcripts
+            drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
         """
         self.sdata = sdata
         self.bins_key = bins_key
         self.points_key = points_key
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
         self.table = None
+        self.drop_filtered_cells = drop_filtered_cells
 
         if not sdata.images:
             self.image_key, self.image = "None", None
@@ -136,7 +139,10 @@ class Aggregator:
         self.sdata.shapes[self.shapes_key] = self.geo_df
 
         if self.table is not None:
-            self.table = self.table[~where_filter]
+            if self.drop_filtered_cells:
+                self.table = self.table[~where_filter]
+            else:
+                self.table.obs["passes_filtering"] = ~where_filter
 
     def compute_table(
         self,
