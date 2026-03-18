@@ -136,7 +136,6 @@ class Aggregator:
         log.info(f"Filtering {where_filter.sum()} cells" + (f" due to {reason}" if reason else ""))
 
         self.geo_df = self.geo_df[~where_filter]
-        self.sdata.shapes[self.shapes_key] = self.geo_df
 
         if self.table is not None:
             if self.drop_filtered_cells:
