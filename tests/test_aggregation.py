@@ -29,10 +29,11 @@ def test_aggregate_channels_aligned():
 
     # One cell is on the first block, one is overlapping on both blocks, and one is on the last block
     cells = [box(x, y, x + cell_size - 1, y + cell_size - 1) for x, y in cell_start]
+    gdf = gpd.GeoDataFrame(geometry=cells)
 
-    adata_mean_intensities = _aggregate_channels_aligned(xarr, cells, "average")
-    adata_min_intensities = _aggregate_channels_aligned(xarr, cells, "min")
-    adata_max_intensities = _aggregate_channels_aligned(xarr, cells, "max")
+    adata_mean_intensities = _aggregate_channels_aligned(xarr, gdf, "average")
+    adata_min_intensities = _aggregate_channels_aligned(xarr, gdf, "min")
+    adata_max_intensities = _aggregate_channels_aligned(xarr, gdf, "max")
 
     true_mean_intensities = np.stack([
         image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start

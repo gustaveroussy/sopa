@@ -55,7 +55,7 @@ def test_remove_overlap_empty():
     xarr = xr.DataArray(arr, dims=["c", "y", "x"], coords={"c": channel_names})
 
     # we can still run aggregation on the empty shape
-    adata = _aggregate_channels_aligned(xarr, res.geometry, mode="average")
+    adata = _aggregate_channels_aligned(xarr, res, mode="average")
     assert (adata.X[1] == 0).all()  # should be all zeros for the empty shape
 
 

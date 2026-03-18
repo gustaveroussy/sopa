@@ -7,7 +7,7 @@ import numpy.ma as ma
 import pandas as pd
 import shapely
 from anndata import AnnData
-from shapely.geometry import Polygon, box
+from shapely.geometry import box
 from spatialdata import SpatialData
 from xarray import DataArray
 
@@ -51,7 +51,7 @@ def aggregate_channels(
     return _aggregate_channels_aligned(image, geo_df, mode)
 
 
-def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon], mode: str) -> AnnData:
+def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame, mode: str) -> AnnData:
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
@@ -65,12 +65,7 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
 
     log.info(f"Aggregating channels intensity over {len(geo_df)} cells with {mode=}")
 
-    if isinstance(geo_df, list):
-        cells = geo_df
-        obs_index = pd.RangeIndex(len(cells))
-    else:
-        cells = list(geo_df.geometry)
-        obs_index = geo_df.index
+    cells = list(geo_df.geometry)
     tree = shapely.STRtree(cells)
 
     n_channels = len(image.coords["c"])
@@ -133,7 +128,7 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
     adata = AnnData(
         X,
         var=pd.DataFrame(index=validated_channel_names(image)),
-        obs=pd.DataFrame(index=obs_index),
+        obs=pd.DataFrame(index=geo_df.index.astype(str)),
     )
 
     return adata
