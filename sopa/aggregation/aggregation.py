@@ -31,6 +31,8 @@ def aggregate(
     min_intensity_ratio: float = 0.1,
     no_overlap: bool = False,
     key_added: str | None = "table",
+    drop_filtered_cells: bool = True,
+    update_shapes: bool = False,
 ):
     """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
 
@@ -55,6 +57,8 @@ def aggregate(
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
         no_overlap: *Experimental feature*: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
+        drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
+        update_shapes: If `True`, updates sdata.shapes[shapes_key] to match the filtered table (i.e., removes filtered cells).
     """
     assert points_key is None or bins_key is None, "Provide either `points_key` or `bins_key`, not both."
 
@@ -70,7 +74,15 @@ def aggregate(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
         )
 
-    aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key, points_key=points_key)
+    aggr = Aggregator(
+        sdata,
+        image_key=image_key,
+        shapes_key=shapes_key,
+        bins_key=bins_key,
+        points_key=points_key,
+        drop_filtered_cells=drop_filtered_cells,
+        update_shapes=update_shapes,
+    )
 
     if key_added is None:
         key_added = f"{aggr.shapes_key}_{SopaKeys.TABLE}"
@@ -239,7 +251,13 @@ class Aggregator:
 
     def add_standardized_table(self, key_added: str):
         add_standardized_table(
-            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key, update_shapes=self.update_shapes
+            self.sdata,
+            self.table,
+            self.geo_df,
+            self.shapes_key,
+            key_added,
+            image_key=self.image_key,
+            update_shapes=self.update_shapes,
         )
 
 
@@ -250,7 +268,7 @@ def add_standardized_table(
     shapes_key: str,
     table_key: str,
     image_key: str | None = None,
-    update_shapes: bool = False
+    update_shapes: bool = False,
 ):
     table.obs_names = list(map(str_cell_id, range(table.n_obs)))
     geo_df.index = list(table.obs_names)
