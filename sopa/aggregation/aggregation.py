@@ -142,7 +142,7 @@ class Aggregator:
         return True
 
     def update_passes_filtering(self, where_filter: np.ndarray, reason: str):
-        log.info(f"Filtering {where_filter.sum()} cells due to {reason}")
+        log.info(f"{where_filter.sum()} cells not passing filtering due to {reason}")
         self.table.obs[SopaKeys.PASSES_FILTERING] &= ~where_filter
 
     def filter_cells(self):
@@ -201,7 +201,7 @@ class Aggregator:
 
             if min_transcripts > 0:
                 self.table.obs[SopaKeys.PASSES_FILTERING] = True
-                where_filter = self.table.X.sum(axis=1) < min_transcripts
+                where_filter = np.asarray(self.table.X.sum(axis=1) < min_transcripts).flatten()
                 self.update_passes_filtering(where_filter, f"transcript count < {min_transcripts}")
 
         if aggregate_channels:
