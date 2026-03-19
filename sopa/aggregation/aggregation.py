@@ -146,7 +146,7 @@ class Aggregator:
         self.table.obs[SopaKeys.PASSES_FILTERING] &= ~where_filter
 
     def filter_cells(self):
-        if (self.table is None) or (SopaKeys.PASSES_FILTERING not in self.table.obs):
+        if SopaKeys.PASSES_FILTERING not in self.table.obs:
             return
 
         passes_filtering = self.table.obs[SopaKeys.PASSES_FILTERING].values
