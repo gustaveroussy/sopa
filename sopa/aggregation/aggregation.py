@@ -132,16 +132,31 @@ class Aggregator:
 
         return True
 
-    def filter_cells(self, where_filter: np.ndarray, reason: str | None = None):
+    def update_passes_filtering(self, where_filter: np.ndarray, reason: str | None = None):
         log.info(f"Filtering {where_filter.sum()} cells" + (f" due to {reason}" if reason else ""))
 
-        self.geo_df = self.geo_df[~where_filter]
-
         if self.table is not None:
-            if self.drop_filtered_cells:
-                self.table = self.table[~where_filter]
+            passes_filtering = ~where_filter
+            if "passes_filtering" in self.table.obs:
+                self.table.obs["passes_filtering"] &= passes_filtering
             else:
-                self.table.obs["passes_filtering"] = ~where_filter
+                self.table.obs["passes_filtering"] = passes_filtering
+
+    def filter_cells(self):
+        if self.table is None:
+            return
+
+        if "passes_filtering" not in self.table.obs:
+            return
+
+        passes_filtering = self.table.obs["passes_filtering"].values
+
+        self.table = self.table[passes_filtering]
+
+        if self.geo_df is not None:
+            self.geo_df = self.geo_df.loc[self.table.obs_names]
+
+        del self.table.obs["passes_filtering"]
 
     def compute_table(
         self,
@@ -185,7 +200,9 @@ class Aggregator:
                 )
 
             if min_transcripts > 0:
-                self.filter_cells(self.table.X.sum(axis=1) < min_transcripts, f"transcript count < {min_transcripts}")
+                self.update_passes_filtering(
+                    self.table.X.sum(axis=1) < min_transcripts, f"transcript count < {min_transcripts}"
+                )
 
         if aggregate_channels:
             adata_intensities = _aggregate_channels(
@@ -196,23 +213,19 @@ class Aggregator:
                 no_overlap=no_overlap,
             )
 
+            if aggregate_genes:
+                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = adata_intensities.to_df()
+            else:
+                self.table = adata_intensities
+
             if min_intensity_ratio > 0:
                 means = adata_intensities.X.mean(axis=1)
                 intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
                 where_filter = means < intensity_threshold
-                self.filter_cells(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
-                adata_intensities = adata_intensities[~where_filter]
+                self.update_passes_filtering(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
 
-            if aggregate_genes:
-                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
-                    adata_intensities.X,
-                    columns=adata_intensities.var_names,
-                    index=adata_intensities.obs_names,
-                )
-            else:
-                self.table = adata_intensities
-
-        self.sdata.shapes[self.shapes_key] = self.geo_df
+        if self.drop_filtered_cells:
+            self.filter_cells()
 
         self.table.uns[SopaKeys.UNS_KEY] = {
             SopaKeys.UNS_HAS_TRANSCRIPTS: aggregate_genes,
