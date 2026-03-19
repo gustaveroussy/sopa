@@ -32,7 +32,6 @@ def aggregate(
     no_overlap: bool = False,
     key_added: str | None = "table",
     drop_filtered_cells: bool = True,
-    update_shapes: bool = False,
 ):
     """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
 
@@ -58,7 +57,6 @@ def aggregate(
         no_overlap: *Experimental feature*: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
         drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
-        update_shapes: If `True`, updates sdata.shapes[shapes_key] to match the filtered table (i.e., removes filtered cells).
     """
     assert points_key is None or bins_key is None, "Provide either `points_key` or `bins_key`, not both."
 
@@ -81,7 +79,6 @@ def aggregate(
         bins_key=bins_key,
         points_key=points_key,
         drop_filtered_cells=drop_filtered_cells,
-        update_shapes=update_shapes,
     )
 
     if key_added is None:
@@ -113,7 +110,6 @@ class Aggregator:
         bins_key: str | None = None,
         points_key: str | None = None,
         drop_filtered_cells: bool = True,
-        update_shapes: bool = False,
     ):
         """
         Args:
@@ -123,7 +119,6 @@ class Aggregator:
             bins_key: Key of `sdata` with the table corresponding to the bins table of gene counts (e.g., for Visium HD data)
             points_key: Key of `sdata` with the points dataframe representing the transcripts
             drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
-            update_shapes: If `True`, updates sdata.shapes[shapes_key] to match the filtered table (i.e., removes filtered cells).
         """
         self.sdata = sdata
         self.bins_key = bins_key
@@ -131,7 +126,6 @@ class Aggregator:
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
         self.table = None
         self.drop_filtered_cells = drop_filtered_cells
-        self.update_shapes = update_shapes
 
         if not sdata.images:
             self.image_key, self.image = "None", None
@@ -257,7 +251,7 @@ class Aggregator:
             self.shapes_key,
             key_added,
             image_key=self.image_key,
-            update_shapes=self.update_shapes,
+            drop_filtered_cells=self.drop_filtered_cells,
         )
 
 
@@ -268,12 +262,12 @@ def add_standardized_table(
     shapes_key: str,
     table_key: str,
     image_key: str | None = None,
-    update_shapes: bool = False,
+    drop_filtered_cells: bool = True,
 ):
     table.obs_names = list(map(str_cell_id, range(table.n_obs)))
     geo_df.index = list(table.obs_names)
 
-    if update_shapes:
+    if drop_filtered_cells:
         add_spatial_element(sdata, shapes_key, geo_df)
 
     table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])

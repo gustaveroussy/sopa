@@ -346,7 +346,6 @@ def test_aggregate_without_dropping_cells():
         aggregate_channels=True,
         min_transcripts=4,
         drop_filtered_cells=False,
-        update_shapes=False,
         key_added="table_no_drop",
     )
 
