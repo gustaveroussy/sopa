@@ -141,31 +141,24 @@ class Aggregator:
 
         return True
 
-    def update_passes_filtering(self, where_filter: np.ndarray, reason: str | None = None):
-        log.info(f"Filtering {where_filter.sum()} cells" + (f" due to {reason}" if reason else ""))
+    def update_passes_filtering(self, where_filter: np.ndarray, reason: str):
+        log.info(f"Filtering {where_filter.sum()} cells due to {reason}")
 
-        if self.table is not None:
-            passes_filtering = ~where_filter
-            if "passes_filtering" in self.table.obs:
-                self.table.obs["passes_filtering"] &= passes_filtering
-            else:
-                self.table.obs["passes_filtering"] = passes_filtering
+        if SopaKeys.PASSES_FILTERING not in self.table.obs:
+            self.table.obs[SopaKeys.PASSES_FILTERING] = True
+
+        self.table.obs[SopaKeys.PASSES_FILTERING] &= ~where_filter
 
     def filter_cells(self):
-        if self.table is None:
+        if (self.table is None) or (SopaKeys.PASSES_FILTERING not in self.table.obs):
             return
 
-        if "passes_filtering" not in self.table.obs:
-            return
-
-        passes_filtering = self.table.obs["passes_filtering"].values
+        passes_filtering = self.table.obs[SopaKeys.PASSES_FILTERING].values
 
         self.table = self.table[passes_filtering]
 
         if self.geo_df is not None:
             self.geo_df = self.geo_df.loc[self.table.obs_names]
-
-        del self.table.obs["passes_filtering"]
 
     def compute_table(
         self,
@@ -209,9 +202,8 @@ class Aggregator:
                 )
 
             if min_transcripts > 0:
-                self.update_passes_filtering(
-                    self.table.X.sum(axis=1) < min_transcripts, f"transcript count < {min_transcripts}"
-                )
+                where_filter = self.table.X.sum(axis=1) < min_transcripts
+                self.update_passes_filtering(where_filter, f"transcript count < {min_transcripts}")
 
         if aggregate_channels:
             adata_intensities = _aggregate_channels(
@@ -235,6 +227,8 @@ class Aggregator:
 
         if self.drop_filtered_cells:
             self.filter_cells()
+
+        del self.table.obs[SopaKeys.PASSES_FILTERING]
 
         self.table.uns[SopaKeys.UNS_KEY] = {
             SopaKeys.UNS_HAS_TRANSCRIPTS: aggregate_genes,
