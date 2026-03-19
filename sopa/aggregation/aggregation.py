@@ -101,6 +101,7 @@ class Aggregator:
         bins_key: str | None = None,
         points_key: str | None = None,
         drop_filtered_cells: bool = True,
+        update_shapes: bool = False,
     ):
         """
         Args:
@@ -110,6 +111,7 @@ class Aggregator:
             bins_key: Key of `sdata` with the table corresponding to the bins table of gene counts (e.g., for Visium HD data)
             points_key: Key of `sdata` with the points dataframe representing the transcripts
             drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
+            update_shapes: If `True`, updates sdata.shapes[shapes_key] to match the filtered table (i.e., removes filtered cells).
         """
         self.sdata = sdata
         self.bins_key = bins_key
@@ -117,6 +119,7 @@ class Aggregator:
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
         self.table = None
         self.drop_filtered_cells = drop_filtered_cells
+        self.update_shapes = update_shapes
 
         if not sdata.images:
             self.image_key, self.image = "None", None
@@ -236,7 +239,7 @@ class Aggregator:
 
     def add_standardized_table(self, key_added: str):
         add_standardized_table(
-            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key
+            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key, update_shapes=self.update_shapes
         )
 
 
@@ -247,11 +250,13 @@ def add_standardized_table(
     shapes_key: str,
     table_key: str,
     image_key: str | None = None,
+    update_shapes: bool = False
 ):
     table.obs_names = list(map(str_cell_id, range(table.n_obs)))
     geo_df.index = list(table.obs_names)
 
-    add_spatial_element(sdata, shapes_key, geo_df)
+    if update_shapes:
+        add_spatial_element(sdata, shapes_key, geo_df)
 
     table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
     table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
