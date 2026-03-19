@@ -315,3 +315,43 @@ def test_overlay():
             [3, 5, 1],
         ])
     ).all()
+
+
+def test_aggregate_without_dropping_cells():
+    np.random.seed(0)
+    x, y = np.meshgrid(np.arange(6), np.arange(6))
+    x = x.flatten()
+    y = y.flatten()
+    genes = np.random.choice(["gene_a", "gene_b", "gene_c"], x.shape[0])
+    points = PointsModel.parse(pd.DataFrame({"x": x, "y": y, "gene": genes}), feature_key="gene")
+
+    gdf = gpd.GeoDataFrame(
+        geometry=[
+            box(0, 0, 1, 1),
+            box(1, 1, 2, 2),
+            box(2, 2, 4, 4),
+            box(1, 2.5, 1.5, 5),
+        ]
+    )
+    gdf.geometry = gdf.geometry.buffer(0.1)
+    gdf = ShapesModel.parse(gdf)
+
+    sdata = spatialdata.SpatialData(shapes={"cellpose_boundaries": gdf}, points={"points": points})
+
+    sopa.aggregate(
+        sdata,
+        shapes_key="cellpose_boundaries",
+        points_key="points",
+        aggregate_genes=True,
+        aggregate_channels=True,
+        min_transcripts=4,
+        drop_filtered_cells=False,
+        update_shapes=False,
+        key_added="table_no_drop",
+    )
+
+    table = sdata["table_no_drop"]
+
+    assert table.n_obs == 4
+    assert "passes_filtering" in table.obs
+    assert (~table.obs["passes_filtering"].to_numpy()).sum() >= 1
