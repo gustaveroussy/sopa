@@ -10,7 +10,7 @@ from spatialdata.models import TableModel
 
 from ..constants import ATTRS_KEY, SopaAttrs, SopaKeys
 from ..io.explorer.utils import str_cell_id
-from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image, validated_channel_names
+from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
 from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
 
@@ -31,6 +31,7 @@ def aggregate(
     min_intensity_ratio: float = 0.1,
     no_overlap: bool = False,
     key_added: str | None = "table",
+    drop_filtered_cells: bool = True,
 ):
     """Aggregate gene counts and/or channel intensities over a `SpatialData` object to create an `AnnData` table (saved in `sdata["table"]`).
 
@@ -55,6 +56,7 @@ def aggregate(
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
         no_overlap: *Experimental feature*: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
+        drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
     """
     assert points_key is None or bins_key is None, "Provide either `points_key` or `bins_key`, not both."
 
@@ -70,7 +72,14 @@ def aggregate(
             sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
         )
 
-    aggr = Aggregator(sdata, image_key=image_key, shapes_key=shapes_key, bins_key=bins_key, points_key=points_key)
+    aggr = Aggregator(
+        sdata,
+        image_key=image_key,
+        shapes_key=shapes_key,
+        bins_key=bins_key,
+        points_key=points_key,
+        drop_filtered_cells=drop_filtered_cells,
+    )
 
     if key_added is None:
         key_added = f"{aggr.shapes_key}_{SopaKeys.TABLE}"
@@ -100,6 +109,7 @@ class Aggregator:
         shapes_key: str | None = None,
         bins_key: str | None = None,
         points_key: str | None = None,
+        drop_filtered_cells: bool = True,
     ):
         """
         Args:
@@ -108,12 +118,14 @@ class Aggregator:
             shapes_key: Key of `sdata` with the shapes corresponding to the cells boundaries
             bins_key: Key of `sdata` with the table corresponding to the bins table of gene counts (e.g., for Visium HD data)
             points_key: Key of `sdata` with the points dataframe representing the transcripts
+            drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
         """
         self.sdata = sdata
         self.bins_key = bins_key
         self.points_key = points_key
         self.shapes_key, self.geo_df = get_boundaries(sdata, return_key=True, key=shapes_key)
         self.table = None
+        self.drop_filtered_cells = drop_filtered_cells
 
         if not sdata.images:
             self.image_key, self.image = "None", None
@@ -129,14 +141,20 @@ class Aggregator:
 
         return True
 
-    def filter_cells(self, where_filter: np.ndarray, reason: str | None = None):
-        log.info(f"Filtering {where_filter.sum()} cells" + (f" due to {reason}" if reason else ""))
+    def update_passes_filtering(self, where_filter: np.ndarray, reason: str):
+        log.info(f"{where_filter.sum()} cells not passing filtering due to {reason}")
+        self.table.obs[SopaKeys.PASSES_FILTERING] &= ~where_filter
 
-        self.geo_df = self.geo_df[~where_filter]
-        self.sdata.shapes[self.shapes_key] = self.geo_df
+    def filter_cells(self):
+        if SopaKeys.PASSES_FILTERING not in self.table.obs:
+            return
 
-        if self.table is not None:
-            self.table = self.table[~where_filter]
+        self.table = self.table[self.table.obs[SopaKeys.PASSES_FILTERING]]
+
+        if self.geo_df is not None:
+            self.geo_df = self.geo_df.loc[self.table.obs_names]
+
+        del self.table.obs[SopaKeys.PASSES_FILTERING]
 
     def compute_table(
         self,
@@ -180,10 +198,12 @@ class Aggregator:
                 )
 
             if min_transcripts > 0:
-                self.filter_cells(self.table.X.sum(axis=1) < min_transcripts, f"transcript count < {min_transcripts}")
+                self.table.obs[SopaKeys.PASSES_FILTERING] = True
+                where_filter = np.asarray(self.table.X.sum(axis=1) < min_transcripts).flatten()
+                self.update_passes_filtering(where_filter, f"transcript count < {min_transcripts}")
 
         if aggregate_channels:
-            mean_intensities = _aggregate_channels(
+            adata_intensities = _aggregate_channels(
                 self.sdata,
                 image_key=self.image_key,
                 shapes_key=self.shapes_key,
@@ -191,27 +211,20 @@ class Aggregator:
                 no_overlap=no_overlap,
             )
 
+            if aggregate_genes:
+                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = adata_intensities.to_df()
+            else:
+                self.table = adata_intensities
+                self.table.obs[SopaKeys.PASSES_FILTERING] = True
+
             if min_intensity_ratio > 0:
-                means = mean_intensities.mean(axis=1)
+                means = adata_intensities.X.mean(axis=1)
                 intensity_threshold = min_intensity_ratio * np.quantile(means, 0.9)
                 where_filter = means < intensity_threshold
-                self.filter_cells(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
-                mean_intensities = mean_intensities[~where_filter]
+                self.update_passes_filtering(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
 
-            if aggregate_genes:
-                self.table.obsm[SopaKeys.INTENSITIES_OBSM] = pd.DataFrame(
-                    mean_intensities,
-                    columns=validated_channel_names(self.image),
-                    index=self.table.obs_names,
-                )
-            else:
-                self.table = AnnData(
-                    mean_intensities,
-                    var=pd.DataFrame(index=validated_channel_names(self.image)),
-                    obs=pd.DataFrame(index=self.geo_df.index),
-                )
-
-        self.sdata.shapes[self.shapes_key] = self.geo_df
+        if self.drop_filtered_cells:
+            self.filter_cells()
 
         self.table.uns[SopaKeys.UNS_KEY] = {
             SopaKeys.UNS_HAS_TRANSCRIPTS: aggregate_genes,
@@ -222,7 +235,7 @@ class Aggregator:
 
     def add_standardized_table(self, key_added: str):
         add_standardized_table(
-            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, image_key=self.image_key
+            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, self.image_key, self.drop_filtered_cells
         )
 
 
@@ -233,11 +246,13 @@ def add_standardized_table(
     shapes_key: str,
     table_key: str,
     image_key: str | None = None,
+    drop_filtered_cells: bool = True,
 ):
     table.obs_names = list(map(str_cell_id, range(table.n_obs)))
     geo_df.index = list(table.obs_names)
 
-    add_spatial_element(sdata, shapes_key, geo_df)
+    if drop_filtered_cells:
+        add_spatial_element(sdata, shapes_key, geo_df)
 
     table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
     table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
