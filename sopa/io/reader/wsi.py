@@ -11,7 +11,7 @@ def wsi(
     path: str | Path,
     as_image: bool = False,
     image_key: str = "wsi",
-    backend: Literal["openslide", "tiffslide", "bioformats"] = "openslide",
+    backend: Literal["openslide", "tiffslide", "bioformats"] = "tiffslide",
 ) -> SpatialData | DataTree:
     """Read a WSI into a `SpatialData` object.
 
@@ -22,7 +22,7 @@ def wsi(
         path: Path to the WSI
         as_image: If `True`, returns a, image instead of a `SpatialData` object
         image_key: The key (or name) to use for the image in the `SpatialData` object
-        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"bioformats"`. See the `reader` argument from [wsidata.open_wsi](https://wsidata.readthedocs.io/en/latest/api/_autogen/wsidata.open_wsi.html).
+        backend: The library to use as a backend in order to load the WSI. One of: `"openslide"`, `"tiffslide"`, `"bioformats"`. See the `reader` argument from [wsidata.open_wsi](https://wsidata.readthedocs.io/en/latest/api/_autogen/wsidata.open_wsi.html).
 
     Returns:
         A `SpatialData` object with a multiscale 2D-image of shape `(C, Y, X)`, or just the DataTree if `as_image=True`
