@@ -4,13 +4,15 @@ import dask
 import geopandas as gpd
 import numpy as np
 import numpy.ma as ma
+import pandas as pd
 import shapely
-from shapely.geometry import Polygon, box
+from anndata import AnnData
+from shapely.geometry import box
 from spatialdata import SpatialData
 from xarray import DataArray
 
 from ..shapes import expand_radius, pixel_outer_bounds, rasterize
-from ..utils import get_boundaries, get_spatial_image, to_intrinsic
+from ..utils import get_boundaries, get_spatial_image, to_intrinsic, validated_channel_names
 
 log = logging.getLogger(__name__)
 
@@ -24,8 +26,8 @@ def aggregate_channels(
     expand_radius_ratio: float = 0,
     mode: str = "average",
     no_overlap: bool = False,
-) -> np.ndarray:
-    """Aggregate the channel intensities per cell (either `"average"`, or take the `"min"` / `"max"`).
+) -> AnnData:
+    """Aggregate the channel intensities inside the cells boundaries (either `"average"`, or take the `"min"` / `"max"`).
 
     Args:
         sdata: A `SpatialData` object
@@ -36,7 +38,7 @@ def aggregate_channels(
         no_overlap: If `True`, the (expanded) cells will not overlap.
 
     Returns:
-        A numpy `ndarray` of shape `(n_cells, n_channels)`
+        An `AnnData` object with the aggregated channel intensities in `adata.X`
     """
     assert mode in AVAILABLE_MODES, f"Invalid {mode=}. Available modes are {AVAILABLE_MODES}"
 
@@ -49,7 +51,7 @@ def aggregate_channels(
     return _aggregate_channels_aligned(image, geo_df, mode)
 
 
-def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon], mode: str) -> np.ndarray:
+def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame, mode: str) -> AnnData:
     """Average channel intensities per cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
@@ -57,13 +59,13 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
         geo_df: A `GeoDataFrame` whose geometries are cell boundaries (polygons)
 
     Returns:
-        A numpy `ndarray` of shape `(n_cells, n_channels)`
+        An `AnnData` object with the aggregated channel intensities
     """
     from dask.diagnostics import ProgressBar
 
     log.info(f"Aggregating channels intensity over {len(geo_df)} cells with {mode=}")
 
-    cells = geo_df if isinstance(geo_df, list) else list(geo_df.geometry)
+    cells = geo_df.geometry.tolist()
     tree = shapely.STRtree(cells)
 
     n_channels = len(image.coords["c"])
@@ -121,7 +123,10 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame | lis
         ]
         dask.compute(tasks)
 
-    if mode == "average":
-        return aggregation / areas[:, None].clip(1)
-    else:
-        return aggregation
+    X = aggregation if mode in ["min", "max"] else aggregation / areas[:, None].clip(1)
+
+    return AnnData(
+        X,
+        var=pd.DataFrame(index=validated_channel_names(image)),
+        obs=pd.DataFrame(index=geo_df.index.astype(str)),
+    )

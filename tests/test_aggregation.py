@@ -21,17 +21,19 @@ from sopa.constants import SopaKeys
 def test_aggregate_channels_aligned():
     image = np.random.randint(1, 10, size=(3, 8, 16))
     arr = da.from_array(image, chunks=(1, 8, 8))
-    xarr = xr.DataArray(arr, dims=["c", "y", "x"])
+    channel_names = ["DAPI", "CD3", "CD20"]
+    xarr = xr.DataArray(arr, dims=["c", "y", "x"], coords={"c": channel_names})
 
     cell_size = 4
     cell_start = [(0, 0), (6, 2), (9, 3)]
 
     # One cell is on the first block, one is overlapping on both blocks, and one is on the last block
     cells = [box(x, y, x + cell_size - 1, y + cell_size - 1) for x, y in cell_start]
+    gdf = gpd.GeoDataFrame(geometry=cells)
 
-    mean_intensities = _aggregate_channels_aligned(xarr, cells, "average")
-    min_intensities = _aggregate_channels_aligned(xarr, cells, "min")
-    max_intensities = _aggregate_channels_aligned(xarr, cells, "max")
+    adata_mean_intensities = _aggregate_channels_aligned(xarr, gdf, "average")
+    adata_min_intensities = _aggregate_channels_aligned(xarr, gdf, "min")
+    adata_max_intensities = _aggregate_channels_aligned(xarr, gdf, "max")
 
     true_mean_intensities = np.stack([
         image[:, y : y + cell_size, x : x + cell_size].mean(axis=(1, 2)) for x, y in cell_start
@@ -43,9 +45,9 @@ def test_aggregate_channels_aligned():
         image[:, y : y + cell_size, x : x + cell_size].max(axis=(1, 2)) for x, y in cell_start
     ])
 
-    assert (mean_intensities == true_mean_intensities).all()
-    assert (min_intensities == true_min_intensities).all()
-    assert (max_intensities == true_max_intensities).all()
+    assert (true_mean_intensities == adata_mean_intensities.X).all()
+    assert (true_min_intensities == adata_min_intensities.X).all()
+    assert (true_max_intensities == adata_max_intensities.X).all()
 
 
 def test_count_transcripts():
@@ -313,3 +315,42 @@ def test_overlay():
             [3, 5, 1],
         ])
     ).all()
+
+
+def test_aggregate_without_dropping_cells():
+    np.random.seed(0)
+    x, y = np.meshgrid(np.arange(6), np.arange(6))
+    x = x.flatten()
+    y = y.flatten()
+    genes = np.random.choice(["gene_a", "gene_b", "gene_c"], x.shape[0])
+    points = PointsModel.parse(pd.DataFrame({"x": x, "y": y, "gene": genes}), feature_key="gene")
+
+    gdf = gpd.GeoDataFrame(
+        geometry=[
+            box(0, 0, 1, 1),
+            box(1, 1, 2, 2),
+            box(2, 2, 4, 4),
+            box(1, 2.5, 1.5, 5),
+        ]
+    )
+    gdf.geometry = gdf.geometry.buffer(0.1)
+    gdf = ShapesModel.parse(gdf)
+
+    sdata = spatialdata.SpatialData(shapes={"cellpose_boundaries": gdf}, points={"points": points})
+
+    sopa.aggregate(
+        sdata,
+        shapes_key="cellpose_boundaries",
+        points_key="points",
+        aggregate_genes=True,
+        aggregate_channels=True,
+        min_transcripts=4,
+        drop_filtered_cells=False,
+        key_added="table_no_drop",
+    )
+
+    table = sdata["table_no_drop"]
+
+    assert table.n_obs == 4
+    assert "passes_filtering" in table.obs
+    assert (~table.obs["passes_filtering"].to_numpy()).sum() >= 1

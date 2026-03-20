@@ -36,6 +36,7 @@ class SopaKeys:
     CELL_OVERLAY_KEY = "is_overlay"
     AREA_OBS = "area"
     Z_SCORES = "z_scores"
+    PASSES_FILTERING = "passes_filtering"
 
     # Geometry keys
     GEOMETRY_AREA = "area"
