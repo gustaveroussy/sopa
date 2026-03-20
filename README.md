@@ -5,6 +5,8 @@
 	Spatial omics pipeline and analysis
 </b></i></p>
 
+Trigger
+
 <div align="center">
 
 [![PyPI](https://img.shields.io/pypi/v/sopa.svg)](https://pypi.org/project/sopa)
