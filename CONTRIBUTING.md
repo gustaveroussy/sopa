@@ -39,8 +39,7 @@ To add some new code to `sopa`, you should:
 4. Implement your changes
 5. If you need to add documentation, add it under the `docs` directory. You can deploy it locally via `uv run poe docs`
 6. Run tests via `uv run poe test_short`. You can open the test coverage report with `open htmlcov/index.html`. For the full tests, use `uv run poe test` (but it may take minutes).
-7. If you fixed an issue or made an important change, mention it in the `CHANGELOG.md` file with your GitHub username.
-8. Run `pre-commit run --all-files` to ensure minimal code quality.
+7. Run `pre-commit run --all-files` to ensure minimal code quality.
 
 ### Create the PR
 9.  Commit and push changes to your personal branch
