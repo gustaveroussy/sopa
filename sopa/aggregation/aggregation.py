@@ -149,9 +149,7 @@ class Aggregator:
         if SopaKeys.PASSES_FILTERING not in self.table.obs:
             return
 
-        passes_filtering = self.table.obs[SopaKeys.PASSES_FILTERING].values
-
-        self.table = self.table[passes_filtering]
+        self.table = self.table[self.table.obs[SopaKeys.PASSES_FILTERING]]
 
         if self.geo_df is not None:
             self.geo_df = self.geo_df.loc[self.table.obs_names]
@@ -237,13 +235,7 @@ class Aggregator:
 
     def add_standardized_table(self, key_added: str):
         add_standardized_table(
-            self.sdata,
-            self.table,
-            self.geo_df,
-            self.shapes_key,
-            key_added,
-            image_key=self.image_key,
-            drop_filtered_cells=self.drop_filtered_cells,
+            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, self.image_key, self.drop_filtered_cells
         )
 
 

@@ -27,7 +27,7 @@ def aggregate_channels(
     mode: str = "average",
     no_overlap: bool = False,
 ) -> AnnData:
-    """Aggregate the channel intensities per cell (either `"average"`, or take the `"min"` / `"max"`).
+    """Aggregate the channel intensities inside the cells boundaries (either `"average"`, or take the `"min"` / `"max"`).
 
     Args:
         sdata: A `SpatialData` object
@@ -38,7 +38,7 @@ def aggregate_channels(
         no_overlap: If `True`, the (expanded) cells will not overlap.
 
     Returns:
-        An `AnnData` object with the aggregated channel intensities
+        An `AnnData` object with the aggregated channel intensities in `adata.X`
     """
     assert mode in AVAILABLE_MODES, f"Invalid {mode=}. Available modes are {AVAILABLE_MODES}"
 
@@ -65,7 +65,7 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame, mode
 
     log.info(f"Aggregating channels intensity over {len(geo_df)} cells with {mode=}")
 
-    cells = list(geo_df.geometry)
+    cells = geo_df.geometry.tolist()
     tree = shapely.STRtree(cells)
 
     n_channels = len(image.coords["c"])
@@ -125,10 +125,8 @@ def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame, mode
 
     X = aggregation if mode in ["min", "max"] else aggregation / areas[:, None].clip(1)
 
-    adata = AnnData(
+    return AnnData(
         X,
         var=pd.DataFrame(index=validated_channel_names(image)),
         obs=pd.DataFrame(index=geo_df.index.astype(str)),
     )
-
-    return adata
