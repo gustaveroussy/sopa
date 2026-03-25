@@ -1,25 +1,21 @@
 import logging
 import shutil
-
 from pathlib import Path
-
-from nimbus_inference.nimbus import Nimbus, prep_naming_convention
-from nimbus_inference.utils import MultiplexDataset
-
-from tifffile import imwrite
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 from anndata import AnnData
+from nimbus_inference.nimbus import Nimbus, prep_naming_convention
+from nimbus_inference.utils import MultiplexDataset
 from shapely.geometry import Polygon
 from spatialdata import SpatialData
+from tifffile import imwrite
 from xarray import DataArray
 
 from ..constants import NimbusFiles
-
 from ..shapes import expand_radius, rasterize_labeled
-from ..utils import get_boundaries, get_spatial_image, to_intrinsic, validated_channel_names, get_cache_dir
+from ..utils import get_boundaries, get_cache_dir, get_spatial_image, to_intrinsic, validated_channel_names
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +28,7 @@ def nimbus_aggregation(
     expand_radius_ratio: float = 0,
     no_overlap: bool = False,
     quantile: float = 0.999,
-    n_subset: int = 50, 
+    n_subset: int = 50,
     batch_size: int = 4,
     delete_cache: bool = True,
 ) -> AnnData:
@@ -56,14 +52,16 @@ def nimbus_aggregation(
     geo_df = expand_radius(geo_df, expand_radius_ratio, no_overlap=no_overlap)
     cache_dir = get_cache_dir(sdata)
 
-    return _run_nimbus(image=image, 
-                       geo_df=geo_df, 
-                       include_channels=include_channels, 
-                       work_dir=cache_dir,
-                       quantile=quantile,
-                       n_subset=n_subset, 
-                       batch_size=batch_size,
-                       delete_cache=delete_cache)
+    return _run_nimbus(
+        image=image,
+        geo_df=geo_df,
+        include_channels=include_channels,
+        work_dir=cache_dir,
+        quantile=quantile,
+        n_subset=n_subset,
+        batch_size=batch_size,
+        delete_cache=delete_cache,
+    )
 
 
 def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path, channel_names: list[str]) -> None:
@@ -86,7 +84,6 @@ def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path,
 
 
 def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None) -> MultiplexDataset:
-
     tiff_dir = work_dir / "image_data"
     seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR
     nimbus_output_dir = work_dir / "nimbus_output"
@@ -102,37 +99,45 @@ def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None)
     if missing:
         raise FileNotFoundError(f"Missing segmentation files for {len(missing)} FOV(s), first: {missing[0]}")
 
-    return MultiplexDataset(fov_paths=[str(p) for p in fov_paths],
-                            suffix=".tiff",
-                            include_channels=include_channels,
-                            segmentation_naming_convention=segmentation_naming,
-                            output_dir=nimbus_output_dir,
-                        )
+    return MultiplexDataset(
+        fov_paths=[str(p) for p in fov_paths],
+        suffix=".tiff",
+        include_channels=include_channels,
+        segmentation_naming_convention=segmentation_naming,
+        output_dir=nimbus_output_dir,
+    )
 
-def _nimbus_inference(work_dir: Path, mpx_data: MultiplexDataset, quantile: float = 0.999, n_subset: int = 50, batch_size: int = 4) -> pd.DataFrame:
+
+def _nimbus_inference(
+    work_dir: Path, mpx_data: MultiplexDataset, quantile: float = 0.999, n_subset: int = 50, batch_size: int = 4
+) -> pd.DataFrame:
     nimbus_output_dir = work_dir / "nimbus_output"
 
     nimbus = Nimbus(
-            dataset=mpx_data,
-            save_predictions=False,
-            batch_size=batch_size,
-            device="auto",
-            output_dir=nimbus_output_dir,
-        )
+        dataset=mpx_data,
+        save_predictions=False,
+        batch_size=batch_size,
+        device="auto",
+        output_dir=nimbus_output_dir,
+    )
 
     mpx_data.prepare_normalization_dict(
-                        quantile=quantile,
-                        n_subset=n_subset,
-                        clip_values=(0, 2),
-                        multiprocessing=True,
-                        overwrite=True
-                    )
-    
+        quantile=quantile, n_subset=n_subset, clip_values=(0, 2), multiprocessing=True, overwrite=True
+    )
+
     return nimbus.predict_fovs()
 
 
-def _run_nimbus(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon], include_channels: list[str] | None, 
-                work_dir: Path, delete_cache: bool = True, quantile: float = 0.999, n_subset: int = 50, batch_size: int = 4) -> AnnData:
+def _run_nimbus(
+    image: DataArray,
+    geo_df: gpd.GeoDataFrame | list[Polygon],
+    include_channels: list[str] | None,
+    work_dir: Path,
+    delete_cache: bool = True,
+    quantile: float = 0.999,
+    n_subset: int = 50,
+    batch_size: int = 4,
+) -> AnnData:
     """predict marker confidence scores for each cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
 
     Args:
@@ -147,23 +152,19 @@ def _run_nimbus(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon], incl
     channel_names = available_channels if include_channels is None else include_channels
     unknown_channels = sorted(set(channel_names) - set(available_channels))
     if unknown_channels:
-        raise ValueError(
-            f"Unknown include_channels: {unknown_channels}. Available channels: {available_channels}"
-        )
+        raise ValueError(f"Unknown include_channels: {unknown_channels}. Available channels: {available_channels}")
 
     log.info(f"Predicting marker confidence scores for {len(geo_df)} cells with {include_channels=}")
 
     if image.shape[1] < 2 or image.shape[2] < 2:
-        raise ValueError(
-            f"Image spatial dimensions must be >= 2, got {(image.shape[1], image.shape[2])}."
-        )
+        raise ValueError(f"Image spatial dimensions must be >= 2, got {(image.shape[1], image.shape[2])}.")
 
-    labels = np.arange(1, len(geo_df) + 1, dtype=np.int32) 
+    labels = np.arange(1, len(geo_df) + 1, dtype=np.int32)
 
     mask = rasterize_labeled(
-            shapes=((geom, label) for geom, label in zip(geo_df.geometry, labels)),
-            out_shape=image.shape[1:],
-        )
+        shapes=((geom, label) for geom, label in zip(geo_df.geometry, labels)),
+        out_shape=image.shape[1:],
+    )
 
     _write_segmentation_data(image, mask, work_dir, channel_names)
 
@@ -171,13 +172,14 @@ def _run_nimbus(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon], incl
 
     mpx_data.check_inputs()
 
-    cell_table = _nimbus_inference(work_dir, 
-                                   mpx_data,
-                                   quantile=quantile,
-                                   n_subset=n_subset, 
-                                   batch_size=batch_size,
-                                   )
-    
+    cell_table = _nimbus_inference(
+        work_dir,
+        mpx_data,
+        quantile=quantile,
+        n_subset=n_subset,
+        batch_size=batch_size,
+    )
+
     if delete_cache and work_dir.exists():
         shutil.rmtree(work_dir)
 
