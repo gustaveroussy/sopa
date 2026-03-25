@@ -32,7 +32,10 @@ def nimbus_aggregation(
     batch_size: int = 4,
     delete_cache: bool = True,
 ) -> AnnData:
-    """Predict marker confidence scores for each cell.
+    """Run [Nimbus](https://nimbus-inference.readthedocs.io/en/latest/?badge=latest) aggregation on a SpatialData object, and predict marker confidence scores for each cell.
+
+    !!! warning "Nimbus installation"
+        Make sure to install the Nimbus-Inference in your environment (`pip install 'Nimbus-Inference'`) for this method to work.
 
     Args:
         sdata: A `SpatialData` object
@@ -41,6 +44,11 @@ def nimbus_aggregation(
         include_channels: List of channels to include in the prediction. If None, all channels are included.
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
         no_overlap: If `True`, the (expanded) cells will not overlap.
+        quantile: Quantile used for Nimbus intensity normalization.
+        n_subset: Number of cells/FOV subsets sampled to estimate normalization statistics.
+        batch_size: Nimbus inference batch size.
+        delete_cache: Whether to delete temporary cache files after inference.
+
 
     Returns:
         An `AnnData` object with the predicted marker confidence scores
@@ -65,8 +73,6 @@ def nimbus_aggregation(
 
 
 def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path, channel_names: list[str]) -> None:
-    """Save per-channel image TIFFs and a segmentation mask."""
-
     tiff_dir = work_dir / NimbusFiles.IMAGE_DIR
     seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR
     tiff_dir.mkdir(parents=True, exist_ok=True)
@@ -138,16 +144,6 @@ def _run_nimbus(
     n_subset: int = 50,
     batch_size: int = 4,
 ) -> AnnData:
-    """predict marker confidence scores for each cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
-
-    Args:
-        image: A `DataArray` of shape `(n_channels, y, x)`
-        geo_df: A `GeoDataFrame` whose geometries are cell boundaries (polygons)
-        include_channels: List of channels to include in the prediction. If None, all channels are included.
-
-    Returns:
-        An `AnnData` object with the predicted marker confidence scores
-    """
     available_channels = validated_channel_names(image)
     channel_names = available_channels if include_channels is None else include_channels
     unknown_channels = sorted(set(channel_names) - set(available_channels))
@@ -191,4 +187,4 @@ def _run_nimbus(
         obs=pd.DataFrame(index=geo_df.index.astype(str)),
     )
 
-    return adata, cell_table
+    return adata
