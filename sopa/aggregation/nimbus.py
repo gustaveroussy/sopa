@@ -1,0 +1,192 @@
+import logging
+import shutil
+
+from pathlib import Path
+
+from nimbus_inference.nimbus import Nimbus, prep_naming_convention
+from nimbus_inference.utils import MultiplexDataset
+
+from tifffile import imwrite
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+from anndata import AnnData
+from shapely.geometry import Polygon
+from spatialdata import SpatialData
+from xarray import DataArray
+
+from ..constants import NimbusFiles
+
+from ..shapes import expand_radius, rasterize_labeled
+from ..utils import get_boundaries, get_spatial_image, to_intrinsic, validated_channel_names, get_cache_dir
+
+log = logging.getLogger(__name__)
+
+
+def nimbus_aggregation(
+    sdata: SpatialData,
+    image_key: str | None = None,
+    shapes_key: str | None = None,
+    include_channels: list[str] | None = None,
+    expand_radius_ratio: float = 0,
+    no_overlap: bool = False,
+    quantile: float = 0.999,
+    n_subset: int = 50, 
+    batch_size: int = 4,
+    delete_cache: bool = True,
+) -> AnnData:
+    """Predict marker confidence scores for each cell.
+
+    Args:
+        sdata: A `SpatialData` object
+        image_key: Key of `sdata` containing the image. If only one `images` element, this does not have to be provided.
+        shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
+        include_channels: List of channels to include in the prediction. If None, all channels are included.
+        expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
+        no_overlap: If `True`, the (expanded) cells will not overlap.
+
+    Returns:
+        An `AnnData` object with the predicted marker confidence scores
+    """
+    image = get_spatial_image(sdata, image_key)
+
+    geo_df = get_boundaries(sdata, key=shapes_key)
+    geo_df = to_intrinsic(sdata, geo_df, image)
+    geo_df = expand_radius(geo_df, expand_radius_ratio, no_overlap=no_overlap)
+    cache_dir = get_cache_dir(sdata)
+
+    return _run_nimbus(image=image, 
+                       geo_df=geo_df, 
+                       include_channels=include_channels, 
+                       work_dir=cache_dir,
+                       quantile=quantile,
+                       n_subset=n_subset, 
+                       batch_size=batch_size,
+                       delete_cache=delete_cache)
+
+
+def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path, channel_names: list[str]) -> None:
+    """Save per-channel image TIFFs and a segmentation mask."""
+
+    tiff_dir = work_dir / NimbusFiles.IMAGE_DIR
+    seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR
+    tiff_dir.mkdir(parents=True, exist_ok=True)
+    seg_dir.mkdir(parents=True, exist_ok=True)
+    for stale_tiff in tiff_dir.glob("*.tiff"):
+        stale_tiff.unlink()
+
+    for c, name in enumerate(channel_names):
+        imwrite(tiff_dir / f"{name}.tiff", image[c])
+
+    seg_file = seg_dir / NimbusFiles.SEGMENTATION_MASK
+    if seg_file.exists():
+        seg_file.unlink()
+    imwrite(seg_file, mask)
+
+
+def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None) -> MultiplexDataset:
+
+    tiff_dir = work_dir / "image_data"
+    seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR
+    nimbus_output_dir = work_dir / "nimbus_output"
+    nimbus_output_dir.mkdir(parents=True, exist_ok=True)
+
+    fov_paths = sorted(p for p in tiff_dir.iterdir() if p.is_dir() and not p.name.startswith("."))
+    if not fov_paths:
+        raise FileNotFoundError(f"No FOV directories found in {tiff_dir}")
+
+    segmentation_naming = prep_naming_convention(seg_dir)
+
+    missing = [p for p in fov_paths if not Path(segmentation_naming(str(p))).exists()]
+    if missing:
+        raise FileNotFoundError(f"Missing segmentation files for {len(missing)} FOV(s), first: {missing[0]}")
+
+    return MultiplexDataset(fov_paths=[str(p) for p in fov_paths],
+                            suffix=".tiff",
+                            include_channels=include_channels,
+                            segmentation_naming_convention=segmentation_naming,
+                            output_dir=nimbus_output_dir,
+                        )
+
+def _nimbus_inference(work_dir: Path, mpx_data: MultiplexDataset, quantile: float = 0.999, n_subset: int = 50, batch_size: int = 4) -> pd.DataFrame:
+    nimbus_output_dir = work_dir / "nimbus_output"
+
+    nimbus = Nimbus(
+            dataset=mpx_data,
+            save_predictions=False,
+            batch_size=batch_size,
+            device="auto",
+            output_dir=nimbus_output_dir,
+        )
+
+    mpx_data.prepare_normalization_dict(
+                        quantile=quantile,
+                        n_subset=n_subset,
+                        clip_values=(0, 2),
+                        multiprocessing=True,
+                        overwrite=True
+                    )
+    
+    return nimbus.predict_fovs()
+
+
+def _run_nimbus(image: DataArray, geo_df: gpd.GeoDataFrame | list[Polygon], include_channels: list[str] | None, 
+                work_dir: Path, delete_cache: bool = True, quantile: float = 0.999, n_subset: int = 50, batch_size: int = 4) -> AnnData:
+    """predict marker confidence scores for each cell. The image and cells have to be aligned, i.e. be on the same coordinate system.
+
+    Args:
+        image: A `DataArray` of shape `(n_channels, y, x)`
+        geo_df: A `GeoDataFrame` whose geometries are cell boundaries (polygons)
+        include_channels: List of channels to include in the prediction. If None, all channels are included.
+
+    Returns:
+        An `AnnData` object with the predicted marker confidence scores
+    """
+    available_channels = validated_channel_names(image)
+    channel_names = available_channels if include_channels is None else include_channels
+    unknown_channels = sorted(set(channel_names) - set(available_channels))
+    if unknown_channels:
+        raise ValueError(
+            f"Unknown include_channels: {unknown_channels}. Available channels: {available_channels}"
+        )
+
+    log.info(f"Predicting marker confidence scores for {len(geo_df)} cells with {include_channels=}")
+
+    if image.shape[1] < 2 or image.shape[2] < 2:
+        raise ValueError(
+            f"Image spatial dimensions must be >= 2, got {(image.shape[1], image.shape[2])}."
+        )
+
+    labels = np.arange(1, len(geo_df) + 1, dtype=np.int32) 
+
+    mask = rasterize_labeled(
+            shapes=((geom, label) for geom, label in zip(geo_df.geometry, labels)),
+            out_shape=image.shape[1:],
+        )
+
+    _write_segmentation_data(image, mask, work_dir, channel_names)
+
+    mpx_data = _build_multiplex_dataset(work_dir, channel_names)
+
+    mpx_data.check_inputs()
+
+    cell_table = _nimbus_inference(work_dir, 
+                                   mpx_data,
+                                   quantile=quantile,
+                                   n_subset=n_subset, 
+                                   batch_size=batch_size,
+                                   )
+    
+    if delete_cache and work_dir.exists():
+        shutil.rmtree(work_dir)
+
+    X = cell_table[channel_names].to_numpy()
+
+    adata = AnnData(
+        X,
+        var=pd.DataFrame(index=channel_names),
+        obs=pd.DataFrame(index=geo_df.index.astype(str)),
+    )
+
+    return adata, cell_table
