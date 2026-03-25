@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Iterable
 
 import numpy as np
 import shapely
@@ -35,3 +36,24 @@ def rasterize(cell: Polygon | MultiPolygon, shape: tuple[int, int], xy_min: tupl
         rasterized_image[rr, cc] = 1
 
     return rasterized_image
+
+
+def rasterize_labeled(
+    shapes: Iterable[tuple[Polygon, int]], out_shape: tuple[int, int], fill: int = 0, dtype: str = "int32"
+) -> np.ndarray:
+    """Rasterize polygons into a labeled mask array.
+
+    Args:
+        shapes: Iterable of pairs ``(polygon, label)`` to rasterize.
+        out_shape: Output mask shape as a tuple ``(y, x)``.
+        fill: Value used to initialize pixels that are not covered by any polygon.
+        dtype: Data type of the output mask.
+
+    Returns:
+        The labeled mask array.
+    """
+    mask = np.full(out_shape, fill, dtype=dtype)
+    for geom, label in shapes:
+        cell_mask = rasterize(geom, out_shape, xy_min=(0, 0))
+        mask[cell_mask > 0] = label
+    return mask
