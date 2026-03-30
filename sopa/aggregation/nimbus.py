@@ -28,7 +28,6 @@ def nimbus_aggregation(
     expand_radius_ratio: float = 0,
     no_overlap: bool = False,
     quantile: float = 0.999,
-    n_subset: int = 1,
     multiprocessing: bool = True,
     batch_size: int = 4,
     clip_values: tuple = (0, 2),
@@ -48,7 +47,6 @@ def nimbus_aggregation(
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
         no_overlap: If `True`, the (expanded) cells will not overlap.
         quantile: Quantile used for Nimbus intensity normalization, default: 0.999.
-        n_subset: Number of FOV subsets sampled to estimate normalization statistics.
         multiprocessing: Whether to use multiprocessing.
         batch_size: Nimbus inference batch size, default: 4.
         clip_values: Values to clip images to after Nimbus intensity normalization, default: (0, 2).
@@ -71,7 +69,6 @@ def nimbus_aggregation(
         include_channels=include_channels,
         work_dir=cache_dir,
         quantile=quantile,
-        n_subset=n_subset,
         batch_size=batch_size,
         clip_values=clip_values,
         multiprocessing=multiprocessing,
@@ -126,7 +123,6 @@ def _nimbus_inference(
     work_dir: Path,
     mpx_data: MultiplexDataset,
     quantile: float,
-    n_subset: int,
     batch_size: int,
     clip_values: tuple,
     multiprocessing: bool,
@@ -143,7 +139,7 @@ def _nimbus_inference(
     )
 
     mpx_data.prepare_normalization_dict(
-        quantile=quantile, n_subset=n_subset, clip_values=clip_values, multiprocessing=multiprocessing, overwrite=True
+        quantile=quantile, clip_values=clip_values, multiprocessing=multiprocessing, n_subset=1, overwrite=True
     )
 
     return nimbus.predict_fovs()
@@ -155,7 +151,6 @@ def _run_nimbus(
     include_channels: list[str] | None,
     work_dir: Path,
     quantile: float,
-    n_subset: int,
     batch_size: int,
     clip_values: tuple,
     multiprocessing: bool,
@@ -190,7 +185,6 @@ def _run_nimbus(
         work_dir,
         mpx_data,
         quantile=quantile,
-        n_subset=n_subset,
         batch_size=batch_size,
         clip_values=clip_values,
         multiprocessing=multiprocessing,
