@@ -29,6 +29,7 @@ def nimbus_aggregation(
     no_overlap: bool = False,
     quantile: float = 0.999,
     n_subset: int = 1,
+    multiprocessing: bool = True,
     batch_size: int = 4,
     clip_values: tuple = (0, 2),
     delete_cache: bool = True,
@@ -46,11 +47,11 @@ def nimbus_aggregation(
         include_channels: List of channels to include in the prediction. If None, all channels are included.
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
         no_overlap: If `True`, the (expanded) cells will not overlap.
-        quantile: Quantile used for Nimbus intensity normalization.
+        quantile: Quantile used for Nimbus intensity normalization, default: 0.999.
         n_subset: Number of FOV subsets sampled to estimate normalization statistics.
-        batch_size: Nimbus inference batch size.
-        clip_values: Values to clip images to after Nimbus intensity normalization.
-        delete_cache: Whether to delete temporary cache files after inference.
+        batch_size: Nimbus inference batch size, default: 4.
+        clip_values: Values to clip images to after Nimbus intensity normalization, default: (0, 2).
+        delete_cache: Whether to delete temporary cache files after inference, default: True.
 
 
     Returns:
@@ -72,6 +73,7 @@ def nimbus_aggregation(
         n_subset=n_subset,
         batch_size=batch_size,
         clip_values=clip_values,
+        multiprocessing=multiprocessing,
         delete_cache=delete_cache,
         **nimbus_model_kwargs,
     )
@@ -126,6 +128,7 @@ def _nimbus_inference(
     n_subset: int,
     batch_size: int,
     clip_values: tuple,
+    multiprocessing: bool,
     **nimbus_model_kwargs,
 ) -> pd.DataFrame:
     nimbus_output_dir = work_dir / "nimbus_output"
@@ -139,7 +142,7 @@ def _nimbus_inference(
     )
 
     mpx_data.prepare_normalization_dict(
-        quantile=quantile, n_subset=n_subset, clip_values=clip_values, multiprocessing=True, overwrite=True
+        quantile=quantile, n_subset=n_subset, clip_values=clip_values, multiprocessing=multiprocessing, overwrite=True
     )
 
     return nimbus.predict_fovs()
@@ -154,6 +157,7 @@ def _run_nimbus(
     n_subset: int,
     batch_size: int,
     clip_values: tuple,
+    multiprocessing: bool,
     delete_cache: bool = True,
     **nimbus_model_kwargs,
 ) -> AnnData:
@@ -188,6 +192,7 @@ def _run_nimbus(
         n_subset=n_subset,
         batch_size=batch_size,
         clip_values=clip_values,
+        multiprocessing=multiprocessing,
         **nimbus_model_kwargs,
     )
 
