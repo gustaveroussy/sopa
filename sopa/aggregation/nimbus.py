@@ -49,6 +49,7 @@ def nimbus_aggregation(
         no_overlap: If `True`, the (expanded) cells will not overlap.
         quantile: Quantile used for Nimbus intensity normalization, default: 0.999.
         n_subset: Number of FOV subsets sampled to estimate normalization statistics.
+        multiprocessing: Whether to use multiprocessing.
         batch_size: Nimbus inference batch size, default: 4.
         clip_values: Values to clip images to after Nimbus intensity normalization, default: (0, 2).
         delete_cache: Whether to delete temporary cache files after inference, default: True.
