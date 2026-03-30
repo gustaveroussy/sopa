@@ -5,7 +5,7 @@ from .aggregation import aggregate, Aggregator
 from .overlay import overlay_segmentation
 
 
-def nimbus_aggregation(*args, **kwargs):
+def nimbus(*args, **kwargs):
     """Lazily import Nimbus aggregation."""
     try:
         from .nimbus import nimbus_aggregation as _nimbus_aggregation
