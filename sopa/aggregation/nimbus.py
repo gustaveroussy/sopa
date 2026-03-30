@@ -28,9 +28,11 @@ def nimbus_aggregation(
     expand_radius_ratio: float = 0,
     no_overlap: bool = False,
     quantile: float = 0.999,
-    n_subset: int = 50,
+    n_subset: int = 1,
     batch_size: int = 4,
+    clip_values: tuple = (0, 2),
     delete_cache: bool = True,
+    **nimbus_model_kwargs,
 ) -> AnnData:
     """Run [Nimbus](https://nimbus-inference.readthedocs.io/en/latest/?badge=latest) aggregation on a SpatialData object, and predict marker confidence scores for each cell.
 
@@ -45,8 +47,9 @@ def nimbus_aggregation(
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
         no_overlap: If `True`, the (expanded) cells will not overlap.
         quantile: Quantile used for Nimbus intensity normalization.
-        n_subset: Number of cells/FOV subsets sampled to estimate normalization statistics.
+        n_subset: Number of FOV subsets sampled to estimate normalization statistics.
         batch_size: Nimbus inference batch size.
+        clip_values: Values to clip images to after Nimbus intensity normalization.
         delete_cache: Whether to delete temporary cache files after inference.
 
 
@@ -68,7 +71,9 @@ def nimbus_aggregation(
         quantile=quantile,
         n_subset=n_subset,
         batch_size=batch_size,
+        clip_values=clip_values,
         delete_cache=delete_cache,
+        **nimbus_model_kwargs,
     )
 
 
@@ -115,7 +120,13 @@ def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None)
 
 
 def _nimbus_inference(
-    work_dir: Path, mpx_data: MultiplexDataset, quantile: float = 0.999, n_subset: int = 50, batch_size: int = 4
+    work_dir: Path,
+    mpx_data: MultiplexDataset,
+    quantile: float,
+    n_subset: int,
+    batch_size: int,
+    clip_values: tuple,
+    **nimbus_model_kwargs,
 ) -> pd.DataFrame:
     nimbus_output_dir = work_dir / "nimbus_output"
 
@@ -123,12 +134,12 @@ def _nimbus_inference(
         dataset=mpx_data,
         save_predictions=False,
         batch_size=batch_size,
-        device="auto",
         output_dir=nimbus_output_dir,
+        **nimbus_model_kwargs,
     )
 
     mpx_data.prepare_normalization_dict(
-        quantile=quantile, n_subset=n_subset, clip_values=(0, 2), multiprocessing=True, overwrite=True
+        quantile=quantile, n_subset=n_subset, clip_values=clip_values, multiprocessing=True, overwrite=True
     )
 
     return nimbus.predict_fovs()
@@ -139,10 +150,12 @@ def _run_nimbus(
     geo_df: gpd.GeoDataFrame | list[Polygon],
     include_channels: list[str] | None,
     work_dir: Path,
+    quantile: float,
+    n_subset: int,
+    batch_size: int,
+    clip_values: tuple,
     delete_cache: bool = True,
-    quantile: float = 0.999,
-    n_subset: int = 50,
-    batch_size: int = 4,
+    **nimbus_model_kwargs,
 ) -> AnnData:
     available_channels = validated_channel_names(image)
     channel_names = available_channels if include_channels is None else include_channels
@@ -174,6 +187,8 @@ def _run_nimbus(
         quantile=quantile,
         n_subset=n_subset,
         batch_size=batch_size,
+        clip_values=clip_values,
+        **nimbus_model_kwargs,
     )
 
     if delete_cache and work_dir.exists():
