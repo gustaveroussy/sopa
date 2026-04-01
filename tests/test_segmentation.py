@@ -3,6 +3,8 @@ import pytest
 import shapely
 from geopandas.testing import assert_geodataframe_equal
 from shapely import MultiPolygon
+from spatialdata import SpatialData
+from spatialdata.models import Image2DModel
 
 import sopa
 from sopa.constants import SopaKeys
@@ -78,3 +80,17 @@ def test_tissue_segmentation():
     m1_default_level0 = MultiPolygon(geo_df.geometry.values)
 
     assert m1_default_transformed.intersection(m1_default_level0).area / m1_default_transformed.area > 0.9
+
+
+def test_tissue_segmentation_drop_threshold():
+    X = np.zeros((1, 50, 50))
+    X[0, 20:40, 20:40] = 1  # 400 pixels
+    X[0, :10, :10] = 1  # 100 pixels, i.e. 20% of the total area
+
+    sdata = SpatialData(images={"image": Image2DModel.parse(X, c_coords=["DAPI"])})
+
+    sopa.segmentation.tissue(sdata, drop_threshold=0.19)
+    assert len(sdata["region_of_interest"]) == 2
+
+    sopa.segmentation.tissue(sdata, drop_threshold=0.21)
+    assert len(sdata["region_of_interest"]) == 1

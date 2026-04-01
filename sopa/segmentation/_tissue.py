@@ -40,9 +40,8 @@ def tissue(
         This segmentation method first transforms the image from RBG color space to HSV. Then,
         on the basis of the saturation channel, a median blurring is applied with an element of size `blur_kernel_size`
         before running the Otsu method. Then a morphological opening and closing are applied as a prostprocessing
-        step with square elements of size `open_kernel_size` and `close_kernel_size`. Lastly, the connected components
-        with size less than `drop_threshold * number_of_pixel_of_the_image` are removed, and the
-        rest are converted into polygons.
+        step with square elements of size `open_kernel_size` and `close_kernel_size`. Lastly, the connected components are converted into polygons,
+        and polygons whose area is inferior to `drop_threshold * total_slide_area` are removed.
 
     !!! info "Staining mode"
         Instead of extracting the saturation channel, the image is converted to a grayscale image by taking the maximum
@@ -59,7 +58,7 @@ def tissue(
         blur_kernel_size: The kernel size of the median bluring operation
         open_kernel_size: The kernel size of the morphological openning operation
         close_kernel_size: The kernel size of the morphological closing operation
-        drop_threshold: Segments that cover less area than a ratio of `drop_threshold` of the number of pixels of the image will be removed
+        drop_threshold: Polygons whose area is inferior to `drop_threshold * total_slide_area` will be removed.
         allow_holes: If `True`, the holes in the polygons will be kept. If `False`, the holes will be removed.
         key_added: Name of the spatial element that will be added, containing the segmented tissue polygons.
     """
@@ -184,6 +183,8 @@ class TissueSegmentation:
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
         geo_df = _vectorize_mask(labels, allow_holes=self.allow_holes)
+        geo_df = geo_df[geo_df.area > self.drop_threshold * geo_df.area.sum()]
+
         return gpd.GeoDataFrame(geometry=[geo_df.union_all()])
 
 
