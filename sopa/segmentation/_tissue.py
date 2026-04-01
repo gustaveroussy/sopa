@@ -184,6 +184,8 @@ class TissueSegmentation:
         labels = skimage.measure.label(mask_open_close, connectivity=2)
 
         geo_df = _vectorize_mask(labels, allow_holes=self.allow_holes)
+        geo_df = geo_df[geo_df.area > self.drop_threshold * geo_df.area.sum()]
+
         return gpd.GeoDataFrame(geometry=[geo_df.union_all()])
 
 
