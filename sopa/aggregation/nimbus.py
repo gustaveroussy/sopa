@@ -46,11 +46,11 @@ def nimbus_aggregation(
         include_channels: List of channels to include in the prediction. If None, all channels are included.
         expand_radius_ratio: Cells polygons will be expanded by `expand_radius_ratio * mean_radius`. This help better aggregate boundary stainings.
         no_overlap: If `True`, the (expanded) cells will not overlap.
-        quantile: Quantile used for Nimbus intensity normalization, default: 0.999.
+        quantile: Quantile used for Nimbus intensity normalization.
         multiprocessing: Whether to use multiprocessing.
-        batch_size: Nimbus inference batch size, default: 4.
-        clip_values: Values to clip images to after Nimbus intensity normalization, default: (0, 2).
-        delete_cache: Whether to delete temporary cache files after inference, default: True.
+        batch_size: Nimbus inference batch size.
+        clip_values: Values to clip images to after Nimbus intensity normalization.
+        delete_cache: Whether to delete temporary cache files after inference.
 
 
     Returns:
@@ -100,7 +100,7 @@ def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None)
     nimbus_output_dir = work_dir / "nimbus_output"
     nimbus_output_dir.mkdir(parents=True, exist_ok=True)
 
-    fov_paths = sorted(p for p in tiff_dir.iterdir() if p.is_dir() and not p.name.startswith("."))
+    fov_paths = sorted(str(p) for p in tiff_dir.iterdir() if p.is_dir() and not p.name.startswith("."))
     if not fov_paths:
         raise FileNotFoundError(f"No FOV directories found in {tiff_dir}")
 
