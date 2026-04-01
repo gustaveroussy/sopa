@@ -9,12 +9,12 @@ from anndata import AnnData
 from nimbus_inference.nimbus import Nimbus, prep_naming_convention
 from nimbus_inference.utils import MultiplexDataset
 from shapely.geometry import Polygon
-from spatialdata import SpatialData
+from spatialdata import SpatialData, rasterize
 from tifffile import imwrite
 from xarray import DataArray
 
 from ..constants import NimbusFiles
-from ..shapes import expand_radius, rasterize_labeled
+from ..shapes import expand_radius
 from ..utils import get_boundaries, get_cache_dir, get_spatial_image, to_intrinsic, validated_channel_names
 
 log = logging.getLogger(__name__)
@@ -168,12 +168,16 @@ def _run_nimbus(
     if image.shape[1] < 2 or image.shape[2] < 2:
         raise ValueError(f"Image spatial dimensions must be >= 2, got {(image.shape[1], image.shape[2])}.")
 
-    labels = np.arange(1, len(geo_df) + 1, dtype=np.int32)
-
-    mask = rasterize_labeled(
-        shapes=((geom, label) for geom, label in zip(geo_df.geometry, labels)),
-        out_shape=image.shape[1:],
+    rasterized = rasterize(
+        data=geo_df,
+        axes=("x", "y"),
+        min_coordinate=[0, 0],
+        max_coordinate=[image.shape[2], image.shape[1]],
+        target_coordinate_system="global",
+        target_unit_to_pixels=1,
     )
+
+    mask = rasterized.to_numpy()
 
     _write_segmentation_data(image, mask, work_dir, channel_names)
 
