@@ -11,14 +11,15 @@ if TYPE_CHECKING:
     from .nimbus import nimbus_aggregation as nimbus
 
 __all__ = [
+    "Aggregator",
+    "aggregate",
     "aggregate_bins",
     "aggregate_channels",
     "count_transcripts",
-    "aggregate",
-    "Aggregator",
-    "overlay_segmentation",
     "nimbus",
+    "overlay_segmentation",
 ]
+
 
 def __getattr__(name: str) -> Any:
     if name == "nimbus":
