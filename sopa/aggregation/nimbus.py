@@ -78,8 +78,8 @@ def nimbus_aggregation(
 
 
 def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path, channel_names: list[str]) -> None:
-    tiff_dir = work_dir / NimbusFiles.IMAGE_DIR
-    seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR
+    tiff_dir = work_dir / NimbusFiles.IMAGE_DIR / NimbusFiles.IMAGE_FOV_DIR
+    seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR / NimbusFiles.SEGMENTATION_OUTPUT_DIR
     tiff_dir.mkdir(parents=True, exist_ok=True)
     seg_dir.mkdir(parents=True, exist_ok=True)
     for stale_tiff in tiff_dir.glob("*.tiff"):
@@ -95,9 +95,9 @@ def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path,
 
 
 def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None) -> MultiplexDataset:
-    tiff_dir = work_dir / "image_data"
-    seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR
-    nimbus_output_dir = work_dir / "nimbus_output"
+    tiff_dir = work_dir / NimbusFiles.IMAGE_DIR
+    seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR / NimbusFiles.SEGMENTATION_OUTPUT_DIR
+    nimbus_output_dir = work_dir / NimbusFiles.NIMBUS_OUTPUT_DIR
     nimbus_output_dir.mkdir(parents=True, exist_ok=True)
 
     fov_paths = sorted(str(p) for p in tiff_dir.iterdir() if p.is_dir() and not p.name.startswith("."))
@@ -128,7 +128,7 @@ def _nimbus_inference(
     multiprocessing: bool,
     **nimbus_model_kwargs,
 ) -> pd.DataFrame:
-    nimbus_output_dir = work_dir / "nimbus_output"
+    nimbus_output_dir = work_dir / NimbusFiles.NIMBUS_OUTPUT_DIR
 
     nimbus = Nimbus(
         dataset=mpx_data,
