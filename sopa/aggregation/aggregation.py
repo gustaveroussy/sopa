@@ -1,18 +1,15 @@
 import logging
 
-import geopandas as gpd
 import numpy as np
-import pandas as pd
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
-from spatialdata.models import TableModel
 
-from ..constants import ATTRS_KEY, SopaAttrs, SopaKeys
-from ..io.explorer.utils import str_cell_id
-from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
+from ..constants import SopaAttrs, SopaKeys
+from ..utils import get_boundaries, get_spatial_element, get_spatial_image
 from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
+from .table import add_parsed_table
 
 log = logging.getLogger(__name__)
 
@@ -231,43 +228,15 @@ class Aggregator:
             SopaKeys.UNS_HAS_INTENSITIES: aggregate_channels,
         }
 
-        self.add_standardized_table(key_added)
+        self.add_parsed_table(key_added)
 
-    def add_standardized_table(self, key_added: str):
-        add_standardized_table(
-            self.sdata, self.table, self.geo_df, self.shapes_key, key_added, self.image_key, self.drop_filtered_cells
+    def add_parsed_table(self, key_added: str):
+        add_parsed_table(
+            self.sdata,
+            self.table,
+            self.geo_df,
+            self.shapes_key,
+            key_added,
+            self.image_key,
+            add_shapes=self.drop_filtered_cells,
         )
-
-
-def add_standardized_table(
-    sdata: SpatialData,
-    table: AnnData,
-    geo_df: gpd.GeoDataFrame,
-    shapes_key: str,
-    table_key: str,
-    image_key: str | None = None,
-    drop_filtered_cells: bool = True,
-):
-    table.obs_names = list(map(str_cell_id, range(table.n_obs)))
-    geo_df.index = list(table.obs_names)
-
-    if drop_filtered_cells:
-        add_spatial_element(sdata, shapes_key, geo_df)
-
-    table.obsm["spatial"] = np.array([[centroid.x, centroid.y] for centroid in geo_df.centroid])
-    table.obs[SopaKeys.REGION_KEY] = pd.Series(shapes_key, index=table.obs_names, dtype="category")
-    table.obs[SopaKeys.SLIDE_KEY] = pd.Series(image_key or "None", index=table.obs_names, dtype="category")
-    table.obs[SopaKeys.INSTANCE_KEY] = geo_df.index
-    table.obs[SopaKeys.AREA_OBS] = geo_df.area.values
-
-    if ATTRS_KEY in table.uns:
-        del table.uns[ATTRS_KEY]
-
-    table = TableModel.parse(
-        table,
-        region_key=SopaKeys.REGION_KEY,
-        region=shapes_key,
-        instance_key=SopaKeys.INSTANCE_KEY,
-    )
-
-    add_spatial_element(sdata, table_key, table)

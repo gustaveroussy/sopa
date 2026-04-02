@@ -12,6 +12,7 @@ from spatialdata import SpatialData
 from .. import settings
 from ..constants import SopaAttrs, SopaKeys
 from ..utils import get_boundaries, get_feature_key, get_spatial_element, to_intrinsic
+from .table import parse_table
 
 log = logging.getLogger(__name__)
 
@@ -31,24 +32,29 @@ def count_transcripts(
         gene_column: Column of the transcript dataframe containing the gene names
         shapes_key: Key of `sdata` containing the cell boundaries. If only one `shapes` element, this does not have to be provided.
         points_key: Key of `sdata` containing the transcripts. If only one `points` element, this does not have to be provided.
-        geo_df: If the cell boundaries are not yet in `sdata`, a `GeoDataFrame` can be directly provided for cell boundaries
+        geo_df: If the cell boundaries are not yet in `sdata`, a `GeoDataFrame` can be directly provided for cell boundaries. If `geo_df` is provided but not `shapes_key`, the table will not be parsed.
         only_excluded: By default, the genes matching the pattern in `sopa.settings.gene_exclude_pattern` are excluded from the count. If `only_excluded=True`, it counts **only** these excluded genes.
 
     Returns:
-        An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell
+        An `AnnData` object of shape `(n_cells, n_genes)` with the counts per cell.
     """
     points_key, points = get_spatial_element(
         sdata.points, key=points_key or sdata.attrs.get(SopaAttrs.TRANSCRIPTS), return_key=True
     )
 
     if geo_df is None:
-        geo_df = get_boundaries(sdata, key=shapes_key)
+        shapes_key, geo_df = get_boundaries(sdata, key=shapes_key, return_key=True)
         geo_df = to_intrinsic(sdata, geo_df, points_key)
 
     gene_column = gene_column or get_feature_key(points, raise_error=True)
 
     log.info(f"Aggregating transcripts over {len(geo_df)} cells")
-    return _count_transcripts_aligned(geo_df, points, gene_column, only_excluded)
+    adata = _count_transcripts_aligned(geo_df, points, gene_column, only_excluded)
+
+    if shapes_key is None:
+        return adata
+
+    return parse_table(adata, geo_df, shapes_key=shapes_key)
 
 
 def _count_transcripts_aligned(

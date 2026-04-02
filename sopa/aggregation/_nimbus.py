@@ -16,6 +16,7 @@ from xarray import DataArray
 from ..constants import NimbusFiles
 from ..shapes import expand_radius
 from ..utils import get_boundaries, get_cache_dir, get_spatial_image, to_intrinsic, validated_channel_names
+from .table import parse_table
 
 log = logging.getLogger(__name__)
 
@@ -34,10 +35,14 @@ def nimbus_aggregation(
     delete_cache: bool = True,
     **nimbus_model_kwargs,
 ) -> AnnData:
-    """Run [Nimbus](https://nimbus-inference.readthedocs.io/en/latest/?badge=latest) aggregation on a SpatialData object, and predict marker confidence scores for each cell.
+    """Run [Nimbus](https://github.com/angelolab/Nimbus-Inference) aggregation to predict marker confidence scores for each cell.
+    This is an alternative to [sopa.aggregation.aggregate_channels][] that uses a deep learning model to predict denoised marker scores.
 
     !!! warning "Nimbus installation"
-        Make sure to install the Nimbus-Inference in your environment (`pip install 'Nimbus-Inference'`) for this method to work.
+        Make sure to install the Nimbus-Inference in your environment for this method to work:
+        ```
+        pip install 'Nimbus-Inference'
+        ```
 
     Args:
         sdata: A `SpatialData` object
@@ -56,14 +61,14 @@ def nimbus_aggregation(
     Returns:
         An `AnnData` object with the predicted marker confidence scores
     """
-    image = get_spatial_image(sdata, image_key)
+    image_key, image = get_spatial_image(sdata, image_key, return_key=True)
 
-    geo_df = get_boundaries(sdata, key=shapes_key)
+    shapes_key, geo_df = get_boundaries(sdata, key=shapes_key, return_key=True)
     geo_df = to_intrinsic(sdata, geo_df, image)
     geo_df = expand_radius(geo_df, expand_radius_ratio, no_overlap=no_overlap)
     cache_dir = get_cache_dir(sdata)
 
-    return _run_nimbus(
+    adata = _run_nimbus(
         image=image,
         geo_df=geo_df,
         include_channels=include_channels,
@@ -76,12 +81,15 @@ def nimbus_aggregation(
         **nimbus_model_kwargs,
     )
 
+    return parse_table(adata, geo_df, shapes_key=shapes_key, image_key=image_key)
+
 
 def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path, channel_names: list[str]) -> None:
     tiff_dir = work_dir / NimbusFiles.IMAGE_DIR / NimbusFiles.IMAGE_FOV_DIR
     seg_dir = work_dir / NimbusFiles.SEGMENTATION_DIR / NimbusFiles.SEGMENTATION_OUTPUT_DIR
     tiff_dir.mkdir(parents=True, exist_ok=True)
     seg_dir.mkdir(parents=True, exist_ok=True)
+
     for stale_tiff in tiff_dir.glob("*.tiff"):
         stale_tiff.unlink()
 
@@ -91,6 +99,7 @@ def _write_segmentation_data(image: DataArray, mask: np.ndarray, work_dir: Path,
     seg_file = seg_dir / NimbusFiles.SEGMENTATION_MASK
     if seg_file.exists():
         seg_file.unlink()
+
     imwrite(seg_file, mask)
 
 
@@ -111,7 +120,7 @@ def _build_multiplex_dataset(work_dir: Path, include_channels: list[str] | None)
         raise FileNotFoundError(f"Missing segmentation files for {len(missing)} FOV(s), first: {missing[0]}")
 
     return MultiplexDataset(
-        fov_paths=[str(p) for p in fov_paths],
+        fov_paths=list(fov_paths),
         suffix=".tiff",
         include_channels=include_channels,
         segmentation_naming_convention=segmentation_naming,
@@ -200,10 +209,8 @@ def _run_nimbus(
 
     X = cell_table[channel_names].to_numpy()
 
-    adata = AnnData(
+    return AnnData(
         X,
         var=pd.DataFrame(index=channel_names),
         obs=pd.DataFrame(index=geo_df.index.astype(str)),
     )
-
-    return adata
