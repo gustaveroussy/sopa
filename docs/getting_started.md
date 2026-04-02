@@ -100,12 +100,6 @@ By default, `sopa` only install the minimal dependencies to avoid a heavy instal
     ```sh
     pip install comseg
     ```
-=== "Nimbus"
-    If you need to run Nimbus aggregation, install `Nimbus-Inference`:
-
-    ```sh
-    pip install Nimbus-Inference
-    ```
 === "WSI"
     If you need to work on whole slide images / H&E images, you can install the corresponding extras as below. You can also consider the `stardist` extra, if you want to run cell segmentation on the H&E image.
 
