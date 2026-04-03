@@ -142,7 +142,11 @@ class Aggregator:
         return True
 
     def update_passes_filtering(self, where_filter: np.ndarray, reason: str):
-        log.info(f"{where_filter.sum()} cells not passing filtering due to {reason}")
+        log.info(f"{where_filter.sum()} cell(s) not passing filtering due to {reason}")
+
+        if SopaKeys.PASSES_FILTERING not in self.table.obs:
+            self.table.obs[SopaKeys.PASSES_FILTERING] = True
+
         self.table.obs[SopaKeys.PASSES_FILTERING] &= ~where_filter
 
     def filter_cells(self):
@@ -198,7 +202,6 @@ class Aggregator:
                 )
 
             if min_transcripts > 0:
-                self.table.obs[SopaKeys.PASSES_FILTERING] = True
                 where_filter = np.asarray(self.table.X.sum(axis=1) < min_transcripts).flatten()
                 self.update_passes_filtering(where_filter, f"transcript count < {min_transcripts}")
 
@@ -215,7 +218,6 @@ class Aggregator:
                 self.table.obsm[SopaKeys.INTENSITIES_OBSM] = adata_intensities.to_df()
             else:
                 self.table = adata_intensities
-                self.table.obs[SopaKeys.PASSES_FILTERING] = True
 
             if min_intensity_ratio > 0:
                 means = adata_intensities.X.mean(axis=1)
