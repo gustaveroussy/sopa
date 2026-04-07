@@ -14,6 +14,8 @@ class ExplorerConstants:
     QUALITY_SCORE = 40
     MICRONS_TO_PIXELS = 4.705882
     PIXELS_TO_MICRONS = 0.2125
+    DENSITY_GRID_SIZE = 10.0  # microns, spatial bin size for density heatmaps
+    METRICS_DENSITY_SPACING = 20.0  # microns, spacing for QC metrics density grid
 
     COLORS = ["white", 400, 500, 600, 700]
     NUCLEUS_COLOR = "white"

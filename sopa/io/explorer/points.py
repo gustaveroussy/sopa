@@ -17,6 +17,133 @@ def subsample_indices(indices: np.ndarray, factor: int = 4) -> np.ndarray:
     return np.random.choice(indices, len(indices) // factor, replace=False)
 
 
+def _classify_gene_names(names: list[str], n_cols: int = 9) -> np.ndarray:
+    """Build a boolean category matrix classifying gene/codeword names.
+
+    Columns follow the native Xenium format:
+        0: is_gene, 1: is_negative_control_probe, 2: is_negative_control_codeword,
+        3: is_deprecated, 4: is_predicted_false_positive, 5: is_unassigned_codeword,
+        6: is_blankcodeword, 7: is_anti_sense, 8: is_genomic_control
+    """
+    cats = np.zeros((len(names), n_cols), dtype=bool)
+    for i, name in enumerate(names):
+        name_lower = name.lower()
+        if "negcontrol" in name_lower or "negprobe" in name_lower:
+            cats[i, 1] = True
+        elif "blank" in name_lower:
+            cats[i, 6] = True
+        elif "systemcontrol" in name_lower or "falsecode" in name_lower:
+            cats[i, 3] = True
+        else:
+            cats[i, 0] = True
+    return cats
+
+
+def _write_density(
+    root: zarr.Group,
+    xy: np.ndarray,
+    gene_indices: np.ndarray,
+    gene_names: list[str],
+    codeword_gene_names: list[str] | None = None,
+):
+    """Write density maps, gene/codeword categories, and metrics density
+    into an existing zarr group, matching the native Xenium Explorer format.
+
+    Args:
+        root: The zarr root group of transcripts.zarr.zip (already open for writing).
+        xy: Transcript coordinates in microns, shape (n_transcripts, 2).
+        gene_indices: Per-transcript gene index (uint16), shape (n_transcripts,).
+        gene_names: List of gene names.
+        codeword_gene_names: List of codeword names. Defaults to gene_names.
+    """
+    import numcodecs
+    from scipy.sparse import coo_matrix
+
+    if codeword_gene_names is None:
+        codeword_gene_names = gene_names
+
+    n_genes = len(gene_names)
+    n_codewords = len(codeword_gene_names)
+    compressor = numcodecs.Blosc(cname="zstd", clevel=5, shuffle=numcodecs.Blosc.BITSHUFFLE)
+
+    # ── Density grid (10 µm bins) ───────────────────────────────────────
+    grid_size = ExplorerConstants.DENSITY_GRID_SIZE
+    x_min, y_min = xy.min(axis=0)
+    x_max, y_max = xy.max(axis=0)
+
+    origin_x = np.floor(x_min / grid_size) * grid_size
+    origin_y = np.floor(y_min / grid_size) * grid_size
+
+    n_cols = int(np.ceil((x_max - origin_x) / grid_size)) + 1
+    n_rows = int(np.ceil((y_max - origin_y) / grid_size)) + 1
+
+    col_idx = np.floor((xy[:, 0] - origin_x) / grid_size).astype(np.int32).clip(0, n_cols - 1)
+    row_idx = np.floor((xy[:, 1] - origin_y) / grid_size).astype(np.int32).clip(0, n_rows - 1)
+
+    # CSR: rows = gene_index * n_rows + grid_row, cols = grid_col
+    csr_row = gene_indices.astype(np.int64) * n_rows + row_idx.astype(np.int64)
+    density_csr = coo_matrix(
+        (np.ones(len(csr_row), dtype=np.uint16), (csr_row, col_idx)),
+        shape=(n_genes * n_rows, n_cols),
+    ).tocsr()
+    density_csr.data = density_csr.data.astype(np.uint16)
+    density_csr.indices = density_csr.indices.astype(np.uint16)
+    density_csr.indptr = density_csr.indptr.astype(np.uint32)
+
+    density_attrs = {
+        "grid_size": [grid_size, grid_size],
+        "rows": n_rows,
+        "cols": n_cols,
+        "origin": {"x": float(origin_x), "y": float(origin_y)},
+    }
+
+    density_group = root.create_group("density")
+
+    gene_density = density_group.create_group("gene", attributes={**density_attrs, "gene_names": gene_names})
+    gene_density.create_array("data", data=density_csr.data, chunks=(len(density_csr.data),), compressor=compressor)
+    gene_density.create_array("indices", data=density_csr.indices, chunks=(len(density_csr.indices),), compressor=compressor)
+    gene_density.create_array("indptr", data=density_csr.indptr, chunks=(len(density_csr.indptr),), compressor=compressor)
+
+    cw_density = density_group.create_group("codeword", attributes={**density_attrs, "codeword_names": codeword_gene_names})
+    cw_density.create_array("data", data=density_csr.data, chunks=(len(density_csr.data),), compressor=compressor)
+    cw_density.create_array("indices", data=density_csr.indices, chunks=(len(density_csr.indices),), compressor=compressor)
+    cw_density.create_array("indptr", data=density_csr.indptr, chunks=(len(density_csr.indptr),), compressor=compressor)
+
+    # ── Gene / codeword categories ──────────────────────────────────────
+    gene_cat = _classify_gene_names(gene_names)
+    codeword_cat = _classify_gene_names(codeword_gene_names)
+
+    root.create_array("gene_category", data=gene_cat, chunks=(n_genes, 1), compressor=compressor)
+    root.create_array("codeword_category", data=codeword_cat, chunks=(n_codewords, 1), compressor=compressor)
+
+    # ── Metrics density (20 µm bins) ────────────────────────────────────
+    spacing = ExplorerConstants.METRICS_DENSITY_SPACING
+    mx_count = int(np.ceil((x_max - origin_x) / spacing)) + 1
+    my_count = int(np.ceil((y_max - origin_y) / spacing)) + 1
+
+    m_col = np.floor((xy[:, 0] - origin_x) / spacing).astype(np.int32).clip(0, mx_count - 1)
+    m_row = np.floor((xy[:, 1] - origin_y) / spacing).astype(np.int32).clip(0, my_count - 1)
+
+    metrics = np.zeros((my_count, mx_count, 4), dtype=np.float32)
+    np.add.at(metrics[:, :, 0], (m_row, m_col), 1.0)
+    metrics[:, :, 1] = metrics[:, :, 0]  # decoded = total for non-Xenium platforms
+
+    is_neg = gene_cat[gene_indices, 1]  # is_negative_control_probe
+    if is_neg.any():
+        np.add.at(metrics[:, :, 2], (m_row[is_neg], m_col[is_neg]), 1.0)
+
+    root.create_array("metrics_density", data=metrics, chunks=metrics.shape, compressor=compressor)
+
+    root.attrs["metrics_density_x_count"] = mx_count
+    root.attrs["metrics_density_x_origin"] = float(origin_x)
+    root.attrs["metrics_density_x_spacing"] = spacing
+    root.attrs["metrics_density_y_count"] = my_count
+    root.attrs["metrics_density_y_origin"] = float(origin_y)
+    root.attrs["metrics_density_y_spacing"] = spacing
+
+    log.info(f"   > Density grid: {n_rows}x{n_cols} ({grid_size}µm bins), {density_csr.nnz} non-zero entries")
+
+
 def write_transcripts(
     path: Path,
     df: dd.DataFrame,
@@ -166,6 +293,9 @@ def write_transcripts(
                     tile_group.create_array("codeword_identity", data=codeword_identity[level_locs][loc], chunks=chunks)
                     tile_group.create_array("uuid", data=uuid[level_locs][loc], chunks=chunks)
                     tile_group.create_array("id", data=transcript_id[level_locs][loc], chunks=chunks)
+
+        # Write density maps, categories, and metrics for Explorer density toggle
+        _write_density(g, xy, gene_identity[:, 0], gene_names)
 
 
 def _z(n: int) -> np.ndarray:
