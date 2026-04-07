@@ -6,10 +6,10 @@ from scipy.sparse import csr_matrix
 from spatialdata import SpatialData
 
 from ..constants import SopaAttrs, SopaKeys
-from ..utils import get_boundaries, get_spatial_element, get_spatial_image
+from ..utils import add_spatial_element, get_boundaries, get_spatial_element, get_spatial_image
 from . import aggregate_bins, count_transcripts
 from . import aggregate_channels as _aggregate_channels
-from .table import add_parsed_table
+from .table import parse_table
 
 log = logging.getLogger(__name__)
 
@@ -150,10 +150,15 @@ class Aggregator:
         if SopaKeys.PASSES_FILTERING not in self.table.obs:
             return
 
-        self.table = self.table[self.table.obs[SopaKeys.PASSES_FILTERING]]
+        if not self.table.obs[SopaKeys.PASSES_FILTERING].any():
+            del self.table.obs[SopaKeys.PASSES_FILTERING]
+            raise ValueError("All cells were filtered. Try adjusting the filtering parameters.")
 
-        if self.geo_df is not None:
-            self.geo_df = self.geo_df.loc[self.table.obs_names]
+        if not self.table.obs[SopaKeys.PASSES_FILTERING].all():
+            self.table = self.table[self.table.obs[SopaKeys.PASSES_FILTERING]].copy()
+
+            if self.geo_df is not None:
+                self.geo_df = self.geo_df.loc[self.table.obs_names].copy()
 
         del self.table.obs[SopaKeys.PASSES_FILTERING]
 
@@ -212,6 +217,7 @@ class Aggregator:
             )
 
             if aggregate_genes:
+                adata_intensities.obs_names = self.table.obs_names
                 self.table.obsm[SopaKeys.INTENSITIES_OBSM] = adata_intensities.to_df()
             else:
                 self.table = adata_intensities
@@ -222,23 +228,15 @@ class Aggregator:
                 where_filter = means < intensity_threshold
                 self.update_passes_filtering(where_filter, f"mean channel intensity < {intensity_threshold:.2f}")
 
-        if self.drop_filtered_cells:
-            self.filter_cells()
-
         self.table.uns[SopaKeys.UNS_KEY] = {
             SopaKeys.UNS_HAS_TRANSCRIPTS: aggregate_genes,
             SopaKeys.UNS_HAS_INTENSITIES: aggregate_channels,
         }
 
-        self.add_parsed_table(key_added)
+        self.table = parse_table(self.table, self.geo_df, self.shapes_key, self.image_key)
 
-    def add_parsed_table(self, key_added: str):
-        add_parsed_table(
-            self.sdata,
-            self.table,
-            self.geo_df,
-            self.shapes_key,
-            key_added,
-            self.image_key,
-            add_shapes=self.drop_filtered_cells,
-        )
+        if self.drop_filtered_cells:
+            self.filter_cells()
+
+        add_spatial_element(self.sdata, self.shapes_key, self.geo_df)
+        add_spatial_element(self.sdata, key_added, self.table)

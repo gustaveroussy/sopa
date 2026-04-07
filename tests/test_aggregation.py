@@ -352,5 +352,22 @@ def test_aggregate_without_dropping_cells():
     table = sdata["table_no_drop"]
 
     assert table.n_obs == 4
-    assert "passes_filtering" in table.obs
-    assert (~table.obs["passes_filtering"].to_numpy()).sum() >= 1
+    assert SopaKeys.PASSES_FILTERING in table.obs
+    assert (~table.obs[SopaKeys.PASSES_FILTERING].to_numpy()).sum() >= 1
+
+
+def test_sequential_aggregation():
+    sdata = sopa.io.toy_dataset(as_output=True)
+
+    sdata["cellpose_boundaries"].index = [f"cellpose_{i}" for i in range(len(sdata["cellpose_boundaries"]))]
+    del sdata["table"]
+
+    sopa.aggregate(sdata, min_intensity_ratio=0.9)
+    assert sdata["table"].n_obs < 400
+
+    n_obs = sdata["table"].n_obs
+
+    sopa.aggregate(sdata, drop_filtered_cells=False, min_intensity_ratio=0.9)
+
+    assert sdata["table"].n_obs == n_obs
+    assert 0.5 < sdata["table"].obs[SopaKeys.PASSES_FILTERING].mean() < 0.999

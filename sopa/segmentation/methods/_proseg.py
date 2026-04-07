@@ -11,7 +11,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import BaseTransformation, Identity
 
-from ...aggregation.aggregation import add_parsed_table
+from ...aggregation.table import add_parsed_table
 from ...constants import SopaAttrs, SopaKeys
 from ...utils import (
     copy_transformations,
