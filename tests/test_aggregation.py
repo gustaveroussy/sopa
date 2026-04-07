@@ -359,6 +359,9 @@ def test_aggregate_without_dropping_cells():
 def test_sequential_aggregation():
     sdata = sopa.io.toy_dataset(as_output=True)
 
+    sdata["cellpose_boundaries"].index = [f"cellpose_{i}" for i in range(len(sdata["cellpose_boundaries"]))]
+    del sdata["table"]
+
     sopa.aggregate(sdata, min_intensity_ratio=0.9)
     assert sdata["table"].n_obs < 400
 
