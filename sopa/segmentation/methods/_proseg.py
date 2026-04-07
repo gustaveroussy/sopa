@@ -11,7 +11,7 @@ from spatialdata import SpatialData
 from spatialdata.models import ShapesModel
 from spatialdata.transformations import BaseTransformation, Identity
 
-from ...aggregation.aggregation import add_standardized_table
+from ...aggregation.aggregation import add_parsed_table
 from ...constants import SopaAttrs, SopaKeys
 from ...utils import (
     copy_transformations,
@@ -110,7 +110,7 @@ def _proseg_points(
     _run_proseg(proseg_command, patch_dir)
     adata, geo_df = _read_proseg(patch_dir, copy_transformations(sdata[points_key]))
 
-    add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
+    add_parsed_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
     set_boundaries_attrs(sdata, key_added)
 
@@ -170,7 +170,7 @@ def _proseg_bins(
 
     adata, geo_df = _read_proseg(work_dir, _transformations_from_microns(bins_shapes))
 
-    add_standardized_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
+    add_parsed_table(sdata, adata, geo_df, key_added, SopaKeys.TABLE)
 
     set_boundaries_attrs(sdata, key_added)
 

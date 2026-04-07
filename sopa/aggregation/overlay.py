@@ -93,7 +93,7 @@ def overlay_segmentation(
     aggregator.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
     aggregator.geo_df.attrs = old_geo_df.attrs
 
-    aggregator.add_standardized_table(table_key)
+    aggregator.add_parsed_table(table_key)
 
 
 def _overlap_area_ratio(row) -> float:

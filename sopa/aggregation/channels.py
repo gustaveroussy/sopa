@@ -13,6 +13,7 @@ from xarray import DataArray
 
 from ..shapes import expand_radius, pixel_outer_bounds, rasterize
 from ..utils import get_boundaries, get_spatial_image, to_intrinsic, validated_channel_names
+from .table import parse_table
 
 log = logging.getLogger(__name__)
 
@@ -42,13 +43,15 @@ def aggregate_channels(
     """
     assert mode in AVAILABLE_MODES, f"Invalid {mode=}. Available modes are {AVAILABLE_MODES}"
 
-    image = get_spatial_image(sdata, image_key)
+    image_key, image = get_spatial_image(sdata, image_key, return_key=True)
 
-    geo_df = get_boundaries(sdata, key=shapes_key)
+    shapes_key, geo_df = get_boundaries(sdata, key=shapes_key, return_key=True)
     geo_df = to_intrinsic(sdata, geo_df, image)
     geo_df = expand_radius(geo_df, expand_radius_ratio, no_overlap=no_overlap)
 
-    return _aggregate_channels_aligned(image, geo_df, mode)
+    adata = _aggregate_channels_aligned(image, geo_df, mode)
+
+    return parse_table(adata, geo_df, shapes_key=shapes_key, image_key=image_key)
 
 
 def _aggregate_channels_aligned(image: DataArray, geo_df: gpd.GeoDataFrame, mode: str) -> AnnData:

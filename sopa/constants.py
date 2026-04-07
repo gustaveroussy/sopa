@@ -70,6 +70,15 @@ class SopaFiles:
     TOML_CONFIG_FILE = "config.toml"
 
 
+class NimbusFiles:
+    SEGMENTATION_DIR = "segmentation"
+    SEGMENTATION_OUTPUT_DIR = "output"
+    SEGMENTATION_MASK = "fov_whole_cell.tiff"
+    IMAGE_DIR = "image_data"
+    IMAGE_FOV_DIR = "fov"
+    NIMBUS_OUTPUT_DIR = "nimbus_output"
+
+
 VALID_DIMENSIONS = ("c", "y", "x")
 LOW_AVERAGE_COUNT = 0.01
 ATTRS_KEY = "spatialdata_attrs"

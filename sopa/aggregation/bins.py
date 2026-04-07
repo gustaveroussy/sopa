@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from ..shapes import expand_radius
 from ..utils import to_intrinsic
+from .table import parse_table
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +57,8 @@ def aggregate_bins(
     adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)
     adata.obsm["spatial"] = np.stack([cells.centroid.x, cells.centroid.y], axis=1)
     adata.obsm["bins_assignments"] = indices_matrix
-    return adata
+
+    return parse_table(adata, cells, shapes_key=shapes_key)
 
 
 def _get_unique_bins_assignments(
