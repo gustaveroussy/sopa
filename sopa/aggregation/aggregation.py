@@ -150,6 +150,10 @@ class Aggregator:
         if SopaKeys.PASSES_FILTERING not in self.table.obs:
             return
 
+        if not self.table.obs[SopaKeys.PASSES_FILTERING].any():
+            del self.table.obs[SopaKeys.PASSES_FILTERING]
+            raise ValueError("All cells were filtered. Try adjusting the filtering parameters.")
+
         if not self.table.obs[SopaKeys.PASSES_FILTERING].all():
             self.table = self.table[self.table.obs[SopaKeys.PASSES_FILTERING]].copy()
 
