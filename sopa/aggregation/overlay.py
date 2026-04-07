@@ -11,6 +11,7 @@ from spatialdata import SpatialData
 from ..constants import SopaAttrs, SopaKeys
 from ..utils import get_feature_key, get_spatial_element, to_intrinsic
 from .aggregation import Aggregator
+from .table import add_parsed_table
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +94,15 @@ def overlay_segmentation(
     aggregator.geo_df = pd.concat([geo_df_cropped, geo_df], join="outer", axis=0)
     aggregator.geo_df.attrs = old_geo_df.attrs
 
-    aggregator.add_parsed_table(table_key)
+    add_parsed_table(
+        sdata,
+        aggregator.table,
+        aggregator.geo_df,
+        aggregator.shapes_key,
+        table_key,
+        image_key=aggregator.image_key,
+        add_shapes=True,
+    )
 
 
 def _overlap_area_ratio(row) -> float:
