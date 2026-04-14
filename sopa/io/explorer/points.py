@@ -25,17 +25,23 @@ def _classify_gene_names(names: list[str], n_cols: int = 9) -> np.ndarray:
         3: is_deprecated, 4: is_predicted_false_positive, 5: is_unassigned_codeword,
         6: is_blankcodeword, 7: is_anti_sense, 8: is_genomic_control
     """
+    import pandas as pd
+
+    lower = pd.Series(names).str.lower()
+    is_neg = lower.str.contains("negcontrol|negprobe", regex=True, na=False).to_numpy()
+    is_blank = lower.str.contains("blank", na=False).to_numpy() & ~is_neg
+    is_dep = (
+        lower.str.contains("systemcontrol|falsecode", regex=True, na=False).to_numpy()
+        & ~is_neg
+        & ~is_blank
+    )
+    is_gene = ~(is_neg | is_blank | is_dep)
+
     cats = np.zeros((len(names), n_cols), dtype=bool)
-    for i, name in enumerate(names):
-        name_lower = name.lower()
-        if "negcontrol" in name_lower or "negprobe" in name_lower:
-            cats[i, 1] = True
-        elif "blank" in name_lower:
-            cats[i, 6] = True
-        elif "systemcontrol" in name_lower or "falsecode" in name_lower:
-            cats[i, 3] = True
-        else:
-            cats[i, 0] = True
+    cats[is_gene, 0] = True
+    cats[is_neg, 1] = True
+    cats[is_dep, 3] = True
+    cats[is_blank, 6] = True
     return cats
 
 
@@ -44,27 +50,20 @@ def _write_density(
     xy: np.ndarray,
     gene_indices: np.ndarray,
     gene_names: list[str],
-    codeword_gene_names: list[str] | None = None,
 ):
-    """Write density maps, gene/codeword categories, and metrics density
+    """Write density map, gene/codeword categories, and metrics density
     into an existing zarr group, matching the native Xenium Explorer format.
 
-    Args:
-        root: The zarr root group of transcripts.zarr.zip (already open for writing).
-        xy: Transcript coordinates in microns, shape (n_transcripts, 2).
-        gene_indices: Per-transcript gene index (uint16), shape (n_transcripts,).
-        gene_names: List of gene names.
-        codeword_gene_names: List of codeword names. Defaults to gene_names.
+    `density/codeword/` is deliberately omitted. Native XOA 3.0 files ship
+    without it (only `density/gene/`) and Explorer v4+ opens them correctly,
+    so for SOPA-supported platforms — where codewords are identical to genes
+    — writing it would be pure duplication. `codeword_category` is still
+    written (it is present in both native v3.0 and v4.0) and, for the same
+    reason, reuses `gene_category`.
     """
-    import numcodecs
     from scipy.sparse import coo_matrix
 
-    if codeword_gene_names is None:
-        codeword_gene_names = gene_names
-
     n_genes = len(gene_names)
-    n_codewords = len(codeword_gene_names)
-    compressor = numcodecs.Blosc(cname="zstd", clevel=5, shuffle=numcodecs.Blosc.BITSHUFFLE)
 
     # ── Density grid (10 µm bins) ───────────────────────────────────────
     grid_size = ExplorerConstants.DENSITY_GRID_SIZE
@@ -100,21 +99,14 @@ def _write_density(
     density_group = root.create_group("density")
 
     gene_density = density_group.create_group("gene", attributes={**density_attrs, "gene_names": gene_names})
-    gene_density.create_array("data", data=density_csr.data, chunks=(len(density_csr.data),), compressor=compressor)
-    gene_density.create_array("indices", data=density_csr.indices, chunks=(len(density_csr.indices),), compressor=compressor)
-    gene_density.create_array("indptr", data=density_csr.indptr, chunks=(len(density_csr.indptr),), compressor=compressor)
-
-    cw_density = density_group.create_group("codeword", attributes={**density_attrs, "codeword_names": codeword_gene_names})
-    cw_density.create_array("data", data=density_csr.data, chunks=(len(density_csr.data),), compressor=compressor)
-    cw_density.create_array("indices", data=density_csr.indices, chunks=(len(density_csr.indices),), compressor=compressor)
-    cw_density.create_array("indptr", data=density_csr.indptr, chunks=(len(density_csr.indptr),), compressor=compressor)
+    gene_density.create_array("data", data=density_csr.data, chunks=(len(density_csr.data),))
+    gene_density.create_array("indices", data=density_csr.indices, chunks=(len(density_csr.indices),))
+    gene_density.create_array("indptr", data=density_csr.indptr, chunks=(len(density_csr.indptr),))
 
     # ── Gene / codeword categories ──────────────────────────────────────
     gene_cat = _classify_gene_names(gene_names)
-    codeword_cat = _classify_gene_names(codeword_gene_names)
-
-    root.create_array("gene_category", data=gene_cat, chunks=(n_genes, 1), compressor=compressor)
-    root.create_array("codeword_category", data=codeword_cat, chunks=(n_codewords, 1), compressor=compressor)
+    root.create_array("gene_category", data=gene_cat, chunks=(n_genes, 1))
+    root.create_array("codeword_category", data=gene_cat, chunks=(n_genes, 1))
 
     # ── Metrics density (20 µm bins) ────────────────────────────────────
     spacing = ExplorerConstants.METRICS_DENSITY_SPACING
@@ -124,15 +116,20 @@ def _write_density(
     m_col = np.floor((xy[:, 0] - origin_x) / spacing).astype(np.int32).clip(0, mx_count - 1)
     m_row = np.floor((xy[:, 1] - origin_y) / spacing).astype(np.int32).clip(0, my_count - 1)
 
+    # Channels follow the native Xenium layout:
+    #   0 = total, 1 = decoded, 2 = negative_control_probes,
+    #   3 = negative_control_codewords.
+    # Channel 3 stays zero for platforms with no codeword-level negatives
+    # (CosMx, MERSCOPE); decoded == total for the same reason.
     metrics = np.zeros((my_count, mx_count, 4), dtype=np.float32)
     np.add.at(metrics[:, :, 0], (m_row, m_col), 1.0)
-    metrics[:, :, 1] = metrics[:, :, 0]  # decoded = total for non-Xenium platforms
+    metrics[:, :, 1] = metrics[:, :, 0]
 
     is_neg = gene_cat[gene_indices, 1]  # is_negative_control_probe
     if is_neg.any():
         np.add.at(metrics[:, :, 2], (m_row[is_neg], m_col[is_neg]), 1.0)
 
-    root.create_array("metrics_density", data=metrics, chunks=metrics.shape, compressor=compressor)
+    root.create_array("metrics_density", data=metrics, chunks=metrics.shape)
 
     root.attrs["metrics_density_x_count"] = mx_count
     root.attrs["metrics_density_x_origin"] = float(origin_x)
