@@ -51,7 +51,6 @@ def aggregate_bins(
     )
 
     if no_overlap:
-        log.warning("Unique bin assignments is currently experimental. Any feedback on GitHub is welcome.")
         indices_matrix = _get_unique_bins_assignments(indices_matrix, bins_table)
 
     adata = AnnData(indices_matrix @ bins_table.X, obs=cells[[]], var=bins_table.var)

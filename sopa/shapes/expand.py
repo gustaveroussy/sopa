@@ -18,7 +18,7 @@ def expand_radius(
     Args:
         geo_df: A GeoDataFrame containing the cells or shapes.
         expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None`, doesn't expand cells.
-        no_overlap: *Experimental feature*: if `True`, ensures that the expanded cells do not overlap by computing the Voronoi diagram of the centroids of the cells.
+        no_overlap: If `True`, ensures that the expanded cells do not overlap by computing the Voronoi diagram of the centroids of the cells.
         inplace: If `True`, modifies the input GeoDataFrame in place. If `False`, returns a new GeoDataFrame.
 
     Returns:
@@ -34,9 +34,6 @@ def expand_radius(
     geo_df.geometry = geo_df.buffer(expand_radius_)
 
     if no_overlap:
-        log.warning(
-            "Computing Voronoi polygons to ensure no overlap between shapes is still experimental. It can take 10+ minutes for 100k+ shapes."
-        )
         geo_df.geometry = remove_overlap(geo_df, as_gdf=False)
 
     return geo_df

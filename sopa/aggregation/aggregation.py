@@ -51,7 +51,7 @@ def aggregate(
         expand_radius_ratio: Ratio to expand the cells polygons for channels averaging. For instance, a ratio of 0.5 expands the shape radius by 50%. If `None` (default), use 1 if we aggregate bins data, and 0 otherwise.
         min_transcripts: Min number of transcripts to keep a cell.
         min_intensity_ratio: Min ratio of the 90th quantile of the mean channel intensity to keep a cell.
-        no_overlap: *Experimental feature*: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
+        no_overlap: If `True`, the (expanded) cells will not overlap for channels and bins aggregation.
         key_added: Key to save the table in `sdata.tables`. If `None`, it will be `f"{shapes_key}_table"`.
         drop_filtered_cells: If `True`, filtered cells are removed from the returned table. If `False`, all cells are kept and a `passes_filtering` column is added to `table.obs`.
     """
