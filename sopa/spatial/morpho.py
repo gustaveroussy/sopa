@@ -84,15 +84,6 @@ def vectorize_niches(
     return gdf
 
 
-def geometrize_niches(*args, **kwargs):
-    """Alias for `vectorize_niches`"""
-    log.warning(
-        "The function `geometrize_niches` is deprecated and will be removed in a future version. "
-        "Use `vectorize_niches` instead."
-    )
-    return vectorize_niches(*args, **kwargs)
-
-
 def _clean_components(adata: AnnData, gdf: gpd.GeoDataFrame, niche_key: str, buffer: int | str) -> gpd.GeoDataFrame:
     data = {"geometry": [], niche_key: []}
 
