@@ -66,7 +66,7 @@ def write(
 
         - `experiment.xenium` contains some experiment metadata. Double-click on this file to open the Xenium Explorer.
 
-        - `morphology.ome.tif` is the primary image. This file can also be created with [`write_image`](./#sopa.io.explorer.write_image). Add more images with `align`.
+        - `morphology.ome.tif` is the primary image. This file can also be created with [`write_image`](./#sopa.io.explorer.write_image). Add more images with [`align`](./#sopa.io.explorer.align).
 
         - `analysis.zarr.zip` contains the cells categories (or clusters), i.e. `adata.obs`. This file can also be created with [`write_cell_categories`](./#sopa.io.explorer.write_cell_categories).
 
