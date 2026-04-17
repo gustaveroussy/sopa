@@ -13,10 +13,6 @@ from .utils import explorer_file_path
 log = logging.getLogger(__name__)
 
 
-def subsample_indices(indices: np.ndarray, factor: int = 4) -> np.ndarray:
-    return np.random.choice(indices, len(indices) // factor, replace=False)
-
-
 def write_transcripts(
     path: Path,
     df: dd.DataFrame,
@@ -25,7 +21,7 @@ def write_transcripts(
     is_dir: bool = True,
     pixel_size: float = 0.2125,
 ):
-    """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations
+    """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations and genes densities.
 
     Args:
         path: Path to the Xenium Explorer directory where the transcript file will be written
@@ -166,6 +162,120 @@ def write_transcripts(
                     tile_group.create_array("codeword_identity", data=codeword_identity[level_locs][loc], chunks=chunks)
                     tile_group.create_array("uuid", data=uuid[level_locs][loc], chunks=chunks)
                     tile_group.create_array("id", data=transcript_id[level_locs][loc], chunks=chunks)
+
+        _write_density(g, xy, gene_identity[:, 0], gene_names)
+
+
+def subsample_indices(indices: np.ndarray, factor: int = 4) -> np.ndarray:
+    return np.random.choice(indices, len(indices) // factor, replace=False)
+
+
+def _classify_gene_names(names: list[str], n_cols: int = 9) -> np.ndarray:
+    """Build a boolean category matrix classifying gene/codeword names.
+
+    Columns follow the native Xenium format:
+        0: is_gene, 1: is_negative_control_probe, 2: is_negative_control_codeword,
+        3: is_deprecated, 4: is_predicted_false_positive, 5: is_unassigned_codeword,
+        6: is_blankcodeword, 7: is_anti_sense, 8: is_genomic_control
+    """
+    import pandas as pd
+
+    lower = pd.Series(names).str.lower()
+    is_neg = lower.str.contains("negcontrol|negprobe", regex=True, na=False).to_numpy()
+    is_blank = lower.str.contains("blank", na=False).to_numpy() & ~is_neg
+    is_dep = lower.str.contains("systemcontrol|falsecode", regex=True, na=False).to_numpy() & ~is_neg & ~is_blank
+    is_gene = ~(is_neg | is_blank | is_dep)
+
+    cats = np.zeros((len(names), n_cols), dtype=bool)
+    cats[is_gene, 0] = True
+    cats[is_neg, 1] = True
+    cats[is_dep, 3] = True
+    cats[is_blank, 6] = True
+    return cats
+
+
+def _write_density(
+    root: zarr.Group,
+    xy: np.ndarray,
+    gene_indices: np.ndarray,
+    gene_names: list[str],
+):
+    """Write the gene density map"""
+    from scipy.sparse import coo_matrix
+
+    n_genes = len(gene_names)
+
+    ### Density grid (10 µm bins)
+    grid_size = ExplorerConstants.DENSITY_GRID_SIZE
+    x_min, y_min = xy.min(axis=0)
+    x_max, y_max = xy.max(axis=0)
+
+    origin_x = np.floor(x_min / grid_size) * grid_size
+    origin_y = np.floor(y_min / grid_size) * grid_size
+
+    n_cols = int(np.ceil((x_max - origin_x) / grid_size)) + 1
+    n_rows = int(np.ceil((y_max - origin_y) / grid_size)) + 1
+
+    col_idx = np.floor((xy[:, 0] - origin_x) / grid_size).astype(np.int32).clip(0, n_cols - 1)
+    row_idx = np.floor((xy[:, 1] - origin_y) / grid_size).astype(np.int32).clip(0, n_rows - 1)
+
+    # CSR: rows = gene_index * n_rows + grid_row, cols = grid_col
+    csr_row = gene_indices.astype(np.int64) * n_rows + row_idx.astype(np.int64)
+    density_csr = coo_matrix(
+        (np.ones(len(csr_row), dtype=np.uint16), (csr_row, col_idx)),
+        shape=(n_genes * n_rows, n_cols),
+    ).tocsr()
+    density_csr.data = density_csr.data.astype(np.uint16)
+    density_csr.indices = density_csr.indices.astype(np.uint16)
+    density_csr.indptr = density_csr.indptr.astype(np.uint32)
+
+    density_attrs = {
+        "grid_size": [grid_size, grid_size],
+        "rows": n_rows,
+        "cols": n_cols,
+        "origin": {"x": float(origin_x), "y": float(origin_y)},
+    }
+
+    density_group = root.create_group("density")
+
+    gene_density = density_group.create_group("gene", attributes={**density_attrs, "gene_names": gene_names})
+    gene_density.create_array("data", data=density_csr.data, chunks=(len(density_csr.data),))
+    gene_density.create_array("indices", data=density_csr.indices, chunks=(len(density_csr.indices),))
+    gene_density.create_array("indptr", data=density_csr.indptr, chunks=(len(density_csr.indptr),))
+
+    ### Gene / codeword categories
+    gene_cat = _classify_gene_names(gene_names)
+    root.create_array("gene_category", data=gene_cat, chunks=(n_genes, 1))
+    root.create_array("codeword_category", data=gene_cat, chunks=(n_genes, 1))
+
+    ### Metrics density (20 µm bins)
+    spacing = ExplorerConstants.METRICS_DENSITY_SPACING
+    mx_count = int(np.ceil((x_max - origin_x) / spacing)) + 1
+    my_count = int(np.ceil((y_max - origin_y) / spacing)) + 1
+
+    m_col = np.floor((xy[:, 0] - origin_x) / spacing).astype(np.int32).clip(0, mx_count - 1)
+    m_row = np.floor((xy[:, 1] - origin_y) / spacing).astype(np.int32).clip(0, my_count - 1)
+
+    # Channels follow the native Xenium layout:
+    #   0 = total, 1 = decoded, 2 = negative_control_probes, 3 = negative_control_codewords. Channel 3 stays zero when there is no codeword-level negatives. Decoded == total for the same reason.
+    metrics = np.zeros((my_count, mx_count, 4), dtype=np.float32)
+    np.add.at(metrics[:, :, 0], (m_row, m_col), 1.0)
+    metrics[:, :, 1] = metrics[:, :, 0]
+
+    is_neg = gene_cat[gene_indices, 1]  # is_negative_control_probe
+    if is_neg.any():
+        np.add.at(metrics[:, :, 2], (m_row[is_neg], m_col[is_neg]), 1.0)
+
+    root.create_array("metrics_density", data=metrics, chunks=metrics.shape)
+
+    root.attrs["metrics_density_x_count"] = mx_count
+    root.attrs["metrics_density_x_origin"] = float(origin_x)
+    root.attrs["metrics_density_x_spacing"] = spacing
+    root.attrs["metrics_density_y_count"] = my_count
+    root.attrs["metrics_density_y_origin"] = float(origin_y)
+    root.attrs["metrics_density_y_spacing"] = spacing
+
+    log.info(f"   > Density grid: {n_rows}x{n_cols} ({grid_size}µm bins), {density_csr.nnz} non-zero entries")
 
 
 def _z(n: int) -> np.ndarray:
