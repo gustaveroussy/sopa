@@ -64,19 +64,21 @@ def write(
     Note:
         This function will create up to 7 files, depending on the `SpatialData` object and the arguments:
 
-        - `experiment.xenium` contains some experiment metadata. Double-click on this file to open the Xenium Explorer. This file can also be created with [`write_metadata`](./#sopa.io.explorer.write_metadata).
+        - `experiment.xenium` contains some experiment metadata. Double-click on this file to open the Xenium Explorer.
 
         - `morphology.ome.tif` is the primary image. This file can also be created with [`write_image`](./#sopa.io.explorer.write_image). Add more images with `align`.
 
         - `analysis.zarr.zip` contains the cells categories (or clusters), i.e. `adata.obs`. This file can also be created with [`write_cell_categories`](./#sopa.io.explorer.write_cell_categories).
 
-        - `cell_feature_matrix.zarr.zip` contains the cell-by-gene counts. This file can also be created with [`write_gene_counts`](./#sopa.io.explorer.write_gene_counts).
+        - `cell_feature_matrix.zarr.zip` contains the cell-by-gene counts.
 
-        - `cells.zarr.zip` contains the cells polygon boundaries. This file can also be created with [`write_polygons`](./#sopa.io.explorer.write_polygons).
+        - `cells.zarr.zip` contains the cells polygon boundaries.
 
-        - `transcripts.zarr.zip` contains transcripts locations. This file can also be created with [`write_transcripts`](./#sopa.io.explorer.write_transcripts).
+        - `transcripts.zarr.zip` contains transcripts locations and gene densities.
 
         - `adata.h5ad` is the `AnnData` object from the `SpatialData`. This is **not** used by the Explorer, but only saved for convenience.
+
+    See more details about these files [on the 10X Genomics website](https://www.10xgenomics.com/support/software/xenium-onboard-analysis/latest/advanced/xoa-output-zarr).
 
     Args:
         path: Path to the directory where files will be saved.

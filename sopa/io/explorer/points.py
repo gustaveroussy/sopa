@@ -21,7 +21,7 @@ def write_transcripts(
     is_dir: bool = True,
     pixel_size: float = 0.2125,
 ):
-    """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations
+    """Write a `transcripts.zarr.zip` file containing pyramidal transcript locations and genes densities.
 
     Args:
         path: Path to the Xenium Explorer directory where the transcript file will be written
