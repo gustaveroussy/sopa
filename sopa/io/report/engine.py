@@ -187,7 +187,7 @@ class Navbar(Renderable):
     def __str__(self) -> str:
         return f"""
         {Title("Sopa report", 3)}
-        {Message("This report was generated <br />by the <a href='https://github.com/gustaveroussy/sopa'>Sopa</a> HTML engine.")}
+        {Message("This report was generated <br />by the <a href='https://github.com/prism-oncology/sopa'>Sopa</a> HTML engine.")}
         {self.children_html}
     """
 

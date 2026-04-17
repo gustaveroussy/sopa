@@ -2,7 +2,7 @@
 
 On Flamingo (Gustave Roussy Institute), you can use the [slurm-gustave-roussy plugin](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm-gustave-roussy.html) via this config.
 
-The usage on Flamingo is similar to the [public tutorial](https://gustaveroussy.github.io/sopa/tutorials/snakemake/), but it uses a specific **profile** called `slurm-igr` (see below how to use it).
+The usage on Flamingo is similar to the [public tutorial](https://prism-oncology.github.io/sopa/tutorials/snakemake/), but it uses a specific **profile** called `slurm-igr` (see below how to use it).
 
 ## Usage
 

@@ -30,7 +30,7 @@ Choose one of the following, depending on your needs:
 === "Editable mode"
 
     ``` bash
-    git clone https://github.com/gustaveroussy/sopa.git
+    git clone https://github.com/prism-oncology/sopa.git
     cd sopa
 
     # no extra
@@ -43,7 +43,7 @@ Choose one of the following, depending on your needs:
 === "uv (dev mode)"
 
     ``` bash
-    git clone https://github.com/gustaveroussy/sopa.git
+    git clone https://github.com/prism-oncology/sopa.git
     cd sopa
 
     uv sync --all-extras --dev
@@ -112,7 +112,7 @@ By default, `sopa` only install the minimal dependencies to avoid a heavy instal
 If you plan to use Snakemake, in addition to the above `sopa` environment, you'll need to clone the `sopa` repository containing the Snakemake workflow:
 
 ```sh
-git clone https://github.com/gustaveroussy/sopa.git
+git clone https://github.com/prism-oncology/sopa.git
 cd sopa   # move inside the sopa repository
 ```
 
