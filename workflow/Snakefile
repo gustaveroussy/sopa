@@ -4,6 +4,10 @@ config = validate_config(config) # validate the Snakemake config
 paths = WorkflowPaths(config) # object handling the paths to the files that will be created
 args = Args(paths, config) # object handling the arguments passed to the workflow
 
+technology = config["read"]["technology"]
+src_dir = os.path.join(workflow.basedir,"src")
+highres_image = config.get("highres_image", None)
+
 ### Segmentation rules
 include: "rules/utils.smk"
 include: "rules/cellpose.smk"
@@ -42,12 +46,10 @@ rule to_spatialdata:
     conda:
         "sopa"
     params:
-        reader = args['read'].as_cli(),
-        data_path = paths.data_path,
-        sdata_path = paths.sdata_path,
+        shell_command = lambda wildcards, input :(f"sopa convert {paths.sdata_path} --sdata-path {paths.sdata_path,} {args['read'].as_cli()}" if technology !="visium_hd" else f"python3 {src_dir}/to_spatialdata_visium_hd.py --input_path {paths.sdata_path} --output_path {paths.sdata_path} --fullres_image_file {highres_image}")
     shell:
         """
-        sopa convert {params.data_path} --sdata-path {params.sdata_path} {params.reader}
+        {params.shell_command}
         """
 
 rule tissue_segmentation:
