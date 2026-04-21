@@ -3,7 +3,7 @@
 Sopa is designed to run on all spatial technologies at single-cell resolution, but some choices or parameters may be more or less suited to certain technologies.
 
 !!! note
-    All this advice is for the API usage, but it also applies to the CLI and the Snakemake pipeline (update the usage accordingly or look at our [per-technology Snakemake configs](https://github.com/gustaveroussy/sopa/tree/main/workflow/config)).
+    All this advice is for the API usage, but it also applies to the CLI and the Snakemake pipeline (update the usage accordingly or look at our [per-technology Snakemake configs](https://github.com/prism-oncology/sopa/tree/main/workflow/config)).
 
 ## Xenium or MERSCOPE
 
@@ -21,7 +21,7 @@ To filter low-quality cells, you can provide `min_transcripts=20` to the [aggreg
 
 ## CosMx
 
-For CosMx data, the same advice as above is applicable, although you may experience some issues when reading the data with `sopa.io.cosmx` due to some frequent changes in the AtoMX exports. If so, please [open an issue](https://github.com/gustaveroussy/sopa/issues) to improve this.
+For CosMx data, the same advice as above is applicable, although you may experience some issues when reading the data with `sopa.io.cosmx` due to some frequent changes in the AtoMX exports. If so, please [open an issue](https://github.com/prism-oncology/sopa/issues) to improve this.
 
 ## Visium HD
 
@@ -46,4 +46,4 @@ Though, if you have H&E with spatial omics, e.g. Xenium + H&E, in that case, we 
 
 ## Other
 
-For other technologies not listed here, please [open a new GitHub issue](https://github.com/gustaveroussy/sopa/issues).
+For other technologies not listed here, please [open a new GitHub issue](https://github.com/prism-oncology/sopa/issues).

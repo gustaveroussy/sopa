@@ -1,6 +1,6 @@
 site_name: Sopa
-repo_name: gustaveroussy/sopa
-repo_url: https://github.com/gustaveroussy/sopa
+repo_name: prism-oncology/sopa
+repo_url: https://github.com/prism-oncology/sopa
 copyright: Copyright &copy; 2023 - 2024 Quentin Blampey
 theme:
   name: material

@@ -24,7 +24,7 @@ sopa.settings.parallelization_backend = None # no backend (i.e., sequential)
 ```
 
 !!! warning
-    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/gustaveroussy/sopa/issues/145) to help us improve it.
+    The `dask` backend is still experimental. You can add a comment to [this issue](https://github.com/prism-oncology/sopa/issues/145) to help us improve it.
 
 You can also pass some kwargs to the [dask Client](https://distributed.dask.org/en/stable/api.html#client):
 ```python
