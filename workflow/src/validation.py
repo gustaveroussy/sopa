@@ -38,6 +38,10 @@ def validate_config(config: dict) -> dict:
             )
         config["patchify"]["patch_width_microns"] = -1
 
+    if "fullres_image_file" in config:  # convenient way to pass the fullres image file path to the reader
+        config["read"]["kwargs"] = config["read"].get("kwargs", {})
+        config["read"]["kwargs"]["fullres_image_file"] = config["fullres_image_file"]
+
     return config
 
 
