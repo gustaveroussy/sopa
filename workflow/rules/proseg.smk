@@ -1,6 +1,6 @@
 rule patch_segmentation_proseg:
     input:
-        (self.segmentation_done("stardist") if args.use("stardist") else []) if config["read"]["technology"] == "visium_hd" else paths.smk_patches_file_transcripts,
+        (paths.segmentation_done("stardist") if args.use("stardist") else []) if config["read"]["technology"] == "visium_hd" else paths.smk_patches_file_transcripts,
         paths.sdata_json_attrs,
         paths.segmentation_done("tissue") if args.use("tissue") else [],
     output:
