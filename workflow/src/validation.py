@@ -59,9 +59,14 @@ def check_segmentation_methods(config: dict):
     )
 
     if "stardist" in config["segmentation"]:
-        assert not any(method in config["segmentation"] for method in TRANSCRIPT_BASED_METHODS), (
-            "Invalid config. 'stardist' cannot be combined with transcript-based methods"
-        )
+        if config["read"]["technology"] == "visium_hd":
+            assert "proseg" in config["segmentation"], (
+                "Invalid config. 'stardist' can only be used with 'proseg' for 'visium_hd' technology"
+            )
+        else:
+            assert not any(method in config["segmentation"] for method in TRANSCRIPT_BASED_METHODS), (
+                "Invalid config. 'stardist' cannot be combined with transcript-based methods"
+            )
 
 
 def check_prior_shapes_key(config: dict):
