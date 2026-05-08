@@ -230,6 +230,7 @@ def get_spatial_element(
     key: str | None = None,
     return_key: bool = False,
     as_spatial_image: bool = False,
+    scale: str = "scale0",
 ) -> SpatialElement | tuple[str, SpatialElement]:
     """Gets an element from a SpatialData object.
 
@@ -238,6 +239,7 @@ def get_spatial_element(
         key: Optional element key. If `None`, returns the only element (if only one).
         return_key: Whether to also return the key of the element.
         as_spatial_image: Whether to return the element as a `SpatialImage` (if it is a `DataTree`)
+        scale: Scale level to extract when the element is a multi-scale `DataTree` (e.g. `"scale0"`, `"scale1"`). Only used when `as_spatial_image=True`.
 
     Returns:
         If `return_key` is False, only the element is returned, else a tuple `(element_key, element)`
@@ -246,7 +248,7 @@ def get_spatial_element(
 
     if key is not None:
         assert key in element_dict, f"Spatial element '{key}' not found."
-        return _return_element(element_dict, key, return_key, as_spatial_image)
+        return _return_element(element_dict, key, return_key, as_spatial_image, scale=scale)
 
     assert len(element_dict) > 0, (
         "No spatial element found. Provide an element key to denote which element you want to use."
@@ -257,7 +259,7 @@ def get_spatial_element(
 
     key = next(iter(element_dict.keys()))
 
-    return _return_element(element_dict, key, return_key, as_spatial_image)
+    return _return_element(element_dict, key, return_key, as_spatial_image, scale=scale)
 
 
 def get_spatial_image(
@@ -265,14 +267,16 @@ def get_spatial_image(
     key: str | None = None,
     return_key: bool = False,
     valid_attr: str = SopaAttrs.CELL_SEGMENTATION,
+    scale: str = "scale0",
 ) -> DataArray | tuple[str, DataArray]:
-    """Gets a DataArray from a SpatialData object (if the image has multiple scale, the `scale0` is returned)
+    """Gets a DataArray from a SpatialData object (if the image has multiple scales, the requested `scale` is returned, default `"scale0"`).
 
     Args:
         sdata: SpatialData object.
         key: Optional image key. If `None`, returns the only image (if only one), or tries to find an image with `valid_attr`.
         return_key: Whether to also return the key of the image.
         valid_attr: Attribute that the image must have to be considered valid.
+        scale: Scale level to extract from a multi-scale image (e.g. `"scale0"`, `"scale1"`). Defaults to `"scale0"`.
 
     Returns:
         If `return_key` is False, only the image is returned, else a tuple `(image_key, image)`
@@ -282,16 +286,26 @@ def get_spatial_image(
         key=key or sdata.attrs.get(valid_attr),
         return_key=return_key,
         as_spatial_image=True,
+        scale=scale,
     )
 
 
 def _return_element(
-    element_dict: dict[str, SpatialElement], key: str, return_key: bool, as_spatial_image: bool
+    element_dict: dict[str, SpatialElement],
+    key: str,
+    return_key: bool,
+    as_spatial_image: bool,
+    scale: str = "scale0",
 ) -> SpatialElement | tuple[str, SpatialElement]:
     element = element_dict[key]
 
     if as_spatial_image and isinstance(element, DataTree):
-        element = next(iter(element["scale0"].values()))
+        if scale not in element:
+            available = list(element.keys())
+            raise ValueError(
+                f"Scale '{scale}' not found in image '{key}'. Available scales: {available}"
+            )
+        element = next(iter(element[scale].values()))
 
     return (key, element) if return_key else element
 

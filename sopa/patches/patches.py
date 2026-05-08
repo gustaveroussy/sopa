@@ -81,6 +81,7 @@ class Patches2D:
         patch_overlap: float | int = 50,
         roi_key: str | None = SopaKeys.ROI,
         use_roi_centroids: bool = False,
+        scale: str = "scale0",
     ):
         """
         Args:
@@ -90,6 +91,7 @@ class Patches2D:
             patch_overlap: Overlap width between the patches
             roi_key: Optional name of the shapes that need to touch the patches. Patches that do not touch any shape will be ignored. If `None`, all patches will be used.
             use_roi_centroids: If `True`, the ROI will be computed from the centroids of the shapes in `roi_key`. If `False`, the ROI will be computed from the shapes themselves.
+            scale: For a multi-scale image, scale level to use for patch creation (e.g. `"scale0"`, `"scale1"`). Patch bounds and the stored transformation will follow this scale's intrinsic coordinate system.
         """
         patch_width = float("inf") if (patch_width is None or patch_width == -1) else patch_width
 
@@ -98,9 +100,15 @@ class Patches2D:
         self.sdata = sdata
         self.element = sdata[element] if isinstance(element, str) else element
         self.original_element = self.element  # in case the element is a DataTree
+        self.scale = scale
 
         if isinstance(self.element, DataTree):
-            self.element = next(iter(self.element["scale0"].values()))
+            if scale not in self.element:
+                available = list(self.element.keys())
+                raise ValueError(
+                    f"Scale '{scale}' not found in image. Available scales: {available}"
+                )
+            self.element = next(iter(self.element[scale].values()))
 
         if isinstance(self.element, DataArray):
             xmin, ymin = 0, 0

@@ -18,18 +18,20 @@ def make_image_patches(
     image_key: str | None = None,
     roi_key: str | None = SopaKeys.ROI,
     key_added: str | None = None,
+    scale: str = "scale0",
 ):
     """Create overlapping patches on an image. This can be used for image-based segmentation methods such as Cellpose, which will run on each patch.
 
     Args:
         sdata: A `SpatialData` object.
-        patch_width: Width of the patches, in pixels. If `None`, creates only one patch.
+        patch_width: Width of the patches, in pixels of the chosen `scale`. If `None`, creates only one patch.
         patch_overlap: Number of pixels of overlap between patches.
         image_key: Optional key of the image on which the patches will be made. If not provided, it is found automatically.
         roi_key: Optional name of the shapes that need to touch the patches. Patches that do not touch any shape will be ignored during segmentation. By default, uses `"region_of_interest"` if existing. If `None`, all patches will be used.
         key_added: Optional name of the patches to be saved. By default, uses `"image_patches"`.
+        scale: For a multi-scale image, scale level to use (e.g. `"scale0"`, `"scale1"`). Patches are created in the chosen scale's intrinsic pixel space; their stored transformation maps back to the global coordinate system. When you later run a staining-based segmentation, pass the same `scale` to that call so the image is sliced at matching coords.
     """
-    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True)
+    image_key, _ = get_spatial_image(sdata, key=image_key, return_key=True, scale=scale)
 
     patches = Patches2D(
         sdata,
@@ -37,6 +39,7 @@ def make_image_patches(
         patch_width=patch_width,
         patch_overlap=patch_overlap,
         roi_key=roi_key,
+        scale=scale,
     )
 
     patches.add_shapes(key_added=key_added)

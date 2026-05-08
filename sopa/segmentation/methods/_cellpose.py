@@ -31,6 +31,7 @@ def cellpose(
     gaussian_sigma: float = 1,
     key_added: str = SopaKeys.CELLPOSE_BOUNDARIES,
     cellpose_model_kwargs: dict | None = None,
+    scale: str = "scale0",
     **cellpose_eval_kwargs: int,
 ):
     """Run [Cellpose](https://cellpose.readthedocs.io/en/latest/) segmentation on a SpatialData object, and add a GeoDataFrame containing the cell boundaries.
@@ -44,7 +45,7 @@ def cellpose(
     Args:
         sdata: A `SpatialData` object
         channels: Name of the channel(s) to be used for segmentation. If one channel, must be a nucleus channel. If a `list` of channels, it must be a cytoplasmic channel and then a nucleus channel.
-        diameter: The Cellpose parameter for the expected cell diameter (in pixel).
+        diameter: The Cellpose parameter for the expected cell diameter (in pixel of the chosen `scale`).
         model_type: Cellpose model type.
         pretrained_model: Path to the pretrained model to be loaded, or `None`
         gpu: Whether to use GPU for segmentation.
@@ -59,6 +60,7 @@ def cellpose(
         gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
         key_added: Name of the shapes element to be added to `sdata`.
         cellpose_model_kwargs: Dictionary of kwargs to be provided to the `cellpose.models.CellposeModel` object.
+        scale: For a multi-scale image, scale level to run Cellpose on (e.g. `"scale0"`, `"scale1"`). Must match the scale passed to `sopa.make_image_patches`. Output cell boundaries are placed in the correct global coordinate system via the scale's transformation. Useful when scale0 is too large for the GPU (cellpose's mask post-processing tensors scale with image area).
         **cellpose_eval_kwargs: Kwargs to be provided to `model.eval` (where `model` is a `cellpose.models.CellposeModel` object)
     """
     channels = channels if isinstance(channels, list) else [channels]
@@ -91,6 +93,7 @@ def cellpose(
         gaussian_sigma=gaussian_sigma,
         cache_dir_name=key_added,
         key_added=key_added,
+        scale=scale,
     )
 
 

@@ -22,6 +22,7 @@ def custom_staining_based(
     cache_dir_name: str = SopaKeys.CUSTOM_BOUNDARIES,
     key_added: str = SopaKeys.CUSTOM_BOUNDARIES,
     min_patch_size: int = 10,
+    scale: str = "scale0",
 ):
     """Run a generic staining-based segmentation model, and add a GeoDataFrame containing the cell boundaries.
 
@@ -39,6 +40,7 @@ def custom_staining_based(
         cache_dir_name: Name of the cache directory.
         key_added: Name of the key to be added to `sdata.shapes`.
         min_patch_size: Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.
+        scale: Scale level of a multi-scale image to segment on (e.g. `"scale0"`, `"scale1"`). Must match the scale used in `sopa.make_image_patches`. Cell polygons are produced in this scale's pixel space and the scale's transformation is copied onto them so they map to the correct global coordinate system.
     """
     temp_dir = get_cache_dir(sdata) / cache_dir_name
 
@@ -52,13 +54,16 @@ def custom_staining_based(
         clahe_kernel_size=clahe_kernel_size,
         gaussian_sigma=gaussian_sigma,
         min_patch_size=min_patch_size,
+        scale=scale,
     )
     segmentation.write_patches_cells(temp_dir, recover=recover)
 
     cells = StainingSegmentation.read_patches_cells(temp_dir)
     cells = solve_conflicts(cells)
 
-    StainingSegmentation.add_shapes(sdata, cells, image_key=segmentation.image_key, key_added=key_added)
+    StainingSegmentation.add_shapes(
+        sdata, cells, image_key=segmentation.image_key, key_added=key_added, scale=scale
+    )
 
     set_boundaries_attrs(sdata, key_added)
 

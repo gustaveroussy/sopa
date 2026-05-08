@@ -33,6 +33,7 @@ class StainingSegmentation:
         clahe_kernel_size: int | Iterable[int] | None = None,
         gaussian_sigma: float = 1,
         min_patch_size: int = 10,
+        scale: str = "scale0",
     ):
         """Generalized staining-based segmentation class
 
@@ -46,11 +47,13 @@ class StainingSegmentation:
             clahe_kernel_size: Parameter for skimage.exposure.equalize_adapthist (applied before running cellpose)
             gaussian_sigma: Parameter for scipy gaussian_filter (applied before running cellpose)
             min_patch_size: Minimum patch size (in pixels) for both width and height. Patches smaller than this will be skipped to avoid segmentation errors.
+            scale: For a multi-scale image, scale level to segment on (e.g. `"scale0"`, `"scale1"`). Must match the scale used when calling `sopa.make_image_patches` (so patch bounds are in the same pixel coords as `self.image`).
         """
         assert SopaKeys.PATCHES in sdata.shapes, "Run `sopa.make_image_patches` before running segmentation"
 
         self.patches_gdf: gpd.GeoDataFrame = sdata[SopaKeys.PATCHES]
         self.method = method
+        self.scale = scale
 
         self.min_area = min_area
         self.clip_limit = clip_limit
@@ -58,7 +61,7 @@ class StainingSegmentation:
         self.gaussian_sigma = gaussian_sigma
         self.min_patch_size = min_patch_size
 
-        self.image_key, self.image = get_spatial_image(sdata, key=image_key, return_key=True)
+        self.image_key, self.image = get_spatial_image(sdata, key=image_key, return_key=True, scale=scale)
 
         image_channels = self.image.coords["c"].values
 
@@ -87,8 +90,11 @@ class StainingSegmentation:
             log.info(f"Skipping patch with too small dimensions ({patch_width}, {patch_height})")
             return gpd.GeoDataFrame(geometry=[])
 
-        image = self.image.sel(
-            c=self.channels,
+        # IMPORTANT: use .isel for x/y (integer pixel indices) rather than .sel.
+        # Patches2D builds bounds from len(coords["x"]) which is pixel-index space.
+        # spatialdata multiscale images keep their DataArray coords in scale0-equivalent
+        # units, so .sel(x=slice(0, scale1_width)) would select only half the image.
+        image = self.image.sel(c=self.channels).isel(
             x=slice(bounds[0], bounds[2]),
             y=slice(bounds[1], bounds[3]),
         ).values
@@ -177,7 +183,14 @@ class StainingSegmentation:
         return cells
 
     @classmethod
-    def add_shapes(cls, sdata: SpatialData, cells: gpd.GeoDataFrame, image_key: str, key_added: str):
+    def add_shapes(
+        cls,
+        sdata: SpatialData,
+        cells: gpd.GeoDataFrame,
+        image_key: str,
+        key_added: str,
+        scale: str = "scale0",
+    ):
         """Adding `shapely` polygon to the `SpatialData` object
 
         Args:
@@ -185,8 +198,9 @@ class StainingSegmentation:
             cells: `GeoDataFrame` containing the cell boundaries after segmentation
             image_key: Key of the image on which segmentation has been run
             shapes_key: Name to provide to the geodataframe to be created
+            scale: Scale level whose transformation should be copied onto the cell shapes (must match the scale used during segmentation so polygons map to the correct global coords).
         """
-        image = get_spatial_image(sdata, image_key)
+        image = get_spatial_image(sdata, image_key, scale=scale)
 
         cells.index = image_key + cells.index.astype(str)
         cells = ShapesModel.parse(cells, transformations=copy_transformations(image))
